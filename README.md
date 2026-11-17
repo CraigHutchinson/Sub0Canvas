@@ -104,7 +104,7 @@ The canvas tooling that writes `layered-doc-1` lives here too, as a C++23 static
 | `sub0canvas/outline.hpp` | Folded views of source files (`foldRegions`, `foldedView`, `sectionView`), READ requests and their answers, and skeleton expansion. |
 | `sub0canvas/edits.hpp` | Search/replace and line edits applied to a set of files (`applyEdits`), with tolerant matching. |
 | `sub0canvas/canvas.hpp` | The revisioned canvas: files at revisions, transactions (LINES, AFTER, SYMBOL), conflict detection, the revision log, and the reply parser. |
-| `sub0canvas/doc_layers.hpp` | Stable block ids (`BlockIndex`: reconciliation through edits, rewrites, renames, splits, merges and moves), layers and items with 1-N anchors, the issues layer, summaries and READ ISSUE detail, and the `layered-doc-1` writer. |
+| `sub0canvas/doc_layers.hpp` | Stable block ids (`BlockIndex`: reconciliation through edits, rewrites, renames, splits, merges and moves), layers and items with 1-N anchors, the issues layer, summaries, the first issues inline (`layerInline`) and READ ISSUE detail, and the `layered-doc-1` writer. |
 
 ```bash
 cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release   # fetches simdjson through CPM (set CPM_SOURCE_CACHE to share a cache)
@@ -122,3 +122,9 @@ target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_sub0canvas_SOURCE` to a checkout.
 
 The library came from Sub0Squad. `tools/import-sub0squad.sh <repo> <ref>` re-imports it from a git ref there, and `lib/IMPORTED_FROM` records which one. That script is for the cut-over only: after it, changes are made here first.
+
+## Where it is going
+
+[docs/BACKBONE.md](docs/BACKBONE.md) is the design (not yet built) for sub0canvas as the backbone of agentic work: items with state, tags and links,
+an event log, subscriptions delivered as inboxes, claims, views, source adapters (local git, GitHub) and a block index replayed over a project's history,
+with ordered slices and their checks.
