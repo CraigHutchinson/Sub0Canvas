@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 # sub0canvas: the layered document's C++ library (lib/) beside its static viewer (index.html, src/*.js). The viewer has no build step; this file builds
 # only the library and its tests. Sub0Squad consumes the library through CPM (CPMAddPackage NAME sub0canvas), pinned to a tag.
-project(sub0canvas VERSION 0.2.0 LANGUAGES CXX)
+project(sub0canvas VERSION 0.2.1 LANGUAGES CXX)
 
 set(SUB0CANVAS_TOP_LEVEL OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
@@ -49,4 +49,16 @@ if(SUB0CANVAS_BUILD_TESTING)
     target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson)
     add_test(NAME ${name} COMMAND ${name})
   endforeach()
+  # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
+  find_program(SUB0CANVAS_NODE node)
+  if(SUB0CANVAS_NODE)
+    file(GLOB viewerTests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.test.js)
+    add_test(NAME test_viewer COMMAND ${SUB0CANVAS_NODE} --test ${viewerTests} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  else()
+    message(STATUS "sub0canvas: node not found; the viewer's tests (test_viewer) are not registered")
+  endif()
+  # Test tiers (CraigHutchinson/.github docs/ci-strategy.md): every test is fast, so all are smoke; `ctest --preset quick` excludes only the label
+  # full, which no test carries yet. A long suite added later is labelled full.
+  get_property(sub0canvasTests DIRECTORY PROPERTY TESTS)
+  set_tests_properties(${sub0canvasTests} PROPERTIES LABELS smoke)
 endif()

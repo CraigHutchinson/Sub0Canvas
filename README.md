@@ -119,6 +119,15 @@ CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/
 target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 ```
 
+`ctest --preset quick` runs the library's tests and, when node is installed, the viewer's (`test_viewer`); `ctest --preset full` adds any test
+labelled `full` (none yet).
+
+**CI** follows the family strategy (CraigHutchinson/.github `docs/ci-strategy.md`): the smoke tier (`ci.yml`, one Linux job) on every push to `main`
+and every pull request, documentation-only changes skipped; the full tier (`ci-full.yml`: Linux GCC and Clang, Windows MinGW-w64) on `v*` and
+`milestone/*` tags, by dispatch, on a pull request labelled `ci:full`, and weekly only if `main` changed. Locally: activate the pre-push gate once
+per clone with `git config core.hooksPath .githooks` (it checks private names, builds and runs the quick tier), prove it with
+`python ../CraigHutchinson.github/tools/ci/hook_check.py --repo .`, and run `.ci/local.json` with that repository's `tools/ci/local_ci.py`.
+
 When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_sub0canvas_SOURCE` to a checkout.
 
 The library came from Sub0Squad. `tools/import-sub0squad.sh <repo> <ref>` re-imports it from a git ref there, and `lib/IMPORTED_FROM` records which one. That script is for the cut-over only: after it, changes are made here first.
