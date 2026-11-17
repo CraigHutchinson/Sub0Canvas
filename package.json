@@ -1,0 +1,13 @@
+{
+  "name": "sub0canvas",
+  "version": "0.1.0",
+  "description": "A viewer for Sub0Squad's layered document: one canvas seen through code, issues, prose, review and any other layer, bound to stable block ids.",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "fixtures": "node tools/gen-fixtures.mjs",
+    "serve": "node tools/serve.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

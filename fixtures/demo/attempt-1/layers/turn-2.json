@@ -1,0 +1,343 @@
+{
+ "schema": "layered-doc-1",
+ "turn": 2,
+ "files": {
+  "src/parser.cpp": {
+   "revision": 4,
+   "text": "#include \"parser.hpp\"\n#include <cstdlib>\n\nstatic bool isDigit(char c)\n{\n    return c >= '0' && c <= '9';\n}\n\nint Parser::parseNumber()\n{\n    int start = pos_;\n    while (pos_ < src_.size() && isDigit(src_[pos_])) ++pos_;\n    return atoi(src_.substr(start, pos_ - start).c_str());\n}\n\nint Parser::factor()\n{\n    if (peekChar() == '(') {\n        ++pos_;\n        int v = expr();\n        ++pos_;\n        return v;\n    }\n    return parseNumber();\n}\n\nint Parser::term()\n{\n    int v = factor();\n    while (peekChar() == '*' || peekChar() == '/' || peekChar() == '%') {\n        char op = src_[pos_++];\n        int rhs = factor();\n        if (op == '*') v *= rhs;\n        else if (op == '/') v /= rhs;\n        else if (rhs == 0) throw std::domain_error(\"modulo by zero\");\n        else v = v % rhs;\n    }\n    return v;\n}\n\nint Parser::expr()\n{\n    int v = term();\n    while (peekChar() == '+' || peekChar() == '-') {\n        char op = src_[pos_++];\n        int rhs = term();\n        v = op == '+' ? v + rhs : v - rhs;\n    }\n    return v;\n}\n"
+  },
+  "src/main.cpp": {
+   "revision": 1,
+   "text": "#include \"parser.hpp\"\n#include <cstdio>\n#include <iostream>\n\nvoid printResult(int v)\n{\n    std::printf(\"= %d\\n\", v);\n}\n\nint main(int argc, char** argv)\n{\n    if (argc < 2) return 1;\n    Parser p(argv[1]);\n    printResult(p.expr());\n    return 0;\n}\n"
+  },
+  "tests/test_parser.cpp": {
+   "revision": 2,
+   "text": "#include \"parser.hpp\"\n#include <cassert>\n\nvoid testPrecedence()\n{\n    Parser p(\"2+3*4\");\n    assert(p.expr() == 14);\n    assert(p.peekChar() == '\\0');\n}\n\nvoid testModulo()\n{\n    Parser p(\"7%3\");\n    assert(p.expr() == 1);\n    assert(p.peekChar() == '\\0');\n}\n"
+  }
+ },
+ "blocks": [
+  {
+   "id": "b1",
+   "path": "src/parser.cpp",
+   "name": "isDigit",
+   "signature": "static bool isDigit(char c)",
+   "first": 4,
+   "last": 7
+  },
+  {
+   "id": "b2",
+   "path": "src/parser.cpp",
+   "name": "Parser::parseNumber",
+   "signature": "int Parser::parseNumber()",
+   "first": 9,
+   "last": 14
+  },
+  {
+   "id": "b3",
+   "path": "src/parser.cpp",
+   "name": "Parser::factor",
+   "signature": "int Parser::factor()",
+   "first": 16,
+   "last": 25
+  },
+  {
+   "id": "b4",
+   "path": "src/parser.cpp",
+   "name": "Parser::term",
+   "signature": "int Parser::term()",
+   "first": 27,
+   "last": 39
+  },
+  {
+   "id": "b5",
+   "path": "src/parser.cpp",
+   "name": "Parser::expr",
+   "signature": "int Parser::expr()",
+   "first": 41,
+   "last": 50
+  },
+  {
+   "id": "b6",
+   "path": "src/main.cpp",
+   "name": "printResult",
+   "signature": "void printResult(int v)",
+   "first": 5,
+   "last": 8
+  },
+  {
+   "id": "b7",
+   "path": "src/main.cpp",
+   "name": "main",
+   "signature": "int main(int argc, char** argv)",
+   "first": 10,
+   "last": 16
+  },
+  {
+   "id": "b8",
+   "path": "tests/test_parser.cpp",
+   "name": "testPrecedence",
+   "signature": "void testPrecedence()",
+   "first": 4,
+   "last": 9
+  },
+  {
+   "id": "b9",
+   "path": "tests/test_parser.cpp",
+   "name": "testModulo",
+   "signature": "void testModulo()",
+   "first": 11,
+   "last": 16
+  }
+ ],
+ "retired": [],
+ "events": [
+  {
+   "carry": "kept",
+   "id": "b3",
+   "path": "src/parser.cpp",
+   "name": "Parser::factor",
+   "detail": ""
+  },
+  {
+   "carry": "kept",
+   "id": "b4",
+   "path": "src/parser.cpp",
+   "name": "Parser::term",
+   "detail": ""
+  },
+  {
+   "carry": "renamed",
+   "id": "b2",
+   "path": "src/parser.cpp",
+   "name": "Parser::parseNumber",
+   "detail": "Parser::number"
+  },
+  {
+   "carry": "kept",
+   "id": "b5",
+   "path": "src/parser.cpp",
+   "name": "Parser::expr",
+   "detail": ""
+  },
+  {
+   "carry": "kept",
+   "id": "b8",
+   "path": "tests/test_parser.cpp",
+   "name": "testPrecedence",
+   "detail": ""
+  },
+  {
+   "carry": "kept",
+   "id": "b9",
+   "path": "tests/test_parser.cpp",
+   "name": "testModulo",
+   "detail": ""
+  }
+ ],
+ "layers": {
+  "issues": [
+   {
+    "number": 1,
+    "id": "issue-cstdlib",
+    "kind": "warning",
+    "title": "'<cstdlib>' is included but only atoi uses it",
+    "detail": "src/parser.cpp:2:1: warning: include could be narrowed [misc-include-cleaner]",
+    "anchors": [
+     {
+      "blockId": "",
+      "path": "src/parser.cpp",
+      "line": 2,
+      "confidence": "exact"
+     }
+    ]
+   }
+  ],
+  "prose": [
+   {
+    "number": 1,
+    "id": "prose-grammar",
+    "kind": "overview",
+    "title": "Recursive descent over three precedence levels",
+    "detail": "expr handles + and -, term handles *, / and %, factor handles parentheses and numbers. Each level calls the next one down, so precedence falls out of the call structure rather than a table.",
+    "anchors": [
+     {
+      "blockId": "b5",
+      "path": "src/parser.cpp",
+      "line": 41,
+      "confidence": "exact"
+     },
+     {
+      "blockId": "b4",
+      "path": "src/parser.cpp",
+      "line": 27,
+      "confidence": "exact"
+     },
+     {
+      "blockId": "b3",
+      "path": "src/parser.cpp",
+      "line": 16,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 2,
+    "id": "prose-expr",
+    "kind": "function",
+    "title": "expr: sums and differences",
+    "detail": "Folds term results left to right with + and -.",
+    "anchors": [
+     {
+      "blockId": "b5",
+      "path": "src/parser.cpp",
+      "line": 41,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 3,
+    "id": "prose-term",
+    "kind": "function",
+    "title": "term: products, quotients and remainders",
+    "detail": "Folds factor results left to right with *, / and %; a zero right-hand side of % throws std::domain_error.",
+    "anchors": [
+     {
+      "blockId": "b4",
+      "path": "src/parser.cpp",
+      "line": 27,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 4,
+    "id": "prose-factor",
+    "kind": "function",
+    "title": "factor: a parenthesised expression or a number",
+    "detail": "Recurses into expr after an opening parenthesis, otherwise reads a number.",
+    "anchors": [
+     {
+      "blockId": "b3",
+      "path": "src/parser.cpp",
+      "line": 16,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 5,
+    "id": "prose-number",
+    "kind": "function",
+    "title": "number: a run of decimal digits",
+    "detail": "Consumes digits from the cursor and converts them.",
+    "anchors": [
+     {
+      "blockId": "b2",
+      "path": "src/parser.cpp",
+      "line": 9,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 6,
+    "id": "prose-isdigit",
+    "kind": "function",
+    "title": "isDigit: an ASCII digit test",
+    "detail": "True for '0' to '9'. Locale-independent, unlike std::isdigit.",
+    "anchors": [
+     {
+      "blockId": "b1",
+      "path": "src/parser.cpp",
+      "line": 4,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 7,
+    "id": "prose-print",
+    "kind": "function",
+    "title": "printResult: the one output format",
+    "detail": "Prints \"= value\". Every front end should go through it.",
+    "anchors": [
+     {
+      "blockId": "b6",
+      "path": "src/main.cpp",
+      "line": 5,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 8,
+    "id": "prose-main",
+    "kind": "function",
+    "title": "main: parse argv[1] and print it",
+    "detail": "Exit code 1 without an argument.",
+    "anchors": [
+     {
+      "blockId": "b7",
+      "path": "src/main.cpp",
+      "line": 10,
+      "confidence": "exact"
+     }
+    ]
+   }
+  ],
+  "review": [
+   {
+    "number": 1,
+    "id": "review-div0-a",
+    "kind": "note",
+    "title": "term(): modulo by zero is not handled",
+    "detail": "reviewer-a: resolved by the guard, keep / consistent.",
+    "anchors": [
+     {
+      "blockId": "b4",
+      "path": "src/parser.cpp",
+      "line": 35,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 2,
+    "id": "review-div0-b",
+    "kind": "note",
+    "title": "Modulo by zero unchecked in term",
+    "detail": "reviewer-b: guard rhs before %, and decide what / by zero does.",
+    "anchors": [
+     {
+      "blockId": "b4",
+      "path": "src/parser.cpp",
+      "line": 34,
+      "confidence": "exact"
+     },
+     {
+      "blockId": "b4",
+      "path": "src/parser.cpp",
+      "line": 35,
+      "confidence": "exact"
+     }
+    ]
+   },
+   {
+    "number": 3,
+    "id": "review-atoi",
+    "kind": "note",
+    "title": "atoi swallows overflow",
+    "detail": "Prefer std::stoi or from_chars so an overflowing literal is an error.",
+    "anchors": [
+     {
+      "blockId": "b2",
+      "path": "src/parser.cpp",
+      "line": 13,
+      "confidence": "exact"
+     }
+    ]
+   }
+  ]
+ }
+}

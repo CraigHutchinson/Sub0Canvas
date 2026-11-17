@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sub0canvas</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">sub0canvas <span class="muted">layered document viewer</span></div>
+  <div class="load">
+    <label class="btn" title="Open an attempt directory (or any folder holding layers/turn-N.json)">Open folder
+      <input id="pick-dir" type="file" webkitdirectory directory multiple hidden></label>
+    <label class="btn" title="Open turn-N.json, canvas.json and canvas/*.rN files">Open files
+      <input id="pick-files" type="file" multiple hidden></label>
+    <button class="btn" id="load-demo" type="button">Demo</button>
+  </div>
+  <select id="doc-select" aria-label="Attempt" hidden></select>
+  <nav class="turns" id="turns" aria-label="Turns"></nav>
+</header>
+<div id="problems" class="problems" hidden></div>
+<main class="layout" id="app">
+  <aside class="nav" id="nav"></aside>
+  <section class="centre" id="centre"></section>
+  <aside class="inspector" id="inspector"></aside>
+</main>
+<div id="drop" class="drop" hidden>Drop an attempt folder or turn files</div>
+<script src="src/model.js"></script>
+<script src="fixtures/demo.js"></script>
+<script src="src/view.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+{
+ "files": {
+  "src/parser.cpp": 6,
+  "src/main.cpp": 3,
+  "tests/test_parser.cpp": 2
+ },
+ "log": [
+  {
+   "path": "src/parser.cpp",
+   "by": "coder",
+   "revision": 1,
+   "base": 0,
+   "from": 1,
+   "to": 0,
+   "delta": 49
+  },
+  {
+   "path": "src/main.cpp",
+   "by": "coder",
+   "revision": 1,
+   "base": 0,
+   "from": 1,
+   "to": 0,
+   "delta": 16
+  },
+  {
+   "path": "tests/test_parser.cpp",
+   "by": "tester",
+   "revision": 1,
+   "base": 0,
+   "from": 1,
+   "to": 0,
+   "delta": 16
+  },
+  {
+   "path": "src/parser.cpp",
+   "by": "batch-fix:issue-peek",
+   "revision": 2,
+   "base": 1,
+   "from": 18,
+   "to": 43,
+   "delta": 0
+  },
+  {
+   "path": "tests/test_parser.cpp",
+   "by": "batch-fix:issue-peek",
+   "revision": 2,
+   "base": 1,
+   "from": 8,
+   "to": 15,
+   "delta": 0
+  },
+  {
+   "path": "src/parser.cpp",
+   "by": "coder (SYMBOL Parser::term)",
+   "revision": 3,
+   "base": 2,
+   "from": 35,
+   "to": 34,
+   "delta": 1
+  },
+  {
+   "path": "src/parser.cpp",
+   "by": "coder (SYMBOL Parser::number)",
+   "revision": 4,
+   "base": 3,
+   "from": 9,
+   "to": 24,
+   "delta": 0
+  },
+  {
+   "path": "src/parser.cpp",
+   "by": "coder (whole-file rewrite)",
+   "revision": 5,
+   "base": 4,
+   "from": 2,
+   "to": 49,
+   "delta": -4
+  },
+  {
+   "path": "src/main.cpp",
+   "by": "coder (SYMBOL main)",
+   "revision": 2,
+   "base": 1,
+   "from": 5,
+   "to": 14,
+   "delta": -5
+  },
+  {
+   "path": "src/main.cpp",
+   "by": "coder (revert decision-output)",
+   "revision": 3,
+   "base": 2,
+   "from": 5,
+   "to": 9,
+   "delta": 5
+  },
+  {
+   "path": "src/parser.cpp",
+   "by": "coder (SYMBOL Parser::skipSpace)",
+   "revision": 6,
+   "base": 5,
+   "from": 32,
+   "to": 45,
+   "delta": 6
+  }
+ ]
+}
