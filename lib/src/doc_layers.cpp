@@ -478,21 +478,35 @@ std::string layerSummary(const std::vector<LayerItem>& items, const BlockIndex& 
     return s;
 }
 
-std::string layerDetail(const LayerItem& item, const BlockIndex& index, const std::map<std::string, std::string>& files)
+namespace {
+
+/// The layer's read keyword: "issues" is read as `ISSUE`.
+std::string readKeyword(const std::string& layer)
 {
-    std::string keyword = item.layer.size() > 1 && item.layer.back() == 's' ? item.layer.substr(0, item.layer.size() - 1) : item.layer;
+    std::string keyword = layer.size() > 1 && layer.back() == 's' ? layer.substr(0, layer.size() - 1) : layer;
     for (char& c : keyword) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-    std::string s = "=== " + keyword + " " + std::to_string(item.number) + " (" + item.kind + ") ===\n" + item.detail + "\n";
+    return keyword;
+}
+
+/// `layerDetail`, with the blocks an earlier item of the same message already showed (`blocksShown`, updated) named instead of repeated.
+std::string detailOf(const LayerItem& item, const BlockIndex& index, const std::map<std::string, std::string>& files, std::set<std::string>& blocksShown)
+{
+    std::string s = "=== " + readKeyword(item.layer) + " " + std::to_string(item.number) + " (" + item.kind + ") ===\n" + item.detail + "\n";
     if (item.anchors.size() > 1) s += "It occurs at " + std::to_string(item.anchors.size()) + " places: the same fix applies at each.\n";
     int shown = 0;
-    std::set<std::string> blocksShown;
+    std::set<std::string> mine;   // this item's blocks, each once
     for (const auto& a : item.anchors) {
         const auto file = files.find(a.path);
         if (!a.blockId.empty()) {
             const Block* b = index.resolve(a.blockId);
             if (!b) { s += "(it was found in a function that no longer exists: the issue may be stale)\n"; continue; }
-            if (!blocksShown.insert(b->id).second) continue;
-            if (shown++ >= 3) { s += "... and in " + leaf(b->name) + "() (lines " + std::to_string(b->first) + "-" + std::to_string(b->last) + ")\n"; continue; }
+            if (!mine.insert(b->id).second) continue;
+            const std::string lines = "(lines " + std::to_string(b->first) + "-" + std::to_string(b->last) + ")";
+            if (!blocksShown.insert(b->id).second) {
+                s += std::string{a.confidence == Anchor::Confidence::suspect ? "Likely in " : "In "} + leaf(b->name) + "() " + lines + ", shown above.\n";
+                continue;
+            }
+            if (shown++ >= 3) { s += "... and in " + leaf(b->name) + "() " + lines + "\n"; continue; }
             const auto f = files.find(b->path);
             s += std::string{a.confidence == Anchor::Confidence::suspect ? "Likely in " : "In "} + b->path + ", " + leaf(b->name) + "(), now at lines " + std::to_string(b->first) + "-" + std::to_string(b->last) + ":\n" +
                  (f == files.end() ? std::string{} : numbered(f->second, b->first, b->last));
@@ -500,6 +514,38 @@ std::string layerDetail(const LayerItem& item, const BlockIndex& index, const st
             if (shown++ >= 3) { s += "... and at " + a.path + ":" + std::to_string(a.line) + "\n"; continue; }
             s += "At " + a.path + ":" + std::to_string(a.line) + " (outside any function):\n" + numbered(file->second, a.line - 3, a.line + 3);
         }
+    }
+    return s;
+}
+
+}  // namespace
+
+std::string layerDetail(const LayerItem& item, const BlockIndex& index, const std::map<std::string, std::string>& files)
+{
+    std::set<std::string> blocksShown;
+    return detailOf(item, index, files, blocksShown);
+}
+
+std::string layerInline(const std::vector<LayerItem>& items, const BlockIndex& index, const std::map<std::string, std::string>& files, std::size_t count, std::size_t maxChars)
+{
+    if (items.empty() || count == 0) return {};
+    std::set<std::string> blocksShown;
+    std::string body;
+    std::size_t shown = 0;
+    for (const auto& it : items) {
+        if (shown >= count) break;
+        std::set<std::string> trial = blocksShown;
+        std::string d = detailOf(it, index, files, trial);
+        if (shown > 0 && body.size() + d.size() > maxChars) break;   // the first is always shown: a verdict with no code at all helps least
+        body += d;
+        blocksShown = std::move(trial);
+        ++shown;
+    }
+    std::string s = shown == items.size() ? std::string{"In full:\n"} : "The first " + std::to_string(shown) + " in full:\n";
+    s += body;
+    if (shown < items.size()) {
+        const std::string rest = std::to_string(shown + 1) + (shown + 1 < items.size() ? "-" + std::to_string(items.size()) : std::string{});
+        s += "The rest (" + rest + ") are listed above: `=== READ: " + readKeyword(items.front().layer) + " n ===` shows one in full.\n";
     }
     return s;
 }

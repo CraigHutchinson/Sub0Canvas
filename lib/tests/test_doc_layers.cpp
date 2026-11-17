@@ -238,6 +238,18 @@ int main()
             CHECK(detail.rfind("=== ISSUE 1 (test) ===\nFAIL 6 - modulo", 0) == 0);
             CHECK(detail.find("Likely in src/calc.cpp, term(), now at lines 18-26:\n  18|     double term()") != std::string::npos);
             CHECK(layerFocus(issues, index).find("src/calc.cpp:18\n") != std::string::npos);
+            // Slice 2: the first issues in full under the summary, the rest left to a read; within a character budget, the first always.
+            const std::map<std::string, std::string> files{{path, moved}};
+            const std::string two = layerInline(issues, index, files, 2);
+            CHECK(two.rfind("The first 2 in full:\n=== ISSUE 1 (test) ===", 0) == 0);
+            CHECK(two.find("=== ISSUE 2 (test) ===") != std::string::npos && two.find("=== ISSUE 3") == std::string::npos);
+            CHECK(two.find("  18|     double term()") != std::string::npos);
+            CHECK(two.find("The rest (3) are listed above: `=== READ: ISSUE n ===` shows one in full.\n") != std::string::npos);
+            const std::string all = layerInline(issues, index, files, 5);
+            CHECK(all.rfind("In full:\n", 0) == 0 && all.find("=== ISSUE 3") != std::string::npos && all.find("The rest") == std::string::npos);
+            const std::string tight = layerInline(issues, index, files, 3, 10);
+            CHECK(tight.rfind("The first 1 in full:\n=== ISSUE 1", 0) == 0 && tight.find("The rest (2-3)") != std::string::npos);
+            CHECK(layerInline(issues, index, files, 0).empty() && layerInline({}, index, files).empty());
         }
         index.update(path, kCalc);
         const std::string compile =
@@ -263,6 +275,17 @@ int main()
             CHECK(summary.find("- in src/calc.cpp:2") != std::string::npos);
             CHECK(layerDetail(errs[0], index, {{path, kCalc}}).find("It occurs at 3 places") != std::string::npos);
             CHECK(layerDetail(errs[1], index, {{path, kCalc}}).find("At src/calc.cpp:2 (outside any function):") != std::string::npos);
+        }
+        {   // Two issues in one function: inline, its code is shown once and the second names it; read alone, each shows its code.
+            const auto both = parseIssues("does not compile: src/calc.cpp\n  src/calc.cpp:11:35: error: 'terms' was not declared in this scope\n"
+                                          "  src/calc.cpp:12:20: error: 'v2' was not declared in this scope\n", index);
+            CHECK_EQ(both.size(), static_cast<std::size_t>(2));
+            if (both.size() == 2) {
+                const std::string inl = layerInline(both, index, {{path, kCalc}});
+                CHECK(inl.find("In src/calc.cpp, expr(), now at lines") != std::string::npos);
+                CHECK(inl.find("=== ISSUE 2 (error) ===") != std::string::npos && inl.find("In expr() (lines ") != std::string::npos && inl.find(", shown above.\n") != std::string::npos);
+                CHECK(layerDetail(both[1], index, {{path, kCalc}}).find("shown above") == std::string::npos);
+            }
         }
         // Python's syntax check names a line too.
         const auto py = parseIssues("syntax error in src/calc.cpp:20: invalid syntax\n    else if\nThe code does not parse, so no test could run.", index);

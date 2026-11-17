@@ -115,7 +115,7 @@ ctest --test-dir build/mingw
 To consume the library from another CMake project, pin it to a tag:
 
 ```cmake
-CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/sub0canvas.git GIT_TAG v0.2.0)
+CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/sub0canvas.git GIT_TAG v0.2.1)
 target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 ```
 

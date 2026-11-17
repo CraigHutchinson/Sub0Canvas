@@ -6,7 +6,8 @@
 /// names the right code after a SYMBOL replace, a whole-file rewrite or a rename. Lines are resolved only when a layer is rendered. Text outside every
 /// block falls back to a path and line, valid for the revision it was found in.
 ///
-/// Slice 1 builds the block index and the ISSUES layer (compiler errors and failing tests, parsed from a gate's verdict). The layer item, its summary and
+/// Slice 1 builds the block index and the ISSUES layer (compiler errors and failing tests, parsed from a gate's verdict); slice 2 adds the first issues
+/// inline (`layerInline`). The layer item, its summary and
 /// its detail are layer-neutral, so the review and prose layers reuse them. Pure data, no I/O.
 
 #include <cstddef>
@@ -129,6 +130,11 @@ struct LayerItem
 /// One item in full: the producer's text, then its anchor resolved now (the block's current numbered lines, or the line it was found at), or that its
 /// block is gone (an orphan).
 [[nodiscard]] std::string layerDetail(const LayerItem& item, const BlockIndex& index, const std::map<std::string, std::string>& files);
+/// The first `count` items in full, as `layerDetail` renders them, for a verdict that shows the first few without a read (slice 2). A function already
+/// shown for an earlier item is named, not repeated. Items are added while the text stays within `maxChars` (the first always); the rest are named as
+/// readable with `=== READ: ISSUE n ===`. "" for no items or a `count` of 0.
+[[nodiscard]] std::string layerInline(const std::vector<LayerItem>& items, const BlockIndex& index, const std::map<std::string, std::string>& files,
+                                      std::size_t count = 3, std::size_t maxChars = 3000);
 /// `path:line` for every item that resolves to a block, one per line: text a folded view reads as focus, so the anchored blocks stay open.
 [[nodiscard]] std::string layerFocus(const std::vector<LayerItem>& items, const BlockIndex& index);
 
