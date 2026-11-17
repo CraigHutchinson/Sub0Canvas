@@ -1,4 +1,4 @@
-# sub0canvas
+# Sub0Canvas
 
 A viewer for the **layered document** that [Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad)'s canvas worker produces: one canvas seen through any number of layers
 (code, gate issues, review notes, prose per function, decisions, or anything else). Each layer binds to **stable block ids**, never to line
