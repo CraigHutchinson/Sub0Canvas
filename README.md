@@ -94,3 +94,31 @@ node tools/screenshots.mjs   # regenerate docs/screenshots with headless Edge or
 | `test/` | Model tests against the demo, plus a check that the committed fixtures match the generator. |
 
 The page uses classic scripts, not ES modules, so it runs when opened straight from disk. The demo is bundled into `fixtures/demo.js` for the same reason.
+
+## The C++ library (`lib/`)
+
+The canvas tooling that writes `layered-doc-1` lives here too, as a C++23 static library, `sub0canvas::sub0canvas`. It works on its own and does not depend on Sub0Squad. Sub0Squad is its first consumer.
+
+| Header | What it is |
+|---|---|
+| `sub0canvas/outline.hpp` | Folded views of source files (`foldRegions`, `foldedView`, `sectionView`), READ requests and their answers, and skeleton expansion. |
+| `sub0canvas/edits.hpp` | Search/replace and line edits applied to a set of files (`applyEdits`), with tolerant matching. |
+| `sub0canvas/canvas.hpp` | The revisioned canvas: files at revisions, transactions (LINES, AFTER, SYMBOL), conflict detection, the revision log, and the reply parser. |
+| `sub0canvas/doc_layers.hpp` | Stable block ids (`BlockIndex`: reconciliation through edits, rewrites, renames, splits, merges and moves), layers and items with 1-N anchors, the issues layer, summaries and READ ISSUE detail, and the `layered-doc-1` writer. |
+
+```bash
+cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release   # fetches simdjson through CPM (set CPM_SOURCE_CACHE to share a cache)
+cmake --build build/mingw -j6
+ctest --test-dir build/mingw
+```
+
+To consume the library from another CMake project, pin it to a tag:
+
+```cmake
+CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/sub0canvas.git GIT_TAG v0.2.0)
+target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
+```
+
+When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_sub0canvas_SOURCE` to a checkout.
+
+The library came from Sub0Squad. `tools/import-sub0squad.sh <repo> <ref>` re-imports it from a git ref there, and `lib/IMPORTED_FROM` records which one. That script is for the cut-over only: after it, changes are made here first.
