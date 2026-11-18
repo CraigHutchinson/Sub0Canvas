@@ -263,3 +263,7 @@ its slice is built.
 | R-AUTH-9 | The server listens on loopback only and refuses requests without the session's token. | U7 | V1 |
 | R-AUTH-10 | A scripted scenario (actors, commands, expected views) replays deterministically against the same protocol and is the test of every authoring slice. | U7, U6 | V1-V5 |
 | R-AUTH-11 | The viewer still opens a folder of snapshots read-only from `file://`. | U7, U1 | V0 |
+| R-AUTH-12 | An update from another actor reaches an open page as events that change only what they name; the reader's scroll, selection, open folds, expanded tree and unsent input are never reset by one, and a selection changed underneath is marked, not replaced. | U7, U6, U2 | V1a |
+| R-AUTH-13 | A click costs what is on screen, not what is loaded: lists render a window of rows, and no pane is rebuilt when nothing it shows changed. | U7, U4 | V1a |
+| R-AUTH-14 | A text is sent to the page once, by content id; a later turn or view sends only the texts the page has not seen. | U7, U4 | V1a |
+| R-AUTH-15 | Every viewer interaction has a latency budget (AUTHORING.md section 3.2), measured at the reference scale by a scripted local benchmark and recorded with the machine; a change that breaks a budget says so. | U7, U4 | K0 |

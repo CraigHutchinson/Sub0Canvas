@@ -112,6 +112,48 @@ First targets; S0 replaces them with measurements, and R-SCALE-2 holds them at 1
 
 Performance is measured locally, never in CI (the family rule): benchmarks carry the ctest label `timing` and skip on battery.
 
+### 6.1 Measured: whole-bundle snapshots of profile B (2026-11-18)
+
+The first measurement on real code: `sub0canvas snapshot` (app/) over subtrees of profile B's repository, on the owner's machine (Windows 11,
+MinGW GCC 13, Release, mains power, one run each, so read the timings to about 20%). Scopes are named by size only. "Turns" is the number of
+commits replayed; every turn is written in full (`layeredJson` repeats every file's text and the cumulative event log).
+
+| scope (code files) | turns | snapshot time | snapshot peak memory | bundle | blocks | viewer model: parse + load (Node) | viewer heap |
+|---|---|---|---|---|---|---|---|
+| 5 | 1 / 8 | 1.1 s / 5.1 s | 6 / 8 MB | 0.1 / 0.7 MB | 80 | 3 / 8 ms | 5 / 7 MB |
+| 230 | 1 / 8 | 1.3 s / 5.8 s | 37 / 97 MB | 5.5 / 43 MB | 3,526 | 41 / 351 ms | 35 / 235 MB |
+| 1,590 | 1 / 8 | 2.0 s / 6.4 s | 136 / 524 MB | 27 / 213 MB | 20,280 | 195 ms / 1.6 s | 161 MB / 1.1 GB |
+| 4,369 | 1 / 8 | 3.3 s / 12 s | 346 MB / 1.3 GB | 66 / 517 MB | | | |
+| 19,162 | 1 | 10 s | 1.3 GB | 244 MB | | | |
+
+The first run took 229 s for the 19,162-file scope: the commits layer looked each event's block up with `BlockIndex::resolve`, which scans every
+live block, so the base turn was quadratic in blocks. The tool now builds one id map per turn (the numbers above are after the fix); `resolve`
+itself stays linear until S1's compact index keys blocks by id.
+
+In the browser, served from git by `tools/serve.mjs` (1 turn):
+
+| scope | fetch (snapshot made on request) | first render | every later click (a full re-render) | DOM nodes | of which the block list |
+|---|---|---|---|---|---|
+| 230 files | 1.8 s | 0.37 s | 0.28-0.34 s | 11,444 | |
+| 1,590 files | 4.0 s | 2.4 s | **1.9-2.1 s** | 65,397 | 60,238 (20,075 rows) |
+
+**What the numbers say.**
+
+1. **Making a snapshot is not the bottleneck.** Seconds even for 19,000 files, and git's own work (history for a pathspec, one `cat-file` batch
+   per turn) is a small part of it. Its memory (1.3 GB) is the whole bundle assembled in one string beside the library's `BlockIndex`, which holds
+   every text and token set: deltas (point 2) and S1's compact index (section 4) remove both.
+2. **Whole bundles grow as files times turns.** Every turn repeats every file and the whole event log, so 8 turns of 1,590 files is 213 MB to
+   move, parse and hold, of which a few megabytes are new. A turn should carry only what changed: per-turn events (`eventsFrom`, BACKBONE.md
+   section 3.3, already proposed for B0) and files by content id, each text sent once.
+3. **The page, not the data, breaks first.** At 20,000 blocks every click costs about 2 s, because each render rebuilds every pane, and 92% of
+   the page is a block list nobody reads in full. Cost must follow what is on screen (R-AUTH-1), and a change must touch only what it changes.
+4. **Live use needs patches, not reloads.** Today the only way to see new data is to reload the bundle, which resets the reader's place. With
+   several people and agents writing, updates arrive continuously; each must reach the open page as a small event that updates only the parts
+   it concerns, leaving the reader's scroll, selection, folds and unsent input alone (R-AUTH-12). This is a requirement of the multi-user and
+   agentic use cases, not an optimisation.
+
+The design that follows is [AUTHORING.md](AUTHORING.md) section 3.1; the slice is V1a (section 7 there).
+
 ## 7. Proving at scale
 
 | rung | data | what it proves |

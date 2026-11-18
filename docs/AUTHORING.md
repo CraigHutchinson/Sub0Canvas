@@ -60,6 +60,55 @@ short view. The rule (R-AUTH-1): **a view is bounded by attention, not by the da
 * **Agents use the same protocol**: `sub0canvas inbox`, `sub0canvas reply`, `sub0canvas state` (a CLI over the same commands) talk to the running
   process, or open the log themselves when none runs (a lock file keeps one writer). No agent-specific mechanism.
 
+### 3.1 Live views: scoped queries in, events out, patches on the page
+
+Measured on a real 1,590-file subtree ([SCALE.md](SCALE.md) section 6.1), the whole-bundle model breaks before the data does: every click
+re-renders 65,000 nodes (2 s), and new data means reloading everything. With people and agents writing at once, updates arrive all the time,
+and each must reach an open page without disturbing the reader (the owner, 2026-11-18). So the page never holds "the document"; it holds a
+**view**, and the server keeps it current.
+
+* **Queries are scoped, answers are pages.** The page asks for what it shows: the file tree of a directory (names and counts, no texts), one
+  file at one revision, the blocks of one file, the first page of a layer with counts, an item in full. Each answer carries the revision or log
+  cursor it was taken at. Nothing asks for "every file" or "every block" (R-AUTH-1, R-SCALE-1).
+* **Updates are events since a cursor.** The server pushes the log's events after the page's cursor (server-sent events through the bridge; the
+  same `since(cursor)` a CLI agent calls). An event names what it touches (an item key, a block id, a path), so the page knows which of its
+  views are stale without asking.
+* **The page patches, it does not rebuild.** Each pane renders from its own slice of state, keyed by item, block and path; an event re-renders
+  only the panes and rows whose keys it names. The reader's scroll, selection, open folds, expanded tree and unsent text are never reset by an
+  update; if the selected block or item changes underneath, it is marked ("changed by agent/worker-2, 3 s ago"), not replaced (R-AUTH-12).
+* **Long lists are windows.** A list renders the rows on screen plus a margin, and the rest on scroll; the block list is scoped to the open
+  file or a filter, never all blocks of the document (R-AUTH-13).
+* **Content is sent once.** Texts travel by content id (a blob hash); a turn or a view refers to the id, and the page asks only for ids it has
+  not seen. A snapshot of eight commits costs the changed files, not eight copies of every file (R-AUTH-14).
+* **The bundle stays as the offline form.** A folder or bundle still opens from `file://` (R-AUTH-11): it is the same events and contents,
+  replayed locally, so one renderer serves both.
+
+This is the same rule as U4's and section 2's, applied to time: what is sent and redrawn is proportional to what changed.
+
+### 3.2 Interactivity budgets (the viewer's KPIs)
+
+Every interaction has a latency budget, measured, not assumed (the owner, 2026-11-18). The budgets hold at the **reference scale**: a 1,590-file
+subtree with 20,000 blocks (SCALE.md section 6.1) and the synthetic mirror (MIRROR.md), and the numbers are recorded with the machine and build,
+like any benchmark (local only, label `timing`). Time is from the input event to the next painted frame; a budget is the 95th percentile of 20
+repetitions.
+
+| interaction | budget | baseline (2026-11-18, 1,590 files, one run) | what the design changes (section 3.1) |
+|---|---|---|---|
+| expand or collapse a folder (1,588 files below it) | 50 ms | 1.25-1.35 s | the tree renders only open folders' rows, windowed; a toggle patches its own rows; children may be listed on demand (and streamed) instead of up front |
+| open a file from the tree | 100 ms (text cached), 300 ms (fetched) | 1.1 s | the code pane alone re-renders; the text is fetched on demand by content id, and the next likely files (neighbours, anchored files) prefetched |
+| select a block (list, code, inspector) | 50 ms | 1.1-1.3 s | patches the selection, the inspector and one scroll; nothing else |
+| switch turn | 200 ms | 1.0 s | applies the turn's delta: changed files and events only |
+| centre on a layer / back to code | 100 ms | 0.12 s / 0.77 s | windowed cards; the code pane kept, not rebuilt |
+| one keystroke in a filter | 30 ms | 0.06 s | windowed results; the search runs where the data is (the server at scale) |
+| first view of a served subtree | 1 s to the tree, 2 s to the first file | 1.6 s load and render, after a 2-4 s snapshot | the tree and the first file first, the rest on demand |
+| an event from another actor while reading | 50 ms, and nothing the reader holds moves | not possible (reload only) | events since a cursor, patched by key (R-AUTH-12) |
+
+**The block list needs a different design, not only a faster one.** Today it is one global list of every block in the document (20,075 rows,
+92% of the page), unscoped and rebuilt on every click. Candidate shapes, to be weighed when it is designed (BACKBONE.md 14.3's register): blocks
+of the open file as an outline inside the tree (where editors put them); blocks of the open folder; a search over all blocks answered by the
+server, showing a page of matches; and the identity history views (retired, merged, orphaned) as their own query rather than rows mixed into
+the list. Whatever is chosen, it is scoped and windowed.
+
 ## 4. The document and its layers
 
 | part | in the authoring tool |
@@ -109,6 +158,7 @@ Each slice is used (by the owner, on this repository) before the next is built.
 | slice | what is built | check |
 |---|---|---|
 | **V0** a worktree snapshot | the `sub0canvas` executable with `snapshot <dir> [paths]` writing `layered-doc-1`; a minimal Markdown provider (headings, fences); the viewer renders Markdown (headings, lists, code) and code side by side | `sub0canvas snapshot . docs` opens in the viewer; every heading of every doc is a block; golden snapshot of `docs/` checked byte for byte |
+| **V1a** live views | section 3.1 without a store yet: `serve` answers scoped queries (tree, file at revision, blocks of a file, layer page) from the snapshot executable, texts by content id; the page renders per pane with keyed patches and windowed lists; turns as deltas (changed files, per-turn events) | on the 1,590-file subtree of SCALE.md 6.1: a click under 50 ms, first view under 1 s, and a scripted stream of 100 events applied while a reader is scrolled and has a block selected leaves scroll and selection unchanged (a scenario, R-AUTH-10) |
 | **V1** comments | `serve` with a minimal store and `FileLog` (B1's core: `item.put`, `item.state`, `item.link`); the bridge; comment, reply, resolve from the viewer | scenario: a comment and its thread survive a restart (replayed from the log) and render identically |
 | **V2** the agent's inbox | B2's `inbox` and `acknowledge` over the review layer; the CLI (`inbox`, `reply`, `state`); views with budgets (R-AUTH-1) | **the round of section 1 on this repository**, done for real, and recorded as a scenario |
 | **V3** edits and suggestions | editing in the page as transactions; suggestions with `fix`; quote re-anchoring (B4's resolver, first part) | scenario: a comment's anchor follows its text through an agent's rewrite of the section, or is marked outdated, never moved silently |

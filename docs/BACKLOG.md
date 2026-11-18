@@ -28,6 +28,21 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Next
 
+* **K0: the viewer's interactivity KPIs** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): a scripted browser benchmark (local, label
+  `timing`) that times every interaction in the budget table on the synthetic mirror and on a large local subtree, 20 repetitions, 95th
+  percentile, and records the numbers with the machine. Baselines are in the table (about 1 s per click at 20,000 blocks). First, so V1a's work
+  is steered by measurement.
+* **The file tree on demand**: render only open folders, windowed; a toggle patches its rows; list a folder's children when it is opened (from
+  the server, streamed for very large folders), with the whole listing up front as the first step. Budget: 50 ms to expand a 1,588-file folder.
+* **File content on demand**: the page holds texts by content id, fetches a file when it is opened and prefetches likely next files; the
+  bundle form keeps working offline.
+* **The block list, redesigned** (AUTHORING.md section 3.2): today one global, unscoped list of every block (92% of the page at 20,000 blocks).
+  Weigh scoped shapes (an outline per file in the tree, per folder, a server-side search with paged matches, identity history as its own view),
+  add the choice to the register, build the winner windowed.
+* **V1a: live views** ([AUTHORING.md](AUTHORING.md) section 3.1; measured need in [SCALE.md](SCALE.md) section 6.1): scoped queries, texts by
+  content id, turns as deltas, and a page that patches per pane with windowed lists, so updates from people and agents never reset the reader.
+  Before V1's comments: every authoring slice after it relies on live updates.
+
 * **The owner reads [SCALE.md](SCALE.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md)** (2026-11-18): the second scale profile and its requirements
   (R-SCALE-5 to 9, A19-A21), and change views (U12, R-CHG, slices P0-P5, four open decisions).
 * **Two owner questions from the register consolidation** (2026-11-18): which policy owns "what counts as a spike" (CHANGE_VIEWS.md
@@ -47,7 +62,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.
 * **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
   coverage. Checked also on the owner's private reference topic, numbers only.
-* **S1: the compact, lazy index** (after S0's numbers).
+* **S1: the compact, lazy index** (after S0's numbers). Includes blocks keyed by id: `BlockIndex::resolve` scans every live block today, which made
+  a per-event lookup quadratic at 200,000 blocks (SCALE.md section 6.1).
 * **B3 claims and notes, B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
 * **Sub0Squad: measure the layer where it acts**: off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the
   summary alone. A Sub0Squad PR with no library change ([INTEGRATION.md](INTEGRATION.md)).
