@@ -83,6 +83,12 @@
         render();
     }
 
+    /** Select a block and open the file it lives in at this turn (through merges), so choosing it anywhere shows it in the code. */
+    function selectBlock(id) {
+        const r = M.resolveId(state.doc, state.turn, id);
+        set(r.block ? { block: id, file: r.block.path } : { block: id });
+    }
+
     // ---- loading ----------------------------------------------------------------------------------------------------------------------------------
 
     function load(entries, source) {
@@ -240,7 +246,7 @@
             state.query = search.value;
             put(list, ...M.findBlocks(doc, search.value).map((b) => {
                 const r = M.resolveId(doc, state.turn, b.id);
-                return h('button', { class: `blockrow ${b.id === state.block ? 'on' : ''} st-${r.status}`, onclick: () => set({ block: b.id }) },
+                return h('button', { class: `blockrow ${b.id === state.block ? 'on' : ''} st-${r.status}`, onclick: () => selectBlock(b.id) },
                     h('span', { class: 'bid' }, b.id), h('span', { class: 'bname' }, b.names[b.names.length - 1] || ''),
                     r.status === 'live' ? null : h('span', { class: `tag st-${r.status}` }, r.status === 'merged' ? `→ ${r.block.id}` : r.status === 'unknown' ? 'absent' : r.status));
             }));
@@ -296,12 +302,25 @@
                 h('span', { class: 'ln' }, n), h('span', { class: 'gut' }, mark ? '●' : ''), h('code', null, text || ' ')));
         });
         // The tree and the code scroll separately, and every render rebuilds them: keep each one's position, the code's only on the same file.
-        const was = { tree: $('#centre .filetree')?.scrollTop ?? 0, code: $('#centre .code')?.scrollTop ?? 0, file: $('#centre .code')?.dataset.file };
-        const code = h('div', { class: 'code', 'data-file': path }, rows);
+        const prev = $('#centre .code');
+        const was = { tree: $('#centre .filetree')?.scrollTop ?? 0, code: prev?.scrollTop ?? 0, file: prev?.dataset.file, block: prev?.dataset.block ?? '' };
+        const code = h('div', { class: 'code', 'data-file': path, 'data-block': sel.block?.id ?? '' }, rows);
         const tree = fileTree(paths, path, t, counts);
         put($('#centre'), h('div', { class: 'codeview' }, tree, code));
         tree.scrollTop = was.tree;
         if (was.file === path) code.scrollTop = was.code;
+        // A block chosen anywhere (the block list, the inspector, a history row) is brought into view, its header at the top; one already fully on
+        // screen stays put, so clicking a block in the code does not move it.
+        const head = code.querySelector('.blockhead.on');
+        if (head && (sel.block.id !== was.block || was.file !== path)) {
+            const box = code.getBoundingClientRect(), at = head.getBoundingClientRect();
+            const last = code.querySelector(`.line[data-line="${sel.block.last}"]`)?.getBoundingClientRect() ?? at;
+            const visible = Math.max(box.top, 0), end = Math.min(box.bottom, innerHeight);
+            if (at.top < visible || last.bottom > end) {
+                if (code.scrollHeight > code.clientHeight) code.scrollTop += at.top - box.top - 8;
+                else head.scrollIntoView({ block: 'start' });   // narrow screens: the page scrolls, not the code
+            }
+        }
     }
 
     // ---- the file tree ------------------------------------------------------------------------------------------------------------------------------
@@ -430,7 +449,7 @@
         let snippet;
         if (r.status === 'orphan' || r.status === 'unknown') {
             snippet = h('div', { class: 'snippet orphan' }, h('p', null, `Block ${r.orphanId} has no live successor at turn ${state.turn}. `,
-                h('button', { class: 'btn small', onclick: () => set({ block: r.orphanId }) }, `History of ${r.orphanId}`)));
+                h('button', { class: 'btn small', onclick: () => selectBlock(r.orphanId) }, `History of ${r.orphanId}`)));
         } else {
             const from = r.block ? r.first : Math.max(1, r.line - 3), to = r.block ? r.last : Math.min(lines.length, r.line + 3);
             const hot = r.status === 'live' || r.status === 'line' ? cur.anchor.line : -1;
@@ -455,7 +474,7 @@
                     h('span', null, `anchor ${k + 1} of ${fan.anchors.length}`),
                     h('button', { class: 'btn icon', title: 'Next anchor', onclick: () => step(1) }, '▶')) : null,
                 h('span', { class: 'where' }, r.path, cur.anchor.column ? `:${r.line}:${cur.anchor.column}` : `:${r.line}`),
-                r.block ? h('button', { class: 'btn small', onclick: () => set({ block: r.block.id }) }, `${r.block.id} ${blockLabel(r.block)}`) : null,
+                r.block ? h('button', { class: 'btn small', onclick: () => selectBlock(r.block.id) }, `${r.block.id} ${blockLabel(r.block)}`) : null,
                 cur.anchor.confidence !== 'exact' ? h('span', { class: `note conf-${cur.anchor.confidence}` }, cur.anchor.confidence) : null,
                 statusNote(r, cur.anchor),
                 r.block ? h('button', { class: 'btn small', onclick: () => set({ centre: 'code', file: r.path, block: r.block.id }) }, 'Open in code') : null),
@@ -566,7 +585,7 @@
             h('div', { class: 'histsum' },
                 hist.names.length > 1 ? h('div', null, 'Names: ', hist.names.join(' → ')) : null,
                 hist.paths.length > 1 ? h('div', null, 'Files: ', hist.paths.join(', ')) : null,
-                hist.mergedFrom.length ? h('div', null, 'Absorbed: ', hist.mergedFrom.map((m) => h('button', { class: 'linkish', onclick: () => set({ block: m }) }, m))) : null,
+                hist.mergedFrom.length ? h('div', null, 'Absorbed: ', hist.mergedFrom.map((m) => h('button', { class: 'linkish', onclick: () => selectBlock(m) }, m))) : null,
                 h('div', null, 'Layers ever attached: ', layersEver.size ? [...layersEver].map((l) => chip(l)) : h('span', { class: 'muted' }, 'none'))),
             hist.timeline.map((t) => h('div', { class: `histrow st-${t.status} ${t.turn === state.turn ? 'on' : ''}`, onclick: () => set({ turn: t.turn }) },
                 h('div', { class: 'histturn' }, `turn ${t.turn}`, h('span', { class: `tag st-${t.status}` }, t.status === 'merged' ? `→ ${t.mergedInto}` : t.status)),
