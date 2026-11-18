@@ -1,8 +1,12 @@
 # Use cases: who Sub0Canvas is for, and what each one demands
 
 Each use case is a consumer the design must serve **without a mechanism of its own** (if one needs a new mechanism, the design is incomplete, see
-[BACKBONE.md](BACKBONE.md) section 9). Each has a proving ground: something that can be run and that fails when the design is wrong
-([TESTING.md](TESTING.md)).
+[BACKBONE.md](BACKBONE.md) section 9; section 14 walks U3-U11 against it). Each has a proving ground: something that can be run and that fails when
+the design is wrong ([TESTING.md](TESTING.md)). What each one requires, stated so that it outlives any implementation, is in
+[REQUIREMENTS.md](REQUIREMENTS.md).
+
+**Investment order (owner, 2026-11-18, [DIRECTION.md](DIRECTION.md) section 4):** U1 stays served; **U7, the authoring tool, is the first use case to
+invest in**, proved on this project's own design work; U2 and U6 grow out of it (the store, inboxes, then more actors); U3 and U4 follow their slices.
 
 | # | use case | scale | built today | proving ground |
 |---|---|---|---|---|
@@ -12,7 +16,11 @@ Each use case is a consumer the design must serve **without a mechanism of its o
 | U4 | **Very large codebases**: monorepos up to **billions of lines** | 10^9-10^10 lines, 10^7 files, 10^7 commits | no | a synthetic corpus at scale, then large public repositories cloned locally (section U4 below) |
 | U5 | **A text editor over layers** | the files open, the repository behind them | no | an LSP-like process serving one editor (BACKBONE.md E1) |
 | U6 | **A collaborative editor with review, comments and explainers** | a team on one document set | no | two people and an agent reviewing one file (BACKBONE.md C1) |
-| U7 | **A viewer** of any of the above | whatever the producer wrote | yes (`index.html`, `src/`) | `npm test`, the demo and golden fixtures |
+| U7 | **The viewer, becoming an authoring tool**: Markdown, code and a GitHub-like review surface where a person and agents comment, reply, edit, test, validate and push | one project's docs and code first (this repository), then any document above | viewer yes (read-only); authoring design ([AUTHORING.md](AUTHORING.md), V0-V5) | `npm test`, golden fixtures; scripted scenarios (AUTHORING.md section 6); the owner's real review round on this repository |
+| U8 | **Quality signals around the code**: CI checks, SARIF, coverage, profiles, churn as layers | one repository and its CI | no | captured CI and SARIF output, hand-checked anchors |
+| U9 | **A prose-first reader of a codebase**: the docs and explanations at the centre, the code a drill-down | one repository | no | Markdown blocks (BLOCK_DISCOVERY.md 4.4), name anchors resolving as code is written |
+| U10 | **Several repositories or dependencies together** | a workspace of documents | no | links with document-qualified keys (BACKBONE.md A9) |
+| U11 | **An agent's long-lived memory of a codebase**: notes that outlive sessions and follow the code | one repository over months | no | notes resolved across G1's history, hand-checked |
 
 ## U1. An agent's working document (built)
 
@@ -69,8 +77,20 @@ Comments and explainers are items in `review` and `prose` layers anchored to blo
 review request is a tag plus a subscription; presence is claims. Concurrent typing is not the backbone's job: either edits are serialised as
 transactions (agents, block-sized edits) or the editor runs its own CRDT and feeds settled revisions.
 
-## U7. A viewer (built)
+## U7. The viewer, becoming an authoring tool (viewer built; authoring designed; the first investment)
 
-The static viewer reads `layered-doc-1` turn files and the canvas log, centres on any layer, drills between prose and code, shows a block's identity
-history and steps through 1-N anchors. It understands optional fields the producer does not write yet (README, "Optional fields"); BACKBONE.md B0
-closes that gap.
+Built: the static viewer reads `layered-doc-1` turn files and the canvas log, centres on any layer, drills between prose and code, shows a block's
+identity history and steps through 1-N anchors. It understands optional fields the producer does not write yet (README, "Optional fields"); B0 closes
+that gap.
+
+Next ([AUTHORING.md](AUTHORING.md)): it becomes where work happens. The owner comments in a `review` layer on this repository's own design documents;
+an agent reads its inbox, edits, replies and marks the comment addressed; the owner verifies; checks run into a `checks` layer; a push happens after an
+explicit confirmation. The underlying data (the log, the history, every revision) grows without limit, but each view stays concise: bounded by the
+reader's attention, "what needs me" first, history on demand (R-AUTH-1, R-AUTH-2). One person and agents first; more people later, tested first by
+scripted scenarios.
+
+## U8-U11. Further consumers (design targets)
+
+Named so the groundwork is checked against them (BACKBONE.md section 14.1). Each needs no new mechanism: quality signals are layers of items with data
+(A4) and ranges (A3); a prose-first reader needs Markdown blocks (A8) and name anchors; several repositories need document-qualified links (A9); an
+agent's memory is `note` events in the log, resolved across history by B4 and G1.

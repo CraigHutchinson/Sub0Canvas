@@ -1,16 +1,21 @@
-// The layered document, slice 1 (docs/LAYERED_DOCUMENT.md): stable block ids and the issues layer, without a model. Each block is one promise of the design:
-// an id survives a SYMBOL replace, a whole-file rewrite, a signature change and a rename; a split keeps the original's id; a merge carries the merged
-// block's items to the survivor; a deleted block orphans its items; a block written again, or moved to another file, gets its id back; a verdict becomes
-// issues bound to ids (a diagnostic repeated at many places is one issue), rendered at the lines of the CURRENT text.
+// The layered document (docs/LAYERED_DOCUMENT.md): stable block identities and the issues layer, without a model.
+//
+// Each block checks requirements of docs/REQUIREMENTS.md (named R-...), through the driver (doc_driver.hpp), so the checks say what a consumer
+// observes and survive changes to how the library stores it: identities are compared, never parsed; blocks are found by name; carries are the format's
+// names. Renderings a model sees (R-REN) are pinned on their exact wording on purpose: a change there is measured in Sub0Squad (TESTING.md, L4).
 #include "check.hpp"
+#include "doc_driver.hpp"
 #include "sub0canvas/canvas.hpp"
-#include "sub0canvas/doc_layers.hpp"
 
 #include <simdjson.h>
 
+#include <algorithm>
 #include <string>
 
-using namespace sub0canvas;
+using namespace req;
+using sub0canvas::Canvas;
+using sub0canvas::CanvasOp;
+using sub0canvas::Transaction;
 
 namespace {
 
@@ -62,15 +67,6 @@ double evaluate(const std::string& s)
 }
 )";
 
-std::string idOf(const BlockIndex& index, const std::string& path, const std::string& leafName)
-{
-    for (const Block* b : index.blocks(path)) {
-        const auto c = b->name.rfind(':');
-        if ((c == std::string::npos ? b->name : b->name.substr(c + 1)) == leafName) return b->id;
-    }
-    return {};
-}
-
 std::string replaceOnce(std::string text, const std::string& from, const std::string& to)
 {
     const auto at = text.find(from);
@@ -79,10 +75,17 @@ std::string replaceOnce(std::string text, const std::string& from, const std::st
     return text;
 }
 
-bool hasEvent(const BlockIndex& index, Carry carry, const std::string& id)
+/// The text of `kCalc` from `from` up to (not including) `to`.
+std::string between(const std::string& text, const std::string& from, const std::string& to)
 {
-    for (const auto& e : index.events()) if (e.carry == carry && e.id == id) return true;
-    return false;
+    const auto a = text.find(from), b = text.find(to);
+    return text.substr(a, b - a);
+}
+
+int firstLine(const Doc& d, const std::string& id)
+{
+    const auto s = d.where(id);
+    return s ? s->first : -1;
 }
 
 }  // namespace
@@ -90,22 +93,24 @@ bool hasEvent(const BlockIndex& index, Carry carry, const std::string& id)
 int main()
 {
     const std::string path = "src/calc.cpp";
-    {   // Every function gets an id; a line resolves to the block holding it; a line outside every block resolves to none.
-        BlockIndex index;
-        index.update(path, kCalc);
-        CHECK_EQ(index.blocks(path).size(), static_cast<std::size_t>(5));
-        const std::string term = idOf(index, path, "term");
-        CHECK(!term.empty() && index.resolve(term) && index.resolve(term)->first == 16);
-        CHECK(index.at(path, 20) && index.at(path, 20)->id == term);
-        CHECK(index.at(path, 1) == nullptr);
-        CHECK(index.resolve(term)->literals.count("%") == 1);
+    {   // R-ID-1: every function-like block gets an identity; a line resolves to the block holding it; a line outside every block to none.
+        // R-ISS-1 (precondition): a block knows the literals it holds.
+        Doc d;
+        d.write(path, kCalc);
+        CHECK_EQ(d.blocks(path).size(), static_cast<std::size_t>(5));
+        const std::string term = d.id(path, "term");
+        CHECK(!term.empty() && firstLine(d, term) == 16);
+        CHECK_EQ(d.holder(path, 20), term);
+        CHECK(d.holder(path, 1).empty());
+        CHECK(d.holdsLiteral(term, "%"));
     }
-    {   // A SYMBOL replace through the canvas keeps the id (the signature is the same), and the edit is in the block's history.
-        BlockIndex index;
+    {   // R-ID-2: a SYMBOL replace through the canvas keeps the identity, and a block it pushed down keeps its own and resolves to its new lines.
+        // R-ID-3: the edit is in the block's history, with its turn; an untouched block's history records nothing.
+        Doc d;
         Canvas canvas;
         canvas.addFile(path, kCalc);
-        index.update(path, canvas.text(path));
-        const std::string term = idOf(index, path, "term"), call = idOf(index, path, "call");
+        d.write(path, canvas.text(path));
+        const std::string term = d.id(path, "term"), call = d.id(path, "call");
         Transaction tx{path, canvas.revision(path), "dev", {}};
         CanvasOp op;
         op.kind = CanvasOp::Kind::replaceSymbol;
@@ -114,21 +119,21 @@ int main()
                   "            else if (eat('%')) v = std::fmod(v, unary());\n            else return v;\n        }\n    }\n";
         tx.ops.push_back(op);
         CHECK(canvas.apply(tx).ok);
-        index.setTurn(1);
-        index.update(path, canvas.text(path));
-        CHECK_EQ(idOf(index, path, "term"), term);
-        CHECK_EQ(idOf(index, path, "call"), call);                       // moved down a line, same id
-        CHECK_EQ(index.resolve(call)->first, 32);
-        const auto history = blockHistory(index, term);
-        CHECK(history.size() == 2 && history[1].carry == Carry::kept && history[1].detail == "edited" && history[1].turn == 1);   // added, then edited
-        CHECK(!hasEvent(index, Carry::kept, call));                      // untouched blocks log nothing
+        d.turn(1);
+        d.write(path, canvas.text(path));
+        CHECK_EQ(d.id(path, "term"), term);
+        CHECK_EQ(d.id(path, "call"), call);
+        CHECK_EQ(firstLine(d, call), 32);
+        const auto history = d.history(term);
+        CHECK(history.size() == 2 && history[1].carry == "kept" && history[1].detail == "edited" && history[1].turn == 1);   // added, then edited
+        CHECK(!d.logged("kept", call));
     }
-    {   // A whole-file rewrite that reorders functions, changes one signature and renames another keeps every id.
-        BlockIndex index;
-        index.update(path, kCalc);
-        const std::string term = idOf(index, path, "term"), factorial = idOf(index, path, "factorial"), call = idOf(index, path, "call"), expr = idOf(index, path, "expr");
+    {   // R-ID-4: a whole-file rewrite that reorders functions, changes one signature and renames another keeps every identity, and says how.
+        Doc d;
+        d.write(path, kCalc);
+        const std::string term = d.id(path, "term"), factorial = d.id(path, "factorial"), call = d.id(path, "call"), expr = d.id(path, "expr");
         std::string rewritten = kCalc;
-        const std::string factorialText = rewritten.substr(rewritten.find("    static double factorial"), rewritten.find("    double call") - rewritten.find("    static double factorial"));
+        const std::string factorialText = between(rewritten, "    static double factorial", "    double call");
         rewritten = replaceOnce(rewritten, factorialText, "");
         rewritten = replaceOnce(rewritten, "    double expr()\n", factorialText + "    double expr()\n");           // factorial moved to the top
         rewritten = replaceOnce(rewritten, "double call(const std::string& f, double x)", "double call(const std::string& f, double x, bool degrees)");   // re-signed
@@ -136,122 +141,136 @@ int main()
         rewritten = replaceOnce(rewritten, "v = term();", "v = multiplicative();");
         rewritten = replaceOnce(rewritten, "v += term();", "v += multiplicative();");
         rewritten = replaceOnce(rewritten, "v -= term();", "v -= multiplicative();");
-        index.update(path, rewritten);
-        CHECK_EQ(idOf(index, path, "factorial"), factorial);
-        CHECK_EQ(idOf(index, path, "call"), call);
-        CHECK_EQ(idOf(index, path, "multiplicative"), term);
-        CHECK_EQ(idOf(index, path, "expr"), expr);
-        CHECK(hasEvent(index, Carry::resigned, call) && hasEvent(index, Carry::renamed, term));
-        CHECK_EQ(index.resolve(factorial)->first, 7);                    // resolved to its new place
+        d.write(path, rewritten);
+        CHECK_EQ(d.id(path, "factorial"), factorial);
+        CHECK_EQ(d.id(path, "call"), call);
+        CHECK_EQ(d.id(path, "multiplicative"), term);
+        CHECK_EQ(d.id(path, "expr"), expr);
+        CHECK(d.logged("resigned", call) && d.logged("renamed", term));
+        CHECK_EQ(firstLine(d, factorial), 7);
     }
-    {   // A split keeps the original's id and adds the new part; a merge carries the merged block's items to the survivor.
-        BlockIndex index;
-        index.update(path, kCalc);
-        const std::string call = idOf(index, path, "call"), factorial = idOf(index, path, "factorial");
-        const std::string split = replaceOnce(kCalc, "        if (f == \"log\") return std::log10(x);\n",
-                                              "        if (f == \"log\") return logarithm(x);\n");
+    {   // R-ID-5: a split keeps the original's identity and gives the new part its own.
+        // R-ID-6: a merge sends the merged block's identity to the survivor, and the survivor's history holds the merged block's.
+        Doc d;
+        d.write(path, kCalc);
+        const std::string call = d.id(path, "call"), factorial = d.id(path, "factorial");
+        const std::string split = replaceOnce(kCalc, "        if (f == \"log\") return std::log10(x);\n", "        if (f == \"log\") return logarithm(x);\n");
         const std::string withHelper = replaceOnce(split, "    double call(", "    static double logarithm(double x)\n    {\n        if (x <= 0) return 0;\n        return std::log10(x);\n    }\n    double call(");
-        index.update(path, withHelper);
-        CHECK_EQ(idOf(index, path, "call"), call);
-        CHECK(!idOf(index, path, "logarithm").empty() && idOf(index, path, "logarithm") != call);
-        // Merge: factorial's body moves into call(); factorial is gone. An issue anchored to factorial follows to call.
+        d.write(path, withHelper);
+        CHECK_EQ(d.id(path, "call"), call);
+        CHECK(!d.id(path, "logarithm").empty() && d.id(path, "logarithm") != call);
         std::string merged = withHelper;
-        const std::string factorialText = merged.substr(merged.find("    static double factorial"), merged.find("    static double logarithm") - merged.find("    static double factorial"));
-        merged = replaceOnce(merged, factorialText, "");
+        merged = replaceOnce(merged, between(merged, "    static double factorial", "    static double logarithm"), "");
         merged = replaceOnce(merged, "        if (f == \"fact\") return factorial(x);\n",
                              "        if (f == \"fact\") {\n            double v = x;\n            double r = 1;\n            for (int i = 2; i <= static_cast<int>(v); ++i) r *= i;\n            return r;\n        }\n");
-        index.update(path, merged);
-        CHECK(hasEvent(index, Carry::merged, factorial));
-        CHECK(index.resolve(factorial) && index.resolve(factorial)->id == call);
-        const auto history = blockHistory(index, call);                 // the survivor's history holds the merged block's too
-        CHECK(std::any_of(history.begin(), history.end(), [&](const BlockEvent& e) { return e.id == factorial && e.carry == Carry::merged; }));
+        d.write(path, merged);
+        CHECK(d.logged("merged", factorial));
+        CHECK_EQ(d.resolvesTo(factorial), call);
+        const auto history = d.history(call);
+        CHECK(std::any_of(history.begin(), history.end(), [&](const Doc::HistoryEntry& e) { return e.id == factorial && e.carry == "merged"; }));
     }
-    {   // Deleted: the item is an orphan, and its detail says so. Written again: the id comes back. Moved to another file: the id comes back there.
-        BlockIndex index;
-        index.update(path, kCalc);
-        const std::string call = idOf(index, path, "call"), evaluate = idOf(index, path, "evaluate");
-        const std::string callText = kCalc.substr(kCalc.find("    double call"), kCalc.find("};") - kCalc.find("    double call"));
-        const std::string without = replaceOnce(kCalc, callText, "");
-        index.update(path, without);
-        CHECK(index.resolve(call) == nullptr && hasEvent(index, Carry::retired, call));
-        LayerItem orphan{"issues", 1, "test", "test logarithms: log(100) is 4.6 but 2", "FAIL 9 - logarithms: ...", {{call, path, 30, Anchor::Confidence::suspect}}, "issues/test/logarithms"};
-        CHECK(layerDetail(orphan, index, {{path, without}}).find("no longer exists") != std::string::npos);
-        CHECK(layerSummary({orphan}, index).find("a function that no longer exists") != std::string::npos);
-        index.update(path, kCalc);                                      // written again (the canvas's "FILE first, then SYMBOL each function")
-        CHECK_EQ(idOf(index, path, "call"), call);
-        CHECK(hasEvent(index, Carry::revived, call));
+    {   // R-ID-7: a deleted block's items are orphans, and the renderings say so. R-ID-8: written again, its identity comes back.
+        // R-ID-9: moved to another file, its identity comes back there.
+        Doc d;
+        d.write(path, kCalc);
+        const std::string call = d.id(path, "call"), evaluate = d.id(path, "evaluate");
+        const std::string without = replaceOnce(kCalc, between(kCalc, "    double call", "};"), "");
+        d.write(path, without);
+        CHECK(!d.where(call) && d.logged("retired", call));
+        const LayerItem orphan = makeItem({.title = "test logarithms: log(100) is 4.6 but 2", .detail = "FAIL 9 - logarithms: ...", .key = "issues/test/logarithms",
+                                           .anchors = {blockAnchor(call, path, 30, Anchor::Confidence::suspect)}});
+        CHECK(d.detail(orphan).find("no longer exists") != std::string::npos);
+        CHECK(d.summary({orphan}).find("a function that no longer exists") != std::string::npos);
+        d.write(path, kCalc);                                            // written again (the canvas's "FILE first, then SYMBOL each function")
+        CHECK_EQ(d.id(path, "call"), call);
+        CHECK(d.logged("revived", call));
         const std::string evalText = kCalc.substr(kCalc.find("double evaluate"));
-        index.update(path, replaceOnce(kCalc, evalText, ""));
-        index.update("src/eval.cpp", "#include <string>\n\n" + evalText);
-        CHECK_EQ(idOf(index, "src/eval.cpp", "evaluate"), evaluate);
+        d.write(path, replaceOnce(kCalc, evalText, ""));
+        d.write("src/eval.cpp", "#include <string>\n\n" + evalText);
+        CHECK_EQ(d.id("src/eval.cpp", "evaluate"), evaluate);
     }
-    {   // Python: indentation blocks get ids too.
-        BlockIndex index;
-        const std::string py = "def add(a, b):\n    return a + b\n\n\ndef sub(a, b):\n    return a - b\n";
-        index.update("calc/ops.py", py);
-        const std::string sub = idOf(index, "calc/ops.py", "sub");
-        index.update("calc/ops.py", "def sub(a, b):\n    return a - b\n\n\ndef add(a, b):\n    return a + b\n");
-        CHECK_EQ(idOf(index, "calc/ops.py", "sub"), sub);
-        CHECK_EQ(index.resolve(sub)->first, 1);
+    {   // R-ID-10: indentation-based languages (Python) get identities too, carried through a reorder.
+        Doc d;
+        d.write("calc/ops.py", "def add(a, b):\n    return a + b\n\n\ndef sub(a, b):\n    return a - b\n");
+        const std::string sub = d.id("calc/ops.py", "sub");
+        d.write("calc/ops.py", "def sub(a, b):\n    return a - b\n\n\ndef add(a, b):\n    return a + b\n");
+        CHECK_EQ(d.id("calc/ops.py", "sub"), sub);
+        CHECK_EQ(firstLine(d, sub), 1);
     }
-    {   // An operator held by several blocks points at none of them (tier 0 bugs-10: "(1+2" did not throw was put on expr() and unary(), the defect was
-        // in primary()); held by one block, it still points there.
-        BlockIndex index;
-        const std::string withUnary = replaceOnce(kCalc, "    static double factorial", "    double unary()\n    {\n        if (eat('-')) return -unary();\n        return 0;\n    }\n    static double factorial");
-        index.update(path, withUnary);
-        const auto issues = parseIssues("GATE FAIL: 2 of 16 tests failed\n"
-                                        "FAIL 1 - invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n"
-                                        "FAIL 2 - remainder: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n", index);
+    {   // R-ISS-2: an operator held by several blocks points at none of them (tier 0 bugs-10: "(1+2" did not throw was put on expr() and unary(), the
+        // defect was in primary()); held by one block, it still points there.
+        Doc d;
+        d.write(path, replaceOnce(kCalc, "    static double factorial", "    double unary()\n    {\n        if (eat('-')) return -unary();\n        return 0;\n    }\n    static double factorial"));
+        const auto issues = d.issues("GATE FAIL: 2 of 16 tests failed\n"
+                                     "FAIL 1 - invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n"
+                                     "FAIL 2 - remainder: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n");
         CHECK_EQ(issues.size(), static_cast<std::size_t>(2));
         if (issues.size() == 2) {
             CHECK(issues[0].anchors.empty());
-            CHECK(issues[1].anchors.size() == 1 && issues[1].anchors[0].blockId == idOf(index, path, "term"));
-            CHECK(layerSummary(issues, index).find(" 1. test invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n") != std::string::npos);
+            CHECK(issues[1].anchors.size() == 1 && issues[1].anchors[0].blockId == d.id(path, "term"));
+            CHECK(d.summary(issues).find(" 1. test invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n") != std::string::npos);
         }
     }
-    {   // A verdict becomes issues bound to blocks: failing tests to their suspect block (named like the test, or holding the literal under test), every
-        // diagnostic to the block holding its line, and one diagnostic at several places to ONE issue with an anchor per place.
-        BlockIndex index;
-        index.update(path, kCalc);
+    {   // R-ISS-7: a runner that reports no expression (Python's unittest: `test_modulo: 30.0 != 1`) is localised from the test's own function in the
+        // test sources it is given; without them the failure is anchored nowhere rather than guessed. R-ISS-8: a Windows runner's carriage returns,
+        // even inside a line, change nothing.
+        Doc d;
+        d.write(path, kCalc);
+        const std::string verdict = "GATE FAIL: 1 of 9 tests failed\nFAIL test_modulo: 30.0 != 1\n";
+        const auto bare = d.issues(verdict);
+        CHECK(bare.size() == 1 && bare[0].anchors.empty() && bare[0].key == "issues/test/test_modulo");
+        const std::map<std::string, std::string> sources{{"tests/test_calc.py", "def helper(a, b):\n    assert a == b\n\n\ndef test_modulo():\n    helper(ev('10%3'), 1)\n"}};
+        const auto located = d.issues(verdict, sources);
+        CHECK(located.size() == 1 && located[0].anchors.size() == 1 && located[0].anchors[0].blockId == d.id(path, "term"));
+        const auto crlf = d.issues("GATE FAIL: 1 of 9 tests failed\r\nFAIL 6 - modulo\r: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\r\n");
+        CHECK(crlf.size() == 1 && crlf[0].key == "issues/test/modulo" && crlf[0].anchors.size() == 1 && crlf[0].anchors[0].blockId == d.id(path, "term"));
+    }
+    {   // R-ISS-1: failing tests land on their suspect block (named like the test, or holding the literal under test), marked suspect.
+        // R-ISS-5: an item's key is the same next turn, whatever its number. R-REN-1..4: the renderings, at the CURRENT lines after a rewrite.
+        Doc d;
+        d.write(path, kCalc);
         const std::string verdict =
             "GATE FAIL: 3 of 16 tests failed\n"
             "FAIL 6 - modulo: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n"
             "FAIL 7 - factorial: CHECK_NEAR failed: ev(\"5!\") is 24 but 120 is 120\n"
             "FAIL 9 - logarithms: CHECK_NEAR failed: ev(\"log(100)\") is 4.60517 but 2 is 2\n";
-        const auto issues = parseIssues(verdict, index);
+        const auto issues = d.issues(verdict);
         CHECK_EQ(issues.size(), static_cast<std::size_t>(3));
         if (issues.size() == 3) {
-            CHECK(issues[0].kind == "test" && issues[0].number == 1 && issues[0].anchors.size() == 1 && issues[0].anchors[0].blockId == idOf(index, path, "term"));
+            CHECK(issues[0].kind == "test" && issues[0].number == 1 && issues[0].anchors.size() == 1 && issues[0].anchors[0].blockId == d.id(path, "term"));
             CHECK(issues[0].anchors[0].confidence == Anchor::Confidence::suspect);
-            CHECK(issues[1].anchors.size() == 1 && issues[1].anchors[0].blockId == idOf(index, path, "factorial"));
-            CHECK_EQ(issues[1].key, std::string{"issues/test/factorial"});   // the same issue next turn, whatever its number
-            CHECK(issues[2].anchors.size() == 1 && issues[2].anchors[0].blockId == idOf(index, path, "call"));
-            const std::string summary = layerSummary(issues, index);
+            CHECK(issues[1].anchors.size() == 1 && issues[1].anchors[0].blockId == d.id(path, "factorial"));
+            CHECK_EQ(issues[1].key, std::string{"issues/test/factorial"});
+            CHECK(issues[2].anchors.size() == 1 && issues[2].anchors[0].blockId == d.id(path, "call"));
+            const std::string summary = d.summary(issues);
             CHECK(summary.rfind("3 issues (`=== READ: ISSUE n ===`", 0) == 0);
             CHECK(summary.find(" 1. test modulo: CHECK_NEAR failed: ev(\"10%3\")") != std::string::npos && summary.find("likely in term() (lines 16-24)") != std::string::npos);
             CHECK(summary.find(" 3. test logarithms") != std::string::npos && summary.find("likely in call()") != std::string::npos);
-            // The ids hold after a whole-file rewrite that moves everything down: the same issues render at the new lines.
-            const std::string moved = "// a header comment\n// and another\n" + kCalc;
-            index.update(path, moved);
-            CHECK(layerSummary(issues, index).find("likely in term() (lines 18-26)") != std::string::npos);
-            const std::string detail = layerDetail(issues[0], index, {{path, moved}});
+            // The identities hold after a whole-file rewrite that moves everything down: the same issues render at the new lines.
+            d.write(path, "// a header comment\n// and another\n" + kCalc);
+            CHECK(d.summary(issues).find("likely in term() (lines 18-26)") != std::string::npos);
+            const std::string detail = d.detail(issues[0]);
             CHECK(detail.rfind("=== ISSUE 1 (test) ===\nFAIL 6 - modulo", 0) == 0);
             CHECK(detail.find("Likely in src/calc.cpp, term(), now at lines 18-26:\n  18|     double term()") != std::string::npos);
-            CHECK(layerFocus(issues, index).find("src/calc.cpp:18\n") != std::string::npos);
-            // Slice 2: the first issues in full under the summary, the rest left to a read; within a character budget, the first always.
-            const std::map<std::string, std::string> files{{path, moved}};
-            const std::string two = layerInline(issues, index, files, 2);
+            CHECK(d.focus(issues).find("src/calc.cpp:18\n") != std::string::npos);
+            // R-REN-3: the first issues in full under the summary, the rest left to a read; within a character budget, the first always.
+            const std::string two = d.inlined(issues, 2);
             CHECK(two.rfind("The first 2 in full:\n=== ISSUE 1 (test) ===", 0) == 0);
             CHECK(two.find("=== ISSUE 2 (test) ===") != std::string::npos && two.find("=== ISSUE 3") == std::string::npos);
             CHECK(two.find("  18|     double term()") != std::string::npos);
             CHECK(two.find("The rest (3) are listed above: `=== READ: ISSUE n ===` shows one in full.\n") != std::string::npos);
-            const std::string all = layerInline(issues, index, files, 5);
+            const std::string all = d.inlined(issues, 5);
             CHECK(all.rfind("In full:\n", 0) == 0 && all.find("=== ISSUE 3") != std::string::npos && all.find("The rest") == std::string::npos);
-            const std::string tight = layerInline(issues, index, files, 3, 10);
+            const std::string tight = d.inlined(issues, 3, 10);
             CHECK(tight.rfind("The first 1 in full:\n=== ISSUE 1", 0) == 0 && tight.find("The rest (2-3)") != std::string::npos);
-            CHECK(layerInline(issues, index, files, 0).empty() && layerInline({}, index, files).empty());
+            CHECK(d.inlined(issues, 0).empty() && d.inlined({}).empty());
+            // R-ISS-5 across turns: the same verdict against the moved text gives the same keys in the same order.
+            const auto again = d.issues(verdict);
+            CHECK(again.size() == 3 && again[0].key == issues[0].key && again[1].key == issues[1].key && again[2].key == issues[2].key);
         }
-        index.update(path, kCalc);
+        d.write(path, kCalc);
+        // R-ISS-3: every diagnostic lands exactly on the block holding its line, and one message at several places is ONE item with an anchor per place.
+        // R-ISS-4: a diagnostic outside every block keeps its path and line.
         const std::string compile =
             "does not compile: src/calc.cpp\n"
             "  src/calc.cpp:11:35: error: 'terms' was not declared in this scope\n"
@@ -261,52 +280,53 @@ int main()
             "  src/calc.cpp:43:20: error: 'terms' was not declared in this scope\n"
             "  src/calc.cpp:2:1: error: expected unqualified-id before 'oops'\n"
             "The code does not compile, so no test could run. Fix the errors first.\n";
-        const auto errs = parseIssues(compile, index);
+        const auto errs = d.issues(compile);
         CHECK_EQ(errs.size(), static_cast<std::size_t>(2));
         if (errs.size() == 2) {
-            CHECK(errs[0].kind == "error" && errs[0].anchors.size() == 3);                       // 1-N: one issue, three places
+            CHECK(errs[0].kind == "error" && errs[0].anchors.size() == 3);
             CHECK(errs[0].key.rfind("issues/error/", 0) == 0 && errs[0].key != errs[1].key);
-            CHECK(errs[0].anchors[0].blockId == idOf(index, path, "expr") && errs[0].anchors[0].confidence == Anchor::Confidence::exact);
-            CHECK(errs[0].anchors[2].blockId == idOf(index, path, "evaluate"));
+            CHECK(errs[0].anchors[0].blockId == d.id(path, "expr") && errs[0].anchors[0].confidence == Anchor::Confidence::exact);
+            CHECK(errs[0].anchors[2].blockId == d.id(path, "evaluate"));
             CHECK(errs[0].detail.find("^~~~~") != std::string::npos);                            // the first occurrence keeps its caret
-            CHECK(errs[1].anchors.size() == 1 && errs[1].anchors[0].blockId.empty() && errs[1].anchors[0].line == 2);   // outside every block: path and line
-            const std::string summary = layerSummary(errs, index);
+            CHECK(errs[1].anchors.size() == 1 && errs[1].anchors[0].blockId.empty() && errs[1].anchors[0].line == 2);
+            const std::string summary = d.summary(errs);
             CHECK(summary.find("- in 3 places: expr(), evaluate()") != std::string::npos);
             CHECK(summary.find("- in src/calc.cpp:2") != std::string::npos);
-            CHECK(layerDetail(errs[0], index, {{path, kCalc}}).find("It occurs at 3 places") != std::string::npos);
-            CHECK(layerDetail(errs[1], index, {{path, kCalc}}).find("At src/calc.cpp:2 (outside any function):") != std::string::npos);
+            CHECK(d.detail(errs[0]).find("It occurs at 3 places") != std::string::npos);
+            CHECK(d.detail(errs[1]).find("At src/calc.cpp:2 (outside any function):") != std::string::npos);
         }
-        {   // Two issues in one function: inline, its code is shown once and the second names it; read alone, each shows its code.
-            const auto both = parseIssues("does not compile: src/calc.cpp\n  src/calc.cpp:11:35: error: 'terms' was not declared in this scope\n"
-                                          "  src/calc.cpp:12:20: error: 'v2' was not declared in this scope\n", index);
+        {   // R-REN-3: two issues in one function: inline, its code is shown once and the second names it; read alone, each shows its code.
+            const auto both = d.issues("does not compile: src/calc.cpp\n  src/calc.cpp:11:35: error: 'terms' was not declared in this scope\n"
+                                       "  src/calc.cpp:12:20: error: 'v2' was not declared in this scope\n");
             CHECK_EQ(both.size(), static_cast<std::size_t>(2));
             if (both.size() == 2) {
-                const std::string inl = layerInline(both, index, {{path, kCalc}});
+                const std::string inl = d.inlined(both);
                 CHECK(inl.find("In src/calc.cpp, expr(), now at lines") != std::string::npos);
                 CHECK(inl.find("=== ISSUE 2 (error) ===") != std::string::npos && inl.find("In expr() (lines ") != std::string::npos && inl.find(", shown above.\n") != std::string::npos);
-                CHECK(layerDetail(both[1], index, {{path, kCalc}}).find("shown above") == std::string::npos);
+                CHECK(d.detail(both[1]).find("shown above") == std::string::npos);
             }
         }
-        // Python's syntax check names a line too.
-        const auto py = parseIssues("syntax error in src/calc.cpp:20: invalid syntax\n    else if\nThe code does not parse, so no test could run.", index);
-        CHECK(py.size() == 1 && py[0].anchors.size() == 1 && py[0].anchors[0].blockId == idOf(index, path, "term"));
+        // R-ISS-6: Python's syntax check names a line too.
+        const auto py = d.issues("syntax error in src/calc.cpp:20: invalid syntax\n    else if\nThe code does not parse, so no test could run.");
+        CHECK(py.size() == 1 && py[0].anchors.size() == 1 && py[0].anchors[0].blockId == d.id(path, "term"));
     }
-    {   // Reads name issues by number; anything else is not an issue read.
-        const auto asks = parseIssueReads("=== READ: ISSUE 3 ===\n=== READ: ISSUES 1, 2 ===\n=== READ: src/calc.cpp SYMBOL term ===\n");
+    {   // R-REN-5: reads name issues by number; anything else is not an issue read.
+        const auto asks = sub0canvas::parseIssueReads("=== READ: ISSUE 3 ===\n=== READ: ISSUES 1, 2 ===\n=== READ: src/calc.cpp SYMBOL term ===\n");
         CHECK(asks == (std::vector<int>{3, 1, 2}));
-        CHECK(parseIssueReads("=== READ: src/ISSUE.cpp LINES 1-3 ===").empty());
+        CHECK(sub0canvas::parseIssueReads("=== READ: src/ISSUE.cpp LINES 1-3 ===").empty());
     }
-    {   // The interchange form is valid JSON carrying the schema, the blocks, their history and the layers with every anchor.
-        BlockIndex index;
-        index.update(path, kCalc);
-        const auto issues = parseIssues("FAIL 6 - modulo: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n", index);
-        const std::string j = layeredJson(4, {{path, kCalc}}, {{path, 2}}, index, {{"issues", issues}});
+    {   // R-FMT-1: the snapshot is valid JSON carrying the schema, the turn, each file's revision, the blocks, their history and every layer's anchors.
+        Doc d;
+        d.turn(4);
+        d.write(path, kCalc);
+        const auto issues = d.issues("FAIL 6 - modulo: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n");
+        const std::string j = d.snapshot({{"issues", issues}}, {{path, 2}});
         simdjson::dom::parser parser;
         simdjson::dom::element doc;
         CHECK(!parser.parse(j).get(doc));
         CHECK(j.find("\"schema\":\"layered-doc-1\"") != std::string::npos && j.find("\"turn\":4") != std::string::npos);
         CHECK(j.find("\"revision\":2") != std::string::npos && j.find("\"carry\":\"added\"") != std::string::npos);
-        CHECK(j.find("\"confidence\":\"suspect\"") != std::string::npos && j.find("\"blockId\":\"" + idOf(index, path, "term") + "\"") != std::string::npos);
+        CHECK(j.find("\"confidence\":\"suspect\"") != std::string::npos && j.find("\"blockId\":\"" + d.id(path, "term") + "\"") != std::string::npos);
     }
     return finish();
 }

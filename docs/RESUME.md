@@ -1,4 +1,4 @@
-# Where Sub0Canvas stands (2026-11-18)
+# Where Sub0Canvas stands (2026-11-18, evening)
 
 Read this first when resuming. What is next, in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
 
@@ -15,6 +15,7 @@ Read this first when resuming. What is next, in order, is [BACKLOG.md](BACKLOG.m
 | issues layer: `parseIssues`, `layerSummary`, `layerDetail`, `layerInline` (slice 2), `layerFocus`, READ ISSUE, `layered-doc-1` | built, tested | [LAYERED_DOCUMENT.md](LAYERED_DOCUMENT.md); measured on Sub0Squad tier 0 (slice 1, slice 2) |
 | the viewer | built, tested (`npm test`, `test_viewer` under ctest) | [README.md](../README.md) |
 | CI (family standard), test presets, `.ci/local.json`, pre-push gate | built | [AGENTS.md](../AGENTS.md) |
+| requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, unreleased (2026-11-18) | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
 
 ## The last measured result
 
@@ -24,11 +25,22 @@ adaptive with a threshold of 6. The noise between identical arms reached 67% on 
 
 ## Designed, not built
 
+**The direction of 2026-11-18** ([DIRECTION.md](DIRECTION.md) sections 3 and 4): the viewer becomes an **authoring tool** and is the first use case to
+invest in, proved on this project's own design work ([AUTHORING.md](AUTHORING.md), V0-V5); block discovery becomes language-aware behind a provider
+seam, drawing on prior art ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md), D0-D3); what is not clear-cut stays an open A/B decision, with policies as data
+that a client may supply ([BACKBONE.md](BACKBONE.md) sections 14.3-14.5). **The owner has not yet read these**, nor BACKBONE.md; section 11 there now
+holds eleven questions.
+
 [BACKBONE.md](BACKBONE.md): items with state, tags and links; an event log; subscriptions as inboxes; claims; views; the store; source adapters
 (local git, GitHub); a revision-aware index replayed over history; the scale design for billions of lines (section 12); slices B0-B4, G1-G5, S0-S4,
 E1, C1. **The owner has not yet read it**; its section 11 lists five open questions for them.
 
 ## Known gaps and debts
+
+* The recorded-reply corpus (32 cases) runs only in Sub0Squad, because applying a parsed reply is squad code (R-EDIT-7; BACKBONE.md A12).
+* No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
+* Measured faults of block discovery: a `{` in a block comment loses every block of the file; Rust/TypeScript generics, arrow functions and Go methods
+  are named wrongly or not at all; decorators fall outside their block; YAML, JSON, XML and Markdown have no blocks (BLOCK_DISCOVERY.md section 2; D0).
 
 * The producer (Sub0Squad) does not yet write the optional fields the viewer understands (item `id`, anchor `column`, `fix`, `mergedFrom`, `layerMeta`):
   slice B0.

@@ -5,11 +5,31 @@ Sub0Squad ([INTEGRATION.md](INTEGRATION.md)). A rung that is skipped is said so 
 
 | rung | what | where | runs | label |
 |---|---|---|---|---|
-| **L0 unit** | the library's rules, one behaviour per block of `CHECK`s: identity rules, transactions, folding, parsing, rendering | `lib/tests/test_*.cpp` (C++), `test/*.test.js` (viewer, under ctest as `test_viewer`) | every change; CI smoke | `smoke` |
-| **L1 golden** | real producer output, frozen: Sub0Squad turn files and gate verdicts, parsed and validated on both sides | `fixtures/golden/` | every change; CI smoke | `smoke` |
-| **L2 use case** | a scenario a consumer depends on, with **hand-checked truth**: a git history's block identities, PR review comments landing on blocks, a recorded squad workflow replayed through the store | `fixtures/scenarios/<name>/` (inputs and `truth.json`), a test per scenario | every change to what it covers; CI full when long | `smoke` or `full` |
+| **L0 unit** | the library's rules, one behaviour per block of `CHECK`s, each naming its requirement (REQUIREMENTS.md): identity rules, transactions, folding, parsing, rendering; and properties against an independent model (`test_canvas_model`: 1,200 random transaction sequences) | `lib/tests/test_*.cpp` (C++), `test/*.test.js` (viewer, under ctest as `test_viewer`) | every change; CI smoke | `smoke` |
+| **L1 golden** | real producer output, frozen: Sub0Squad turn files and gate verdicts, validated by the viewer and **replayed through the library** (`test_golden_replay`: same blocks, identities one to one, same history, same issues) | `fixtures/golden/` | every change; CI smoke | `smoke` |
+| **L2 use case** | a scenario a consumer depends on, with **hand-checked truth**: a git history's block identities, PR review comments landing on blocks, a recorded squad workflow replayed through the store, a scripted authoring session (actors, commands, expected views; AUTHORING.md section 6); a language's conformance corpus (BLOCK_DISCOVERY.md, D1) | `fixtures/scenarios/<name>/` (inputs and `truth.json`), `fixtures/languages/<language>/`, a test per scenario | every change to what it covers; CI full when long | `smoke` or `full` |
 | **L3 scale** | the budgets of BACKBONE.md section 12 on a synthetic corpus (10^5 to 10^9 lines) and, locally, on large public repositories | `bench/` (S0) | locally before a release, and for any change to index internals; **never in CI** (shared runners are too noisy) | `timing` (skips on battery) |
 | **L4 consumer** | the change inside Sub0Squad: its tests, and a tier 0 A/B when what a model sees changes | a pull request in Sub0Squad | each integration iteration | (Sub0Squad's own) |
+
+## Requirements, not implementations
+
+Tests state what consumers rely on, so that the architecture can move under them (owner, 2026-11-18). The catalogue is
+[REQUIREMENTS.md](REQUIREMENTS.md); every test block names the ids it checks.
+
+* **Assert what a consumer can observe**: an identity kept or lost, an anchor on the right function, a refusal that names the edit, a rendering a
+  model reads. Do not assert how it is stored: no container sizes of internals, no event counts that are logging policy rather than behaviour, no
+  spelling of an identity.
+* **Go through the driver where the architecture is expected to move.** `lib/tests/doc_driver.hpp` is the one place that knows today's types. It
+  finds blocks by name, compares identities without parsing them, reports history with the format's carry names, and builds items by field name (so a
+  new field never breaks a test). When B1's store or S1's index arrives, the driver is rewritten and the requirement tests stay.
+* **Compare against independent truth, never against the code's own output.** A model written from the requirement (`test_canvas_model`), a real
+  producer's recorded output (`test_golden_replay`, which maps identities one to one instead of matching their spelling), or hand-checked truth (L2).
+* **Pinned text is deliberate.** Renderings a model reads (R-REN) are pinned exactly, because their wording is the requirement and is measured in
+  Sub0Squad. Everything else is checked by meaning.
+* **A test that has never failed proves little.** When a check is new, break its input once and see it fail (the golden replay was checked so:
+  a moved block, a changed carry and a misplaced anchor in a copy of the fixtures each fail it).
+* **The library's contract is tested here.** A behaviour Sub0Squad relies on is checked in this repository, not only in Sub0Squad's tests
+  (REQUIREMENTS.md, "Sub0Squad's use, mapped", lists what is still checked only there).
 
 ## Rules
 
@@ -38,7 +58,9 @@ python ../CraigHutchinson.github/tools/ci/local_ci.py --level quick   # the decl
 ## The golden fixtures (L1)
 
 `fixtures/golden/` holds producer output captured from real Sub0Squad runs (README there says which run and build). Two tests read it:
-`test/golden.test.js` (the viewer loads and validates every turn file) and the C++ side when B0 adds byte-for-byte writer checks. When the producer's
+`test/golden.test.js` (the viewer loads and validates every turn file) and `test_golden_replay` (the library, fed each turn's texts and the gate's
+lines, agrees with what the producer recorded). B0 adds byte-for-byte writer checks; the next capture should include an attempt with compiler
+diagnostics at several places, which no golden attempt has yet (R-U1-4). When the producer's
 output changes on purpose, the golden files are re-captured from a real run, and the diff is reviewed as part of the change.
 
 ## The synthetic corpus (L3, S0)

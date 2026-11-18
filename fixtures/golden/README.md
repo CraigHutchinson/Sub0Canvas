@@ -11,5 +11,6 @@ hand-made demo. Captured files: `layers/turn-N.json` (`layered-doc-1`), `canvas.
 | `on-bugs-6-run-2` | `t0-on/bugs-6/run-2/attempt-1` | 0.0.0-178-ga03fb86 | the layer always on (mode 1) with 6 failures: a run that changed 14 lines where 6 were needed |
 | `adaptive6-fix-many-run-1` | `t0-adaptive6/fix-many/run-1/attempt-1` | 0.0.0-180-g15baab1 | 5 short failures passed through as the gate's text (adaptive mode), fixed in one turn; the layers are still written |
 
-Checked by `test/golden.test.js` (every turn validates, items carry stable ids, anchors resolve to live blocks). Re-capture from a real run when the
+Checked by `test/golden.test.js` (every turn validates, items carry stable ids, anchors resolve to live blocks) and by `test_golden_replay` (the
+library, fed each turn's texts and the gate's lines, gives the same blocks, identities one to one, the same history and the same issues). Re-capture from a real run when the
 producer's output changes on purpose, and review the diff as part of that change. The calculator sources inside are Sub0Squad's tier 0 cases.

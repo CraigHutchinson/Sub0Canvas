@@ -1,4 +1,5 @@
 // Edit replies and the canvas they are applied to: each edit exactly once, every failure names the edit, other files untouched.
+// Each block names the requirements of docs/REQUIREMENTS.md it checks (R-EDIT, R-VIEW, R-CAN).
 #include <sstream>
 #include <filesystem>
 #include <fstream>
@@ -12,7 +13,7 @@ using namespace sub0canvas;
 
 int main()
 {
-    { // Edit replies: applied to the earlier files, exactly once each; every failure names the edit; the other files are untouched.
+    { // R-EDIT-2: edit replies: applied to the earlier files, exactly once each; every failure names the edit; the other files are untouched.
         const std::map<std::string, std::string> files{{"src/a.js", "function add(a, b) {\n  return a - b;\n}\nexport { add };\n"}, {"src/b.js", "export const x = 1;\n"}};
         const std::set<std::string> allowed{"src/a.js", "src/b.js"};
         std::string err;
@@ -20,7 +21,7 @@ int main()
         CHECK(ok && ok->at("src/a.js") == "function add(a, b) {\n  return a + b;\n}\nexport { add };\n" && ok->at("src/b.js") == "export const x = 1;\n");
         auto two = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfunction add(a, b)\n=======\nfunction add(a, b = 0)\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n=== EDIT: src/b.js ===\n<<<<<<< SEARCH\nconst x = 1;\n=======\nconst x = 2;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err);
         CHECK(two && two->at("src/a.js").find("b = 0") != std::string::npos && two->at("src/a.js").find("a + b") != std::string::npos && two->at("src/b.js") == "export const x = 2;\n");
-        {   // Folded views: structure stays, function bodies fold, focus regions open, READ requests are answered.
+        {   // R-VIEW-1, R-VIEW-2, R-VIEW-6: folded views: structure stays, function bodies fold, focus regions open, READ requests are answered.
             std::string cpp = "#include <string>\nnamespace n {\nclass A {\npublic:\n  int get() const { return v; }\n  int v = 0;\n};\ndouble f(double x)\n{\n  double y = x;\n  if (y > 1) {\n    y = 2;\n  }\n  y += 1;\n  return y;\n}\nint g(int a) { return a; }\n}\n";
             const auto regions = foldRegions(cpp, false);
             CHECK(regions.size() == 1 && regions[0].name == "f" && regions[0].first == 8 && regions[0].bodyFrom == 10 && regions[0].bodyTo == 16);   // g and get are one line: nothing to fold; namespace and class stay open
@@ -52,7 +53,7 @@ int main()
             const auto pr = foldRegions(py, true);
             CHECK(pr.size() == 1 && pr[0].name == "a" && pr[0].first == 3 && pr[0].bodyTo == 5);
         }
-        {   // The canvas: transactions against a revision, all or nothing, rebased through earlier edits, conflicts named, any revision restorable.
+        {   // R-CAN-1 to R-CAN-6: the canvas: transactions against a revision, all or nothing, rebased through earlier edits, conflicts named, any revision restorable.
             Canvas cv;
             cv.addFile("a.cpp", "l1\nl2\nl3\nl4\nl5\nl6\n");
             CHECK(cv.revision("a.cpp") == 1);
@@ -90,7 +91,7 @@ int main()
             auto added = cv.apply({"f.cpp", 2, "w5", {{CanvasOp::Kind::replaceSymbol, 0, 0, "nope", "int nope() { return 0; }"}}});
             CHECK(added.ok && cv.text("f.cpp") == "int a() { return 1; }\ndouble f(double x) { return x; }\nint z;\n\nint nope() { return 0; }\n");
         }
-        {   // Line edits: the worker names lines of the numbered draft it was shown; several edits apply together against that numbering.
+        {   // R-EDIT-3, R-EDIT-4: line edits: the worker names lines of the numbered draft it was shown; several edits apply together against that numbering.
             std::map<std::string, std::string> f2 = {{"src/a.js", "one\ntwo\nthree\nfour\nfive\n"}};
             std::set<std::string> al = {"src/a.js"};
             auto one = applyEdits("=== EDIT: src/a.js LINES 2 ===\nTWO\n=== END EDIT ===", f2, al, err);
@@ -135,16 +136,17 @@ int main()
             CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (x) y();\n    w();\n=======\nz();\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "a\n    else if (x) y();\nb\n"}}, al, err) &&
                   err.find("line 2 of the file is `else if (x) y();`") != std::string::npos);
         }
-        {   // The canvas reads a marked LINES edit the same way (tier 0 write-file: the markers were written into main.cpp and poisoned every later turn).
+        {   // R-EDIT-4: the canvas reads a marked LINES edit the same way (tier 0 write-file: the markers were written into main.cpp and poisoned every later turn).
             const CanvasReply r = parseCanvasReply("=== EDIT: src/main.cpp LINES 67-68 ===\n    a();\n    b();\n=======\n    c();\n>>>>>>> REPLACE\n=== END EDIT ===\n");
             CHECK(r.error.empty() && r.transactions.size() == 1 && r.transactions[0].ops.size() == 1 && r.transactions[0].ops[0].text == "    c();\n");
         }
-        {   // A header written twice: the empty first copy is skipped, the block under the second applies (tier 0 write-function).
+        {   // R-EDIT-6: a header written twice: the empty first copy is skipped, the block under the second applies (tier 0 write-function).
             const CanvasReply r = parseCanvasReply("=== EDIT: src/calc.cpp SYMBOL call ===\n=== EDIT: src/calc.cpp SYMBOL call ===\nint call()\n{\n    return 1;\n}\n=== END EDIT ===\n");
             CHECK(r.error.empty() && r.transactions.size() == 1 && r.transactions[0].ops.size() == 1 && r.transactions[0].ops[0].symbol == "call");
             const CanvasReply empty = parseCanvasReply("=== EDIT: src/calc.cpp SYMBOL call ===\n=== END EDIT ===\n");
             CHECK(!empty.error.empty());   // an empty block on its own is still refused
         }
+        // R-EDIT-4: marked bodies; R-EDIT-2, R-EDIT-5, R-EDIT-6: refusals that name what is wrong.
         CHECK(replacementOfMarkedBlock("a\nb\n") == "a\nb\n");
         CHECK(replacementOfMarkedBlock("<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE\n") == "new\n");
         CHECK(replacementOfMarkedBlock("old\n=======\n>>>>>>> REPLACE\n").empty());   // an empty replacement deletes

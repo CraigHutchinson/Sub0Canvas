@@ -42,12 +42,17 @@ target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
-  foreach(name test_edits test_doc_layers)
+  # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
+  foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
     target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson)
-    add_test(NAME ${name} COMMAND ${name})
+    set(args "")
+    if(name STREQUAL "test_golden_replay")
+      set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)   # real producer output
+    endif()
+    add_test(NAME ${name} COMMAND ${name} ${args})
   endforeach()
   # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
   find_program(SUB0CANVAS_NODE node)

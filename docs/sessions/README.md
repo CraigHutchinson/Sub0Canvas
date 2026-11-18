@@ -42,6 +42,8 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 | [s0-scale-harness.md](s0-scale-harness.md) | S0: a synthetic corpus at any size and benchmarks of today's index against the scale budgets | 2026-11-18 |
 | [b0-format-catch-up.md](b0-format-catch-up.md) | B0: the producer writes the viewer's optional fields; golden fixtures checked on both sides | 2026-11-18 |
 | [g1-git-history.md](g1-git-history.md) | G1: a local git document adapter and per-path block history, against hand-checked truth | 2026-11-18 |
+| [d0-block-discovery-seam.md](d0-block-discovery-seam.md) | D0: one outline result and a provider per language, today's heuristics behind it, the measured faults fixed | 2026-11-18 |
+| [v0-worktree-snapshot.md](v0-worktree-snapshot.md) | V0: a `sub0canvas snapshot` of this repository's docs, Markdown blocks, Markdown rendered in the viewer | 2026-11-18 |
 
 ## Done
 

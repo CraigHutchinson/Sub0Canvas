@@ -286,4 +286,5 @@ tier 0"). What they mean for this library:
 * following calls in localisation (a defect in a callee of the suspect);
 * the batch-fix transaction for 1-N items, and workflows that merge items;
 * nested blocks: `foldRegions` returns outermost function-like regions only;
-* languages beyond brace-delimited and Python (the folding heuristics set the limit; tree-sitter is the upgrade, BACKBONE.md section 12).
+* languages beyond brace-delimited and Python, and their measured faults: [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) (a provider per language, prior art,
+  who decides structure and folding).

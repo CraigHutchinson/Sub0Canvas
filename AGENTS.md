@@ -16,9 +16,12 @@ hold up on codebases of billions of lines.
 | [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
 | [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | block identity, layers, the issues layer, formats, prior art (built: slices 1 and 2) |
 | [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
-| [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, and the ordered slices |
+| [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, the ordered slices; section 14: the later use cases, amendments, the register of open decisions, policies as data |
+| [docs/AUTHORING.md](docs/AUTHORING.md) | the viewer becoming an authoring tool (the first use case to invest in): concise views, the server, comments and inboxes, scenarios, slices V0-V5 |
+| [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
+| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | what consumers rely on, independent of implementation, each with the test that checks it; Sub0Squad's use mapped |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for and what each use case demands |
-| [docs/TESTING.md](docs/TESTING.md) | the proving ladder: unit, golden, use case, scale, consumer |
+| [docs/TESTING.md](docs/TESTING.md) | the proving ladder (unit, golden, use case, scale, consumer) and testing requirements rather than implementations |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | how a change reaches Sub0Squad: a tag here, a pull request there |
 | [README.md](README.md) | the viewer, the input format, building the library |
 
@@ -26,7 +29,8 @@ hold up on codebases of billions of lines.
 
 * `lib/include/sub0canvas/*.hpp`, `lib/src/*.cpp`: the C++23 library, target `sub0canvas::sub0canvas`, namespace `sub0canvas`. Pure: no I/O, no
   threads, no clock reads, no environment.
-* `lib/tests/`: C++ tests (`check.hpp`, one executable per area).
+* `lib/tests/`: C++ tests (`check.hpp`, one executable per area; `doc_driver.hpp`, the driver requirement tests go through so they survive
+  architectural change, TESTING.md).
 * `index.html`, `src/*.js`, `test/*.test.js`, `tools/*.mjs`: the static viewer (no build step, no dependencies, Node 20+ for its tests).
 * `fixtures/demo/`: the viewer's hand-made demo; `fixtures/golden/`: real producer output, frozen.
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.
@@ -34,13 +38,16 @@ hold up on codebases of billions of lines.
 ## Build and test
 
 ```bash
-cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # set CPM_SOURCE_CACHE to share a dependency cache
+cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # CPM_SOURCE_CACHE: the global cache, below
 cmake --build --preset default
 ctest --preset quick      # what the pre-push gate and CI smoke run; ctest --preset full for everything
 npm test                  # the viewer alone
 ```
 
-On Windows the toolchain is MinGW-w64 UCRT (WinLibs GCC) with Ninja. Activate the pre-push gate once per clone: `git config core.hooksPath .githooks`,
+On Windows the toolchain is MinGW-w64 UCRT (WinLibs GCC) with Ninja. Dependencies come through CPM into one global cache outside every
+repository (`CPM_SOURCE_CACHE=%USERPROFILE%\.cache\cpm`, a user-level variable; never a cache under `out/`, which a clean build or a new worktree
+loses), and consumers on this machine build against the local checkout: `CPM_Sub0Canvas_SOURCE` and the other `CPM_<Name>_SOURCE` overrides are
+user-level variables, so local sources are the default unless a pin is wanted on purpose. Activate the pre-push gate once per clone: `git config core.hooksPath .githooks`,
 and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --repo .`.
 
 ## Code style
@@ -74,7 +81,7 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
   up, close with an `## Outcome`, move to *Done*), listed there and pointed at from the backlog. Not left in a chat or a session card, which other
   devices cannot open.
 * **The name**: the project is **Sub0Canvas** in prose, docs, commit messages and URLs (`https://github.com/CraigHutchinson/Sub0Canvas.git`). Code and
-  build identifiers stay lower-case: namespace `sub0canvas`, target `sub0canvas::sub0canvas`, headers `sub0canvas/*.hpp`, the CMake project and
-  CPM package name `sub0canvas` (`CPM_sub0canvas_SOURCE`), `SUB0CANVAS_*` options, the npm package name. Do not rename those without the owner.
+  build identifiers stay lower-case: namespace `sub0canvas`, target `sub0canvas::sub0canvas`, headers `sub0canvas/*.hpp`, the CMake project name
+  `sub0canvas`, `SUB0CANVAS_*` options, the npm package name. Do not rename those without the owner.
 * **Changes the squad consumes** go here first, are tagged, then reach Sub0Squad through a pull request there ([docs/INTEGRATION.md](docs/INTEGRATION.md)).
 * **Docs**: each piece of evidence has one home; a brief links to it rather than copying it. Retire a document once its content is integrated.

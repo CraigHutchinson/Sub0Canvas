@@ -1,6 +1,8 @@
 # The Sub0Canvas backbone: layers as the place where agents, people and sources meet
 
-Status: **design, for the owner to read.** Nothing here is implemented. Written 2026-11-17 from the owner's direction ([DIRECTION.md](DIRECTION.md), originally Sub0Squad's `docs/LAYERED_DOCUMENT.md`; the sections
+Status: **design, for the owner to read.** Nothing here is implemented. Section 14 (2026-11-18) checks it against the later use cases, lists the
+amendments that found, and keeps the register of open decisions; the authoring tool ([AUTHORING.md](AUTHORING.md)) is now the first use case to invest
+in, and block discovery has its own design ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)). Written 2026-11-17 from the owner's direction ([DIRECTION.md](DIRECTION.md), originally Sub0Squad's `docs/LAYERED_DOCUMENT.md`; the sections
 "Direction: Sub0Canvas as the squad's backbone" and "Sources"), the slice 1 and slice 2 code in `lib/`, the viewer in `src/`, and the viewer's schema
 requests in [the README](../README.md#optional-fields-the-viewer-understands).
 
@@ -451,6 +453,12 @@ with B0**: its numbers decide the data structures B1 (the store) and G1 (the rev
 before more code depends on them. Every slice climbs the proving ladder of [TESTING.md](TESTING.md) (unit, golden, use case, scale) before it is
 integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRATION.md)).
 
+**Two further tracks (2026-11-18).** **D0-D3**, block discovery ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) section 5): D0 (the provider seam, today's
+heuristics behind it, byte-identical) lands before S1 and G1 replay more files through `foldRegions`. **V0-V5**, the authoring tool
+([AUTHORING.md](AUTHORING.md) section 7), the first use case to invest in: V0-V2 pull forward the parts of B1, B2, B4, D2 and E1 they need (a store
+with a file log, inboxes, quote re-anchoring, a Markdown provider, a process that owns the store), proved on the owner's own design work before
+Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0, V1, V2 (which build B1 and B2's cores); G1 after D0.
+
 ## 11. Open questions for the owner
 
 1. **Where the store lives in Sub0Squad.** Per attempt (in the canvas loop, simplest, B2) or per workflow in the daemon (needed for the orchestration
@@ -463,6 +471,15 @@ integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRA
    Confirm that this is acceptable for Sub0Canvas, or keep G2 to G5 on a local mirror only (`gh` export to files, then read offline).
 5. **The C++ standard in the core.** `std::expected` (C++23) is used in the sketches, as Sub0Squad already builds C++23. Confirm Sub0Canvas keeps C++23
    rather than lowering it for wider reuse.
+6. **Revision ids as strings in the format** (A1). Proposed at B0, with readers accepting numbers too.
+7. **The block id scheme** (A2, with question 3): opaque, allocated per replay root and per shard without a global counter. Confirm.
+8. **tree-sitter as an optional dependency** (BLOCK_DISCOVERY.md 4.5): a download, generated C per grammar and build time, for real syntax trees in the
+   languages where measurement shows the heuristic fails. Approve in principle, then language by language.
+9. **Applying a parsed reply in the library** (A12): moves Sub0Squad's `applyCanvasReply` here, so the recorded-reply corpus is tested here; a
+   Sub0Squad PR follows.
+10. **Where the authoring tool's review log lives** (AUTHORING.md section 4; pros and cons in 14.5): committed under `.sub0canvas/`, local only, or
+    local with export.
+11. **The authoring server's stack** (AUTHORING.md section 3; 14.5): a C++ `serve` process over stdio with a small Node bridge is proposed.
 
 ## 12. Scale: a codebase of billions of lines
 
@@ -474,7 +491,7 @@ repository.** What is touched is the paths a view shows, an anchor names, a subs
 
 | part | today | at scale |
 |---|---|---|
-| block discovery | `foldRegions` heuristic per file | unchanged per file (O(n)); a tree-sitter backend behind the same `FoldRegion` result for languages the heuristic gets wrong; chosen per path by extension |
+| block discovery | `foldRegions` heuristic per file | a provider per language behind one outline result, chosen by detection, measured by a conformance corpus ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)); O(n) per file whichever provider |
 | block storage | `Block` holds `std::set<std::string>` of tokens and of literals; `BlockIndex::texts_` holds every indexed file's full text | a compact block: id, path id (interned), span, signature hash, name (interned), and a fixed-size **MinHash sketch** of its tokens (64 x 32 bits) instead of the sets; texts fetched from the `DocumentSource` when needed, never held |
 | reuse | a path is re-scanned when its text changes | blocks are computed **once per blob** (the git object id, or a hash of the text) and cached by it, so a file identical across 10^4 revisions and branches is scanned once |
 | reconciliation within a file | signature, then unique name, then Jaccard over token sets | the same order; similarity estimated from sketches (MinHash's estimate of Jaccard); exact comparison only for the few candidates the sketch keeps |
@@ -501,4 +518,169 @@ rebuilt from the document source, never the truth.
 See LAYERED_DOCUMENT.md's "Prior art". The additions specific to the backbone: **event sourcing** (the log as truth, views as projections, replay for
 reproducibility); **Linear and GitHub Projects** (a small state lifecycle with free-form labels, status as a field); **LSP** (one process owns the
 model, editors are views); **Backstage / Grafana data sources** (capability-declared adapters, credentials at the edge); **W3C Web Annotation** (the
-text-quote selector of source anchors); **GitHub and Gerrit comment porting** (outdated, never silently moved).
+text-quote selector of source anchors); **GitHub and Gerrit comment porting** (outdated, never silently moved). For block discovery: **Notepad++
+(Scintilla, Lexilla, user-defined languages), KSyntaxHighlighting, tree-sitter, LSP, Universal Ctags, GitHub Linguist** (BLOCK_DISCOVERY.md section
+3). For policies: **Sub0Squad's processes as data** (14.4).
+
+## 14. The later use cases against the groundwork (2026-11-18)
+
+Written after the owner asked that the groundwork be checked against the later use cases, so that it is solid and extensible for them and for others
+not yet named ([DIRECTION.md](DIRECTION.md) sections 3 and 4). It walks each use case over the mechanisms of section 3 (14.1), lists the amendments
+that walk found, which are cheap now and expensive once B1 and G1 are built (14.2), and keeps a register of the decisions that are deliberately left
+open for real use to resolve (14.3). Requirements are in [REQUIREMENTS.md](REQUIREMENTS.md), block discovery in [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md),
+the authoring tool (now the first use case to invest in) in [AUTHORING.md](AUTHORING.md).
+
+### 14.1 The walk
+
+A use case passes when it needs no mechanism beyond section 3. Where it needed a change, the change is an amendment (14.2), not a new mechanism.
+
+| use case | mechanisms it uses | what the walk found | amendment |
+|---|---|---|---|
+| U7 the authoring tool (first) | items, state, links, inbox, views, the canvas, a store owned by one process | threads of replies; anchoring to selected text and ranges; views bounded by attention; a process the page and agents both talk to; Markdown blocks | A3, A5, A8, A10, A14 |
+| U3 G2 pull requests and review comments | source anchors, the resolver, the revision index, keys by source | multi-line comments need ranges; comment replies are threads; PR heads are commit ids, not numbers | A1, A3, A5 |
+| U3 G3 issues and project items | items, state, tags | a project field with values beyond the lifecycle (priority, iteration) | A4 (data), tags by convention |
+| U3 G4 events and subscriptions | the log, inboxes | webhook payloads evolve; unknown kinds must survive | A7 |
+| U3 G5 write back | `WriteSink`, confirmation | a private note must never be posted by accident | A11 |
+| U3 forks, several repositories | stores, keys | a reference from one repository's item to another's | A9 |
+| U4 S3 large real repositories | the index, per-path replay | a language the heuristic gets wrong is wrong at every commit | A8 |
+| U4 S4 the sharded store | the store, the log, identities | a global id counter cannot be shared across shards and per-path replays | A2 |
+| U5 E1 an editor | views, the index, a document source per buffer | nested blocks and kinds for the outline; ranges for decorations; one process serving the editor | A3, A8, A10 |
+| U6 C1 collaborative review | items, state, tags, claims, inboxes | threads; authorship and time of an item; presence | A5, A6 |
+| U8 quality signals (CI checks, SARIF, coverage, profiles) | items, anchors, layers | numeric per-block data with no mechanism per metric; SARIF regions are ranges | A3, A4 |
+| U9 a prose-first reader of a codebase | prose layer, name anchors, views | documents are Markdown: headings must be blocks | A8 |
+| U10 a multi-repository or dependency view | stores, links | items that point across documents | A9 |
+| U11 an agent's long-lived memory of a codebase | `note` events, the store, the resolver | notes must outlive sessions and follow code across history | none new: B1's log plus B4's resolver |
+
+### 14.2 Amendments
+
+Each is folded into the section it names when its slice is built; until then this list is the decision.
+
+| # | amendment | changes | slice |
+|---|---|---|---|
+| A1 | **Revision ids are opaque strings** document-wide. A canvas's per-file numbers are one source's scheme; a commit id is another. Readers accept a number or a string. | `Anchor.revision`, `BlockEvent.turn` → a revision id; `revisions` in the format | B0 (format), G1 |
+| A2 | **Identities are allocated without a global counter**: opaque, unique per replay root (and per shard), never parsed. Tests already compare rather than spell them (R-ID-11). | `BlockIndex` id allocation; ties to open question 3 | S1, S4 |
+| A3 | **Anchors may be ranges**: `endLine`, `endColumn` beside `line`, `column`. | `Anchor`, the format | B0 |
+| A4 | **Items carry open data**: `data` (a JSON object, kind-specific: coverage, durations, a project field) and `detailFormat` (`text` or `markdown`). A metric is a layer of items with data, never a mechanism. | `LayerItem`, the format | B1 |
+| A5 | **Link kinds are open strings** with registered conventions (`duplicates`, `causes`, `fixes`, `implements`, `discusses`, `blocks`, `partOf`, and `repliesTo` for threads, `supersedes`, `tests`, `documents`). The core treats none specially except where a rule says so. | `Link::Kind` → string | B1 |
+| A6 | **Authorship and time of an item are derived from the log** (its first and latest `item.put`), exposed by the store, never written by producers as fields. One truth. | the store's API | B1 |
+| A7 | **The log evolves additively**: unknown event kinds and fields are kept and skipped by replay; the log's header records producer versions. | `Event`, `FileLog` | B1 |
+| A8 | **Block discovery behind a provider seam**, with nested blocks, kinds and non-code formats; structure derived, identity granularity per document, folding per caller ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 4.7). | `outline.hpp`, `BlockIndex`, the canvas's SYMBOL | D0 |
+| A9 | **One store per document; references across documents are links with document-qualified keys** (`<document>:<key>`), never anchors into another store. A workspace view composes stores. | keys, views | G2, later |
+| A10 | **The store's surface is a message protocol**: every mutation is an event and every read a query or view spec, both serialisable, so one process owns a store and pages, editors, agents and scenarios talk to it alike (AUTHORING.md section 3). | the store's API, a `serve` executable | V1 |
+| A11 | **Exports take a query**: snapshots, SARIF and write-back include only what the query selects, so a private item (by tag convention, `private/<actor>`) never leaves by default. Visibility is policy; the query is the mechanism. | writers, `WriteSink` callers | B1, G5 |
+| A12 | **Applying a parsed reply moves into the library**: the all-or-nothing application of a `CanvasReply` across files (Sub0Squad's `applyCanvasReply`) is library behaviour that every consumer (the squad, the authoring tool, an editor) needs. With it, the 32 recorded-reply cases become this library's own test (R-EDIT-7). | `canvas.hpp`; a Sub0Squad PR to call it | next minor |
+| A13 | **Policies are named and recorded** (14.3): every output records the policy versions that produced it, so two runs can be compared and a change of policy is visible in the data. | the format (`policies`), views | B0 onward |
+| A14 | **Views take budgets**: a scope, item and character limits, and cursors; the summary-first rendering of R-REN generalised to every view (R-AUTH-1). | `ViewSpec` (3.6) | V2 |
+
+### 14.3 Open decisions, kept open by design
+
+The owner's rule: what is not clear-cut is kept as an **A/B decision** that real use resolves, and the design is shaped so that keeping it open is
+cheap. The pattern for each:
+
+1. **The mechanism is settled; the policy is a named, versioned parameter** with a stated default (`fold@1`, `identity-granularity@1`).
+2. **Every output records the policies that made it** (A13), so data is never ambiguous about which arm produced it.
+3. **It is resolved by measurement on a real use case**, with an off or baseline arm and enough runs to see the noise (Sub0Squad's practice), or, for
+   deterministic policies, by replaying the same recorded history under both arms offline (the golden replay and scenarios make that cheap).
+4. **The resolution is written here** with its evidence, and the losing arm is kept only if a use case still wants it.
+
+| decision | arms | default now | resolved by | where it is kept open |
+|---|---|---|---|---|
+| fold policy: which bodies a view folds | worth folding (bodies of three lines or more) / by depth / by budget only / focus first | worth folding, focus open | Sub0Squad A/B on what the worker sees; the owner's use of the authoring tool (V2) | the view's fold policy (`ViewSpec`) |
+| identity granularity per language | functions only / functions and methods / classes too; YAML depth; Markdown heading depth | functions and methods; Markdown headings to `###` | golden replay and G1 history under each arm: fewer orphans and fewer false merges win | the document's identity policy |
+| block discovery per language | heuristic / declarative / tree-sitter / LSP | heuristic | the conformance corpus (D1) and S3's repositories | the provider registry (BLOCK_DISCOVERY.md 4.2) |
+| reconciliation thresholds | Jaccard 0.5 and containment 0.6 / other values / sketch-estimated | today's | S0's corpus truth and G1's hand-checked history | an identity-rules policy |
+| issue localisation | name, then literals / plus the call graph / none | name, then literals | Sub0Squad tier 0: a wrong pointer costs more than none | the issues producer's policy |
+| verdict rendering | off / adaptive (threshold 6) / always; inline count | adaptive 6, inline 3 | measured in Sub0Squad (slice 2); continuing | Sub0Squad's switches, recorded in `agent.json` |
+| events in a snapshot | per turn / cumulative | per turn (open question 2) | the viewer copes with both; settle at B0 | `eventsFrom` in the format |
+| identity scheme | local to a replay root / content-addressed | local to a root (open question 3) | G1 and S4: does identity survive what users do | A2 |
+| where the store lives in Sub0Squad | per attempt / per workflow | per attempt (open question 1) | B2 in the squad | the squad's option |
+| where the review log lives | committed under `.sub0canvas/` / local only | to ask (open question 10) | the owner's use (V1) | the server's configuration |
+| the authoring server's stack | C++ `serve` over stdio with a Node bridge / a C++ HTTP server / Node only | C++ over stdio with a bridge (AUTHORING.md section 3) | V1: build cost and one truth for the store's rules | the protocol (A10), which every arm speaks |
+
+This register is the place to add a decision when a design choice turns out not to be clear-cut. A decision leaves the register with its evidence.
+
+### 14.4 Policies as data, supplied by the client
+
+Sub0Squad already made this choice for its workflows: **processes as data** (`registry/processes/standard@1.json`, versioned `name@N`, a built-in
+constant equal to the default file, a few parameterised executors in code; "extension is files and jobs, no plugin ABI", Sub0Squad
+`docs/PROCESS_DESIGN.md`). The owner's direction is that Sub0Canvas's policies follow it: **iterable** (a new version is a new file, compared against
+the old by A/B) and **client-provided** where an integration needs its own (Sub0Squad supplies its fold policy for its worker's prompt; the authoring
+tool supplies another for a person's screen).
+
+* **A policy is a versioned JSON object** with a name (`fold@1`, `identity-granularity@1`, `outline-cpp@1`, `reconcile@1`, `localise@1`,
+  `render-verdict@1`), validated on load, with a refusal that names the field. The library ships each default **twice, identical**: as a constant in
+  code (so the pure core needs no file) and as `registry/policies/<name>@<n>.json` (so it can be read, diffed and copied). A test proves the two are
+  equal.
+* **Code holds the executors, data holds the choices.** The fold executor takes a fold policy; the reconciler takes thresholds and the rule order; a
+  declarative outline provider takes a language definition (BLOCK_DISCOVERY.md 4.3). No policy contains code, and there is no plugin ABI: a
+  capability that needs code (a tree-sitter grammar) is compiled in and selected by data.
+* **Who may supply which policy** follows from 4.7 of BLOCK_DISCOVERY.md: presentation policies (fold, render, budgets) are the caller's on every
+  request; document policies (identity granularity, outline providers, reconciliation) are fixed per document, so a client supplies them when it
+  creates the document, and changing them later is a reported migration. A client never changes a document policy per request.
+* **Recorded in every output** (A13): a snapshot's `policies` names each policy and version that produced it, so two arms are told apart by data.
+* **Kept open until relevant** (the owner's words): today only the defaults exist, as constants. The registry file, the loader and client supply are
+  built when the first use case needs a second arm: the fold policy at V2 or in Sub0Squad's next A/B, whichever comes first. Until then the seam is the
+  parameter struct, which costs nothing.
+
+### 14.5 Pros and cons of the open decisions
+
+Grounded comparisons to guide each decision; the evidence that will settle each is in 14.3's "resolved by". Each recommendation is a default, not a
+closing of the question.
+
+**Who decides folding** (BLOCK_DISCOVERY.md 4.7)
+
+| option | for | against |
+|---|---|---|
+| the caller decides everything, structure included | maximum flexibility | identities would depend on who asked; layers made by one caller would not land for another; R-BLK-11 cannot hold |
+| the library decides everything, folding included | one behaviour, simplest | a model's prompt and a person's screen need different folds; the squad's A/Bs on folding become impossible |
+| **structure derived, granularity per document, folding per caller** (recommended) | identities are one per document; every reader folds as it needs; each part testable alone | three concepts to explain; granularity changes need a migration path (BLOCK_DISCOVERY.md 4.6) |
+
+**Policies: built in, data, or client-provided** (14.4)
+
+| option | for | against |
+|---|---|---|
+| constants in code only | simplest; nothing to load or validate | every experiment is a rebuild; a client cannot bring its own; arms are not visible in the data |
+| **data files with built-in defaults, client supply when needed** (recommended) | Sub0Squad's proven pattern; A/B by swapping a file; recorded in outputs; no code in data | a loader and validation to maintain; versioning discipline (a changed file is a new version) |
+| plugins (code supplied by the client) | anything is possible | an ABI to keep stable; untestable combinations; the core is no longer pure; Sub0Squad rejected it for the same reasons |
+
+**Block discovery backend** (BLOCK_DISCOVERY.md)
+
+| option | for | against |
+|---|---|---|
+| keep the heuristic, fix its faults | no dependency; fast; already identity-tested on real runs | every language is hand work; names and nesting stay approximate; misses data formats |
+| declarative definitions (UDL-like) | the long tail without code; users add languages | regexes cannot name everything (generics, receivers); a rule engine to maintain |
+| **tree-sitter where measured to win, heuristic and declarative behind it** (recommended) | real trees, names, nesting, error recovery, incremental; upstream queries; the editors' consensus | a dependency (owner approval); generated C per grammar, build size; spans move between grammar versions (handled by 4.6) |
+| LSP outlines | the most accurate symbols where a server runs | a process and I/O per language; never in the core; only for consumers that already run servers (E1) |
+
+**The authoring server's stack** (AUTHORING.md section 3)
+
+| option | for | against |
+|---|---|---|
+| Node only, a JavaScript store | quickest to start; the viewer is already JavaScript | two implementations of the store's rules (identity, reconciliation, claims): the viewer and the squad would drift apart |
+| a C++ HTTP server | one language, one truth | an HTTP and socket layer to write and test on Windows and Linux, with no dependency allowed without approval |
+| **C++ `serve` over stdio with a Node bridge** (recommended) | one truth for the rules (the library); stdio is trivial and portable; the same process serves an editor (LSP-like, E1); the bridge is about as small as today's `serve.mjs` | two processes to start; a protocol to version (A10, which every option needs anyway) |
+
+**Where the review log lives** (AUTHORING.md section 4)
+
+| option | for | against |
+|---|---|---|
+| committed in the repository (`.sub0canvas/`) | shared across the owner's devices; history in git; review is part of the project's record | public in a public repository; commits for every comment unless batched; merge conflicts on the log (append-only, so mostly mechanical) |
+| local only (ignored by git) | private; no commit noise | lost with the clone; not shared across devices; an agent on another machine cannot see the inbox |
+| local, exported on demand (a query, A11) | private by default; shareable deliberately | one more step; two places to look |
+
+The owner decides (open question 10); the server takes the location from its configuration, so all three stay possible.
+
+**Events in a snapshot** (open question 2)
+
+| option | for | against |
+|---|---|---|
+| **per turn, with `eventsFrom`** (recommended) | snapshots stay small (R-AUTH-1); the log is the cumulative record | Sub0Squad writes cumulative today, so B0 changes the producer |
+| cumulative | a snapshot is self-contained | grows with every turn; duplicates the log; the viewer strips it anyway |
+
+**Identity scheme** (open question 3, A2)
+
+| option | for | against |
+|---|---|---|
+| **local to a replay root, opaque** (recommended) | identity survives body edits and renames (the point of block ids); no coordination within a root | ids differ between roots, so interchange names the root; shards need allocation without a counter (A2) |
+| content-addressed (Unison-like) | the same everywhere, no coordination | every body edit is a new identity, which defeats layers that should follow the code; renames are new ids unless names are excluded |
+| hierarchical position ids (CRDT-like) | stable under concurrent insertion | identity is about position, not about the function; a move breaks it |

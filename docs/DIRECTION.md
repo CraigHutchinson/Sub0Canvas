@@ -1,7 +1,8 @@
-# The owner's direction (2026-11-17)
+# The owner's direction (2026-11-17, 2026-11-18)
 
-Status: **source material, kept verbatim.** These are the two sections of Sub0Squad's `docs/LAYERED_DOCUMENT.md` in which the owner set the direction
-for this project, moved here on 2026-11-18. [BACKBONE.md](BACKBONE.md) is the design written from them; where the two differ, BACKBONE.md is the newer
+Status: **source material, kept verbatim.** Sections 1 and 2 are the two sections of Sub0Squad's `docs/LAYERED_DOCUMENT.md` in which the owner set the
+direction for this project, moved here on 2026-11-18. Sections 3 and 4 are the owner's words in a design session of 2026-11-18, answered by
+[BACKBONE.md](BACKBONE.md) section 14, [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) and [AUTHORING.md](AUTHORING.md). [BACKBONE.md](BACKBONE.md) is the design written from them; where the two differ, BACKBONE.md is the newer
 decision and this file is the intent it answers. Wording such as "this repository" and "the squad" refers to Sub0Squad, where it was written.
 
 ## 1. Direction: Sub0Canvas as the squad's backbone (owner, 2026-11-17)
@@ -146,3 +147,42 @@ Five rules keep adapters small and the core trustworthy:
   intelligence across history; batch changes as 1-N edits) are the closest products.
 * Plugin architectures such as **Backstage** and **Grafana data sources** are the model for adapters: capability-declared, credentials at the edge, a core
   that knows none of them.
+
+## 3. Folding needs language semantics, from prior art (owner, 2026-11-18)
+
+> I note that the folding needs potential support for language semantic processing - Yaml, Xml, Json, Rust, Python, C++, Javascript, Typescript etc
+> all have differing language folding - the Notepad++ project supports an extensible mechanism and other tooling could exist as a guide to ensure that
+> we don't reinvent a solution that may already exist as prior art we can pull on.
+
+And, later the same day:
+
+> We also need to be intelligent as to whom decides how content is folded - is it an external interface decided by a caller/user/agent or an
+> internally derived aspect for what a block, sub-block etc is
+
+Answered by [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) (section 4.7 answers the second).
+
+And:
+
+> Some decisions like the folding can be kept as open a/b decisions which real-usecases may resolve so shaping the design to be flexible may be of
+> value for anythign that is not clear cut
+
+Answered by [BACKBONE.md](BACKBONE.md) section 14.3, the register of open decisions.
+
+And:
+
+> Similar to the sub0squad data based workflow design the policy should ideally be iterable and or client provided by integration - keep open for
+> when this si relvant, we should run pros/cons over options to guide making grounded decisions.
+
+Answered by [BACKBONE.md](BACKBONE.md) sections 14.4 (policies as data, supplied by the client) and 14.5 (pros and cons of the open decisions).
+
+## 4. The interactive viewer as an authoring tool, proved on this project (owner, 2026-11-18)
+
+> consider that the underling project data, work donw log, git repo history etc can be very large but the agent/viewer should have a clean and concise
+> view as per the project goals. An initial use-case which we must invest in is the interactive viewer, somewhat a markdown/code/github like
+> application so to extend what we have into an authoring tool which means we can interactively test, validate, and push, respond as a user on the
+> mutli-user document (but multi users/agents shall become at later stages and we can have scripted/automated test scenarios.
+>
+> For example sub0canvas use case the sub0canvas could be used here to iterate on the design work, I can add comments on the review layer, you action
+> their notes via the inbox etc.
+
+Answered by [AUTHORING.md](AUTHORING.md); the use case is U7 in [USE_CASES.md](USE_CASES.md).
