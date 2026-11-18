@@ -2,77 +2,75 @@
 
 Status: living (2026-11-18). Updated whenever work starts, lands or is reordered.
 
-What is next, in order. Each item names its slice ([BACKBONE.md](BACKBONE.md) section 10, [AUTHORING.md](AUTHORING.md) section 7,
+What is next, in order, by the phases of [PLAN.md](PLAN.md) (which holds the gates and the reasons). Each item names its slice ([BACKBONE.md](BACKBONE.md) section 10, [AUTHORING.md](AUTHORING.md) section 7,
 [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) section 5) and, when it has one, its brief in [sessions/](sessions/README.md). Items in *Now* can run in
 parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIREMENTS.md).
 
-## Now
+## Waiting on the owner
 
-* **The owner reads the design** and answers the open questions: [BACKBONE.md](BACKBONE.md) section 11 (eleven questions; 6-11 are new), with
-  section 14 (the later use cases, amendments A1-A14, the register of open decisions, pros and cons), [AUTHORING.md](AUTHORING.md) and
-  [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md). The answers decide B1's shape, the authoring server (V1) and tree-sitter (D3).
+* **One sheet of decisions**, [PLAN.md](PLAN.md) section 3 (O1-O13): the release, where data lives, writers and clocks, block ids, the format
+  revision, the server, GitHub, C++23, tree-sitter, the store in Sub0Squad, Sub0Fabric, the scale profile and change views, spikes. Each has a
+  recommendation and links to its reasoning ([DECISIONS.md](DECISIONS.md), [SCALE.md](SCALE.md), [CHANGE_VIEWS.md](CHANGE_VIEWS.md)). Phase 1
+  needs none of them except O1.
+
+## Now: phase 1, groundwork in parallel ([PLAN.md](PLAN.md) section 4)
+
+* **Release v0.3.0** (O1: pushing the tag needs the owner's go-ahead), then **Sub0Squad adopts `applyReply`, turn control and the moved checks**: a
+  Sub0Squad PR replaces its `applyCanvasReply` and `turn_control`, drops the copied tests and cases (block 4, the skeleton block,
+  `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).
 * **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
-  faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1 and G1. Brief:
+  faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1, G1 and V0's Markdown. Brief:
   [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
-* **V0: a worktree snapshot and Markdown in the viewer.** The first step of the authoring tool. **Started 2026-11-18**: `sub0canvas snapshot`
-  (`app/`) reads a git repository's history for a pathspec into a viewer bundle, and `tools/serve.mjs` serves it straight from git. Left: Markdown
-  blocks and rendering, the worktree's uncommitted state, and a trunk's merge commits titled by the change they merge (first-parent history is
-  all "Merge PR" subjects). Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
-* **S0: the scale harness.** A deterministic synthetic corpus and benchmarks of today's index, so the data structures are chosen by measurement.
-  Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
-* **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10): reverted state, stale stacks, evil merges,
-  file footprints, guards, column units, case-only paths, regenerated files. Design them before P0, checked on `fixtures/mirror/`.
-* **B0: format catch-up.** The producer writes the fields the viewer already understands, plus A1 (revision ids as strings), A3 (ranges) and A13
-  (policies recorded); a golden set is checked on both sides; re-capture one attempt with compiler diagnostics (R-U1-4). Brief:
-  [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
+* **S0: the scale harness.** A deterministic synthetic corpus (profile A's sizes, profile B's mix) and benchmarks of today's index, so S1's data
+  structures are chosen by measurement. Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
+* **B0: one format revision.** Item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
+  `eventsFrom` (once O5 is confirmed), texts by content id; additive, checked on both sides; re-capture one attempt with compiler diagnostics
+  (R-U1-4). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
+* **K0: the viewer's interactivity benchmark** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): every interaction in the budget table on the
+  synthetic mirror and a large local subtree, 20 repetitions, 95th percentile, recorded with the machine. Before V1a. Brief:
+  [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
+* **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10), design only: reverted state, stale stacks, evil
+  merges, file footprints, guards, column units, case-only paths, regenerated files; each checkable on `fixtures/mirror/`. Before P0.
 
-## Next
+## Next: phase 2, the authoring tool on this repository
 
-* **K0: the viewer's interactivity KPIs** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): a scripted browser benchmark (local, label
-  `timing`) that times every interaction in the budget table on the synthetic mirror and on a large local subtree, 20 repetitions, 95th
-  percentile, and records the numbers with the machine. Baselines are in the table (about 1 s per click at 20,000 blocks). First, so V1a's work
-  is steered by measurement. Brief: [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
-* **The file tree on demand**: render only open folders, windowed; a toggle patches its rows; list a folder's children when it is opened (from
-  the server, streamed for very large folders), with the whole listing up front as the first step. Budget: 50 ms to expand a 1,588-file folder.
-* **File content on demand**: the page holds texts by content id, fetches a file when it is opened and prefetches likely next files; the
-  bundle form keeps working offline.
-* **The block list, redesigned** (AUTHORING.md section 3.2): today one global, unscoped list of every block (92% of the page at 20,000 blocks).
-  Weigh scoped shapes (an outline per file in the tree, per folder, a server-side search with paged matches, identity history as its own view),
-  add the choice to the register, build the winner windowed.
-* **V1a: live views** ([AUTHORING.md](AUTHORING.md) section 3.1; measured need in [SCALE.md](SCALE.md) section 6.1): scoped queries, texts by
-  content id, turns as deltas, and a page that patches per pane with windowed lists, so updates from people and agents never reset the reader.
-  Before V1's comments: every authoring slice after it relies on live updates.
+* **V0, finished**: Markdown blocks (through D0's seam), Markdown rendered, the worktree's uncommitted state, merge commits titled by the change they
+  merge. The snapshot itself is built (`app/`, `tools/serve.mjs`). Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
+* **V1a: live views** ([AUTHORING.md](AUTHORING.md) section 3.1; measured need in [SCALE.md](SCALE.md) section 6.1): the `serve` process and the
+  bridge; scoped queries; texts by content id (B0); turns as deltas; per-pane keyed patches, windowed lists. Its steps:
+  * **the file tree on demand**: only open folders rendered, windowed; a toggle patches its rows; children listed when opened (streamed for very
+    large folders). Budget: 50 ms to expand a 1,588-file folder;
+  * **file content on demand**: texts by content id, fetched when opened, likely next files prefetched; the bundle form keeps working offline;
+  * **the block list in its chosen shape** (register row in BACKBONE.md 14.3: today one global list is 92% of the page at 20,000 blocks), scoped
+    and windowed.
+* **V1: comments**: the store's core (B1), the log as its own module (A18) with writers and Lamport clocks (A15), written locally in the per-writer
+  segment format; comment, reply and resolve from the viewer; scenarios as tests.
+* **V2: the agent's inbox and sync**: B2's inbox over the review layer, the CLI, views with budgets; the git-ref log backend (A17). **The acceptance
+  test is a real review round on this repository's docs** (AUTHORING.md section 1).
 
-* **The owner reads [SCALE.md](SCALE.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md)** (2026-11-18): the second scale profile and its requirements
-  (R-SCALE-5 to 9, A19-A21), and change views (U12, R-CHG, slices P0-P5, four open decisions).
-* **Two owner questions from the register consolidation** (2026-11-18): which policy owns "what counts as a spike" (CHANGE_VIEWS.md
-  section 2 gives it to both the topic policy and `lineage@1`; the register, BACKBONE.md 14.3, follows the topic policy); and whether
-  BACKBONE.md section 11's confirmations (questions 4, 5, 6) should also fold into the register or stay a question list.
+## Then: phase 3, history and scale
 
-* **V1: comments** (after the owner's answers to questions 10 and 11): `sub0canvas serve`, a minimal store and file log (B1's core), the bridge;
-  comment, reply and resolve from the viewer; scenarios as tests.
-* **V2: the agent's inbox**: B2's inbox over the review layer, the CLI, views with budgets; **the acceptance test is a real review round on this
-  repository's docs** (AUTHORING.md section 1).
-* **G1: the git document adapter and per-path history** (after D0). Brief: [sessions/g1-git-history.md](sessions/g1-git-history.md).
-* **Sub0Squad adopts `applyReply` and turn control** (moved here 2026-11-18, A12 done): after a tag here, a Sub0Squad PR replaces its
-  `applyCanvasReply` and `turn_control` with these, drops the copied tests and cases, keeps `run-v11-test-app-reply.txt` (its platform test).
-* **The owner confirms [DECISIONS.md](DECISIONS.md)**: storage layered by kind (git refs per writer), deterministic birth ids, Sub0Platform's C++ layer
-  in the tools (a reason to finish its move out of Sub0Squad), Sub0Fabric kept open behind a liftable log module (A15-A18).
+* **G1: the git document adapter and per-path history** (after D0; A20, A21). Brief: [sessions/g1-git-history.md](sessions/g1-git-history.md).
+* **S1: the compact, lazy index** (after S0's numbers): blocks keyed by id and by blob (`BlockIndex::resolve` scans every live block today, which
+  made a per-event lookup quadratic at 200,000 blocks, SCALE.md section 6.1), birth ids (A16), no texts held.
 * **D1: the conformance corpus** per language, hand-checked outlines.
+* **S2** the sketch index and per-path checkpoints.
 * **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.
 * **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
   coverage. Checked also on the owner's private reference topic, numbers only.
-* **S1: the compact, lazy index** (after S0's numbers). Includes blocks keyed by id: `BlockIndex::resolve` scans every live block today, which made
-  a per-event lookup quadratic at 200,000 blocks (SCALE.md section 6.1).
 * **B3 claims and notes, B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
+
+## Any time
+
 * **Sub0Squad: measure the layer where it acts**: off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the
   summary alone. A Sub0Squad PR with no library change ([INTEGRATION.md](INTEGRATION.md)).
+* **Sub0Platform: finish moving the C++ layer out of Sub0Squad**, so `app/` and `serve` adopt it (DECISIONS.md section 8). Before or during V1a.
 
-## Later
+## Later: phase 4, widening (ordered after phase 2's acceptance round)
 
 * **V3-V5**: edits and suggestions, checks and push, a second actor.
 * **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
-* **S2** the sketch index and per-path checkpoints; **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
+* **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
 * **G2-G5**: GitHub items, issues and project items, events and subscriptions, write-back.
 * **P3-P5**: change views in the authoring tool; forge (configurable host) and tracker sources; topic inboxes and carve-out proposals.
 * **M1: a live sandbox for the mirror** (parked by the owner, 2026-11-18): a local forge (Gitea or Forgejo, a download to approve), a forge-CLI
@@ -84,5 +82,3 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 ## Tidy-ups
 
 * `lib/tests/check.hpp`: avoid `getenv`'s deprecation under clang on Windows (`_dupenv_s` there, or read once through a small helper).
-* Sub0Squad's `test_blocks` still holds copies of the checks moved here (block 4, the skeleton block, `canvasModelCheck`): once Sub0Squad pins a tag
-  with them here, its copies can go, in a Sub0Squad PR.

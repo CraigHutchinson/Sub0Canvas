@@ -58,7 +58,7 @@ A change view needs nothing beyond [BACKBONE.md](BACKBONE.md) section 3. It is i
 | `tests` | a test-only change, the changes or blocks it exercises | its anchors (tests named after blocks), or stated by the author | stated, or suspect |
 | `discusses` | a write-up, a tracker issue, the topic | the tracker link, a document linked from the description | exact |
 
-Derived links are proposals of a **lineage policy** (`lineage@1`): thresholds, which links to derive, what counts as a spike. Each derived link
+Derived links are proposals of a **lineage policy** (`lineage@1`): thresholds, which links to derive, how spike coverage is scored (what counts as a spike is the topic policy's `spike` tag, which `lineage@1` only reads). Each derived link
 records the policy version that made it (A13). An author's statement overrides a derivation, and both are kept in the log.
 
 ## 3. The derived facts

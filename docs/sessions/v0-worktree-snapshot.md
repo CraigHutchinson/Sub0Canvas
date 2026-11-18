@@ -1,9 +1,14 @@
 # Follow-up session: V0, a worktree snapshot and Markdown in the viewer
 
-Status: open (written 2026-11-18). Backlog: "V0" under *Now*. Design: [AUTHORING.md](../AUTHORING.md) sections 3, 4 and 7 (V0);
+Status: open, partly done (written 2026-11-18; narrowed the same day: `sub0canvas snapshot` exists in `app/`, reading a git
+repository's history for a pathspec, and `tools/serve.mjs` serves it from git). Backlog: "V0" under *Now*. Design: [AUTHORING.md](../AUTHORING.md) sections 3, 4 and 7 (V0);
 [BLOCK_DISCOVERY.md](../BLOCK_DISCOVERY.md) 4.4 (Markdown); requirements R-AUTH-1, R-AUTH-11, R-BLK-9 in [REQUIREMENTS.md](../REQUIREMENTS.md).
 
 ## Goal
+
+**Left** ([PLAN.md](../PLAN.md) phase 2, step 1): Markdown blocks through D0's provider seam, Markdown rendered in the viewer, the worktree's
+uncommitted state as a last turn, and merge commits titled by the change they merge. Steps 2 and 3 below are done in their first form; the
+original goal follows for context.
 
 The first step of the authoring tool: open **this repository's own docs** in the viewer as a layered document. Build a `sub0canvas` executable in this
 repository with one command, `snapshot <dir> [paths...]`, that writes a `layered-doc-1` snapshot of the working tree (files, blocks, no layers yet),

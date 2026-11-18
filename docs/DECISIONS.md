@@ -66,6 +66,7 @@ The data is not one thing. Each kind has different needs, so the answer is a lay
 | derived caches | block index checkpoints, sketches, snapshots for the viewer | rebuildable, per clone, large, never the truth |
 | per-reader state | inbox cursors, folds and view preferences, the server token | private, per user, small |
 | exports | a review rendered for a PR, SARIF, a snapshot to share | deliberate, scoped by a query (A11) |
+| configuration | the identity policy, the command allowlist, policy files a client supplies | part of the project: reviewed, versioned, shared |
 
 ### 3.1 Options for the shared annotations (the hard part)
 
@@ -92,7 +93,9 @@ The data is not one thing. Each kind has different needs, so the answer is a lay
    clones of hundreds of gigabytes each; only per-clone state stays under the git directory.
 4. **Per-reader state**: the user's state directory, via Sub0Platform's `dirs.state("sub0canvas")`, keyed by repository (inbox cursors, folds, the
    server's session token).
-5. **Exports: option A only as an export**: `sub0canvas export review --query ...` writes a readable Markdown or JSON file a person may commit or attach
+5. **Configuration: committed** under `.sub0canvas/` (`config.json`, `commands.json`, policy files), like `.editorconfig`: it is part of the
+   project, changes rarely, and is reviewed like code. Annotations never go there.
+6. **Exports: option A only as an export**: `sub0canvas export review --query ...` writes a readable Markdown or JSON file a person may commit or attach
    to a PR. It is a view, never the truth.
 
 **What this changes in the design.** BACKBONE.md section 4's rule "single writer per document" becomes **single writer per segment** (per ref); the

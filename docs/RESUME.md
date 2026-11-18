@@ -2,7 +2,8 @@
 
 Status: living (2026-11-18, evening). Rewritten at the end of each working session.
 
-Read this first when resuming. What is next, in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
+Read this first when resuming. The plan, in phases, and the one sheet of decisions waiting on the owner are [PLAN.md](PLAN.md); what is next,
+in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
 
 ## Released
 
@@ -31,19 +32,18 @@ adaptive with a threshold of 6. The noise between identical arms reached 67% on 
 **The direction of 2026-11-18** ([DIRECTION.md](DIRECTION.md) sections 3 and 4): the viewer becomes an **authoring tool** and is the first use case to
 invest in, proved on this project's own design work ([AUTHORING.md](AUTHORING.md), V0-V5); block discovery becomes language-aware behind a provider
 seam, drawing on prior art ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md), D0-D3); what is not clear-cut stays an open A/B decision, with policies as data
-that a client may supply ([BACKBONE.md](BACKBONE.md) sections 14.3-14.5). **The owner has not yet read these**, nor BACKBONE.md; section 11 there now
-holds eleven questions. **[DECISIONS.md](DECISIONS.md)** (direction section 5) works through all of them with options, pros and cons: storage layered
-by kind with shared annotations in git refs per writer, deterministic birth ids, the Sub0 glue libraries to adopt, Sub0Fabric kept open. **Not
-yet confirmed by the owner.**
+that a client may supply ([BACKBONE.md](BACKBONE.md) sections 14.3-14.5). **[DECISIONS.md](DECISIONS.md)** (direction section 5) works through
+every open question with options, pros and cons: storage layered by kind with shared annotations in git refs per writer, deterministic birth ids,
+the Sub0 glue libraries to adopt, Sub0Fabric kept open.
 
 [BACKBONE.md](BACKBONE.md): items with state, tags and links; an event log; subscriptions as inboxes; claims; views; the store; source adapters
 (local git, GitHub); a revision-aware index replayed over history; scale ([SCALE.md](SCALE.md)); slices B0-B4, G1-G5, S0-S4,
-E1, C1. **The owner has not yet read it**; its section 11 lists five open questions for them.
+E1, C1.
 
 **Scale and change views (2026-11-18, later).** Scale has one home, [SCALE.md](SCALE.md), with a second target profile measured on a private
 monorepo (440,000 files, most not code; 430 GB of git; about 1,700 pull requests a week): R-SCALE-5 to 9 and amendments A19-A21 follow from it.
 [CHANGE_VIEWS.md](CHANGE_VIEWS.md) designs pull requests, spikes and their dependencies as layers (U12, R-CHG, P0-P5), checked against the shape
-of a private 25-change reference topic. **The owner has not yet read either.** This public repository never names its private references; a
+of a private 25-change reference topic. This public repository never names its private references; a
 local-only guard in the owner's clone enforces it (AGENTS.md).
 
 **The synthetic mirror (2026-11-18, built).** `tools/mirror/` generates an invented project with a work-dominated repository's shape, a 31-change
@@ -55,6 +55,11 @@ repository's subtree straight from git. Measured up to 19,000 files ([SCALE.md](
 as files times turns, and the page breaks first (about 1 s per click at 20,000 blocks). The answer is designed, not built: live views patched by
 events ([AUTHORING.md](AUTHORING.md) section 3.1, V1a), interactivity budgets with baselines (section 3.2), and in the backlog K0 (a brief:
 [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md)), the file tree and content on demand, and a scoped block list.
+
+**Consolidated (2026-11-18, night).** [PLAN.md](PLAN.md) reconciles all of the above: a review that found and fixed ten disagreements between
+the day's documents (the review log's location, A2 against A16, section 11, spike ownership, one format revision for B0 and V1a, and others), four
+phases with their gates, and **one sheet of thirteen decisions for the owner** (O1-O13). None of the design is confirmed by the owner yet; phase 1
+needs none of it except the release (O1).
 
 ## Known gaps and debts
 
@@ -70,7 +75,7 @@ events ([AUTHORING.md](AUTHORING.md) section 3.1, V1a), interactivity budgets wi
   scale (SCALE.md, slices S0-S2).
 * The test helper `lib/tests/check.hpp` calls `getenv`, which clang on Windows (MSVC runtime) flags as deprecated under `-Werror`; the Linux Clang
   CI leg is unaffected.
-* Turn files' `events` are cumulative today; BACKBONE.md proposes per-turn events plus a cumulative log (open question 2).
+* Turn files' `events` are cumulative today, and every turn repeats every file's text; B0's one format revision fixes both (PLAN.md O5).
 
 ## Where things are
 

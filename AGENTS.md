@@ -1,7 +1,7 @@
 # Working in Sub0Canvas
 
-Instructions for agents and people continuing this project. Start with [docs/RESUME.md](docs/RESUME.md) (where it stands) and
-[docs/BACKLOG.md](docs/BACKLOG.md) (what is next). A task with its own brief is in [docs/sessions/](docs/sessions/README.md): start a session with
+Instructions for agents and people continuing this project. Start with [docs/RESUME.md](docs/RESUME.md) (where it stands),
+[docs/PLAN.md](docs/PLAN.md) (the phases and what waits on the owner) and [docs/BACKLOG.md](docs/BACKLOG.md) (what is next). A task with its own brief is in [docs/sessions/](docs/sessions/README.md): start a session with
 "Read `docs/sessions/<file>.md` and do it."
 
 ## What this is
@@ -22,6 +22,7 @@ hold up on codebases of billions of lines.
 | [docs/MIRROR.md](docs/MIRROR.md) | the synthetic mirror: a seeded invented project with real-world shape and edge cases, its modes and fixture |
 | [docs/CHANGE_VIEWS.md](docs/CHANGE_VIEWS.md) | pull requests, spikes and local branches as layers: topics, lineage, block-level overlap, landing coverage, slices P0-P5 |
 | [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
+| [docs/PLAN.md](docs/PLAN.md) | the consolidated plan: phases and gates across every track, the review that reconciled the design, the one sheet of decisions for the owner |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | the open questions worked through: options, pros and cons, recommendations; where data lives (git refs), the Sub0 libraries to adopt, Sub0Fabric kept open |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | what consumers rely on, independent of implementation, each with the test that checks it; Sub0Squad's use mapped |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for and what each use case demands |

@@ -42,16 +42,16 @@ short view. The rule (R-AUTH-1): **a view is bounded by attention, not by the da
 ## 3. Architecture
 
 ```
-  browser (index.html, src/*.js)  ──HTTP + server-sent events──▶  tools/canvas-serve.mjs  ──JSON lines over stdio──▶  sub0canvas serve
+  browser (index.html, src/*.js)  ──HTTP + server-sent events──▶  tools/serve.mjs (bridge) ──JSON lines over stdio──▶  sub0canvas serve
   agent / script / CLI  ─────────────────────────── sub0canvas <command> (via the running server, or directly) ──────────┘
-                                                                                                           owns: the store, events.ndjson,
+                                                                                                           owns: the store, its log (A17),
                                                                                                            the worktree as document source
 ```
 
 * **One process owns the document** (BACKBONE.md section 4, rule 1): `sub0canvas serve`, a new executable in this repository linking the library.
   It speaks **JSON lines over stdio**, LSP-like: each request is a command (an event to append, R-BB-8) or a query (an inbox, a view, a range of
   history). The library stays pure; the executable does the I/O (files, the clock, running checks).
-* **The bridge** (`tools/canvas-serve.mjs`, Node, no dependencies, growing from today's `tools/serve.mjs`) serves the page, forwards requests to the
+* **The bridge** (`tools/serve.mjs`, Node, no dependencies, grown from today's static and git-backed server) serves the page, forwards requests to the
   process, and pushes updates to the page as server-sent events. It binds `127.0.0.1` only and requires a per-session token in every request, so
   another local web page cannot drive it.
 * **Why not a JavaScript store**: the store's rules (identity, reconciliation by key, claims) must have one implementation, or the viewer and the
@@ -121,8 +121,11 @@ the list. Whatever is chosen, it is scoped and windowed.
 | `issues`, `plan` | as today, and `docs/BACKLOG.md` as items (BACKBONE.md section 8) |
 | actors | `person/<name>`, `agent/<name>`; every event names one. One person now; more later with no new mechanism (claims give presence, BACKBONE.md 3.5) |
 
-**Where the review log lives** is an open question for the owner (BACKBONE.md section 11, question 10): committed under `.sub0canvas/` (shared through
-git across devices, history kept, visible in this public repository) or local only (private, lost with the clone).
+**Where the review log lives**: through the store's `Log` interface, so the answer changes a backend, not the tool. Recommended
+([DECISIONS.md](DECISIONS.md) section 3, A17; for the owner to confirm, [PLAN.md](PLAN.md) O2): one append-only segment per writer, shared
+through git refs of its own (`refs/sub0canvas/...`, synced by fetch and push, never in branches or the working tree), private items under a
+namespace that is never pushed. V1 writes that segment format locally; V2 adds the git-ref backend. The tool's configuration (identity policy,
+command allowlist) is committed under `.sub0canvas/`, like any project configuration.
 
 ## 5. Testing, validating and pushing from the tool
 
@@ -159,8 +162,8 @@ Each slice is used (by the owner, on this repository) before the next is built.
 |---|---|---|
 | **V0** a worktree snapshot | the `sub0canvas` executable with `snapshot <dir> [paths]` writing `layered-doc-1`; a minimal Markdown provider (headings, fences); the viewer renders Markdown (headings, lists, code) and code side by side | `sub0canvas snapshot . docs` opens in the viewer; every heading of every doc is a block; golden snapshot of `docs/` checked byte for byte |
 | **V1a** live views | section 3.1 without a store yet: `serve` answers scoped queries (tree, file at revision, blocks of a file, layer page) from the snapshot executable, texts by content id; the page renders per pane with keyed patches and windowed lists; turns as deltas (changed files, per-turn events) | on the 1,590-file subtree of SCALE.md 6.1: a click under 50 ms, first view under 1 s, and a scripted stream of 100 events applied while a reader is scrolled and has a block selected leaves scroll and selection unchanged (a scenario, R-AUTH-10) |
-| **V1** comments | `serve` with a minimal store and `FileLog` (B1's core: `item.put`, `item.state`, `item.link`); the bridge; comment, reply, resolve from the viewer | scenario: a comment and its thread survive a restart (replayed from the log) and render identically |
-| **V2** the agent's inbox | B2's `inbox` and `acknowledge` over the review layer; the CLI (`inbox`, `reply`, `state`); views with budgets (R-AUTH-1) | **the round of section 1 on this repository**, done for real, and recorded as a scenario |
+| **V1** comments | `serve` with a minimal store (B1's core: `item.put`, `item.state`, `item.link`) and the log as its own module (A18), events with writer and Lamport clock (A15), written locally in the per-writer segment format; the bridge; comment, reply, resolve from the viewer | scenario: a comment and its thread survive a restart (replayed from the log) and render identically |
+| **V2** the agent's inbox | B2's `inbox` and `acknowledge` over the review layer; the CLI (`inbox`, `reply`, `state`); views with budgets (R-AUTH-1); the git-ref log backend (A17), so a review on one device reaches an agent on another | **the round of section 1 on this repository**, done for real, and recorded as a scenario |
 | **V3** edits and suggestions | editing in the page as transactions; suggestions with `fix`; quote re-anchoring (B4's resolver, first part) | scenario: a comment's anchor follows its text through an agent's rewrite of the section, or is marked outdated, never moved silently |
 | **V4** checks and push | the command allowlist, the `checks` layer, commit, push behind confirmation | scenario with a failing then passing test; a push refused without confirmation |
 | **V5** a second actor | presence from claims (B3), two sessions on one document, scenarios with two people and an agent | C1's check, as a scenario |

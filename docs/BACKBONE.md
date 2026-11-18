@@ -459,34 +459,28 @@ integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRA
 heuristics behind it, byte-identical) lands before S1 and G1 replay more files through `foldRegions`. **V0-V5**, the authoring tool
 ([AUTHORING.md](AUTHORING.md) section 7), the first use case to invest in: V0-V2 pull forward the parts of B1, B2, B4, D2 and E1 they need (a store
 with a file log, inboxes, quote re-anchoring, a Markdown provider, a process that owns the store), proved on the owner's own design work before
-Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0, V1, V2 (which build B1 and B2's cores); G1 after D0. **P0-P5**, change views
+Sub0Squad depends on them. The order across all tracks, in phases with their gates, is [PLAN.md](PLAN.md) section 4. **P0-P5**, change views
 ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 8): P0 after G1 and B4, P1 with S2's sketches, P3 in the authoring tool after V2, P4 widening G2.
 
 ## 11. Open questions for the owner
 
-1. **Where the store lives in Sub0Squad.** Per attempt (in the canvas loop, simplest, B2) or per workflow in the daemon (needed for the orchestration
-   layer and for subscriptions that span workers). Proposed: per attempt first, the daemon in step 3 of the migration.
-2. **Per-turn `events`.** Section 3.3 proposes per-turn events in snapshots and a cumulative log. That changes what Sub0Squad writes today (cumulative).
-   The viewer already copes with both. Confirm.
-3. **Ids across replay roots** (section 6). Proposed: local to a root, named in the file. A content-addressed id is the alternative, at the cost of
-   identity changing on every body edit.
-4. **The GitHub adapter and the network rule.** It reads from github.com with the user's `gh` login. It is a separate target that Sub0Squad never links.
-   Confirm that this is acceptable for Sub0Canvas, or keep G2 to G5 on a local mirror only (`gh` export to files, then read offline).
-5. **The C++ standard in the core.** `std::expected` (C++23) is used in the sketches, as Sub0Squad already builds C++23. Confirm Sub0Canvas keeps C++23
-   rather than lowering it for wider reuse.
-6. **Revision ids as strings in the format** (A1). Proposed at B0, with readers accepting numbers too.
-7. **The block id scheme** (A2, with question 3): opaque, allocated per replay root and per shard without a global counter. Confirm.
-8. **tree-sitter as an optional dependency** (BLOCK_DISCOVERY.md 4.5): a download, generated C per grammar and build time, for real syntax trees in the
-   languages where measurement shows the heuristic fails. Approve in principle, then language by language.
-9. **Applying a parsed reply in the library** (A12): moves Sub0Squad's `applyCanvasReply` here, so the recorded-reply corpus is tested here; a
-   Sub0Squad PR follows.
-10. **Where the authoring tool's review log lives** (AUTHORING.md section 4; pros and cons in 14.5): committed under `.sub0canvas/`, local only, or
-    local with export.
-11. **The authoring server's stack** (AUTHORING.md section 3; 14.5): a C++ `serve` process over stdio with a small Node bridge is proposed.
+The eleven questions asked here are worked through in [DECISIONS.md](DECISIONS.md), and their recommended answers are defaults in the register
+(14.3) or amendments (14.2). What the owner is asked to confirm, gathered with SCALE.md's and CHANGE_VIEWS.md's, is one sheet:
+[PLAN.md](PLAN.md) section 3. This table keeps the original numbering so earlier references resolve.
 
-**Every question above is worked through, with options, pros and cons and a recommendation, in [DECISIONS.md](DECISIONS.md)** (2026-11-18),
-whose amendments A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a liftable module) are in 14.2.
-Question 9 is done.
+| # | question | recommendation | now lives in | owner sheet |
+|---|---|---|---|---|
+| 1 | where the store lives in Sub0Squad | per attempt first, in the per-project format | register (14.3); DECISIONS.md 5 | O10 |
+| 2 | per-turn `events` in snapshots | per turn with `eventsFrom`; the log is cumulative | register; B0 | O5 |
+| 3 | ids across replay roots | deterministic birth ids | A16 (refines A2); DECISIONS.md 4 | O4 |
+| 4 | the GitHub adapter and the network rule | read-only through `gh`, a separate target; captured files in tests | DECISIONS.md 5 | O7 |
+| 5 | the C++ standard | C++23 | DECISIONS.md 5 | O8 |
+| 6 | revision ids as strings | yes, at B0; numbers still read | A1 | O5 |
+| 7 | the block id scheme | as question 3 | A16 | O4 |
+| 8 | tree-sitter | an optional target; each grammar approved; adopted by measurement | register; DECISIONS.md 6 | O9 |
+| 9 | applying a parsed reply in the library | **done** (2026-11-18) | A12 | O1 (the release) |
+| 10 | where the review log lives | storage layered by kind; git refs per writer | A17, A19; register | O2 |
+| 11 | the authoring server's stack | C++ `serve` over stdio, a Node bridge | register; DECISIONS.md 7 | O6 |
 
 ## 12. Scale
 
@@ -538,7 +532,7 @@ Each is folded into the section it names when its slice is built; until then thi
 | # | amendment | changes | slice |
 |---|---|---|---|
 | A1 | **Revision ids are opaque strings** document-wide. A canvas's per-file numbers are one source's scheme; a commit id is another. Readers accept a number or a string. | `Anchor.revision`, `BlockEvent.turn` → a revision id; `revisions` in the format | B0 (format), G1 |
-| A2 | **Identities are allocated without a global counter**: opaque, unique per replay root (and per shard), never parsed. Tests already compare rather than spell them (R-ID-11). | `BlockIndex` id allocation; ties to open question 3 | S1, S4 |
+| A2 | **Identities are allocated without a global counter**: opaque, never parsed. Tests already compare rather than spell them (R-ID-11). **Refined by A16** (2026-11-18): deterministic birth ids meet this by construction, so the earlier per-root naming is dropped. | `BlockIndex` id allocation; ties to open question 3 | S1, S4 |
 | A3 | **Anchors may be ranges**: `endLine`, `endColumn` beside `line`, `column`. | `Anchor`, the format | B0 |
 | A4 | **Items carry open data**: `data` (a JSON object, kind-specific: coverage, durations, a project field) and `detailFormat` (`text` or `markdown`). A metric is a layer of items with data, never a mechanism. | `LayerItem`, the format | B1 |
 | A5 | **Link kinds are open strings** with registered conventions (`duplicates`, `causes`, `fixes`, `implements`, `discusses`, `blocks`, `partOf`, and `repliesTo` for threads, `supersedes`, `tests`, `documents`). The core treats none specially except where a rule says so. | `Link::Kind` → string | B1 |
@@ -587,6 +581,7 @@ cheap. The pattern for each:
 | hunk equivalence (change views) | stable patch id only / patch id or same block with sketch similarity / block only | patch id or same block with similarity at least 0.8 | P2's precision and recall on synthetic and reference truth | the lineage policy (`lineage@1`, [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 2) |
 | what marks a spike (change views) | title marker / label / long-held draft / stated only | title marker or label, set by the topic policy | the owner's use; the policy is data | the topic policy (CHANGE_VIEWS.md section 2) |
 | topic grouping (change views) | tracker key in title or branch / labels / milestone / by hand | tracker key, with hand grouping overriding | P4 on the reference topic | the topic policy (CHANGE_VIEWS.md section 2) |
+| the viewer's block list | an outline of the open file inside the tree / blocks of the open folder / a server-side search with paged matches; identity history (retired, merged, orphaned) as its own view in every arm | the open file's outline in the tree, with search | K0's numbers and the owner's use in V1a | the page's view spec ([AUTHORING.md](AUTHORING.md) section 3.2) |
 | areas in the topic map (change views) | directories by depth / ownership files / clusters of co-changed blocks | directories folded to the budget | P3, by what the owner reads fastest | the topic map's view spec (A14) |
 
 The reasoning behind the rows is in 14.5, [DECISIONS.md](DECISIONS.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 9; the rows themselves live only here.
