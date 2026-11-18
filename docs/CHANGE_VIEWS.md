@@ -157,14 +157,11 @@ mechanically.
 
 P0 to P2 are library work proved without a forge. P3 lands in the authoring tool. P4 widens the sources, and P5 puts agents on top.
 
-## 9. Open decisions (added to BACKBONE.md 14.3's register)
+## 9. Open decisions
 
-| decision | arms | default now | resolved by |
-|---|---|---|---|
-| hunk equivalence | stable patch id only / patch id or same block with sketch similarity / block only | patch id or same block with similarity at least 0.8 | P2's precision and recall on synthetic and reference truth |
-| what marks a spike | title marker / label / long-held draft / stated only | title marker or label, set by the topic policy | the owner's use; the policy is data |
-| topic grouping | tracker key in title or branch / labels / milestone / by hand | tracker key, with hand grouping overriding | P4 on the reference topic |
-| areas in the topic map | directories by depth / ownership files / clusters of co-changed blocks | directories folded to the budget | P3, by what the owner reads fastest |
+Four decisions here are kept open by design: hunk equivalence, what marks a spike, topic grouping, and areas in the topic map. Their arms, defaults
+and the evidence that settles each are rows of the one register, [BACKBONE.md](BACKBONE.md#143-open-decisions-kept-open-by-design) section 14.3;
+the reasoning is in sections 2 (the topic and lineage policies), 3 and 4 above.
 
 ## 10. Gaps the mirror exposes
 

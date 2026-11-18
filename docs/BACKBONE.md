@@ -1,6 +1,7 @@
 # The Sub0Canvas backbone: layers as the place where agents, people and sources meet
 
-Status: **design, for the owner to read.** Nothing here is implemented. Section 14 (2026-11-18) checks it against the later use cases, lists the
+Status: **design, for the owner to read.** Built so far: slices 1 and 2 (`outline`, `edits`, `canvas`, `doc_layers`, the viewer) and amendment A12
+(`applyReply` and turn control); everything else here is design. Section 14 (2026-11-18) checks it against the later use cases, lists the
 amendments that found, and keeps the register of open decisions; the authoring tool ([AUTHORING.md](AUTHORING.md)) is now the first use case to invest
 in, and block discovery has its own design ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)). Written 2026-11-17 from the owner's direction ([DIRECTION.md](DIRECTION.md), originally Sub0Squad's `docs/LAYERED_DOCUMENT.md`; the sections
 "Direction: Sub0Canvas as the squad's backbone" and "Sources"), the slice 1 and slice 2 code in `lib/`, the viewer in `src/`, and the viewer's schema
@@ -484,7 +485,7 @@ Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0
 11. **The authoring server's stack** (AUTHORING.md section 3; 14.5): a C++ `serve` process over stdio with a small Node bridge is proposed.
 
 **Every question above is worked through, with options, pros and cons and a recommendation, in [DECISIONS.md](DECISIONS.md)** (2026-11-18),
-which also adds amendments A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a liftable module).
+whose amendments A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a liftable module) are in 14.2.
 Question 9 is done.
 
 ## 12. Scale
@@ -550,6 +551,10 @@ Each is folded into the section it names when its slice is built; until then thi
 | A12 | **Applying a parsed reply moves into the library**: the all-or-nothing application of a `CanvasReply` across files (Sub0Squad's `applyCanvasReply`) is library behaviour that every consumer (the squad, the authoring tool, an editor) needs. With it, the 30 recorded-reply cases become this library's own test (R-EDIT-7). **Done 2026-11-18** (`applyReply`, atomic by construction; turn control moved too; [DECISIONS.md](DECISIONS.md) section 2). | `canvas.hpp`; a Sub0Squad PR to call it | next minor |
 | A13 | **Policies are named and recorded** (14.3): every output records the policy versions that produced it, so two runs can be compared and a change of policy is visible in the data. | the format (`policies`), views | B0 onward |
 | A14 | **Views take budgets**: a scope, item and character limits, and cursors; the summary-first rendering of R-REN generalised to every view (R-AUTH-1). | `ViewSpec` (3.6) | V2 |
+| A15 | **Events carry their writer and a Lamport clock**: the store reads many writers' segments and merges them deterministically (Lamport clock, then writer); section 4's "single writer per document" becomes "single writer per segment" ([DECISIONS.md](DECISIONS.md) section 3). | `Event`, the store, section 4 | B1 / V1 |
+| A16 | **Block ids are deterministic birth ids**: a hash of the revision, path and signature a block was born with, plus an ordinal among identical births, so every replay of the same history derives the same ids with no counter ([DECISIONS.md](DECISIONS.md) section 4). | `BlockIndex` id allocation; with A2 | S1, or B0 if cheap |
+| A17 | **Storage is layered by kind**: git refs for shared annotations (one per writer, private items under a never-pushed namespace), the git common directory for caches, the user's state directory for per-reader state, exports on demand ([DECISIONS.md](DECISIONS.md) section 3). | the `Log` interface (`GitRefLog` in the tools), the cache layer | V1 |
+| A18 | **The log is a module of its own**: its own format spec and no dependency on the rest of the library, so it can be lifted out into a shared orchestration layer (Sub0Fabric) when a second consumer needs it ([DECISIONS.md](DECISIONS.md) section 9). | the log's module boundary | B1 / V1 |
 | A19 | **Caches are per user and keyed by object id**, shared by every clone and worktree of a repository (the repository identified by its root commit); per-clone state holds only what differs. Extends [DECISIONS.md](DECISIONS.md) section 3's cache layer, which was per clone. | the cache layer, `DocumentSource` | S1 |
 | A20 | **Document sources may lack objects**: `files` and `revisions` return an unknown marker for a missing blob or a cut history, and callers render unknown rather than fail. | `DocumentSource` | G1 |
 | A21 | **The git adapter uses git's own indexes**: commit-graph with changed-path Bloom filters for per-path history, one long-lived `cat-file --batch` for objects, patch ids for hunks; it never walks the whole tree or every ref per request. | the git adapter | G1, P0 |
@@ -569,18 +574,22 @@ cheap. The pattern for each:
 |---|---|---|---|---|
 | fold policy: which bodies a view folds | worth folding (bodies of three lines or more) / by depth / by budget only / focus first | worth folding, focus open | Sub0Squad A/B on what the worker sees; the owner's use of the authoring tool (V2) | the view's fold policy (`ViewSpec`) |
 | identity granularity per language | functions only / functions and methods / classes too; YAML depth; Markdown heading depth | functions and methods; Markdown headings to `###` | golden replay and G1 history under each arm: fewer orphans and fewer false merges win | the document's identity policy |
-| block discovery per language | heuristic / declarative / tree-sitter / LSP | heuristic | the conformance corpus (D1) and S3's repositories | the provider registry (BLOCK_DISCOVERY.md 4.2) |
+| block discovery per language | heuristic / declarative / tree-sitter / LSP | heuristic; tree-sitter as an optional target, adopted per language where measured to win (DECISIONS.md section 6) | the conformance corpus (D1) and S3's repositories | the provider registry (BLOCK_DISCOVERY.md 4.2) |
 | reconciliation thresholds | Jaccard 0.5 and containment 0.6 / other values / sketch-estimated | today's | S0's corpus truth and G1's hand-checked history | an identity-rules policy |
 | issue localisation | name, then literals / plus the call graph / none | name, then literals | Sub0Squad tier 0: a wrong pointer costs more than none | the issues producer's policy |
 | verdict rendering | off / adaptive (threshold 6) / always; inline count | adaptive 6, inline 3 | measured in Sub0Squad (slice 2); continuing | Sub0Squad's switches, recorded in `agent.json` |
-| events in a snapshot | per turn / cumulative | per turn (open question 2) | the viewer copes with both; settle at B0 | `eventsFrom` in the format |
+| events in a snapshot | per turn / cumulative | per turn, with `eventsFrom` (open question 2; DECISIONS.md section 5) | the viewer copes with both; settle at B0 | `eventsFrom` in the format |
 | identity scheme | counter per root / random / content-addressed / deterministic birth ids | deterministic birth ids proposed (DECISIONS.md section 4) | G1 and S4: does identity survive what users do, and agree across clones | A2, A16 |
 | where the store lives in Sub0Squad | per attempt / per workflow / per project | per attempt first, in the per-project format (DECISIONS.md section 5) | B2 in the squad | the squad's option |
 | where the review log lives | working-tree files / git refs of its own / git notes / local only / a database / the forge | git refs per writer, caches in the git directory, state per user (DECISIONS.md section 3) | the owner's use (V1) | the `Log` interface (A17) |
 | a shared orchestration layer (Sub0Fabric) | build now / build here behind a liftable boundary / extend Sub0Log | here, liftable (A18) | the second consumer of the log mechanics (likely Sub0Squad's journal) | DECISIONS.md section 9 |
-| the authoring server's stack | C++ `serve` over stdio with a Node bridge / a C++ HTTP server / Node only | C++ over stdio with a bridge (AUTHORING.md section 3) | V1: build cost and one truth for the store's rules | the protocol (A10), which every arm speaks |
+| the authoring server's stack | C++ `serve` over stdio with a Node bridge / a C++ HTTP server / Node only | C++ over stdio with a bridge, on Sub0Platform's C++ layer (AUTHORING.md section 3; DECISIONS.md section 7) | V1: build cost and one truth for the store's rules | the protocol (A10), which every arm speaks |
+| hunk equivalence (change views) | stable patch id only / patch id or same block with sketch similarity / block only | patch id or same block with similarity at least 0.8 | P2's precision and recall on synthetic and reference truth | the lineage policy (`lineage@1`, [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 2) |
+| what marks a spike (change views) | title marker / label / long-held draft / stated only | title marker or label, set by the topic policy | the owner's use; the policy is data | the topic policy (CHANGE_VIEWS.md section 2) |
+| topic grouping (change views) | tracker key in title or branch / labels / milestone / by hand | tracker key, with hand grouping overriding | P4 on the reference topic | the topic policy (CHANGE_VIEWS.md section 2) |
+| areas in the topic map (change views) | directories by depth / ownership files / clusters of co-changed blocks | directories folded to the budget | P3, by what the owner reads fastest | the topic map's view spec (A14) |
 
-Change views add four (hunk equivalence, what marks a spike, topic grouping, areas in the topic map): [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 9.
+The reasoning behind the rows is in 14.5, [DECISIONS.md](DECISIONS.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 9; the rows themselves live only here.
 
 This register is the place to add a decision when a design choice turns out not to be clear-cut. A decision leaves the register with its evidence.
 
@@ -653,7 +662,8 @@ closing of the question.
 | local only (ignored by git) | private; no commit noise | lost with the clone; not shared across devices; an agent on another machine cannot see the inbox |
 | local, exported on demand (a query, A11) | private by default; shareable deliberately | one more step; two places to look |
 
-The owner decides (open question 10); the server takes the location from its configuration, so all three stay possible.
+The owner decides (open question 10); the server takes the location from its configuration, so all three stay possible. [DECISIONS.md](DECISIONS.md)
+section 3 widens the options (git refs, git notes, a database, the forge) and recommends git refs per writer (A17).
 
 **Events in a snapshot** (open question 2)
 
@@ -666,6 +676,9 @@ The owner decides (open question 10); the server takes the location from its con
 
 | option | for | against |
 |---|---|---|
-| **local to a replay root, opaque** (recommended) | identity survives body edits and renames (the point of block ids); no coordination within a root | ids differ between roots, so interchange names the root; shards need allocation without a counter (A2) |
+| local to a replay root, opaque (the earlier proposal) | identity survives body edits and renames (the point of block ids); no coordination within a root | ids differ between roots, so interchange names the root; shards need allocation without a counter (A2) |
 | content-addressed (Unison-like) | the same everywhere, no coordination | every body edit is a new identity, which defeats layers that should follow the code; renames are new ids unless names are excluded |
 | hierarchical position ids (CRDT-like) | stable under concurrent insertion | identity is about position, not about the function; a move breaks it |
+| **deterministic birth ids** (recommended, A16) | the same on every clone that replays the same history, with no counter or coordination; survives body edits and renames | opaque hashes; live ids are deterministic only given the same edit sequence |
+
+The full comparison, with counters and random ids, is [DECISIONS.md](DECISIONS.md) section 4.
