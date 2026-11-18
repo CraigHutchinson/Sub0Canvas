@@ -44,6 +44,7 @@ test('the canvas output loads in the viewer with no problems', () => {
     const last = docs[0].turns.at(-1);
     for (const layer of ['changes', 'topics', 'spikes', 'review']) assert.ok(last.layers[layer].length > 0, layer);
     assert.ok(last.layers.changes.some((c) => /state: reverted/.test(c.detail)), 'the reverted change shows as reverted');
+    assert.equal(last.layers.changes.length, m.plan.length, 'the last turn, at the window\'s end, shows every change');
 });
 
 test('the source answers like a DocumentSource', () => {

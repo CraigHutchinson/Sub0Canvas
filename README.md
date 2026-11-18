@@ -84,7 +84,8 @@ These fields are not yet in the producer. The demo uses them, and the viewer wor
 ```bash
 npm test             # node:test, no dependencies (Node 20+)
 npm run fixtures     # regenerate every generated fixture (fixtures:demo, fixtures:mirror; fixtures/README.md)
-npm run serve        # http://127.0.0.1:8765 (only needed where a browser refuses scripts from file://)
+npm run serve        # http://127.0.0.1:8765 (only needed where a browser refuses scripts from file://, or for ?bundle=<url>: a JSON
+                     # array of {path, text} the page loads at start, as `npm run mirror -- canvas` writes)
 node tools/screenshots.mjs   # regenerate docs/screenshots with headless Edge or Chrome
 ```
 

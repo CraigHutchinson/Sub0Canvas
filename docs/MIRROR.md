@@ -27,7 +27,7 @@ register) and `shape.json` (the statistics). A test proves regeneration matches 
 npm run mirror -- shape   --seed 1                       # statistics
 npm run mirror -- source  --seed 1 [--serve]             # state and truth as JSON; --serve: JSON lines on stdio
 npm run mirror -- local   --seed 1 --out <dir>           # <dir>/repo, a git repository; every commit id checked against the generator's
-npm run mirror -- canvas  --seed 1 --out <dir>           # layered-doc-1 turns, one per week, for the viewer
+npm run mirror -- canvas  --seed 1 --out <dir>           # layered-doc-1 turns, one per week, and a bundle for the viewer
 npm run mirror -- github  --seed 1 --repo <name>         # the steps that publish it to a new forge repository: printed only
 npm run fixtures:mirror                                  # rewrite fixtures/mirror/seed-1
 ```
@@ -37,7 +37,16 @@ npm run fixtures:mirror                                  # rewrite fixtures/mirr
   calls as JSON lines on stdio (`{"id":1,"method":"files","params":{"revision":"<sha>"}}`), the protocol shape of AUTHORING.md section 3.
 * **local**: git builds the repository through `fast-import`; the generator computes the same commit ids in JavaScript, and the mode fails
   if git disagrees. It imports with `core.ignorecase=false`, because the case-only rename edge case otherwise diverges on Windows.
-* **canvas**: trunk at the end of each week of the topic window, the topic's code files (followed through moves), and layers `changes` (each
+* **canvas**: to preview it, write it under the served folder and open the bundle:
+
+  ```bash
+  npm run mirror -- canvas --seed 1 --out out/mirror
+  npm run serve
+  ```
+
+  then `http://127.0.0.1:8765/?bundle=out/mirror/mirror-seed-1.bundle.json` (add `#turn=7&centre=spikes` to open the last week on spike
+  coverage). The folder `out/mirror/mirror-seed-1/` also opens with *Open folder* from `file://`. It holds trunk at the start of each week of
+  the topic window and at its end, the topic's code files (followed through moves), and layers `changes` (each
   change with its state then, anchored to its footprint), `topics`, `spikes` (each spike hunk's state then) and `review`.
 * **github**: prints the ordered steps that create a repository and replay the pull requests in time order. A merge is a push of the merge
   commit, which a forge marks as a merge. `--execute` runs them against the user's own forge account. It is written but **has not been run**

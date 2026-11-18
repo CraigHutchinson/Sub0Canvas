@@ -52,7 +52,9 @@ const DAY = 86400;
  */
 function canvasEntries(m, { name = `mirror-seed-${m.seed}` } = {}) {
     const mainCommits = m.commits.filter((c) => c.branch === 'main');
-    const start = m.bySha.get(m.windowStart).time;
+    // Turns and the plan's day offsets count from the topic window itself, not from the last commit before it (which can be days earlier).
+    const start = Date.parse(m.state.repository.window.from) / 1000;
+    const end = Date.parse(m.state.repository.window.to) / 1000;
     const truth = m.truth;
     const topicBlocks = new Set(), topicFiles = new Set();
     for (const c of Object.values(truth.changes)) { for (const b of c.footprint) topicBlocks.add(b); for (const f of c.files) if (/\.(cpp|h|py)$/.test(f)) topicFiles.add(f); }
@@ -62,7 +64,7 @@ function canvasEntries(m, { name = `mirror-seed-${m.seed}` } = {}) {
     let prevBlocks = new Map();
     const weeks = 8;
     for (let w = 0; w < weeks; w++) {
-        const cutoff = start + w * 7 * DAY + (w === weeks - 1 ? 7 * DAY : 0);
+        const cutoff = w === weeks - 1 ? end : start + w * 7 * DAY;   // weekly, the last turn at the window's end
         const tipCommit = mainCommits.filter((c) => c.time <= cutoff).at(-1);
         const tree = tipCommit.tree;
         const files = {}, blocks = [], live = new Map();

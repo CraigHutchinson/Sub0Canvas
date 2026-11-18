@@ -4,7 +4,8 @@
 //   node tools/mirror/cli.js shape  [--seed N]                       topic and repository statistics against the anonymised targets
 //   node tools/mirror/cli.js source [--seed N] [--serve]             {state, truth} as JSON; --serve: a DocumentSource/ItemSource over JSON lines on stdio
 //   node tools/mirror/cli.js local  [--seed N] --out DIR             DIR/repo (git, every commit id checked), DIR/mirror-state.json, DIR/mirror-truth.json
-//   node tools/mirror/cli.js canvas [--seed N] --out DIR             DIR/mirror-seed-N/: layered-doc-1 turns the viewer opens (one per week of the topic)
+//   node tools/mirror/cli.js canvas [--seed N] --out DIR             DIR/mirror-seed-N/: layered-doc-1 turns the viewer opens (one per week of the
+//                                                                     topic), and DIR/mirror-seed-N.bundle.json for index.html?bundle=<url>
 //   node tools/mirror/cli.js github [--seed N] --out DIR --repo NAME [--public] [--no-drafts] [--execute]
 //                                                                     the steps that publish it to a new forge repository and replay its pull
 //                                                                     requests; prints them, and runs them only with --execute
@@ -118,8 +119,12 @@ function main() {
         case 'local': if (!args.out) fail('local needs --out DIR'); process.stdout.write(`${local(m, args.out)}\n`); break;
         case 'canvas': {
             if (!args.out) fail('canvas needs --out DIR');
-            for (const e of canvasEntries(m)) { const p = path.join(args.out, e.path); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, e.text); }
-            process.stdout.write(`${path.join(args.out, `mirror-seed-${m.seed}`)}\n`);
+            const entries = canvasEntries(m);
+            for (const e of entries) { const p = path.join(args.out, e.path); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, e.text); }
+            // The same files as one bundle, for the served viewer: index.html?bundle=<this file's URL>.
+            const bundleFile = path.join(args.out, `mirror-seed-${m.seed}.bundle.json`);
+            fs.writeFileSync(bundleFile, JSON.stringify(entries));
+            process.stdout.write(`${path.join(args.out, `mirror-seed-${m.seed}`)}\n${bundleFile}\n`);
             break;
         }
         case 'github': github(m, args); break;

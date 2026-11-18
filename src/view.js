@@ -93,7 +93,7 @@
         put(box, ...problems.slice(0, 20).map((p) => h('div', null, p)), problems.length > 20 ? h('div', null, `… and ${problems.length - 20} more`) : null);
         if (!docs.length) return;
         state.docs = docs;
-        if (source !== 'hash') history.replaceState(null, '', location.pathname + location.search + (source === 'demo' && location.hash ? location.hash : ''));
+        if (source !== 'hash') history.replaceState(null, '', location.pathname + location.search + ((source === 'demo' || source === 'bundle') && location.hash ? location.hash : ''));
         readHash();
         render();
     }
@@ -551,8 +551,16 @@
         else if (location.hash.length > 1 && window.SUB0CANVAS_DEMO) loadDemo(true);
     });
 
-    // Start: with a hash naming a view, open the demo there (links and screenshots); otherwise show the welcome page.
-    if (location.hash.length > 1 && window.SUB0CANVAS_DEMO) loadDemo(true);
+    // Start: ?bundle=<url> loads a JSON array of {path, text} (what `npm run mirror -- canvas` writes beside its folder); it needs the page served
+    // (npm run serve), because a page opened from file:// cannot fetch. Otherwise a hash naming a view opens the demo there (links and screenshots),
+    // and with neither the welcome page shows.
+    const bundle = new URLSearchParams(location.search).get('bundle');
+    if (bundle) {
+        fetch(bundle)
+            .then((r) => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.json(); })
+            .then((entries) => load(entries, 'bundle'))
+            .catch((e) => { render(); $('#problems').hidden = false; $('#problems').textContent = `Could not load ${bundle}: ${e.message}. A bundle needs the page served (npm run serve).`; });
+    } else if (location.hash.length > 1 && window.SUB0CANVAS_DEMO) loadDemo(true);
     else render();
 
     window.S0View = { load, state, render };
