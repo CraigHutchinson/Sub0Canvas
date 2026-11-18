@@ -69,7 +69,11 @@ std::string quote(const std::string& s) { return "\"" + s + "\""; }
 std::string git(const Options& o, const std::string& args)
 {
     const std::string cmd = "git -C " + quote(o.repo) + " " + args;
-    FILE* p = popen(cmd.c_str(), "rb");
+#ifdef _WIN32
+    FILE* p = popen(cmd.c_str(), "rb");   // binary: no CRLF translation of blob bytes
+#else
+    FILE* p = popen(cmd.c_str(), "r");    // glibc's popen refuses "rb" (EINVAL); POSIX streams do not translate anyway
+#endif
     if (!p) fail("cannot run git");
     std::string out;
     char buf[65536];
