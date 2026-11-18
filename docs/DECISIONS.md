@@ -4,7 +4,7 @@ Status: **proposed, for the owner to confirm** (2026-11-18), except where marked
 ([DIRECTION.md](DIRECTION.md) section 5): prefer a forward-looking design, the most capable solution first time where viable; brainstorm options and
 weigh them for each question; move the proving grounds and the code they need from Sub0Squad (go-ahead given); for where data lives, consider existing
 tooling such as `.git`, the Sub0 glue libraries and other prior art; keep a shared orchestration layer ("Sub0Fabric") open if the review finds that
-shape. It answers [BACKBONE.md](BACKBONE.md) section 11 (questions 1-11); its recommendations update section 14's register of open decisions.
+shape. It answers [BACKBONE.md](BACKBONE.md) section 11 (questions 1-11); its recommendations are the defaults in section 14.3's register of open decisions, and its amendments are rows of 14.2.
 
 Prior art here is from knowledge, not a fresh search; the facts about the Sub0 libraries are from their READMEs in local checkouts (2026-11-18).
 
@@ -215,11 +215,7 @@ Lamport clock and writer, durable cursors (inboxes) and live notification (Sub0P
 **The trigger to extract**: the second consumer that needs the same mechanics, most likely Sub0Squad moving its journal onto the log format, or
 Sub0Log wanting git replication. It stays in BACKBONE.md 14.3's register until then.
 
-## 10. Amendments this adds (to BACKBONE.md 14.2)
+## 10. Amendments this adds
 
-| # | amendment | slice |
-|---|---|---|
-| A15 | Events carry their writer and a Lamport clock; the store reads many writers' segments and merges them deterministically; "single writer per document" becomes "single writer per segment" | B1 / V1 |
-| A16 | Block ids are deterministic birth ids (section 4) | S1, or B0 if cheap |
-| A17 | Storage is layered by kind (section 3): git refs for shared annotations, the git common directory for caches, the user's state directory for per-reader state, exports on demand | V1 |
-| A18 | The log is a module with its own format spec and no dependency on the rest of the library, so it can become Sub0Fabric | B1 / V1 |
+A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a module of its own) are rows of the one
+amendment register, [BACKBONE.md](BACKBONE.md#142-amendments) section 14.2.
