@@ -13,7 +13,7 @@ and Sub0Squad). Read-only, local, no network. Do not build the store (B1) or any
 
 * `BlockIndex` follows one sequence of texts and logs `BlockEvent`s (`kept` with `edited`, `resigned`, `renamed`, `revived`, `added`, `retired`,
   `merged`) stamped with an integer turn. `blockHistory(index, id)` gives one id's events including ids merged into it.
-* BACKBONE.md section 6 sketches `RevisionIndex` over a tree; section 12 changes it to **per-path replay** (a path's own revisions, git's rename and
+* BACKBONE.md section 6 sketches `RevisionIndex` over a tree; [SCALE.md](../SCALE.md) section 4 changes it to **per-path replay** (a path's own revisions, git's rename and
   copy detection handing cross-file moves to the revive rule, checkpoints per path) so that resolving one anchor never replays the whole tree.
 * Good test histories exist locally: this repository (small, includes the import of `lib/` from Sub0Squad), and Sub0Squad (hundreds of commits,
   `src/canvas_agent.cpp`, `src/doc_layers.cpp` moved out to this repository on 2026-11-17, functions renamed over time).
@@ -37,7 +37,7 @@ and Sub0Squad). Read-only, local, no network. Do not build the store (B1) or any
 
 * `sub0canvas::git` and per-path history are in `main`, with the tiny-repository test in the quick set.
 * The truth check passes on all eight functions, or each disagreement is explained (a rule's limit, written into LAYERED_DOCUMENT.md).
-* The replay cost of Sub0Squad's history is recorded in BACKBONE.md section 12.
+* The replay cost of Sub0Squad's history is recorded in SCALE.md section 6.
 
 ## Environment and constraints
 

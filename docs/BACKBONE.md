@@ -21,7 +21,8 @@ This document fixes:
 * how **Sub0Squad's existing pieces** become layers and adapters, and which stay where they are (section 8);
 * the **consumers** outside Sub0Squad (section 9);
 * **ordered slices**, each with a check that can fail (section 10), and the open questions that need the owner (section 11);
-* how it all scales to a codebase of **billions of lines** (section 12).
+* how it all scales, in outline (section 12; the design is [SCALE.md](SCALE.md));
+* pull requests, spikes and their dependencies as change views, in outline ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)).
 
 It does not decide how use cases are built on the mechanisms (a scheduler's policy, a reviewer's prompt). Those are built on the backbone, not into it.
 
@@ -441,7 +442,7 @@ Ordered so that each slice is used by a consumer before the next is built. Each 
 | **E1** editor | an LSP-like process serving decorations and hovers from views | a VS Code session shows the issues and prose of a Sub0Squad attempt in the margin, and they follow a function moved by an edit |
 | **C1** collaborative review | review requests as tags plus subscriptions, presence from claims | two people and one agent review one file: every comment survives the author's subsequent edits on the right block, and the reviewer's inbox lists exactly the unaddressed ones |
 
-| **S0** scale harness | a deterministic synthetic corpus generator (files, blocks, commits with edits, renames, moves, merges; generated on the fly, never written whole) and benchmarks of today's index (`bench_index`, label `timing`, local only) | the budgets of section 12 are measured and recorded for 10^5, 10^7 and 10^9 lines; today's limits (memory per block, retired scan) are numbers, not guesses |
+| **S0** scale harness | a deterministic synthetic corpus generator (files, blocks, commits with edits, renames, moves, merges; generated on the fly, never written whole) and benchmarks of today's index (`bench_index`, label `timing`, local only) | the budgets of SCALE.md section 6 are measured and recorded for 10^5, 10^7 and 10^9 lines; today's limits (memory per block, retired scan) are numbers, not guesses |
 | **S1** compact, lazy index | blocks keyed by blob hash and reused; no full texts held; fixed-size sketches instead of token sets; per-path laziness | S0 at 10^9 lines (streamed) within the memory budget; `test_doc_layers` unchanged; Sub0Squad's tier 0 cases unchanged (identity events byte-identical on the golden fixtures) |
 | **S2** sketch index and per-path history | MinHash/LSH candidates for revive and merge; per-path checkpoints; `RevisionIndex` per path | revive and merge recall against the exhaustive scan on S0's corpus (no lost ids at 10^7 blocks); a path's history over 10^5 commits under the budget |
 | **S3** large real repositories | G1's checks run against large public repositories cloned locally (the Linux kernel, Chromium; the owner approves each download) | the G1 identity-history check on five hand-checked functions per repository; the budgets hold on real code |
@@ -457,7 +458,8 @@ integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRA
 heuristics behind it, byte-identical) lands before S1 and G1 replay more files through `foldRegions`. **V0-V5**, the authoring tool
 ([AUTHORING.md](AUTHORING.md) section 7), the first use case to invest in: V0-V2 pull forward the parts of B1, B2, B4, D2 and E1 they need (a store
 with a file log, inboxes, quote re-anchoring, a Markdown provider, a process that owns the store), proved on the owner's own design work before
-Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0, V1, V2 (which build B1 and B2's cores); G1 after D0.
+Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0, V1, V2 (which build B1 and B2's cores); G1 after D0. **P0-P5**, change views
+([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 8): P0 after G1 and B4, P1 with S2's sketches, P3 in the authoring tool after V2, P4 widening G2.
 
 ## 11. Open questions for the owner
 
@@ -485,37 +487,9 @@ Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0
 which also adds amendments A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a liftable module).
 Question 9 is done.
 
-## 12. Scale: a codebase of billions of lines
+## 12. Scale
 
-The backbone must hold for a monorepo of billions of lines (use case U4 in [USE_CASES.md](USE_CASES.md): about 2 billion lines, 9 million files and
-35 million commits is the published size of the largest known one). The rule that follows: **cost is proportional to what is touched, never to the
-repository.** What is touched is the paths a view shows, an anchor names, a subscription's area covers, or a commit changes.
-
-**What changes in the core** (today's code, measured against that rule):
-
-| part | today | at scale |
-|---|---|---|
-| block discovery | `foldRegions` heuristic per file | a provider per language behind one outline result, chosen by detection, measured by a conformance corpus ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)); O(n) per file whichever provider |
-| block storage | `Block` holds `std::set<std::string>` of tokens and of literals; `BlockIndex::texts_` holds every indexed file's full text | a compact block: id, path id (interned), span, signature hash, name (interned), and a fixed-size **MinHash sketch** of its tokens (64 x 32 bits) instead of the sets; texts fetched from the `DocumentSource` when needed, never held |
-| reuse | a path is re-scanned when its text changes | blocks are computed **once per blob** (the git object id, or a hash of the text) and cached by it, so a file identical across 10^4 revisions and branches is scanned once |
-| reconciliation within a file | signature, then unique name, then Jaccard over token sets | the same order; similarity estimated from sketches (MinHash's estimate of Jaccard); exact comparison only for the few candidates the sketch keeps |
-| revive and merge across files | every retired block is scanned (`for (... : retired_)`) | an **LSH index** over retired sketches (bands of the sketch as bucket keys): candidates in O(1) per block, then the exact rule on those few; retired blocks expire from the index after a horizon (a revival after 10^4 commits is a new block) |
-| history | one `BlockIndex` follows one line of texts; `RevisionIndex` (section 6) replays a tree | **per-path replay**: a path's own revisions (`git log --follow`-style, with git's rename and copy detection to hand cross-file moves to the LSH), checkpoints per path every N revisions; a whole-tree replay is never needed to resolve one anchor |
-| store and log | not built (B1) | **sharded** by path prefix (a directory subtree per shard, split when large); each shard its own log segment and snapshot; a query names its area, and only those shards are read; cross-shard items (a PR touching many areas) are stored once and indexed in each shard they anchor into |
-| output | `layeredJson` writes every file, block and event | scoped writers: a view or snapshot takes a query (paths, layers) and writes only what it covers; the full form remains for U1 |
-
-**Budgets** (first targets; S0 replaces them with measurements): at least 1 million lines per second per core for cold indexing; an incremental
-update proportional to the changed files of a commit; a warm anchor resolution under 10 ms; a compact block under about 200 bytes; resident memory
-proportional to the paths touched. Performance is measured locally, never in CI (the family rule): benchmarks carry the ctest label `timing` and
-skip on battery.
-
-**What does not change:** the identity rules (section 2 and LAYERED_DOCUMENT.md), the item and anchor model, the event kinds, the adapter interfaces
-(a `DocumentSource` already returns files per revision and changed paths), and the format (scoped snapshots are still `layered-doc-1`).
-
-**Risks.** Sketch-estimated similarity can miss or invent a match near the thresholds: S2 measures recall and precision against the exhaustive rule
-on the synthetic corpus, and the exact rule always confirms a candidate. Heuristic folding on unusual code yields wrong blocks: tree-sitter for the
-languages that matter, chosen by measurement on S3's repositories. Interning and caching add state that must survive restarts: they are caches,
-rebuilt from the document source, never the truth.
+Moved to [SCALE.md](SCALE.md) (2026-11-18), the one home for scale: two target profiles (the largest published monorepo, lines-dominated; a private product monorepo measured locally, dominated by non-code files, history width and change volume), the requirements they set, the design (compact blocks keyed by blob, sketches and LSH, per-path replay, sharded store and indexes), the budgets and the risks. The rule it holds the backbone to: **cost is proportional to what is touched, never to the repository.** What does not change at scale: the identity rules, the item and anchor model, the event kinds, the adapter interfaces and the format.
 
 ## 13. Prior art this design borrows from
 
@@ -554,6 +528,7 @@ A use case passes when it needs no mechanism beyond section 3. Where it needed a
 | U9 a prose-first reader of a codebase | prose layer, name anchors, views | documents are Markdown: headings must be blocks | A8 |
 | U10 a multi-repository or dependency view | stores, links | items that point across documents | A9 |
 | U11 an agent's long-lived memory of a codebase | `note` events, the store, the resolver | notes must outlive sessions and follow code across history | none new: B1's log plus B4's resolver |
+| U12 change views ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)) | items, links, anchors, views, inboxes | changes and topics are items; lineage is links (new conventions under A5); footprints are anchors; hunk fingerprints are item data (A4); a profile-B repository needs shared caches, partial history and git's own indexes | A19, A20, A21 |
 
 ### 14.2 Amendments
 
@@ -575,6 +550,9 @@ Each is folded into the section it names when its slice is built; until then thi
 | A12 | **Applying a parsed reply moves into the library**: the all-or-nothing application of a `CanvasReply` across files (Sub0Squad's `applyCanvasReply`) is library behaviour that every consumer (the squad, the authoring tool, an editor) needs. With it, the 30 recorded-reply cases become this library's own test (R-EDIT-7). **Done 2026-11-18** (`applyReply`, atomic by construction; turn control moved too; [DECISIONS.md](DECISIONS.md) section 2). | `canvas.hpp`; a Sub0Squad PR to call it | next minor |
 | A13 | **Policies are named and recorded** (14.3): every output records the policy versions that produced it, so two runs can be compared and a change of policy is visible in the data. | the format (`policies`), views | B0 onward |
 | A14 | **Views take budgets**: a scope, item and character limits, and cursors; the summary-first rendering of R-REN generalised to every view (R-AUTH-1). | `ViewSpec` (3.6) | V2 |
+| A19 | **Caches are per user and keyed by object id**, shared by every clone and worktree of a repository (the repository identified by its root commit); per-clone state holds only what differs. Extends [DECISIONS.md](DECISIONS.md) section 3's cache layer, which was per clone. | the cache layer, `DocumentSource` | S1 |
+| A20 | **Document sources may lack objects**: `files` and `revisions` return an unknown marker for a missing blob or a cut history, and callers render unknown rather than fail. | `DocumentSource` | G1 |
+| A21 | **The git adapter uses git's own indexes**: commit-graph with changed-path Bloom filters for per-path history, one long-lived `cat-file --batch` for objects, patch ids for hunks; it never walks the whole tree or every ref per request. | the git adapter | G1, P0 |
 
 ### 14.3 Open decisions, kept open by design
 
@@ -601,6 +579,8 @@ cheap. The pattern for each:
 | where the review log lives | working-tree files / git refs of its own / git notes / local only / a database / the forge | git refs per writer, caches in the git directory, state per user (DECISIONS.md section 3) | the owner's use (V1) | the `Log` interface (A17) |
 | a shared orchestration layer (Sub0Fabric) | build now / build here behind a liftable boundary / extend Sub0Log | here, liftable (A18) | the second consumer of the log mechanics (likely Sub0Squad's journal) | DECISIONS.md section 9 |
 | the authoring server's stack | C++ `serve` over stdio with a Node bridge / a C++ HTTP server / Node only | C++ over stdio with a bridge (AUTHORING.md section 3) | V1: build cost and one truth for the store's rules | the protocol (A10), which every arm speaks |
+
+Change views add four (hunk equivalence, what marks a spike, topic grouping, areas in the topic map): [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 9.
 
 This register is the place to add a decision when a design choice turns out not to be clear-cut. A decision leaves the register with its evidence.
 

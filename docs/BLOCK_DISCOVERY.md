@@ -2,7 +2,7 @@
 
 Status: **design, for the owner to read** (2026-11-18). Nothing here is built. It answers the owner's note that folding needs language-aware
 processing (YAML, XML, JSON, Rust, Python, C++, JavaScript, TypeScript and more), that Notepad++ has an extensible mechanism, and that existing tools
-should be drawn on rather than reinvented. It extends [BACKBONE.md](BACKBONE.md) (section 12, "block discovery", and section 14, amendment A8) and
+should be drawn on rather than reinvented. It extends [BACKBONE.md](BACKBONE.md) (section 14, amendment A8) and [SCALE.md](SCALE.md) (section 4, "block discovery") and
 states its requirements in [REQUIREMENTS.md](REQUIREMENTS.md) (R-BLK).
 
 ## 1. Why it matters more than folding

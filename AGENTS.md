@@ -18,6 +18,8 @@ hold up on codebases of billions of lines.
 | [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, the ordered slices; section 14: the later use cases, amendments, the register of open decisions, policies as data |
 | [docs/AUTHORING.md](docs/AUTHORING.md) | the viewer becoming an authoring tool (the first use case to invest in): concise views, the server, comments and inboxes, scenarios, slices V0-V5 |
+| [docs/SCALE.md](docs/SCALE.md) | scale, its one home: two target profiles (billions of lines; a work-dominated private monorepo, measured), requirements, design, indexes, budgets |
+| [docs/CHANGE_VIEWS.md](docs/CHANGE_VIEWS.md) | pull requests, spikes and local branches as layers: topics, lineage, block-level overlap, landing coverage, slices P0-P5 |
 | [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | the open questions worked through: options, pros and cons, recommendations; where data lives (git refs), the Sub0 libraries to adopt, Sub0Fabric kept open |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | what consumers rely on, independent of implementation, each with the test that checks it; Sub0Squad's use mapped |
@@ -72,7 +74,10 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
 * **Clean up as you go** (standing permission): once work is merged, superseded or obsolete, delete its branches (local and remote), worktrees and
   stale folders (old run data under `out/`) without asking, after checking that it really is merged or superseded. Retire legacy documents once
   their content is integrated; git keeps them. "Never throw work away" protects unique, unmerged work only.
-* **This is a public repository: never name or link a private repository** (the pre-push gate checks, `private_names.py`).
+* **This is a public repository: never name or link a private repository** (the pre-push gate checks, `private_names.py`). **Closed-source
+  codebases used as references are described by their shape and numbers only**: never their name, owner, internal tools, tracker keys, paths,
+  titles or links, in files, commit messages or anything posted. Private proving grounds publish anonymised numbers only (R-CHG-9). The owner's
+  clone carries a local-only guard for this (under `.git/`, never tracked); if a commit or edit is refused by it, rephrase, never bypass it.
 * **Report faithfully**: regressions named, skipped steps said, numbers with their noise. Never throw work away.
 * **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. **Never dispatch the
   full tier after a routine push**: verify locally (`ctest --preset quick`, or `full`) and check only the smoke run after pushing. Full runs are for

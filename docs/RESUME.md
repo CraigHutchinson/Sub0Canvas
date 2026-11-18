@@ -35,8 +35,14 @@ by kind with shared annotations in git refs per writer, deterministic birth ids,
 yet confirmed by the owner.**
 
 [BACKBONE.md](BACKBONE.md): items with state, tags and links; an event log; subscriptions as inboxes; claims; views; the store; source adapters
-(local git, GitHub); a revision-aware index replayed over history; the scale design for billions of lines (section 12); slices B0-B4, G1-G5, S0-S4,
+(local git, GitHub); a revision-aware index replayed over history; scale ([SCALE.md](SCALE.md)); slices B0-B4, G1-G5, S0-S4,
 E1, C1. **The owner has not yet read it**; its section 11 lists five open questions for them.
+
+**Scale and change views (2026-11-18, later).** Scale has one home, [SCALE.md](SCALE.md), with a second target profile measured on a private
+monorepo (440,000 files, most not code; 430 GB of git; about 1,700 pull requests a week): R-SCALE-5 to 9 and amendments A19-A21 follow from it.
+[CHANGE_VIEWS.md](CHANGE_VIEWS.md) designs pull requests, spikes and their dependencies as layers (U12, R-CHG, P0-P5), checked against the shape
+of a private 25-change reference topic. **The owner has not yet read either.** This public repository never names its private references; a
+local-only guard in the owner's clone enforces it (AGENTS.md).
 
 ## Known gaps and debts
 
@@ -49,7 +55,7 @@ E1, C1. **The owner has not yet read it**; its section 11 lists five open questi
 * The producer (Sub0Squad) does not yet write the optional fields the viewer understands (item `id`, anchor `column`, `fix`, `mergedFrom`, `layerMeta`):
   slice B0.
 * `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or
-  scale (BACKBONE.md section 12, slices S0-S2).
+  scale (SCALE.md, slices S0-S2).
 * The test helper `lib/tests/check.hpp` calls `getenv`, which clang on Windows (MSVC runtime) flags as deprecated under `-Werror`; the Linux Clang
   CI leg is unaffected.
 * Turn files' `events` are cumulative today; BACKBONE.md proposes per-turn events plus a cumulative log (open question 2).

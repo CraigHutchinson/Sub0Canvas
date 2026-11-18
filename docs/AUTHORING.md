@@ -36,7 +36,7 @@ short view. The rule (R-AUTH-1): **a view is bounded by attention, not by the da
   revisions are fetched by range when asked. The viewer never loads a whole log: it reads a snapshot and the events after it (BACKBONE.md 3.3, 4).
 * **Large is the server's problem, not the page's.** The page holds what is on screen. Lists are paged; long files render folded (the same folded view
   a model gets, CANVAS.md), with the anchored sections open.
-* This is the same rule as U4's ("cost proportional to what is touched", BACKBONE.md section 12), applied to attention: what is shown is proportional
+* This is the same rule as U4's ("cost proportional to what is touched", SCALE.md section 1), applied to attention: what is shown is proportional
   to what concerns the reader.
 
 ## 3. Architecture

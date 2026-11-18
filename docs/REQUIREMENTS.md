@@ -209,14 +209,33 @@ its slice is built.
 | R-SRC-7 | Nothing is written back to a source without the consumer's confirmation; a rejected proposal leaves no trace there. | U3, U6 | G5 |
 | R-SRC-8 | Tests read captured data; no test uses the network. | all | all |
 
-### Scale (R-SCALE; BACKBONE.md section 12)
+### Scale (R-SCALE; SCALE.md)
 
 | id | requirement | serves | slice |
 |---|---|---|---|
 | R-SCALE-1 | Cost is proportional to what is touched (paths viewed, anchored, subscribed to or changed), never to the repository. | U4 | S0-S4 |
-| R-SCALE-2 | The budgets of BACKBONE.md section 12, once measured, hold at 10^5, 10^7 and 10^9 lines (locally, label `timing`). | U4 | S0, S1 |
+| R-SCALE-2 | The budgets of SCALE.md section 6, once measured, hold at 10^5, 10^7 and 10^9 lines (locally, label `timing`). | U4 | S0, S1 |
 | R-SCALE-3 | Identity allocation needs no global counter: shards and per-path replays allocate without coordinating. | U4 | S1, S4 (A2) |
 | R-SCALE-4 | Sketch-based candidate search loses no identity that the exhaustive rule keeps, on the synthetic corpus. | U4 | S2 |
+| R-SCALE-5 | Every path is classified before it is parsed; binary files get no blocks, and data and sidecar files are indexed only when the document's policy asks. | U4 | D0, S1 |
+| R-SCALE-6 | Per-blob tables are shared by every clone and worktree of a repository on one machine; an extra clone costs only its own small state. | U4, U12 | S1 (A19) |
+| R-SCALE-7 | A missing object (partial or shallow clone) makes an answer unknown, never an error; the view still renders. | U4, U3 | G1 (A20) |
+| R-SCALE-8 | A trunk merge costs in proportion to the paths it changed and the open changes whose footprints it meets, not to the number of open changes. | U4, U12 | S4, P1 |
+| R-SCALE-9 | Per-path history never walks commits that did not change the path (git's changed-path filters, or an equivalent index). | U4, U3 | G1 (A21) |
+
+### Change views (R-CHG; CHANGE_VIEWS.md, U12)
+
+| id | requirement | serves | slice |
+|---|---|---|---|
+| R-CHG-1 | A change's footprint is the set of blocks its diff modifies, resolved at its merge base and carried to the viewed revision. | U12, U3 | P0 |
+| R-CHG-2 | Overlap and conflict are relations between blocks, never inferred from shared files alone; shared files are reported only as a count. | U12 | P1 |
+| R-CHG-3 | Every derived lineage link (carved from, supersedes, integrates, duplicates, depends on, ports) carries its evidence, a confidence and the policy version that made it; an author's statement overrides it, and both are kept. | U12 | P2 |
+| R-CHG-4 | Each hunk of a spike is in exactly one of landed, in flight, not carved, obsolete or dropped, against the target branch. | U12 | P2 |
+| R-CHG-5 | A rewritten carve-out still matches its spike hunk (patch id, or same block with similar text) at the recall P2 states. | U12 | P2 |
+| R-CHG-6 | A topic view opens summary first within its budget, whatever the number of changes and files in the topic. | U12, U7 | P3 |
+| R-CHG-7 | Changes need no forge: local branches, stacks and worktrees are changes from the git adapter alone. | U12 | P0 |
+| R-CHG-8 | Nothing is created at a forge or tracker (a branch, a pull request, a closure) without the consumer's confirmation. | U12 | P5 |
+| R-CHG-9 | A private proving ground publishes only anonymised numbers; no name, path, title or link of its source enters this repository. | all | all |
 
 ### Editors, collaboration and exports (R-ED, R-COL, R-EXP)
 

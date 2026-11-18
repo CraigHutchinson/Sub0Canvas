@@ -22,6 +22,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Next
 
+* **The owner reads [SCALE.md](SCALE.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md)** (2026-11-18): the second scale profile and its requirements
+  (R-SCALE-5 to 9, A19-A21), and change views (U12, R-CHG, slices P0-P5, four open decisions).
+
 * **V1: comments** (after the owner's answers to questions 10 and 11): `sub0canvas serve`, a minimal store and file log (B1's core), the bridge;
   comment, reply and resolve from the viewer; scenarios as tests.
 * **V2: the agent's inbox**: B2's inbox over the review layer, the CLI, views with budgets; **the acceptance test is a real review round on this
@@ -32,6 +35,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **The owner confirms [DECISIONS.md](DECISIONS.md)**: storage layered by kind (git refs per writer), deterministic birth ids, Sub0Platform's C++ layer
   in the tools (a reason to finish its move out of Sub0Squad), Sub0Fabric kept open behind a liftable log module (A15-A18).
 * **D1: the conformance corpus** per language, hand-checked outlines.
+* **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.
+* **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
+  coverage. Checked also on the owner's private reference topic, numbers only.
 * **S1: the compact, lazy index** (after S0's numbers).
 * **B3 claims and notes, B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
 * **Sub0Squad: measure the layer where it acts**: off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the
@@ -43,6 +49,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
 * **S2** the sketch index and per-path checkpoints; **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
 * **G2-G5**: GitHub items, issues and project items, events and subscriptions, write-back.
+* **P3-P5**: change views in the authoring tool; forge (configurable host) and tracker sources; topic inboxes and carve-out proposals.
+* **S3-private**: the budgets on the measured work-dominated monorepo, on the owner's machine, numbers only (SCALE.md section 7).
 * **E1**: an editor served by the same `serve` process. **C1**: collaborative review.
 * A SARIF export of the issues layer (R-EXP-1); the policy registry and loader (BACKBONE.md 14.4) when the first policy needs a second arm.
 

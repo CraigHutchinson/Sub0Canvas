@@ -87,7 +87,9 @@ The data is not one thing. Each kind has different needs, so the answer is a lay
    merge), lifted onto git for replication, which is the strongest sign for Sub0Fabric (section 9). Sync is `git fetch` and `git push` with a refspec
    the tool configures on first use (with the owner's confirmation); **private items go to `refs/sub0canvas-local/...`, which is never pushed**.
 3. **Derived caches: option D**, under the git common directory (`git rev-parse --git-common-dir`, so all worktrees of a clone share them):
-   `.git/sub0canvas/cache/`. Rebuildable from the document and the log; deleting them costs time, never data.
+   `.git/sub0canvas/cache/`. Rebuildable from the document and the log; deleting them costs time, never data. **Amended (A19, SCALE.md)**: per-blob
+   tables keyed by object id move to a per-user cache shared by every clone of the repository, because a work-dominated monorepo is held as several
+   clones of hundreds of gigabytes each; only per-clone state stays under the git directory.
 4. **Per-reader state**: the user's state directory, via Sub0Platform's `dirs.state("sub0canvas")`, keyed by repository (inbox cursors, folds, the
    server's session token).
 5. **Exports: option A only as an export**: `sub0canvas export review --query ...` writes a readable Markdown or JSON file a person may commit or attach

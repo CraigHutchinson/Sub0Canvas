@@ -89,7 +89,7 @@ then function, then lines); editors' folding and LSP document symbols.
 * **Addressing by name needs every function,** not only the foldable ones (`all = true`).
 * **Two insertions after one line keep their given order** (a stable sort; a model-based test found the unstable one).
 * **Fold detection is heuristic.** Macros or odd formatting can show the wrong lines, which costs a read, never correctness: edits apply to the real
-  text. A tree-sitter outline is the upgrade when a language or scale needs it (BACKBONE.md section 12).
+  text. A tree-sitter outline is the upgrade when a language or scale needs it (SCALE.md section 4).
 
 ## Not built
 

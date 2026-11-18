@@ -13,7 +13,7 @@ invest in**, proved on this project's own design work; U2 and U6 grow out of it 
 | U1 | **An agent's working document** (Sub0Squad's canvas worker) | one task: a few files, hundreds of lines, tens of turns | yes (canvas, folding, block ids, issues layer) | unit tests; Sub0Squad's `test_blocks`, `test_canvas_agent` and tier 0 A/B ([INTEGRATION.md](INTEGRATION.md)) |
 | U2 | **The squad's backbone**: planner, scheduler, workers, reviewers and owners meeting in layers | one workflow: tens of files, many agents, days | design (BACKBONE.md B1-B3) | the same Sub0Squad checks, plus a recorded workflow replayed through the store |
 | U3 | **A GitHub project view**: history, PRs, review comments, issues, checks around the code | one repository, its whole history and open PRs | design (BACKBONE.md G1-G5) | this repository's and Sub0Squad's own history and PRs, hand-checked truth |
-| U4 | **Very large codebases**: monorepos up to **billions of lines** | 10^9-10^10 lines, 10^7 files, 10^7 commits | no | a synthetic corpus at scale, then large public repositories cloned locally (section U4 below) |
+| U4 | **Very large codebases**: monorepos up to **billions of lines**, and monorepos large in files, history and concurrent work | 10^9-10^10 lines, 10^7 files, 10^7 commits; or 10^5-10^6 files, 10^4 branches, 10^3 open changes, 10^2 merges a day | no | a synthetic corpus at scale, then large public repositories cloned locally (section U4 below) |
 | U5 | **A text editor over layers** | the files open, the repository behind them | no | an LSP-like process serving one editor (BACKBONE.md E1) |
 | U6 | **A collaborative editor with review, comments and explainers** | a team on one document set | no | two people and an agent reviewing one file (BACKBONE.md C1) |
 | U7 | **The viewer, becoming an authoring tool**: Markdown, code and a GitHub-like review surface where a person and agents comment, reply, edit, test, validate and push | one project's docs and code first (this repository), then any document above | viewer yes (read-only); authoring design ([AUTHORING.md](AUTHORING.md), V0-V5) | `npm test`, golden fixtures; scripted scenarios (AUTHORING.md section 6); the owner's real review round on this repository |
@@ -21,6 +21,7 @@ invest in**, proved on this project's own design work; U2 and U6 grow out of it 
 | U9 | **A prose-first reader of a codebase**: the docs and explanations at the centre, the code a drill-down | one repository | no | Markdown blocks (BLOCK_DISCOVERY.md 4.4), name anchors resolving as code is written |
 | U10 | **Several repositories or dependencies together** | a workspace of documents | no | links with document-qualified keys (BACKBONE.md A9) |
 | U11 | **An agent's long-lived memory of a codebase**: notes that outlive sessions and follow the code | one repository over months | no | notes resolved across G1's history, hand-checked |
+| U12 | **Change views**: pull requests, spikes and local branches as layers; the changes serving one goal as a topic, with lineage (stacks, carve-outs, supersessions, dependencies, ports), block-level overlap and conflicts, a spike's landing coverage, drill-down to every variant of a block | one topic of tens of changes, within a repository of thousands of open ones | no | synthetic change sets with known lineage (S0); this repository's and Sub0Squad's branches; the owner's private reference topic, numbers only ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 7) |
 
 ## U1. An agent's working document (built)
 
@@ -44,27 +45,7 @@ Sub0Squad's backbone-integration PRs ([INTEGRATION.md](INTEGRATION.md)), so ever
 
 ## U4. Very large codebases (design target)
 
-**The target.** The design must hold for a monorepo of billions of lines: Google described its monorepo in 2015 as about 2 billion lines in about
-9 million source files with about 35 million commits; single large public projects (the Linux kernel, Chromium) are tens of millions of lines each.
-At that scale nothing may be proportional to the repository: only to **what is touched** (the paths a view, an anchor, a subscription or a commit
-concerns).
-
-**What it demands of the design** (BACKBONE.md section 12 holds the design; these are the requirements it answers):
-
-| requirement | why | today's code |
-|---|---|---|
-| **Lazy, per-path indexing.** A path is indexed when first needed, never the whole tree. | 10^7 files cannot be read for one view | `BlockIndex` indexes what it is fed: fine, the consumer decides |
-| **Content-addressed reuse.** Blocks of a file are computed once per blob (its git hash) and shared across revisions and branches. | most files are identical across most revisions | not built: `update` re-scans text, keyed by path |
-| **No full texts held.** The index keeps hashes, spans and compact sketches, and fetches text from the document source on demand. | 10^9 lines of text do not fit in memory | `BlockIndex::texts_` keeps every path's text; `Block` keeps two `std::set<std::string>` per block |
-| **Sub-linear candidate search.** Revive and merge look for similar blocks among retired ones with a sketch index (MinHash / locality-sensitive hashing), not a scan. | a scan over every retired block is quadratic across history | `retired_` is scanned in full on every unmatched block |
-| **Per-path history.** Replay follows one path's revisions (and git's rename detection), with checkpoints, not every commit of the tree. | replaying 10^7 commits for one anchor is impossible | `RevisionIndex` is designed per tree; section 12 makes it per path |
-| **Sharded store and log.** Items and events are partitioned (by path prefix), and queries touch only the shards in their area. | one log of a monorepo's events is too large to replay | the store is not built yet (B1): decide before building |
-| **Bounded output.** Snapshots and views are scoped (a query, a set of paths), never "everything". | `layeredJson` writes every file and block | fine for U1; scoped writer needed for U3/U4 |
-| **Parsing that scales and is right.** O(n) per file, many languages. | the brace/indent heuristic is fast but language-blind | `foldRegions` heuristic; tree-sitter is the upgrade |
-
-**Budgets to measure against** (first guesses, to be replaced by S0's measurements): indexing at least 1 million lines per second per core on a cold
-file; an incremental commit update proportional to the files it changed; a warm anchor resolution under 10 ms; a compact block under about 200 bytes;
-memory proportional to the paths touched, not the repository.
+Two shapes of scale: a monorepo of billions of lines (the largest published one: about 2 billion lines, 9 million files, 35 million commits), and a monorepo that is large in everything but lines: hundreds of thousands of files, most of them not code, a git directory of hundreds of gigabytes, thousands of branches, hundreds of merges a day against thousands of open changes, several clones per developer (measured on a private repository, 2026-11-18). The requirements, design and budgets for both are in [SCALE.md](SCALE.md).
 
 ## U5. A text editor over layers (design)
 
@@ -94,3 +75,7 @@ scripted scenarios.
 Named so the groundwork is checked against them (BACKBONE.md section 14.1). Each needs no new mechanism: quality signals are layers of items with data
 (A4) and ranges (A3); a prose-first reader needs Markdown blocks (A8) and name anchors; several repositories need document-qualified links (A9); an
 agent's memory is `note` events in the log, resolved across history by B4 and G1.
+
+## U12. Change views (design)
+
+A topic of work in a large repository is rarely one pull request. It is an exploratory spike, focused changes carved out of it, stacks, supersessions, an integration change and ports to release branches, spread over weeks. The forge shows a flat list. U12 shows the set: what each change came from and depends on, where changes meet at block level (not file level, which is noise), what of a spike has landed, and every pending variant of one block side by side. It needs no new mechanism: changes and topics are items, lineage is links, footprints are anchors ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)).
