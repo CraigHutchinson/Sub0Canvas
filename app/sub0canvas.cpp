@@ -197,14 +197,19 @@ int snapshot(const Options& o)
         item.key = commits[t].sha;
         item.kind = t == 0 ? "base" : "commit";
         item.title = commits[t].sha.substr(0, 10) + " " + commits[t].subject;
-        std::set<std::string> seen;
-        for (const auto& e : index.events()) {
-            if (e.turn != static_cast<int>(t) || e.carry == Carry::retired || e.carry == Carry::merged || !seen.insert(e.id).second) continue;
-            if (const Block* b = index.resolve(e.id)) item.anchors.push_back({b->id, b->path, b->first, Anchor::Confidence::exact});
+        // The base commit "changed" everything it shows: anchoring it to every block is noise, so it gets none. Later commits look their blocks up
+        // in one map per turn: BlockIndex::resolve scans every live block, and a call per event was quadratic (229 s for 19,000 files).
+        if (t > 0) {
+            std::map<std::string, const Block*> live;
+            for (const Block* b : index.all()) live.emplace(b->id, b);
+            std::set<std::string> seen;
+            for (const auto& e : index.events()) {
+                if (e.turn != static_cast<int>(t) || e.carry == Carry::retired || e.carry == Carry::merged || !seen.insert(e.id).second) continue;
+                if (const auto b = live.find(e.id); b != live.end()) item.anchors.push_back({b->second->id, b->second->path, b->second->first, Anchor::Confidence::exact});
+            }
         }
         item.detail = std::format("{} by {} on {}\n{}\n{} blocks added or changed", commits[t].sha, commits[t].author, commits[t].date, commits[t].subject,
-                                  item.anchors.size());
-        if (t == 0) item.anchors.clear();          // the base commit "changed" everything it shows: anchoring it to every block is noise
+                                  t == 0 ? std::string("(the base: every block)") : std::to_string(item.anchors.size()));
         commitItems.push_back(item);
         std::vector<LayerItem> shown(commitItems.rbegin(), commitItems.rend());
         for (std::size_t i = 0; i < shown.size(); ++i) shown[i].number = static_cast<int>(i) + 1;
