@@ -16,9 +16,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
   Markdown and code. The first step of the authoring tool. Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
 * **S0: the scale harness.** A deterministic synthetic corpus and benchmarks of today's index, so the data structures are chosen by measurement.
   Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
-* **M0: the synthetic mirror.** A seeded generator of a small invented project with the shape of a work-dominated monorepo and a 25-change topic
-  (spikes, carve-outs, stacks, supersessions, ports), its captured forge and tracker state, and the truth; a small fixture checked for
-  regeneration. The public stand-in for the private reference topic. Brief: [sessions/m0-synthetic-mirror.md](sessions/m0-synthetic-mirror.md).
+* **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10): reverted state, stale stacks, evil merges,
+  file footprints, guards, column units, case-only paths, regenerated files. Design them before P0, checked on `fixtures/mirror/`.
 * **B0: format catch-up.** The producer writes the fields the viewer already understands, plus A1 (revision ids as strings), A3 (ranges) and A13
   (policies recorded); a golden set is checked on both sides; re-capture one attempt with compiler diagnostics (R-U1-4). Brief:
   [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
@@ -53,6 +52,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **S2** the sketch index and per-path checkpoints; **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
 * **G2-G5**: GitHub items, issues and project items, events and subscriptions, write-back.
 * **P3-P5**: change views in the authoring tool; forge (configurable host) and tracker sources; topic inboxes and carve-out proposals.
+* **M1: a live sandbox for the mirror** (parked by the owner, 2026-11-18): a local forge (Gitea or Forgejo, a download to approve), a forge-CLI
+  stand-in over a bare remote, or a live test repository through `github --execute` ([MIRROR.md](MIRROR.md), "Parked").
 * **S3-private**: the budgets on the measured work-dominated monorepo, on the owner's machine, numbers only (SCALE.md section 7).
 * **E1**: an editor served by the same `serve` process. **C1**: collaborative review.
 * A SARIF export of the issues layer (R-EXP-1); the policy registry and loader (BACKBONE.md 14.4) when the first policy needs a second arm.

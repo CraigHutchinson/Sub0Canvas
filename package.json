@@ -7,7 +7,10 @@
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
     "fixtures": "node tools/gen-fixtures.mjs",
-    "serve": "node tools/serve.mjs"
+    "serve": "node tools/serve.mjs",
+    "mirror": "node tools/mirror/cli.js"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

@@ -8,6 +8,8 @@
 //   node tools/mirror/cli.js github [--seed N] --out DIR --repo NAME [--public] [--no-drafts] [--execute]
 //                                                                     the steps that publish it to a new forge repository and replay its pull
 //                                                                     requests; prints them, and runs them only with --execute
+//   node tools/mirror/cli.js fixture [--seed N] [--out DIR]          DIR/seed-N/{state,truth,shape}.json (default DIR: fixtures/mirror), the
+//                                                                     committed fixture that test/mirror.test.js checks against regeneration
 'use strict';
 
 const fs = require('node:fs');
@@ -49,7 +51,7 @@ function local(m, out) {
     const repo = path.join(out, 'repo');
     if (fs.existsSync(repo)) fail(`${repo} exists; choose an empty --out`);
     run('git', ['init', '-q', '--initial-branch=main', repo]);
-    run('git', ['-C', repo, '-c', 'core.autocrlf=false', 'fast-import', '--quiet', '--done'], { input: fastImportStream(m) });
+    run('git', ['-C', repo, '-c', 'core.autocrlf=false', '-c', 'core.ignorecase=false', 'fast-import', '--quiet', '--done'], { input: fastImportStream(m) });
     const refs = run('git', ['-C', repo, 'for-each-ref', '--format=%(refname:short) %(objectname)', 'refs/heads']).stdout.trim().split('\n');
     const got = Object.fromEntries(refs.map((l) => l.split(' ')));
     const bad = [...m.branches].filter(([b, sha]) => got[b] !== sha);
@@ -121,7 +123,15 @@ function main() {
             break;
         }
         case 'github': github(m, args); break;
-        default: fail('mode is one of shape, source, local, canvas, github');
+        case 'fixture': {
+            const dir = path.join(args.out ?? path.join(__dirname, '..', '..', 'fixtures', 'mirror'), `seed-${m.seed}`);
+            writeJson(path.join(dir, 'state.json'), m.state);
+            writeJson(path.join(dir, 'truth.json'), m.truth);
+            writeJson(path.join(dir, 'shape.json'), shape(m));
+            process.stdout.write(`${dir}\n`);
+            break;
+        }
+        default: fail('mode is one of shape, source, local, canvas, github, fixture');
     }
 }
 

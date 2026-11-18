@@ -91,14 +91,16 @@ function render(f) {
     if (f.kind === 'binary') bytes = f.bytes;
     else if (f.kind === 'text') bytes = Buffer.from(f.lines.join('\n') + '\n', 'utf8');
     else {
-        const L = [];
+        // Edge cases live here on purpose: preambles that shift every line, CRLF, a BOM, tab indentation, #if-guarded blocks.
+        const L = [...(f.preamble ?? [])];
+        const ind = f.indent ?? '    ';
         if (f.lang === 'py') {
             L.push(`"""${f.summary}"""`, '', 'import logging', '', 'log = logging.getLogger(__name__)', '');
             for (const b of f.blocks) {
                 L.push('');
                 const first = L.length + 1;
-                L.push(b.sig, ...b.body.map((l) => '    ' + l));
-                if (b.tail) L.push('    ' + b.tail);
+                L.push(b.sig, ...b.body.map((l) => ind + l));
+                if (b.tail) L.push(ind + b.tail);
                 spans[b.id] = [first, L.length];
             }
         } else {
@@ -107,16 +109,19 @@ function render(f) {
             else L.push(`#include "${f.include}"`);
             L.push('', `namespace ${NS} {`, '');
             for (const b of f.blocks) {
+                if (b.guard) L.push(`#if ${b.guard}`);
                 const first = L.length + 1;
-                L.push(b.sig, '{', ...b.body.map((l) => '    ' + l));
-                if (b.tail) L.push('    ' + b.tail);
+                L.push(b.sig, '{', ...b.body.map((l) => ind + l));
+                if (b.tail) L.push(ind + b.tail);
                 L.push('}');
                 spans[b.id] = [first, L.length];
+                if (b.guard) L.push(`#endif // ${b.guard}`);
                 L.push('');
             }
             L.push(`} // namespace ${NS}`);
         }
-        bytes = Buffer.from(L.join('\n') + '\n', 'utf8');
+        const eol = f.eol === 'crlf' ? '\r\n' : '\n';
+        bytes = Buffer.from((f.bom ? '\uFEFF' : '') + L.join(eol) + eol, 'utf8');
     }
     r = { bytes, spans, blob: gitHash('blob', bytes) };
     renderCache.set(f, r);
@@ -174,19 +179,49 @@ function png(rng) {
 // One shape for background churn and for the topic's hunks: append (before the block's tail), replace (a line by its exact text: every generated
 // line is unique, so a missing line means the block was rewritten), add (a new block), rename, resign, rewrite, delete, put/remove (whole files).
 
+/** The file holding block `id`: at `path` first, else wherever it moved (a hunk names the block; its path is a hint, as for the core's resolver). */
+function locate(tree, path, id) {
+    const f = tree.get(path);
+    if (f?.kind === 'code' && f.blocks.some((b) => b.id === id)) return path;
+    for (const [p, g] of tree) if (g.kind === 'code' && g.blocks.some((b) => b.id === id)) return p;
+    return null;
+}
+
 function applyOp(tree, op) {
-    const f = tree.get(op.path);
     if (op.op === 'put') { const t = new Map(tree); t.set(op.path, op.file); return { ok: true, tree: t }; }
-    if (op.op === 'remove') { if (!f) return { ok: false, why: 'no file' }; const t = new Map(tree); t.delete(op.path); return { ok: true, tree: t }; }
+    if (op.op === 'remove') { if (!tree.has(op.path)) return { ok: false, why: 'no file' }; const t = new Map(tree); t.delete(op.path); return { ok: true, tree: t }; }
+    if (op.op === 'movefile') {
+        const g = tree.get(op.path);
+        if (!g || tree.has(op.to)) return { ok: false, why: 'cannot move file' };
+        const t = new Map(); for (const [p, x] of tree) t.set(p === op.path ? op.to : p, p === op.path ? { ...g, path: op.to } : x);
+        return { ok: true, tree: t };
+    }
+    if (op.op === 'header') {
+        const t = new Map(tree);
+        for (const [p, g] of tree) if (g.kind === 'code') t.set(p, { ...g, preamble: g.lang === 'py' ? op.lines.map((l) => `# ${l}`) : op.lines.map((l) => `// ${l}`) });
+        return { ok: true, tree: t };
+    }
+    const path = op.block && op.op !== 'add' ? locate(tree, op.path, op.block) : op.path;
+    if (!path) return { ok: false, why: `no block ${op.block}` };
+    const f = tree.get(path);
     if (!f) return { ok: false, why: `no file ${op.path}` };
-    if (f.kind === 'text' && op.op === 'lines') { const t = new Map(tree); t.set(op.path, { ...f, lines: op.lines(f.lines) }); return { ok: true, tree: t }; }
+    if (f.kind === 'text' && op.op === 'lines') { const t = new Map(tree); t.set(path, { ...f, lines: op.lines(f.lines) }); return { ok: true, tree: t }; }
     if (f.kind !== 'code') return { ok: false, why: 'not code' };
+    if (op.op === 'move') {
+        const b = f.blocks.find((x) => x.id === op.block), dest = tree.get(op.to);
+        if (!dest || dest.kind !== 'code' || op.to === path) return { ok: false, why: 'cannot move block' };
+        const t = new Map(tree);
+        t.set(path, { ...f, blocks: f.blocks.filter((x) => x.id !== op.block) });
+        t.set(op.to, { ...dest, blocks: [...dest.blocks, { ...b, name: b.name.replace(/^\w+::/, `${op.cls}::`), sig: b.sig.replace(/ \w+::/, ` ${op.cls}::`) }] });
+        return { ok: true, tree: t };
+    }
+    if (op.op === 'regen') { const t = new Map(tree); t.set(path, { ...f, blocks: f.blocks.map(op.block2) }); return { ok: true, tree: t }; }
     const i = f.blocks.findIndex((b) => b.id === op.block);
     if (op.op === 'add') {
-        if (i >= 0) return { ok: false, why: `block ${op.block} exists` };
+        if (locate(tree, op.path, op.block)) return { ok: false, why: `block ${op.block} exists` };
         const blocks = f.blocks.slice();
-        blocks.push({ id: op.block, name: op.name, sig: op.sig, body: op.body.slice(), tail: op.tail });
-        const t = new Map(tree); t.set(op.path, { ...f, blocks }); return { ok: true, tree: t };
+        blocks.push({ id: op.block, name: op.name, sig: op.sig, body: op.body.slice(), tail: op.tail, ...(op.guard ? { guard: op.guard } : {}) });
+        const t = new Map(tree); t.set(path, { ...f, blocks }); return { ok: true, tree: t };
     }
     if (i < 0) return { ok: false, why: `no block ${op.block}` };
     const b = f.blocks[i];
@@ -198,14 +233,19 @@ function applyOp(tree, op) {
             if (k < 0) return { ok: false, why: 'line gone' };
             nb = { ...b, body: [...b.body.slice(0, k), op.new, ...b.body.slice(k + 1)] }; break;
         }
+        case 'removeLine': {
+            const k = b.body.indexOf(op.line);
+            if (k < 0) return { ok: false, why: 'line gone' };
+            nb = { ...b, body: [...b.body.slice(0, k), ...b.body.slice(k + 1)] }; break;
+        }
         case 'rename': nb = { ...b, name: op.name, sig: op.sig }; break;
         case 'resign': nb = { ...b, sig: op.sig }; break;
         case 'rewrite': nb = { ...b, body: op.body.slice() }; break;
-        case 'delete': { const blocks = f.blocks.filter((x) => x.id !== op.block); const t = new Map(tree); t.set(op.path, { ...f, blocks }); return { ok: true, tree: t }; }
+        case 'delete': { const blocks = f.blocks.filter((x) => x.id !== op.block); const t = new Map(tree); t.set(path, { ...f, blocks }); return { ok: true, tree: t }; }
         default: return { ok: false, why: `unknown op ${op.op}` };
     }
     const blocks = f.blocks.slice(); blocks[i] = nb;
-    const t = new Map(tree); t.set(op.path, { ...f, blocks });
+    const t = new Map(tree); t.set(path, { ...f, blocks });
     return { ok: true, tree: t };
 }
 
@@ -290,6 +330,26 @@ function generateMirror({ seed = 1 } = {}) {
     for (const pr of PRESETS) { const p = `presets/${pr}.json`; put({ kind: 'text', path: p, lines: ['{', `  "name": "${pr}",`, `  "quality": ${rng.int(50, 100)},`, `  "size": ${rng.pick([256, 512, 1024, 2048])}`, '}'] }); put(sidecar(p)); }
     for (const l of LAYOUTS) { const p = `layouts/${l}.layout`; put({ kind: 'text', path: p, lines: [`layout: ${l}`, `panels: ${rng.int(1, 5)}`, `split: ${rng.int(20, 80)}`, `dock: ${rng.pick(['left', 'right', 'bottom'])}`] }); put(sidecar(p)); }
 
+    // Repository edge cases present from the start (truth.edgeCases names each): a large generated file nobody edits by hand; CRLF with a BOM; tabs
+    // and non-ASCII text; overloads (one name, two blocks); a block inside #if.
+    const genRow = (k, salt) => ({ id: newBlockId(), name: `Schema::row${k}`, sig: `const SchemaRow& Schema::row${k}()`,
+        body: [`static const SchemaRow r{${k}, ${(k * 7919 + salt) % 100003}, "${['photo', 'album', 'tag', 'face', 'place'][k % 5]}"};`], tail: 'return r;' });
+    put({ kind: 'code', lang: 'cpp', path: 'core/generated/schema_tables.cpp', summary: 'GENERATED by schemagen from schema/catalogue.yaml: do not edit', include: 'generated/schema.h',
+        generated: true, blocks: Array.from({ length: 400 }, (_, k) => genRow(k, 0)) });
+    put({ kind: 'code', lang: 'py', path: 'plugins/legacy_import.py', summary: 'Legacy importer, kept with Windows line endings.', eol: 'crlf', bom: true, blocks: uniqueNames(Array.from({ length: 3 }, pyBlock)) });
+    {
+        const blocks = uniqueNames(Array.from({ length: 4 }, () => cppBlock('Albums')));
+        blocks[0] = { ...blocks[0], body: ['// Gr\u00fc\u00dfe an die Kalibrierung: na\u00efve caf\u00e9 ordering, \u00bd steps', ...blocks[0].body] };
+        put({ kind: 'code', lang: 'cpp', path: 'core/albums/albums_legacy.cpp', summary: 'Albums: legacy layout (tab-indented)', include: 'albums/albums.h', indent: '\t', blocks });
+    }
+    {
+        const sel = tree0.get('core/selection/selection.cpp');
+        // pinned: churn never renames, rewrites or deletes these, so every seed keeps the edge case
+        const over = (params) => ({ id: newBlockId(), name: 'Selection::countEntries', sig: `std::size_t Selection::countEntries(${params})`, body: [cppLine(), cppLine()], tail: 'return 0;', pinned: true });
+        const guarded = { id: newBlockId(), name: 'Selection::dumpProfile', sig: 'void Selection::dumpProfile()', body: [cppLine(), cppLine()], tail: null, guard: 'FERNHALL_PROFILING', pinned: true };
+        put({ ...sel, blocks: [...sel.blocks, over('const Batch& batch'), over('RecordId id, int flags'), guarded] });
+    }
+
     const initialBlocks = new Set();
     for (const f of tree0.values()) if (f.kind === 'code') for (const b of f.blocks) initialBlocks.add(b.id);
 
@@ -321,9 +381,9 @@ function generateMirror({ seed = 1 } = {}) {
     function churnOp(tree, bias) {
         const roll = rng.float();
         if (roll < 0.62) {
-            const pool = codeBlocks(tree, (f) => !bias || bias.some((m) => f.path.startsWith(`core/${m}/`)));
-            const { f, b } = rng.pick(pool.length ? pool : codeBlocks(tree));
-            const r2 = rng.float();
+            const pool = codeBlocks(tree, (f) => !f.generated && (!bias || bias.some((m) => f.path.startsWith(`core/${m}/`))));
+            const { f, b } = rng.pick(pool.length ? pool : codeBlocks(tree, (f) => !f.generated));
+            const r2 = b.pinned ? 0 : rng.float();   // a pinned edge-case block only ever grows
             const area = f.path.startsWith('core/') ? f.path.split('/')[1] : f.path.split('/')[0];
             if (r2 < 0.5) return { op: { op: 'append', path: f.path, block: b.id, lines: [lineFor(f)] }, msg: `${pascal(area)}: ${rng.pick(VERBS)} ${rng.pick(NOUNS).toLowerCase()} after ${rng.pick(VERBS)}` };
             if (r2 < 0.72) {
@@ -375,7 +435,7 @@ function generateMirror({ seed = 1 } = {}) {
         }
     });
     for (const { rel, day } of releaseTimes.sort((a, b) => a.day - b.day)) {
-        const { f, b } = rng.pick(codeBlocks(tip(rel).tree, (ff) => ff.lang === 'cpp'));
+        const { f, b } = rng.pick(codeBlocks(tip(rel).tree, (ff) => ff.lang === 'cpp' && !ff.generated));
         makeCommit({ branch: rel, parents: [branches.get(rel)], tree: applyAll(tip(rel).tree, [{ op: 'append', path: f.path, block: b.id, lines: [cppLine()] }], 'backport'),
             author: rng.pick(PEOPLE), time: t(day), message: `[2.x] Backport: guard ${rng.pick(NOUNS).toLowerCase()} ${rng.pick(['overflow', 'reentry', 'null read'])}` });
     }
@@ -454,6 +514,37 @@ function generateMirror({ seed = 1 } = {}) {
     const H = (L, v) => L.map((x) => hunk(x, v));
     const [K1, K2, K3] = [G.K.slice(0, 3), G.K.slice(3, 5), G.K.slice(5)];
 
+    // ---- edge cases: real-world situations the canvas may not support yet. The fixture exists to push those boundaries, so each is recorded in
+    // truth.edgeCases with what it stresses and whether today's design covers it ('handled' built, 'designed' on paper, 'gap' neither).
+    const edgeCases = [];
+    const edge = (id, what, where, today, design) => edgeCases.push({ id, what, where, today, design });
+    const mkL = (group, f, b) => {
+        const id = `L${String(++lin).padStart(2, '0')}`;
+        protectedBlocks.add(b.id); takenBlocks.add(b.id);
+        const L = { id, group, name: b.name, tmpl: { op: 'append', path: f.path, block: b.id, n: lit++, isPy: false } };
+        lineages.set(id, L); return L;
+    };
+    const selW = W.get('core/selection/selection.cpp');
+    const overB = selW.blocks.filter((b) => b.name === 'Selection::countEntries')[1];
+    const guardB = selW.blocks.find((b) => b.guard);
+    const OV = mkL('OV', selW, overB), GU = mkL('GU', selW, guardB);
+    // Two open changes replacing one line differently: a true conflict.
+    const cfFile = rng.pick(topicFiles(['search']));
+    const cfBlock = rng.pick(cfFile.blocks.filter((b) => initialBlocks.has(b.id) && !takenBlocks.has(b.id) && b.body.length >= 2));
+    const cfOld = rng.pick(cfBlock.body);
+    protectedLines.add(`${cfBlock.id}\0${cfOld}`); protectedBlocks.add(cfBlock.id); takenBlocks.add(cfBlock.id);
+    const cfHunk = (tag, call) => ({ lineage: tag, op: 'replace', path: cfFile.path, block: cfBlock.id, old: cfOld, new: `const auto hits = index.${call}(ids, ${lit++});` });
+    // An assets-only change: binaries and their sidecars, no code block at all.
+    const iconPaths = rng.sample([...W.keys()].filter((p) => p.startsWith('assets/icons/') && p.endsWith('.png')), 3).sort();
+    const asOps = iconPaths.flatMap((p) => [{ lineage: 'AS1', op: 'put', path: p, file: { kind: 'binary', path: p, bytes: png(rng) } },
+        { lineage: 'AS1', op: 'lines', path: p + '.sidecar', lines: (ls) => ls.map((l) => (l.startsWith('labels:') ? 'labels: [selection]' : l)) }]);
+    // A stale change opened 300 days before the window, still open: its base is far behind trunk.
+    const staleHunk = { lineage: 'ST1', op: 'append', path: G.K[0].tmpl.path, block: G.K[0].tmpl.block, lines: [`tracker.legacyWarm(${lit++});`] };
+    // An evil merge: the merge commit of C7 carries a line that is in neither parent.
+    const evilTarget = rng.pick(codeBlocks(W, (f) => f.path.startsWith('core/selection/') && f.lang === 'cpp').filter(({ b }) => !protectedBlocks.has(b.id)));
+    protectedBlocks.add(evilTarget.b.id);
+    const evilOp = { op: 'append', path: evilTarget.f.path, block: evilTarget.b.id, lines: [`selection.flushPending(${lit++}); // resolved while merging`] };
+
     // Test-only and unrelated changes edit their own files and blocks.
     const perfFile = { kind: 'code', lang: 'py', path: 'tests/perf/test_select_many.py', summary: 'Performance test: select many photos.', blocks: [pyBlock(), pyBlock()] };
     const reproFile = { kind: 'code', lang: 'py', path: 'tests/test_preview_dock_repro.py', summary: 'Reproducer: docked preview outliving its parent.', blocks: [pyBlock()] };
@@ -467,7 +558,7 @@ function generateMirror({ seed = 1 } = {}) {
         const p = `core/tags/${part}.cpp`;
         refOps.push({ lineage: 'REF', op: 'put', path: p, file: { kind: 'code', lang: 'cpp', path: p, summary: `Tags: ${part}`, include: 'tags/tags.h', blocks: Array.from({ length: 3 }, () => cppBlock('Tags')) } });
     }
-    const refFiles = rng.shuffle([...W.values()].filter((f) => f.kind === 'code' && f.lang === 'cpp' && !spikeFiles.has(f.path))).slice(0, 20)
+    const refFiles = rng.shuffle([...W.values()].filter((f) => f.kind === 'code' && f.lang === 'cpp' && !f.generated && !spikeFiles.has(f.path))).slice(0, 20)
         .concat(rng.sample([...spikeFiles].filter((p) => W.get(p)), 4).map((p) => W.get(p)));
     for (const f of refFiles) {
         const free = f.blocks.filter((b) => !takenBlocks.has(b.id) && !protectedBlocks.has(b.id));
@@ -484,7 +575,7 @@ function generateMirror({ seed = 1 } = {}) {
         C('ORIG', { author: ORIGIN_AUTHOR, kind: 'origin', title: `Draft: faster scans of very large folders, with investigation notes`, open: 0.2, base: 'main', draft: true,
             commits: [[0.2, [...H(G.A.slice(0, 2)), ...H(G.B.slice(0, 2)), ...H(own.ORIG), { lineage: 'DOC', op: 'put', path: 'docs/investigation-large-folders.md', file: { kind: 'text', path: 'docs/investigation-large-folders.md', lines: ['# Large folder scans', '', 'Where the time goes, measured.', ''] } }]]], close: 9 }),
         C('S1', { kind: 'spike', title: `SPIKE-NO-MERGE [${KEY}] Library scan stalls on large folders: reproducer, spikes, background scan`, open: 1, base: 'main', draft: true, labels: ['spike'],
-            commits: [[1, H([...G.A, ...G.B, ...G.C, ...G.D])], [5, H([...G.E, ...G.F])], [11, H([...G.K, ...G.M])], [19, H(G.H)]] }),
+            commits: [[1, H([...G.A, ...G.B, ...G.C, ...G.D, OV, GU])], [5, H([...G.E, ...G.F])], [11, H([...G.K, ...G.M])], [19, H(G.H)]] }),
         C('C1', { kind: 'carve', title: `[${KEY}] Per-folder scan fixes from the investigation draft, updated to trunk`, open: 1.5, base: 'main', draft: true, commits: [[1.5, [...H(G.A), ...H(own.X1)]]], close: 26 }),
         C('C2', { kind: 'carve', title: `[${KEY}] Stop selection code from reading every selected photo`, open: 2, base: 'main', draft: true, commits: [[2, H([...G.B, ...G.C])], [6, H(G.D)]], close: 27 }),
         C('C3', { kind: 'carve', title: `[${KEY}] Add photo queries that do not open the file`, open: 7, base: 'main', commits: [[7, H(G.E)]], merge: 20 }),
@@ -493,15 +584,15 @@ function generateMirror({ seed = 1 } = {}) {
         C('C5', { kind: 'carve', title: `[${KEY}] Skip the decode for thumbnails the cached type rules out`, open: 25, base: 'main', commits: [[25, c5Hunks]], merge: 35 }),
         C('T1', { kind: 'test', title: `[${KEY}] Add a performance test for selecting many photos`, open: 30, base: 'main', commits: [[30, [{ lineage: 'T1', op: 'put', path: perfFile.path, file: perfFile }]]], merge: 33 }),
         C('C6', { kind: 'carve', title: `[${KEY}] Stop selection history reading selected photos`, open: 30.2, base: 'main', commits: [[30.2, H(G.B, 1)]], merge: 34 }),
-        C('T2', { kind: 'test', title: `[${KEY}] Limit atlas test setup to atlas tests`, open: 30.4, base: 'main', commits: [[30.4, [t2Hunk]]], merge: 31 }),
-        C('C7', { kind: 'carve', title: `[${KEY}] Classify the global selection without reading photos`, open: 30.6, base: 'main', commits: [[30.6, H(G.C, 1)]], merge: 35 }),
+        C('T2', { kind: 'test', title: `Limit atlas test setup to atlas tests`, open: 30.4, base: 'main', commits: [[30.4, [t2Hunk]]], merge: 31 }),
+        C('C7', { kind: 'carve', title: `[${KEY}] Classify the global selection without reading photos`, open: 30.6, base: 'main', commits: [[30.6, H(G.C, 1)]], merge: 35, evil: evilOp }),
         C('C8', { kind: 'carve', title: `[${KEY}] Stop thumbnail tracking reading selected photos`, open: 30.8, base: 'main', commits: [[30.8, H(G.D)]], merge: 34 }),
         C('C9', { kind: 'carve', title: `[${KEY}] Stop panel overlays reading selected photos`, open: 31, base: 'main', commits: [[31, H(G.F)]], merge: 36 }),
         C('S2', { kind: 'spike', topic: KEY2, title: `SPIKE-NO-MERGE [${KEY2}] Let storage decide whether a record is resident`, open: 32, base: 'main', draft: true, labels: ['spike'], commits: [[32, H(G.P)]] }),
         C('S3', { kind: 'spike', title: `SPIKE-NO-MERGE [${KEY}] Keep the details panel responsive with thousands selected`, open: 32.3, base: 'main', draft: true, labels: ['spike'], commits: [[32.3, H(G.Gd)]] }),
         C('C10', { kind: 'carve', title: `[${KEY}] Let a scanner thread hand the store lock to the UI thread`, open: 32.6, base: 'main', draft: true, commits: [[32.6, H(own.C10)]], close: 40 }),
         C('C11', { kind: 'carve', title: `[${KEY}] Compute the details footer once per selection`, open: 33, base: 'main', commits: [[33, H(G.Gd.slice(0, 3))]], merge: 38 }),
-        C('REF', { kind: 'refactor', topic: KEY_REF, author: PEOPLE[2], title: `[${KEY_REF}] Move tag storage into its own module`, open: 35, base: 'main', commits: [[35, refOps]], merge: 37 }),
+        C('REF', { kind: 'refactor', topic: KEY_REF, author: PEOPLE[2], title: `[${KEY_REF}] Move tag storage into its own module (unblocks ${KEY2})`, open: 35, base: 'main', commits: [[35, refOps]], merge: 37 }),
         C('K1', { kind: 'carve', title: `[${KEY}] Build the shared tracker only when something reads it`, open: 36, base: 'main', commits: [[36, [...H(K1), ...H(own.K1x)]]] }),
         C('K2', { kind: 'carve', title: `[${KEY}] Let the panels skip unread photos without a details view`, open: 36.2, base: 'K1', draft: true, commits: [[36.2, H(K2)]] }),
         C('C12', { kind: 'carve', title: `[${KEY}] Count the selection without reading selected photos`, open: 36.4, base: 'main', commits: [[36.4, H(G.M)]] }),
@@ -509,6 +600,12 @@ function generateMirror({ seed = 1 } = {}) {
         C('C13', { kind: 'carve', topic: KEY, title: `[${KEY}] Add Storage::isResident to check a record exists without loading it`, open: 38, base: 'main', commits: [[38, H(G.P.slice(0, 2))]], merge: 39 }),
         C('PORT', { kind: 'port', title: `[${KEY_PORT}] Port: photo queries and thumbnail decode skip to 2.1`, open: 40, base: 'release/2.1', draft: true, commits: [[40, [...H(G.E, 1), ...c5Hunks]]] }),
         C('R1', { kind: 'spike', title: `SPIKE-NO-MERGE [${KEY}] Reproduce docked preview outliving its parent`, open: 45, base: 'main', draft: true, labels: ['spike'], commits: [[45, [{ lineage: 'R1', op: 'put', path: reproFile.path, file: reproFile }]]], close: 46 }),
+        // edge-case changes
+        C('ST1', { kind: 'carve', topic: 'CAT-0731', author: PEOPLE[4], title: `[CAT-0731] Warm the tracker cache on startup`, open: 400 - WINDOW_DAY, baseAt: 400, base: 'main', commits: [[400.5 - WINDOW_DAY, [staleHunk]]] }),
+        C('CF1', { kind: 'carve', topic: KEY2, author: PEOPLE[1], title: `[${KEY2}] Batch the search index lookups`, open: 39, base: 'main', commits: [[39, [cfHunk('CF1', 'lookupBatch')]]] }),
+        C('CF2', { kind: 'carve', title: `[${KEY}] Serve search lookups from the resident cache`, open: 39.5, base: 'main', commits: [[39.5, [cfHunk('CF2', 'lookupCached')]]] }),
+        C('AS1', { kind: 'assets', topic: KEY, author: PEOPLE[8], title: `[${KEY}] Refresh the selection icons`, open: 41, base: 'main', commits: [[41, asOps]], merge: 41.5 }),
+        C('C8R', { kind: 'carve', title: `[${KEY}] Reland: stop thumbnail tracking reading selected photos`, open: 42, base: 'main', commits: [[42, H(G.D, 1)]], merge: 45 }),
     ];
     const truthLinks = [
         ['C1', 'carvedFrom', 'S1'], ['C2', 'carvedFrom', 'S1'], ['C3', 'carvedFrom', 'S1'], ['C6', 'carvedFrom', 'S1'], ['C7', 'carvedFrom', 'S1'], ['C8', 'carvedFrom', 'S1'],
@@ -521,6 +618,7 @@ function generateMirror({ seed = 1 } = {}) {
         ['C5', 'dependsOn', 'C3'],
         ['PORT', 'ports', 'C3'], ['PORT', 'ports', 'C5'],
         ['T1', 'tests', 'topic'], ['T2', 'tests', 'topic'], ['R1', 'tests', 'topic'],
+        ['CF1', 'conflictsWith', 'CF2'], ['C8R', 'relands', 'C8'], ['AS1', 'partOf', 'topic'],
     ];
 
     // -- the window: churn, deliberate rewrites (obsolete hunks), drift, and the topic's changes, in time order --
@@ -529,6 +627,24 @@ function generateMirror({ seed = 1 } = {}) {
     for (const d of windowTimes) events.push({ day: d, type: 'churn', bias: rng.chance(0.35) ? ['library', 'selection', 'details', 'index', 'thumbs'] : null });
     G.H.slice(0, 2).forEach((L, i) => events.push({ day: 22 + i * 3, type: 'rewrite', L }));
     events.push({ day: 8, type: 'feature-branch', name: 'feature/scan-v2' });
+    const trunkEdit = (day, ops, message, author = PEOPLE[6]) => events.push({ day, type: 'trunk', ops, message, author });
+    trunkEdit(15, [{ op: 'header', lines: ['Copyright (c) the Fernhall contributors.', 'SPDX-License-Identifier: MIT'] }], 'Add a licence header to every source file');
+    trunkEdit(24, () => {
+        const L = G.H[2], tr = tip('main').tree, from = locate(tr, L.tmpl.path, L.tmpl.block);
+        const to = [...tr.keys()].filter((p) => p.startsWith('core/index/') && p.endsWith('.cpp') && p !== from).sort()[0];
+        return [{ op: 'move', path: from, block: L.tmpl.block, to, cls: 'Index' }];
+    }, 'Index: move page lookups next to the page table');
+    trunkEdit(26, [{ op: 'regen', path: 'core/generated/schema_tables.cpp', block2: (b) => ({ ...b, body: [b.body[0].replace(/, (\d+), "/, (_, x) => `, ${(Number(x) * 31 + 7) % 100003}, "`)] }) }], 'Regenerate schema tables');
+    trunkEdit(28, () => { const p = G.Gd[0].tmpl.path; return [{ op: 'movefile', path: p, to: p.replace('core/details/', 'core/details/panel/') }]; }, 'Details: move panel sources under panel/');
+    trunkEdit(30, () => (tip('main').tree.has('docs/performance.md') ? [{ op: 'movefile', path: 'docs/performance.md', to: 'docs/Performance.md' }] : []), 'Docs: capitalise Performance.md');
+    trunkEdit(38, () => {
+        const tr = tip('main').tree, p = locate(tr, G.K[0].tmpl.path, G.K[0].tmpl.block);
+        const b = tr.get(p).blocks.find((x) => x.id === G.K[0].tmpl.block), short = b.name.split('::').pop();
+        return [{ op: 'rename', path: p, block: b.id, name: b.name.replace(short, `${short}Lazily`), sig: b.sig.replace(short + '(', `${short}Lazily(`) }];
+    }, 'Library: name the lazy tracker path');
+    events.push({ day: 40, type: 'revert', key: 'C8' });
+    events.push({ day: 42, type: 'rebase', key: 'K1' });
+    events.push({ day: 44, type: 'backmerge', key: 'C12' });
     for (const ch of plan) {
         events.push({ day: ch.open, type: 'open', ch });
         ch.commits.forEach(([day, hunks], i) => events.push({ day: day + 0.01, type: 'push', ch, hunks, first: i === 0 }));
@@ -550,10 +666,30 @@ function generateMirror({ seed = 1 } = {}) {
             makeCommit({ branch: 'main', parents: [branches.get('main')], tree: applyAll(tip('main').tree, [{ op: 'rewrite', path: m.path, block: m.block, body }], 'rewrite'),
                 author: PEOPLE[7], time, message: `Index: rewrite ${ev.L.name.split('::').pop()} around the new page table` });
         } else if (ev.type === 'feature-branch') branches.set(ev.name, branches.get('main'));
-        else if (ev.type === 'open') {
+        else if (ev.type === 'trunk') {
+            const ops = typeof ev.ops === 'function' ? ev.ops() : ev.ops;
+            if (ops.length) makeCommit({ branch: 'main', parents: [branches.get('main')], tree: applyAll(tip('main').tree, ops, ev.message), author: ev.author, time, message: ev.message });
+        } else if (ev.type === 'revert') {
+            const s = changeState.get(ev.key), ch = plan.find((c) => c.key === ev.key);
+            const inverse = ch.commits.flatMap(([, h]) => h).reverse().flatMap((h) => (h.op === 'replace' ? [{ ...h, old: h.new, new: h.old }] : h.lines.map((line) => ({ op: 'removeLine', path: h.path, block: h.block, line }))));
+            makeCommit({ branch: 'main', parents: [branches.get('main')], tree: applyAll(tip('main').tree, inverse, `revert ${ev.key}`), author: PEOPLE[9], time,
+                message: `Revert "${ch.title}"\n\nThis reverts the merge of pull request ${s.number}: thumbnails flicker on rescan.` });
+            s.reverted = time; s.revertSha = branches.get('main');
+        } else if (ev.type === 'rebase') {
+            const s = changeState.get(ev.key), ch = plan.find((c) => c.key === ev.key);
+            const c = makeCommit({ branch: s.branch, parents: [branches.get('main')], tree: applyAll(tip('main').tree, ch.commits.flatMap(([, h]) => h), `rebase ${ev.key}`),
+                author: ch.author, time, kind: 'change', change: ch.key, message: ch.title });
+            s.pushes.push(c.sha); s.head = c.sha; s.rebased = time; s.baseSha = c.parents[0];
+        } else if (ev.type === 'backmerge') {
+            const s = changeState.get(ev.key), ch = plan.find((c) => c.key === ev.key);
+            const c = makeCommit({ branch: s.branch, parents: [s.head, branches.get('main')], tree: applyAll(tip('main').tree, ch.commits.flatMap(([, h]) => h), `back-merge ${ev.key}`),
+                author: ch.author, time, kind: 'change', change: ch.key, message: `Merge branch 'main' into ${s.branch}` });
+            s.pushes.push(c.sha); s.head = c.sha; s.backMerged = time;
+        } else if (ev.type === 'open') {
             const ch = ev.ch;
             const baseRef = branches.has(ch.base) ? ch.base : changeState.get(ch.base).branch;
-            changeState.set(ch.key, { branch: branchOf(ch), baseBranch: baseRef, baseSha: branches.get(baseRef), number: prNumber++, state: 'open', opened: time, pushes: [] });
+            const baseSha = ch.baseAt !== undefined ? commits.filter((c) => c.branch === 'main' && c.time <= t(ch.baseAt)).at(-1).sha : branches.get(baseRef);
+            changeState.set(ch.key, { branch: branchOf(ch), baseBranch: baseRef, baseSha, number: prNumber++, state: 'open', opened: time, pushes: [] });
         } else if (ev.type === 'push') {
             const s = changeState.get(ev.ch.key);
             const parent = ev.first ? s.baseSha : branches.get(s.branch);
@@ -565,7 +701,13 @@ function generateMirror({ seed = 1 } = {}) {
             const s = changeState.get(ev.ch.key);
             const target = s.baseBranch;
             const hunks = ev.ch.commits.flatMap(([, h]) => h);
-            const tree = applyAll(tip(target).tree, hunks, `merge ${ev.ch.key}`);
+            const tree = applyAll(tip(target).tree, ev.ch.evil ? [...hunks, ev.ch.evil] : hunks, `merge ${ev.ch.key}`);
+            // What landed is now someone's code: churn must not rewrite it out from under a later revert.
+            for (const h of hunks) {
+                if (h.op === 'replace') protectedLines.add(`${h.block}\0${h.new}`);
+                if (h.op === 'append') for (const l of h.lines) protectedLines.add(`${h.block}\0${l}`);
+                if (h.block) protectedBlocks.add(h.block);
+            }
             makeCommit({ branch: target, parents: [branches.get(target), s.head], tree, author: ev.ch.author, committer: MERGER, time, kind: 'merge', change: ev.ch.key,
                 message: `Merge pull request ${s.number} from ${s.branch}\n\n${ev.ch.title}` });
             s.state = 'merged'; s.merged = time; s.mergeSha = branches.get(target);
@@ -582,7 +724,7 @@ function generateMirror({ seed = 1 } = {}) {
             holders.get(h.lineage).add(ch.key);
         }
     }
-    const isMainMerge = (k) => changeState.get(k).state === 'merged' && changeState.get(k).baseBranch === 'main';
+    const isMainMerge = (k) => changeState.get(k).state === 'merged' && changeState.get(k).baseBranch === 'main' && !changeState.get(k).reverted;
     const spikeCoverage = {};
     for (const sp of plan.filter((c) => c.kind === 'spike')) {
         spikeCoverage[sp.key] = sp.commits.flatMap(([, hs]) => hs).filter((h) => lineages.has(h.lineage)).map((h) => {
@@ -592,7 +734,8 @@ function generateMirror({ seed = 1 } = {}) {
             else if (hs.some((k) => changeState.get(k).state === 'open')) state = 'inFlight';
             else if (hs.length) state = 'dropped';
             else state = applyOp(mainTree, h).ok ? 'notCarved' : 'obsolete';
-            return { lineage: h.lineage, block: h.block, path: h.path, op: h.op, state, heldBy: hs.sort() };
+            const pathNow = h.block ? locate(mainTree, h.path, h.block) : h.path;
+            return { lineage: h.lineage, block: h.block, path: h.path, ...(pathNow && pathNow !== h.path ? { pathNow } : {}), op: h.op, state, heldBy: hs.sort() };
         });
     }
     const footprint = (ch) => {
@@ -609,7 +752,8 @@ function generateMirror({ seed = 1 } = {}) {
         const fp = footprint(ch);
         changesTruth[ch.key] = { number: s.number, kind: ch.kind, topic: ch.topic, state: s.state, base: s.baseBranch, footprint: fp.blocks, files: fp.files,
             lineages: [...new Set(ch.commits.flatMap(([, h]) => h).map((h) => h.lineage).filter((l) => lineages.has(l)))].sort(),
-            rewritten: ch.commits.some(([, h]) => h.some((x) => x.variant)) };
+            rewritten: ch.commits.some(([, h]) => h.some((x) => x.variant)),
+            ...(s.reverted ? { revertedBy: s.revertSha } : {}), ...(s.rebased ? { rebased: true } : {}), ...(s.backMerged ? { backMerged: true } : {}) };
     }
     const truth = {
         schema: TRUTH_SCHEMA, seed, topic: KEY, product: PRODUCT.name,
@@ -618,7 +762,43 @@ function generateMirror({ seed = 1 } = {}) {
         links: truthLinks.map(([from, kind, to]) => ({ from, kind, to })),
         spikeCoverage,
         blocks: blockNames,
+        edgeCases,
+        notModelled: ['symbolic links and submodules (git modes 120000, 160000)', 'large-file pointers (LFS)', 'two paths differing only by case in one tree',
+            'committed conflict markers', 'a topic spanning several repositories (U10)', 'review comments replayed on a forge', 'hunks split across two carve-outs'],
     };
+    const commitBy = (msg) => commits.find((c) => c.branch === 'main' && c.message.startsWith(msg))?.sha ?? null;
+    const st = (k) => changeState.get(k);
+    edge('overloads', 'two blocks share one name in one file; a spike hunk edits the second', { path: selW.path, blocks: [overB.id, ...selW.blocks.filter((b) => b.name === overB.name && b.id !== overB.id).map((b) => b.id)], lineage: OV.id },
+        'designed', 'LAYERED_DOCUMENT.md identity rules (signature first); BLOCK_DISCOVERY.md 4.1');
+    edge('guarded-block', 'a block inside #if/#endif; a spike hunk edits it', { path: selW.path, block: guardB.id, lineage: GU.id }, 'gap', 'BLOCK_DISCOVERY.md does not say whether the guard belongs to the span');
+    edge('generated-file', 'a 400-block generated file, regenerated wholesale on trunk (every block changes at once)', { path: 'core/generated/schema_tables.cpp', commit: commitBy('Regenerate schema tables') },
+        'designed', 'SCALE.md section 3, kinds before blocks (kinds@1); identity under wholesale regeneration is not designed');
+    edge('line-endings-and-bom', 'a file with CRLF line endings and a UTF-8 BOM', { path: 'plugins/legacy_import.py' }, 'gap', 'line and column semantics for CRLF and BOM are unspecified');
+    edge('tabs-and-non-ascii', 'tab indentation and non-ASCII text (columns differ from bytes and characters)', { path: 'core/albums/albums_legacy.cpp' }, 'gap', 'anchor column units are unspecified (BACKBONE.md 3.2)');
+    edge('licence-header', 'one trunk commit prepends two lines to every source file: every line number moves, no block changes', { commit: commitBy('Add a licence header') },
+        'designed', 'identity by signature, anchors re-resolved by quote (BACKBONE.md 5.1)');
+    edge('block-moved-across-files', 'a block the spike edits moves to another file on trunk; the hunk still applies there', { block: G.H[2].tmpl.block, from: G.H[2].tmpl.path, commit: commitBy('Index: move page lookups') },
+        'designed', 'SCALE.md section 4, cross-file moves through the LSH');
+    edge('file-moved', 'a file the topic edits moves to a new directory before carve-outs based on it merge', { from: G.Gd[0].tmpl.path, commit: commitBy('Details: move panel sources') },
+        'designed', 'git rename detection in per-path replay (SCALE.md section 4)');
+    edge('case-only-rename', 'a file renamed by case only (fatal on case-insensitive file systems if both existed)', { from: 'docs/performance.md', to: 'docs/Performance.md', commit: commitBy('Docs: capitalise') },
+        'gap', 'path identity on case-insensitive file systems is unspecified');
+    edge('rename-under-open-change', 'trunk renames a block that open changes (a stack, the integration change) modify', { block: G.K[0].tmpl.block, commit: commitBy('Library: name the lazy tracker path') },
+        'designed', 'identity carries through renames (R-ID); footprints carried to the viewed revision (R-CHG-1)');
+    edge('true-conflict', 'two open changes, under different topics, replace the same line differently', { changes: ['CF1', 'CF2'], block: cfBlock.id }, 'designed', 'CHANGE_VIEWS.md section 3');
+    edge('revert-and-reland', 'a merged carve-out is reverted on trunk, then relanded by a new change', { changes: ['C8', 'C8R'], revert: st('C8').revertSha },
+        'gap', 'CHANGE_VIEWS.md landing coverage has no reverted state; a holder that merged is not enough');
+    edge('force-pushed-rebase', 'the bottom of a stack is rebased (history rewritten); the changes above still sit on its old head', { changes: ['K1', 'K2', 'K3'], heads: st('K1').pushes },
+        'gap', 'a stale stack and a non-linear change history are not designed');
+    edge('back-merge', 'trunk is merged into an open change: its branch now contains unrelated trunk work', { change: 'C12', head: st('C12').head },
+        'designed', 'footprints are relative to the merge base (CHANGE_VIEWS.md section 2), which the back-merge moves');
+    edge('evil-merge', 'a merge commit carries a line that is in neither parent', { change: 'C7', merge: st('C7').mergeSha, block: evilOp.block, line: evilOp.lines[0] },
+        'gap', 'content attributed to no change: blame and footprints miss it');
+    edge('assets-only-change', 'a change of binaries and sidecars only: no code block in its footprint', { change: 'AS1', files: iconPaths }, 'gap', 'R-CHG-1 defines footprints as blocks only');
+    edge('stale-change', 'a change opened 300 days before the window, still open, its base far behind trunk', { change: 'ST1', base: st('ST1').baseSha }, 'designed', 'drift (CHANGE_VIEWS.md section 3)');
+    edge('topic-key-placement', 'a tracker key only in the branch name; a title naming two keys', { changes: ['T2', 'REF'] }, 'designed', 'the topic policy (CHANGE_VIEWS.md section 2)');
+    edge('feature-branch-merge', 'a carve-out merged into a feature branch, not trunk', { change: 'C4', branch: 'feature/scan-v2' }, 'designed', 'landing is relative to a target branch');
+    edge('port', 'a change of landed hunks onto a release branch, rewritten', { change: 'PORT', branch: 'release/2.1' }, 'designed', 'ports links (CHANGE_VIEWS.md section 2)');
 
     // -- forge and tracker state --
     const iso = (s) => new Date(s * 1000).toISOString().replace('.000Z', 'Z');
@@ -633,9 +813,9 @@ function generateMirror({ seed = 1 } = {}) {
     for (const key of ['C6', 'K1', 'C12', 'C3']) {
         const s = changeState.get(key), ch = plan.find((c) => c.key === key);
         const h = ch.commits[0][1].find((x) => x.block);
-        const f = bySha.get(s.head).tree.get(h.path);
-        const span = render(f).spans[h.block];
-        reviews.push({ pull: s.number, path: h.path, line: span[0], commit: s.head, blockId: h.block, author: PEOPLE[3].user,
+        const headTree = bySha.get(s.head).tree, at = locate(headTree, h.path, h.block);
+        const span = render(headTree.get(at)).spans[h.block];
+        reviews.push({ pull: s.number, path: at, line: span[0], commit: s.head, blockId: h.block, author: PEOPLE[3].user,
             body: rng.pick(['Does this still read the photo when the cache is cold?', 'Can this skip the decode entirely?', 'Please add a test for the empty selection.', 'Is the order of these checks deliberate?']),
             state: s.state === 'merged' ? 'resolved' : 'open', at: iso(s.opened + 3600 * 20) });
     }
@@ -707,4 +887,4 @@ function shape(m) {
     };
 }
 
-module.exports = { generateMirror, shape, applyOp, treeId, render, STATE_SCHEMA, TRUTH_SCHEMA };
+module.exports = { generateMirror, shape, applyOp, locate, treeId, render, STATE_SCHEMA, TRUTH_SCHEMA };

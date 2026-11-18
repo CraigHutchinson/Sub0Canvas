@@ -3,7 +3,7 @@
 // I/O; tests call these directly.
 'use strict';
 
-const { applyOp } = require('./mirror.js');
+const { applyOp, locate } = require('./mirror.js');
 
 // ---- local: git fast-import ------------------------------------------------------------------------------------------------------------------------
 
@@ -54,8 +54,8 @@ function canvasEntries(m, { name = `mirror-seed-${m.seed}` } = {}) {
     const mainCommits = m.commits.filter((c) => c.branch === 'main');
     const start = m.bySha.get(m.windowStart).time;
     const truth = m.truth;
-    const topicPaths = new Set();
-    for (const c of Object.values(truth.changes)) for (const f of c.files) if (/\.(cpp|h|py)$/.test(f)) topicPaths.add(f);
+    const topicBlocks = new Set(), topicFiles = new Set();
+    for (const c of Object.values(truth.changes)) { for (const b of c.footprint) topicBlocks.add(b); for (const f of c.files) if (/\.(cpp|h|py)$/.test(f)) topicFiles.add(f); }
     const entries = [];
     const revisions = new Map();                     // path -> {rev, blob}
     const canvasLog = [];
@@ -66,6 +66,9 @@ function canvasEntries(m, { name = `mirror-seed-${m.seed}` } = {}) {
         const tipCommit = mainCommits.filter((c) => c.time <= cutoff).at(-1);
         const tree = tipCommit.tree;
         const files = {}, blocks = [], live = new Map();
+        // The topic's files as they are now: a moved file or block is followed by its blocks, not by its old path.
+        const topicPaths = new Set([...topicFiles].filter((p) => tree.has(p)));
+        for (const b of topicBlocks) { const p = locate(tree, '', b); if (p) topicPaths.add(p); }
         for (const p of [...topicPaths].sort()) {
             const f = tree.get(p);
             if (!f || f.kind !== 'code') continue;
@@ -98,6 +101,7 @@ function canvasEntries(m, { name = `mirror-seed-${m.seed}` } = {}) {
         const stateAt = (key) => {
             const s = m.changeState.get(key);
             if (s.opened > cutoff) return null;
+            if (s.reverted && s.reverted <= cutoff) return 'reverted';
             if (s.merged && s.merged <= cutoff) return 'merged';
             if (s.closed && s.closed <= cutoff) return 'closed';
             return 'open';
@@ -158,7 +162,13 @@ function githubPlan(m, { repo, visibility = 'private', drafts = true } = {}) {
     for (const iss of m.state.issues) sh(['gh', 'issue', 'create', '-R', full, '--title', `[${iss.key}] ${iss.title}`, '--body', `Tracker item ${iss.key} (${iss.type}, ${iss.status}).\n\nLinks: ${iss.links.map((l) => `${l.type} ${l.key}`).join(', ') || 'none'}`], `tracker item ${iss.key}`);
 
     const pushed = new Map();                        // branch -> sha last pushed
-    const push = (branch, sha, note) => { if (pushed.get(branch) === sha) return; pushed.set(branch, sha); sh(['git', 'push', '{remote}', `${sha}:refs/heads/${branch}`], note); };
+    // Change branches are pushed with force: a rebase rewrites one (the force-pushed-rebase edge case); shared branches only ever move forward.
+    const changeBranches = new Set([...m.changeState.values()].map((s) => s.branch));
+    const push = (branch, sha, note) => {
+        if (pushed.get(branch) === sha) return;
+        pushed.set(branch, sha);
+        sh(['git', 'push', '{remote}', `${changeBranches.has(branch) ? '+' : ''}${sha}:refs/heads/${branch}`], note);
+    };
     const lastOn = (branch, time) => m.commits.filter((c) => c.branch === branch && c.time <= time).at(-1);
     const advanceShared = (time) => {
         for (const b of ['main', 'release/2.0', 'release/2.1', 'feature/scan-v2']) {

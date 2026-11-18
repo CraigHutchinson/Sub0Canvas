@@ -91,6 +91,7 @@ node tools/screenshots.mjs   # regenerate docs/screenshots with headless Edge or
 | `src/model.js` | Pure model: loading, validation, a per-turn index (live and retired blocks, anchors keyed by the block they *resolve* to through merges), and the queries (`attachedTo`, `fanOut`, `blockHistory`, `itemTrace`, `duplicateGroups`, `unify`, `previewFix`). It is a classic script and a CommonJS module, so the page and the tests load the same file. |
 | `src/view.js` | The page: plain DOM, re-rendered from one state object kept in the URL hash. |
 | `tools/gen-fixtures.mjs` | The demo story in four turns, with block lines computed from the source text: a SYMBOL edit, a batch regex fix, a rename, a whole-file rewrite with a signature change, a merge, an orphan, a revival, a 1-N issue (8 anchors, 2 files), duplicate review notes, and prose and decision layers. |
+| `tools/mirror/` | The synthetic mirror: a seeded, invented project with real-world repository shape, a topic of pull requests and its exact truth, as a git repository, a canvas, a data source or a forge plan ([docs/MIRROR.md](docs/MIRROR.md)). `npm run mirror -- <mode>`. |
 | `test/` | Model tests against the demo, plus a check that the committed fixtures match the generator. |
 
 The page uses classic scripts, not ES modules, so it runs when opened straight from disk. The demo is bundled into `fixtures/demo.js` for the same reason.

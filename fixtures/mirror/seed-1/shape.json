@@ -1,0 +1,52 @@
+{
+ "files": 292,
+ "kinds": {
+  "code": 97,
+  "docs": 11,
+  "data": 32,
+  "binary": 61,
+  "sidecar": 91
+ },
+ "commits": 318,
+ "trunkCommits": 273,
+ "branches": 35,
+ "changes": 31,
+ "byKind": {
+  "origin": 1,
+  "spike": 4,
+  "carve": 20,
+  "integration": 1,
+  "test": 2,
+  "refactor": 1,
+  "port": 1,
+  "assets": 1
+ },
+ "byState": {
+  "closed": 5,
+  "open": 12,
+  "merged": 14
+ },
+ "topicFiles": 57,
+ "hotspots": 14,
+ "sharingFilesWithS1": 22,
+ "refactorSharedWithS1": 3,
+ "stackDepth": 3,
+ "coverage": {
+  "S1": {
+   "dropped": 3,
+   "landed": 17,
+   "notCarved": 5,
+   "inFlight": 12,
+   "obsolete": 2
+  },
+  "S2": {
+   "landed": 2,
+   "notCarved": 2
+  },
+  "S3": {
+   "landed": 3,
+   "notCarved": 2
+  },
+  "R1": {}
+ }
+}

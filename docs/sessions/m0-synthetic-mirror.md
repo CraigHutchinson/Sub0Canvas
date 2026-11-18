@@ -1,6 +1,6 @@
 # Follow-up session: M0, a synthetic mirror project as a validation fixture
 
-Status: open (written 2026-11-18). Backlog: "M0: the synthetic mirror" under *Now*. Design: [CHANGE_VIEWS.md](../CHANGE_VIEWS.md) section 7,
+Status: **done** (2026-11-18); see Outcome. Written 2026-11-18. Backlog: "M0: the synthetic mirror" under *Now*. Design: [CHANGE_VIEWS.md](../CHANGE_VIEWS.md) section 7,
 [SCALE.md](../SCALE.md) section 2 (profile B) and section 7; [TESTING.md](../TESTING.md) rungs L2 and L3.
 
 ## Goal
@@ -61,3 +61,14 @@ build the fixture they will be checked against.
 Windows 11, Node 20+, git 2.4x or later; no dependencies. The owner's standing rules ([AGENTS.md](../../AGENTS.md)): nothing leaves the machine,
 ask before downloads, installs or creating repositories, commit as you go, confirm before pushing; closed-source references by shape and numbers
 only.
+
+## Outcome
+
+Built in `tools/mirror/` (Node, no dependencies), documented in [MIRROR.md](../MIRROR.md), tested by `test/mirror.test.js` (8 tests: determinism,
+the fixture, seven more seeds, the viewer loading the canvas output, the source, the truth's consistency, the forge plan, git rebuilding the same
+commit ids). Fixture: `fixtures/mirror/seed-1/` (state, truth, shape; about 235 KB, larger than the brief's guess because the truth carries every
+footprint and hunk state). Beyond the brief, at the owner's direction: an **edge-case register** of real-world situations the canvas may not handle
+yet (`truth.edgeCases`, MIRROR.md), whose gaps are CHANGE_VIEWS.md section 10. Modes: shape, source (JSON or stdio), local, canvas, github (a plan;
+`--execute` written, not run live), fixture. **Parked by the owner**: a live sandbox on a local forge (Gitea or Forgejo), a forge-CLI stand-in,
+git-native review (MIRROR.md, "Parked").
+

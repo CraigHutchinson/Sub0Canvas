@@ -1,0 +1,4981 @@
+{
+ "schema": "mirror-truth-1",
+ "seed": 1,
+ "topic": "CAT-1042",
+ "product": "Fernhall",
+ "notes": "Identity is per lineage: a hunk equivalence class. Born blocks keep one id across the changes that add them. Hunk states take the first that holds of landed (a holder merged into main), inFlight (a holder open), dropped (only closed holders), obsolete (no holder and it no longer applies to main), notCarved.",
+ "changes": {
+  "ORIG": {
+   "number": 401,
+   "kind": "origin",
+   "topic": "CAT-1042",
+   "state": "closed",
+   "base": "main",
+   "footprint": [
+    "b39",
+    "b40",
+    "b44",
+    "b772",
+    "b86"
+   ],
+   "files": [
+    "core/scanner/scanner_cache.cpp",
+    "core/scanner/scanner_io.cpp",
+    "core/selection/selection.cpp",
+    "core/selection/selection_io.cpp",
+    "docs/investigation-large-folders.md"
+   ],
+   "lineages": [
+    "L03",
+    "L04",
+    "L06",
+    "L07",
+    "L57"
+   ],
+   "rewritten": false
+  },
+  "S1": {
+   "number": 402,
+   "kind": "spike",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b103",
+    "b111",
+    "b114",
+    "b125",
+    "b13",
+    "b132",
+    "b134",
+    "b15",
+    "b151",
+    "b152",
+    "b158",
+    "b160",
+    "b162",
+    "b163",
+    "b165",
+    "b18",
+    "b20",
+    "b34",
+    "b39",
+    "b40",
+    "b5",
+    "b61",
+    "b62",
+    "b65",
+    "b68",
+    "b69",
+    "b77",
+    "b772",
+    "b774",
+    "b78",
+    "b787",
+    "b84",
+    "b86",
+    "b90",
+    "b91",
+    "b92",
+    "b94",
+    "b95"
+   ],
+   "files": [
+    "core/bridge/bridge.cpp",
+    "core/bridge/bridge_io.cpp",
+    "core/bridge/bridge_query.cpp",
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/details/details_query.cpp",
+    "core/index/index.cpp",
+    "core/index/index_cache.cpp",
+    "core/index/index_query.cpp",
+    "core/library/library.cpp",
+    "core/library/library_cache.cpp",
+    "core/library/library_jobs.cpp",
+    "core/scanner/scanner.cpp",
+    "core/scanner/scanner_cache.cpp",
+    "core/scanner/scanner_io.cpp",
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp",
+    "core/selection/selection_io.cpp",
+    "core/thumbs/thumbs.cpp",
+    "core/thumbs/thumbs_io.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L01",
+    "L03",
+    "L04",
+    "L05",
+    "L06",
+    "L07",
+    "L08",
+    "L09",
+    "L10",
+    "L11",
+    "L12",
+    "L13",
+    "L14",
+    "L15",
+    "L16",
+    "L17",
+    "L18",
+    "L19",
+    "L20",
+    "L21",
+    "L22",
+    "L23",
+    "L24",
+    "L25",
+    "L26",
+    "L27",
+    "L28",
+    "L29",
+    "L30",
+    "L31",
+    "L32",
+    "L33",
+    "L34",
+    "L35",
+    "L36",
+    "L37",
+    "L38",
+    "L58",
+    "L59"
+   ],
+   "rewritten": false
+  },
+  "C1": {
+   "number": 403,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "closed",
+   "base": "main",
+   "footprint": [
+    "b34",
+    "b39",
+    "b40",
+    "b47"
+   ],
+   "files": [
+    "core/scanner/scanner.cpp",
+    "core/scanner/scanner_cache.cpp",
+    "core/scanner/scanner_io.cpp",
+    "core/scanner/scanner_query.cpp"
+   ],
+   "lineages": [
+    "L03",
+    "L04",
+    "L05",
+    "L47"
+   ],
+   "rewritten": false
+  },
+  "C2": {
+   "number": 404,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "closed",
+   "base": "main",
+   "footprint": [
+    "b103",
+    "b111",
+    "b114",
+    "b152",
+    "b162",
+    "b163",
+    "b772",
+    "b84",
+    "b86",
+    "b92",
+    "b95"
+   ],
+   "files": [
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp",
+    "core/selection/selection_io.cpp",
+    "core/thumbs/thumbs.cpp",
+    "core/thumbs/thumbs_io.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L06",
+    "L07",
+    "L08",
+    "L09",
+    "L10",
+    "L11",
+    "L12",
+    "L13",
+    "L14",
+    "L15",
+    "L16"
+   ],
+   "rewritten": false
+  },
+  "C3": {
+   "number": 405,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b13",
+    "b18",
+    "b787"
+   ],
+   "files": [
+    "core/library/library.cpp",
+    "core/library/library_cache.cpp",
+    "core/library/library_jobs.cpp"
+   ],
+   "lineages": [
+    "L01",
+    "L17",
+    "L18"
+   ],
+   "rewritten": false
+  },
+  "INT": {
+   "number": 406,
+   "kind": "integration",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b15",
+    "b151",
+    "b158",
+    "b160",
+    "b165",
+    "b20",
+    "b5",
+    "b77",
+    "b78",
+    "b90",
+    "b91",
+    "b94"
+   ],
+   "files": [
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/details/details_query.cpp",
+    "core/library/library.cpp",
+    "core/library/library_cache.cpp",
+    "core/library/library_jobs.cpp",
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp",
+    "core/selection/selection_io.cpp"
+   ],
+   "lineages": [
+    "L22",
+    "L23",
+    "L24",
+    "L25",
+    "L26",
+    "L27",
+    "L28",
+    "L29",
+    "L30",
+    "L31",
+    "L32",
+    "L33"
+   ],
+   "rewritten": false
+  },
+  "C4": {
+   "number": 407,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "feature/scan-v2",
+   "footprint": [
+    "b12",
+    "b201",
+    "b4"
+   ],
+   "files": [
+    "core/library/library.cpp",
+    "core/library/library_jobs.cpp",
+    "core/metadata/metadata.cpp"
+   ],
+   "lineages": [
+    "L48",
+    "L49",
+    "L50"
+   ],
+   "rewritten": false
+  },
+  "C5": {
+   "number": 408,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b115",
+    "b7"
+   ],
+   "files": [
+    "core/library/library.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L51",
+    "L52"
+   ],
+   "rewritten": false
+  },
+  "T1": {
+   "number": 409,
+   "kind": "test",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [],
+   "files": [
+    "tests/perf/test_select_many.py"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "C6": {
+   "number": 410,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b772",
+    "b84",
+    "b86",
+    "b95"
+   ],
+   "files": [
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp",
+    "core/selection/selection_io.cpp"
+   ],
+   "lineages": [
+    "L06",
+    "L07",
+    "L08",
+    "L09"
+   ],
+   "rewritten": true
+  },
+  "T2": {
+   "number": 411,
+   "kind": "test",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b117"
+   ],
+   "files": [
+    "tests/test_thumbs.py"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "C7": {
+   "number": 412,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b152",
+    "b162",
+    "b163",
+    "b92"
+   ],
+   "files": [
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/selection/selection_cache.cpp"
+   ],
+   "lineages": [
+    "L10",
+    "L11",
+    "L12",
+    "L13"
+   ],
+   "rewritten": true
+  },
+  "C8": {
+   "number": 413,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b103",
+    "b111",
+    "b114"
+   ],
+   "files": [
+    "core/thumbs/thumbs.cpp",
+    "core/thumbs/thumbs_io.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L14",
+    "L15",
+    "L16"
+   ],
+   "rewritten": false,
+   "revertedBy": "b6f677c15d02f225e12dc34aae90ffede3938802"
+  },
+  "C9": {
+   "number": 414,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b125",
+    "b132",
+    "b134"
+   ],
+   "files": [
+    "core/bridge/bridge.cpp",
+    "core/bridge/bridge_io.cpp",
+    "core/bridge/bridge_query.cpp"
+   ],
+   "lineages": [
+    "L19",
+    "L20",
+    "L21"
+   ],
+   "rewritten": false
+  },
+  "S2": {
+   "number": 415,
+   "kind": "spike",
+   "topic": "CAT-1107",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b177",
+    "b185",
+    "b187",
+    "b788"
+   ],
+   "files": [
+    "core/storage/storage.cpp",
+    "core/storage/storage_io.cpp",
+    "core/storage/storage_query.cpp"
+   ],
+   "lineages": [
+    "L02",
+    "L44",
+    "L45",
+    "L46"
+   ],
+   "rewritten": false
+  },
+  "S3": {
+   "number": 416,
+   "kind": "spike",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b155",
+    "b156",
+    "b157",
+    "b161",
+    "b164"
+   ],
+   "files": [
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/details/details_query.cpp"
+   ],
+   "lineages": [
+    "L39",
+    "L40",
+    "L41",
+    "L42",
+    "L43"
+   ],
+   "rewritten": false
+  },
+  "C10": {
+   "number": 417,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "closed",
+   "base": "main",
+   "footprint": [
+    "b174",
+    "b37",
+    "b49"
+   ],
+   "files": [
+    "core/scanner/scanner_cache.cpp",
+    "core/scanner/scanner_query.cpp",
+    "core/storage/storage.cpp"
+   ],
+   "lineages": [
+    "L53",
+    "L54",
+    "L55"
+   ],
+   "rewritten": false
+  },
+  "C11": {
+   "number": 418,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b156",
+    "b161",
+    "b164"
+   ],
+   "files": [
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp",
+    "core/details/details_query.cpp"
+   ],
+   "lineages": [
+    "L39",
+    "L40",
+    "L41"
+   ],
+   "rewritten": false
+  },
+  "REF": {
+   "number": 419,
+   "kind": "refactor",
+   "topic": "CAT-0990",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b109",
+    "b191",
+    "b203",
+    "b208",
+    "b214",
+    "b225",
+    "b227",
+    "b233",
+    "b234",
+    "b246",
+    "b253",
+    "b256",
+    "b264",
+    "b279",
+    "b284",
+    "b285",
+    "b291",
+    "b45",
+    "b64",
+    "b768",
+    "b80",
+    "b9"
+   ],
+   "files": [
+    "core/albums/albums.cpp",
+    "core/albums/albums_cache.cpp",
+    "core/albums/albums_jobs.cpp",
+    "core/albums/albums_legacy.cpp",
+    "core/albums/albums_query.cpp",
+    "core/export/export.cpp",
+    "core/export/export_io.cpp",
+    "core/export/export_jobs.cpp",
+    "core/export/export_query.cpp",
+    "core/index/index_query.cpp",
+    "core/library/library_io.cpp",
+    "core/metadata/metadata.cpp",
+    "core/metadata/metadata_cache.cpp",
+    "core/metadata/metadata_io.cpp",
+    "core/scanner/scanner_query.cpp",
+    "core/search/search.cpp",
+    "core/search/search_cache.cpp",
+    "core/search/search_io.cpp",
+    "core/search/search_query.cpp",
+    "core/selection/selection.cpp",
+    "core/storage/storage_jobs.cpp",
+    "core/tags/tags.cpp",
+    "core/tags/tags_query.cpp",
+    "core/tags/tags_store.cpp",
+    "core/thumbs/thumbs_io.cpp"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "K1": {
+   "number": 420,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b151",
+    "b159",
+    "b160",
+    "b165"
+   ],
+   "files": [
+    "core/details/details.cpp",
+    "core/details/details_cache.cpp",
+    "core/details/details_io.cpp"
+   ],
+   "lineages": [
+    "L22",
+    "L23",
+    "L24",
+    "L56"
+   ],
+   "rewritten": false,
+   "rebased": true
+  },
+  "K2": {
+   "number": 421,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet",
+   "footprint": [
+    "b15",
+    "b158"
+   ],
+   "files": [
+    "core/details/details_query.cpp",
+    "core/library/library_jobs.cpp"
+   ],
+   "lineages": [
+    "L25",
+    "L26"
+   ],
+   "rewritten": false
+  },
+  "C12": {
+   "number": 422,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b78",
+    "b90",
+    "b91"
+   ],
+   "files": [
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp",
+    "core/selection/selection_io.cpp"
+   ],
+   "lineages": [
+    "L31",
+    "L32",
+    "L33"
+   ],
+   "rewritten": false,
+   "backMerged": true
+  },
+  "K3": {
+   "number": 423,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "rin/cat-1042-k2-let-the-panels-skip-unread-photos-withou",
+   "footprint": [
+    "b20",
+    "b5",
+    "b77",
+    "b94"
+   ],
+   "files": [
+    "core/library/library.cpp",
+    "core/library/library_cache.cpp",
+    "core/selection/selection.cpp",
+    "core/selection/selection_cache.cpp"
+   ],
+   "lineages": [
+    "L27",
+    "L28",
+    "L29",
+    "L30"
+   ],
+   "rewritten": false
+  },
+  "C13": {
+   "number": 424,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b177",
+    "b788"
+   ],
+   "files": [
+    "core/storage/storage.cpp"
+   ],
+   "lineages": [
+    "L02",
+    "L44"
+   ],
+   "rewritten": false
+  },
+  "PORT": {
+   "number": 427,
+   "kind": "port",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "release/2.1",
+   "footprint": [
+    "b115",
+    "b13",
+    "b18",
+    "b7",
+    "b787"
+   ],
+   "files": [
+    "core/library/library.cpp",
+    "core/library/library_cache.cpp",
+    "core/library/library_jobs.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L01",
+    "L17",
+    "L18",
+    "L51",
+    "L52"
+   ],
+   "rewritten": true
+  },
+  "R1": {
+   "number": 430,
+   "kind": "spike",
+   "topic": "CAT-1042",
+   "state": "closed",
+   "base": "main",
+   "footprint": [],
+   "files": [
+    "tests/test_preview_dock_repro.py"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "ST1": {
+   "number": 400,
+   "kind": "carve",
+   "topic": "CAT-0731",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b160"
+   ],
+   "files": [
+    "core/details/details_io.cpp"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "CF1": {
+   "number": 425,
+   "kind": "carve",
+   "topic": "CAT-1107",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b281"
+   ],
+   "files": [
+    "core/search/search_cache.cpp"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "CF2": {
+   "number": 426,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "open",
+   "base": "main",
+   "footprint": [
+    "b281"
+   ],
+   "files": [
+    "core/search/search_cache.cpp"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "AS1": {
+   "number": 428,
+   "kind": "assets",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [],
+   "files": [
+    "assets/icons/clock.png",
+    "assets/icons/clock.png.sidecar",
+    "assets/icons/flag_2227.png",
+    "assets/icons/flag_2227.png.sidecar",
+    "assets/icons/share.png",
+    "assets/icons/share.png.sidecar"
+   ],
+   "lineages": [],
+   "rewritten": false
+  },
+  "C8R": {
+   "number": 429,
+   "kind": "carve",
+   "topic": "CAT-1042",
+   "state": "merged",
+   "base": "main",
+   "footprint": [
+    "b103",
+    "b111",
+    "b114"
+   ],
+   "files": [
+    "core/thumbs/thumbs.cpp",
+    "core/thumbs/thumbs_io.cpp",
+    "core/thumbs/thumbs_jobs.cpp"
+   ],
+   "lineages": [
+    "L14",
+    "L15",
+    "L16"
+   ],
+   "rewritten": true
+  }
+ },
+ "links": [
+  {
+   "from": "C1",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C2",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C3",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C6",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C7",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C8",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C9",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "K1",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "K2",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "K3",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C12",
+   "kind": "carvedFrom",
+   "to": "S1"
+  },
+  {
+   "from": "C11",
+   "kind": "carvedFrom",
+   "to": "S3"
+  },
+  {
+   "from": "C13",
+   "kind": "carvedFrom",
+   "to": "S2"
+  },
+  {
+   "from": "C1",
+   "kind": "carvedFrom",
+   "to": "ORIG"
+  },
+  {
+   "from": "S1",
+   "kind": "continues",
+   "to": "ORIG"
+  },
+  {
+   "from": "C6",
+   "kind": "supersedes",
+   "to": "C2"
+  },
+  {
+   "from": "C7",
+   "kind": "supersedes",
+   "to": "C2"
+  },
+  {
+   "from": "C8",
+   "kind": "supersedes",
+   "to": "C2"
+  },
+  {
+   "from": "INT",
+   "kind": "integrates",
+   "to": "C12"
+  },
+  {
+   "from": "INT",
+   "kind": "integrates",
+   "to": "K1"
+  },
+  {
+   "from": "INT",
+   "kind": "integrates",
+   "to": "K2"
+  },
+  {
+   "from": "INT",
+   "kind": "integrates",
+   "to": "K3"
+  },
+  {
+   "from": "INT",
+   "kind": "duplicates",
+   "to": "C12"
+  },
+  {
+   "from": "K2",
+   "kind": "stackedOn",
+   "to": "K1"
+  },
+  {
+   "from": "K3",
+   "kind": "stackedOn",
+   "to": "K2"
+  },
+  {
+   "from": "C5",
+   "kind": "dependsOn",
+   "to": "C3"
+  },
+  {
+   "from": "PORT",
+   "kind": "ports",
+   "to": "C3"
+  },
+  {
+   "from": "PORT",
+   "kind": "ports",
+   "to": "C5"
+  },
+  {
+   "from": "T1",
+   "kind": "tests",
+   "to": "topic"
+  },
+  {
+   "from": "T2",
+   "kind": "tests",
+   "to": "topic"
+  },
+  {
+   "from": "R1",
+   "kind": "tests",
+   "to": "topic"
+  },
+  {
+   "from": "CF1",
+   "kind": "conflictsWith",
+   "to": "CF2"
+  },
+  {
+   "from": "C8R",
+   "kind": "relands",
+   "to": "C8"
+  },
+  {
+   "from": "AS1",
+   "kind": "partOf",
+   "to": "topic"
+  }
+ ],
+ "spikeCoverage": {
+  "S1": [
+   {
+    "lineage": "L03",
+    "block": "b39",
+    "path": "core/scanner/scanner_cache.cpp",
+    "op": "append",
+    "state": "dropped",
+    "heldBy": [
+     "C1"
+    ]
+   },
+   {
+    "lineage": "L04",
+    "block": "b40",
+    "path": "core/scanner/scanner_io.cpp",
+    "op": "replace",
+    "state": "dropped",
+    "heldBy": [
+     "C1"
+    ]
+   },
+   {
+    "lineage": "L05",
+    "block": "b34",
+    "path": "core/scanner/scanner.cpp",
+    "op": "replace",
+    "state": "dropped",
+    "heldBy": [
+     "C1"
+    ]
+   },
+   {
+    "lineage": "L06",
+    "block": "b772",
+    "path": "core/selection/selection.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C6"
+    ]
+   },
+   {
+    "lineage": "L07",
+    "block": "b86",
+    "path": "core/selection/selection_io.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C6"
+    ]
+   },
+   {
+    "lineage": "L08",
+    "block": "b95",
+    "path": "core/selection/selection_cache.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C6"
+    ]
+   },
+   {
+    "lineage": "L09",
+    "block": "b84",
+    "path": "core/selection/selection.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C6"
+    ]
+   },
+   {
+    "lineage": "L10",
+    "block": "b152",
+    "path": "core/details/details.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C7"
+    ]
+   },
+   {
+    "lineage": "L11",
+    "block": "b163",
+    "path": "core/details/details_cache.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C7"
+    ]
+   },
+   {
+    "lineage": "L12",
+    "block": "b162",
+    "path": "core/details/details_io.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C7"
+    ]
+   },
+   {
+    "lineage": "L13",
+    "block": "b92",
+    "path": "core/selection/selection_cache.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C7"
+    ]
+   },
+   {
+    "lineage": "L14",
+    "block": "b111",
+    "path": "core/thumbs/thumbs_io.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C8",
+     "C8R"
+    ]
+   },
+   {
+    "lineage": "L15",
+    "block": "b114",
+    "path": "core/thumbs/thumbs_jobs.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C8",
+     "C8R"
+    ]
+   },
+   {
+    "lineage": "L16",
+    "block": "b103",
+    "path": "core/thumbs/thumbs.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C2",
+     "C8",
+     "C8R"
+    ]
+   },
+   {
+    "lineage": "L58",
+    "block": "b774",
+    "path": "core/selection/selection.cpp",
+    "op": "append",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L59",
+    "block": "b772",
+    "path": "core/selection/selection.cpp",
+    "op": "append",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L01",
+    "block": "b787",
+    "path": "core/library/library.cpp",
+    "op": "add",
+    "state": "landed",
+    "heldBy": [
+     "C3",
+     "PORT"
+    ]
+   },
+   {
+    "lineage": "L17",
+    "block": "b18",
+    "path": "core/library/library_cache.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C3",
+     "PORT"
+    ]
+   },
+   {
+    "lineage": "L18",
+    "block": "b13",
+    "path": "core/library/library_jobs.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C3",
+     "PORT"
+    ]
+   },
+   {
+    "lineage": "L19",
+    "block": "b132",
+    "path": "core/bridge/bridge_io.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C9"
+    ]
+   },
+   {
+    "lineage": "L20",
+    "block": "b125",
+    "path": "core/bridge/bridge.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C9"
+    ]
+   },
+   {
+    "lineage": "L21",
+    "block": "b134",
+    "path": "core/bridge/bridge_query.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C9"
+    ]
+   },
+   {
+    "lineage": "L22",
+    "block": "b160",
+    "path": "core/details/details_io.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K1"
+    ]
+   },
+   {
+    "lineage": "L23",
+    "block": "b151",
+    "path": "core/details/details.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K1"
+    ]
+   },
+   {
+    "lineage": "L24",
+    "block": "b165",
+    "path": "core/details/details_cache.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K1"
+    ]
+   },
+   {
+    "lineage": "L25",
+    "block": "b15",
+    "path": "core/library/library_jobs.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K2"
+    ]
+   },
+   {
+    "lineage": "L26",
+    "block": "b158",
+    "path": "core/details/details_query.cpp",
+    "pathNow": "core/details/panel/details_query.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K2"
+    ]
+   },
+   {
+    "lineage": "L27",
+    "block": "b77",
+    "path": "core/selection/selection.cpp",
+    "op": "append",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K3"
+    ]
+   },
+   {
+    "lineage": "L28",
+    "block": "b20",
+    "path": "core/library/library_cache.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K3"
+    ]
+   },
+   {
+    "lineage": "L29",
+    "block": "b94",
+    "path": "core/selection/selection_cache.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K3"
+    ]
+   },
+   {
+    "lineage": "L30",
+    "block": "b5",
+    "path": "core/library/library.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "INT",
+     "K3"
+    ]
+   },
+   {
+    "lineage": "L31",
+    "block": "b78",
+    "path": "core/selection/selection.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "C12",
+     "INT"
+    ]
+   },
+   {
+    "lineage": "L32",
+    "block": "b91",
+    "path": "core/selection/selection_cache.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "C12",
+     "INT"
+    ]
+   },
+   {
+    "lineage": "L33",
+    "block": "b90",
+    "path": "core/selection/selection_io.cpp",
+    "op": "replace",
+    "state": "inFlight",
+    "heldBy": [
+     "C12",
+     "INT"
+    ]
+   },
+   {
+    "lineage": "L34",
+    "block": "b61",
+    "path": "core/index/index.cpp",
+    "op": "replace",
+    "state": "obsolete",
+    "heldBy": []
+   },
+   {
+    "lineage": "L35",
+    "block": "b68",
+    "path": "core/index/index_cache.cpp",
+    "op": "replace",
+    "state": "obsolete",
+    "heldBy": []
+   },
+   {
+    "lineage": "L36",
+    "block": "b65",
+    "path": "core/index/index_query.cpp",
+    "pathNow": "core/index/index.cpp",
+    "op": "replace",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L37",
+    "block": "b62",
+    "path": "core/index/index.cpp",
+    "op": "replace",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L38",
+    "block": "b69",
+    "path": "core/index/index_cache.cpp",
+    "op": "replace",
+    "state": "notCarved",
+    "heldBy": []
+   }
+  ],
+  "S2": [
+   {
+    "lineage": "L02",
+    "block": "b788",
+    "path": "core/storage/storage.cpp",
+    "op": "add",
+    "state": "landed",
+    "heldBy": [
+     "C13"
+    ]
+   },
+   {
+    "lineage": "L44",
+    "block": "b177",
+    "path": "core/storage/storage.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C13"
+    ]
+   },
+   {
+    "lineage": "L45",
+    "block": "b187",
+    "path": "core/storage/storage_query.cpp",
+    "op": "append",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L46",
+    "block": "b185",
+    "path": "core/storage/storage_io.cpp",
+    "op": "append",
+    "state": "notCarved",
+    "heldBy": []
+   }
+  ],
+  "S3": [
+   {
+    "lineage": "L39",
+    "block": "b156",
+    "path": "core/details/details_query.cpp",
+    "pathNow": "core/details/panel/details_query.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C11"
+    ]
+   },
+   {
+    "lineage": "L40",
+    "block": "b161",
+    "path": "core/details/details_io.cpp",
+    "op": "append",
+    "state": "landed",
+    "heldBy": [
+     "C11"
+    ]
+   },
+   {
+    "lineage": "L41",
+    "block": "b164",
+    "path": "core/details/details_cache.cpp",
+    "op": "replace",
+    "state": "landed",
+    "heldBy": [
+     "C11"
+    ]
+   },
+   {
+    "lineage": "L42",
+    "block": "b155",
+    "path": "core/details/details.cpp",
+    "op": "append",
+    "state": "notCarved",
+    "heldBy": []
+   },
+   {
+    "lineage": "L43",
+    "block": "b157",
+    "path": "core/details/details_query.cpp",
+    "pathNow": "core/details/panel/details_query.cpp",
+    "op": "replace",
+    "state": "notCarved",
+    "heldBy": []
+   }
+  ],
+  "R1": []
+ },
+ "blocks": {
+  "b1": {
+   "path": "core/library/library.h",
+   "name": "readHeader"
+  },
+  "b2": {
+   "path": "core/library/library.h",
+   "name": "countPath"
+  },
+  "b3": {
+   "path": "core/library/library.h",
+   "name": "collectPhoto"
+  },
+  "b4": {
+   "path": "core/library/library.cpp",
+   "name": "Library::refreshRecord"
+  },
+  "b5": {
+   "path": "core/library/library.cpp",
+   "name": "Library::buildJob"
+  },
+  "b6": {
+   "path": "core/library/library.cpp",
+   "name": "Library::mergeFolder"
+  },
+  "b7": {
+   "path": "core/library/library.cpp",
+   "name": "Library::collectFolder"
+  },
+  "b787": {
+   "path": "core/library/library.cpp",
+   "name": "Library::peekRecord"
+  },
+  "b8": {
+   "path": "core/library/library_io.cpp",
+   "name": "Library::sortPath"
+  },
+  "b9": {
+   "path": "core/library/library_io.cpp",
+   "name": "Library::mergeThumb"
+  },
+  "b10": {
+   "path": "core/library/library_io.cpp",
+   "name": "Library::flushSlot"
+  },
+  "b11": {
+   "path": "core/library/library_jobs.cpp",
+   "name": "Library::queuePreview"
+  },
+  "b12": {
+   "path": "core/library/library_jobs.cpp",
+   "name": "Library::resolveRating"
+  },
+  "b13": {
+   "path": "core/library/library_jobs.cpp",
+   "name": "Library::scanAlbum"
+  },
+  "b14": {
+   "path": "core/library/library_jobs.cpp",
+   "name": "Library::collectEntry"
+  },
+  "b15": {
+   "path": "core/library/library_jobs.cpp",
+   "name": "Library::resolveThumb"
+  },
+  "b16": {
+   "path": "core/library/library_cache.cpp",
+   "name": "Library::trackEntry"
+  },
+  "b18": {
+   "path": "core/library/library_cache.cpp",
+   "name": "Library::flushRecord"
+  },
+  "b19": {
+   "path": "core/library/library_cache.cpp",
+   "name": "Library::prepareThumb"
+  },
+  "b20": {
+   "path": "core/library/library_cache.cpp",
+   "name": "Library::mergePhoto"
+  },
+  "b21": {
+   "path": "tests/test_library.py",
+   "name": "resolve_header"
+  },
+  "b22": {
+   "path": "tests/test_library.py",
+   "name": "merge_batch"
+  },
+  "b23": {
+   "path": "tests/test_library.py",
+   "name": "filter_query"
+  },
+  "b24": {
+   "path": "tests/test_library.py",
+   "name": "build_album"
+  },
+  "b25": {
+   "path": "tests/test_library.py",
+   "name": "merge_rating"
+  },
+  "b775": {
+   "path": "tests/test_library.py",
+   "name": "prepare_folder"
+  },
+  "b26": {
+   "path": "core/scanner/scanner.h",
+   "name": "mergeRecord"
+  },
+  "b27": {
+   "path": "core/scanner/scanner.h",
+   "name": "flushCache"
+  },
+  "b28": {
+   "path": "core/scanner/scanner.h",
+   "name": "readPage"
+  },
+  "b29": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::trackFolder"
+  },
+  "b30": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::prepareSlot"
+  },
+  "b31": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::findPage"
+  },
+  "b32": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::mergePage"
+  },
+  "b33": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::findCache"
+  },
+  "b34": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::findRecord"
+  },
+  "b35": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::sortCache"
+  },
+  "b36": {
+   "path": "core/scanner/scanner.cpp",
+   "name": "Scanner::flushThumb"
+  },
+  "b37": {
+   "path": "core/scanner/scanner_cache.cpp",
+   "name": "Scanner::loadPreview"
+  },
+  "b38": {
+   "path": "core/scanner/scanner_cache.cpp",
+   "name": "Scanner::findHeader"
+  },
+  "b39": {
+   "path": "core/scanner/scanner_cache.cpp",
+   "name": "Scanner::prepareTag"
+  },
+  "b40": {
+   "path": "core/scanner/scanner_io.cpp",
+   "name": "Scanner::refreshPage"
+  },
+  "b41": {
+   "path": "core/scanner/scanner_io.cpp",
+   "name": "Scanner::trackAlbum"
+  },
+  "b42": {
+   "path": "core/scanner/scanner_io.cpp",
+   "name": "Scanner::filterRecord"
+  },
+  "b43": {
+   "path": "core/scanner/scanner_io.cpp",
+   "name": "Scanner::sortThumb"
+  },
+  "b44": {
+   "path": "core/scanner/scanner_io.cpp",
+   "name": "Scanner::sortRecord"
+  },
+  "b45": {
+   "path": "core/scanner/scanner_query.cpp",
+   "name": "Scanner::refreshAlbum"
+  },
+  "b46": {
+   "path": "core/scanner/scanner_query.cpp",
+   "name": "Scanner::flushJob"
+  },
+  "b47": {
+   "path": "core/scanner/scanner_query.cpp",
+   "name": "Scanner::mergeRating"
+  },
+  "b48": {
+   "path": "core/scanner/scanner_query.cpp",
+   "name": "Scanner::readFolder"
+  },
+  "b49": {
+   "path": "core/scanner/scanner_query.cpp",
+   "name": "Scanner::filterFolder"
+  },
+  "b50": {
+   "path": "tests/test_scanner.py",
+   "name": "load_path"
+  },
+  "b51": {
+   "path": "tests/test_scanner.py",
+   "name": "merge_page"
+  },
+  "b52": {
+   "path": "tests/test_scanner.py",
+   "name": "merge_slot"
+  },
+  "b53": {
+   "path": "tests/test_scanner.py",
+   "name": "apply_job"
+  },
+  "b54": {
+   "path": "tests/test_scanner.py",
+   "name": "read_cache"
+  },
+  "b55": {
+   "path": "tests/test_scanner.py",
+   "name": "apply_thumb"
+  },
+  "b56": {
+   "path": "core/index/index.h",
+   "name": "resolveAlbum"
+  },
+  "b57": {
+   "path": "core/index/index.h",
+   "name": "applyFolder"
+  },
+  "b58": {
+   "path": "core/index/index.cpp",
+   "name": "Index::refreshCache"
+  },
+  "b59": {
+   "path": "core/index/index.cpp",
+   "name": "Index::collectBatch"
+  },
+  "b60": {
+   "path": "core/index/index.cpp",
+   "name": "Index::scanPath"
+  },
+  "b61": {
+   "path": "core/index/index.cpp",
+   "name": "Index::readPage"
+  },
+  "b62": {
+   "path": "core/index/index.cpp",
+   "name": "Index::countJob"
+  },
+  "b63": {
+   "path": "core/index/index.cpp",
+   "name": "Index::mergePhoto"
+  },
+  "b65": {
+   "path": "core/index/index.cpp",
+   "name": "Index::queueFolder"
+  },
+  "b807": {
+   "path": "core/index/index.cpp",
+   "name": "Index::mergeRating"
+  },
+  "b64": {
+   "path": "core/index/index_query.cpp",
+   "name": "Index::scanPhoto"
+  },
+  "b66": {
+   "path": "core/index/index_query.cpp",
+   "name": "Index::flushSlot"
+  },
+  "b67": {
+   "path": "core/index/index_cache.cpp",
+   "name": "Index::collectFolder"
+  },
+  "b68": {
+   "path": "core/index/index_cache.cpp",
+   "name": "Index::mergePage"
+  },
+  "b69": {
+   "path": "core/index/index_cache.cpp",
+   "name": "Index::filterPhoto"
+  },
+  "b70": {
+   "path": "tests/test_index.py",
+   "name": "open_entry"
+  },
+  "b71": {
+   "path": "tests/test_index.py",
+   "name": "open_photo"
+  },
+  "b72": {
+   "path": "tests/test_index.py",
+   "name": "resolve_thumb"
+  },
+  "b73": {
+   "path": "tests/test_index.py",
+   "name": "build_album"
+  },
+  "b74": {
+   "path": "core/selection/selection.h",
+   "name": "openRecord"
+  },
+  "b75": {
+   "path": "core/selection/selection.h",
+   "name": "buildFolder"
+  },
+  "b76": {
+   "path": "core/selection/selection.h",
+   "name": "refreshThumb"
+  },
+  "b77": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::loadRecord"
+  },
+  "b78": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::flushSlot"
+  },
+  "b79": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::sortRating"
+  },
+  "b80": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::loadQuery"
+  },
+  "b81": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::findQuery"
+  },
+  "b82": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::prepareJob"
+  },
+  "b83": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::findPhoto"
+  },
+  "b84": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::trackEntry"
+  },
+  "b773": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::countEntries"
+  },
+  "b774": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::countEntries"
+  },
+  "b772": {
+   "path": "core/selection/selection.cpp",
+   "name": "Selection::dumpProfile"
+  },
+  "b85": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::resolveTag"
+  },
+  "b86": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::queueRating"
+  },
+  "b87": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::trackAlbum"
+  },
+  "b88": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::mergeTag"
+  },
+  "b89": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::sortRating"
+  },
+  "b90": {
+   "path": "core/selection/selection_io.cpp",
+   "name": "Selection::prepareFolder"
+  },
+  "b91": {
+   "path": "core/selection/selection_cache.cpp",
+   "name": "Selection::resolvePage"
+  },
+  "b92": {
+   "path": "core/selection/selection_cache.cpp",
+   "name": "Selection::filterThumb"
+  },
+  "b93": {
+   "path": "core/selection/selection_cache.cpp",
+   "name": "Selection::loadSlot"
+  },
+  "b94": {
+   "path": "core/selection/selection_cache.cpp",
+   "name": "Selection::resolveJob"
+  },
+  "b95": {
+   "path": "core/selection/selection_cache.cpp",
+   "name": "Selection::collectPath"
+  },
+  "b96": {
+   "path": "tests/test_selection.py",
+   "name": "find_preview"
+  },
+  "b97": {
+   "path": "tests/test_selection.py",
+   "name": "filter_preview"
+  },
+  "b98": {
+   "path": "tests/test_selection.py",
+   "name": "open_job"
+  },
+  "b99": {
+   "path": "tests/test_selection.py",
+   "name": "load_album"
+  },
+  "b777": {
+   "path": "tests/test_selection.py",
+   "name": "sort_photo"
+  },
+  "b808": {
+   "path": "tests/test_selection.py",
+   "name": "read_job"
+  },
+  "b100": {
+   "path": "core/thumbs/thumbs.h",
+   "name": "collectPreview"
+  },
+  "b101": {
+   "path": "core/thumbs/thumbs.h",
+   "name": "mergeSlot"
+  },
+  "b102": {
+   "path": "core/thumbs/thumbs.h",
+   "name": "collectPage"
+  },
+  "b103": {
+   "path": "core/thumbs/thumbs.cpp",
+   "name": "Thumbs::trackTag"
+  },
+  "b104": {
+   "path": "core/thumbs/thumbs.cpp",
+   "name": "Thumbs::scanAlbum"
+  },
+  "b105": {
+   "path": "core/thumbs/thumbs.cpp",
+   "name": "Thumbs::mergeJob"
+  },
+  "b106": {
+   "path": "core/thumbs/thumbs.cpp",
+   "name": "Thumbs::loadPage"
+  },
+  "b107": {
+   "path": "core/thumbs/thumbs_io.cpp",
+   "name": "Thumbs::scanRange"
+  },
+  "b108": {
+   "path": "core/thumbs/thumbs_io.cpp",
+   "name": "Thumbs::readCache"
+  },
+  "b109": {
+   "path": "core/thumbs/thumbs_io.cpp",
+   "name": "Thumbs::readRating"
+  },
+  "b111": {
+   "path": "core/thumbs/thumbs_io.cpp",
+   "name": "Thumbs::sortJob"
+  },
+  "b112": {
+   "path": "core/thumbs/thumbs_jobs.cpp",
+   "name": "Thumbs::sortJob"
+  },
+  "b113": {
+   "path": "core/thumbs/thumbs_jobs.cpp",
+   "name": "Thumbs::refreshSlot"
+  },
+  "b114": {
+   "path": "core/thumbs/thumbs_jobs.cpp",
+   "name": "Thumbs::buildThumb"
+  },
+  "b115": {
+   "path": "core/thumbs/thumbs_jobs.cpp",
+   "name": "Thumbs::filterRange"
+  },
+  "b116": {
+   "path": "tests/test_thumbs.py",
+   "name": "queue_thumb"
+  },
+  "b117": {
+   "path": "tests/test_thumbs.py",
+   "name": "sort_photo"
+  },
+  "b118": {
+   "path": "tests/test_thumbs.py",
+   "name": "read_query"
+  },
+  "b119": {
+   "path": "tests/test_thumbs.py",
+   "name": "apply_cache"
+  },
+  "b120": {
+   "path": "tests/test_thumbs.py",
+   "name": "open_slot"
+  },
+  "b121": {
+   "path": "core/bridge/bridge.h",
+   "name": "collectRecord"
+  },
+  "b122": {
+   "path": "core/bridge/bridge.h",
+   "name": "scanBatch"
+  },
+  "b123": {
+   "path": "core/bridge/bridge.h",
+   "name": "readRange"
+  },
+  "b124": {
+   "path": "core/bridge/bridge.h",
+   "name": "queueCache"
+  },
+  "b125": {
+   "path": "core/bridge/bridge.cpp",
+   "name": "Bridge::mergeSlot"
+  },
+  "b126": {
+   "path": "core/bridge/bridge.cpp",
+   "name": "Bridge::resolveRecord"
+  },
+  "b127": {
+   "path": "core/bridge/bridge.cpp",
+   "name": "Bridge::trackTag"
+  },
+  "b128": {
+   "path": "core/bridge/bridge.cpp",
+   "name": "Bridge::collectSlot"
+  },
+  "b129": {
+   "path": "core/bridge/bridge_io.cpp",
+   "name": "Bridge::trackAlbum"
+  },
+  "b130": {
+   "path": "core/bridge/bridge_io.cpp",
+   "name": "Bridge::countJob"
+  },
+  "b131": {
+   "path": "core/bridge/bridge_io.cpp",
+   "name": "Bridge::findThumb"
+  },
+  "b132": {
+   "path": "core/bridge/bridge_io.cpp",
+   "name": "Bridge::loadPath"
+  },
+  "b133": {
+   "path": "core/bridge/bridge_io.cpp",
+   "name": "Bridge::prepareAlbum"
+  },
+  "b134": {
+   "path": "core/bridge/bridge_query.cpp",
+   "name": "Bridge::preparePage"
+  },
+  "b135": {
+   "path": "core/bridge/bridge_query.cpp",
+   "name": "Bridge::buildQuery"
+  },
+  "b136": {
+   "path": "core/bridge/bridge_query.cpp",
+   "name": "Bridge::filterCache"
+  },
+  "b137": {
+   "path": "core/bridge/bridge_query.cpp",
+   "name": "Bridge::openRating"
+  },
+  "b138": {
+   "path": "tests/test_bridge.py",
+   "name": "resolve_range"
+  },
+  "b139": {
+   "path": "tests/test_bridge.py",
+   "name": "merge_preview"
+  },
+  "b140": {
+   "path": "tests/test_bridge.py",
+   "name": "count_cache"
+  },
+  "b141": {
+   "path": "tests/test_bridge.py",
+   "name": "filter_folder"
+  },
+  "b142": {
+   "path": "tests/test_bridge.py",
+   "name": "apply_page"
+  },
+  "b143": {
+   "path": "tests/test_bridge.py",
+   "name": "resolve_preview"
+  },
+  "b779": {
+   "path": "tests/test_bridge.py",
+   "name": "read_photo"
+  },
+  "b144": {
+   "path": "core/details/details.h",
+   "name": "flushSlot"
+  },
+  "b145": {
+   "path": "core/details/details.h",
+   "name": "queueBatch"
+  },
+  "b146": {
+   "path": "core/details/details.h",
+   "name": "findBatch"
+  },
+  "b147": {
+   "path": "core/details/details.h",
+   "name": "countJob"
+  },
+  "b803": {
+   "path": "core/details/details.h",
+   "name": "scanTag"
+  },
+  "b148": {
+   "path": "core/details/details.cpp",
+   "name": "Details::refreshTag"
+  },
+  "b149": {
+   "path": "core/details/details.cpp",
+   "name": "Details::loadFolder"
+  },
+  "b150": {
+   "path": "core/details/details.cpp",
+   "name": "Details::flushSlot"
+  },
+  "b151": {
+   "path": "core/details/details.cpp",
+   "name": "Details::collectCache"
+  },
+  "b152": {
+   "path": "core/details/details.cpp",
+   "name": "Details::prepareAlbum"
+  },
+  "b153": {
+   "path": "core/details/details.cpp",
+   "name": "Details::countPreview"
+  },
+  "b154": {
+   "path": "core/details/details.cpp",
+   "name": "Details::buildRating"
+  },
+  "b155": {
+   "path": "core/details/details.cpp",
+   "name": "Details::trackHeader"
+  },
+  "b156": {
+   "path": "core/details/panel/details_query.cpp",
+   "name": "Details::loadCache"
+  },
+  "b157": {
+   "path": "core/details/panel/details_query.cpp",
+   "name": "Details::readPage"
+  },
+  "b158": {
+   "path": "core/details/panel/details_query.cpp",
+   "name": "Details::openCache"
+  },
+  "b804": {
+   "path": "core/details/panel/details_query.cpp",
+   "name": "Details::trackTag"
+  },
+  "b159": {
+   "path": "core/details/details_io.cpp",
+   "name": "Details::queueThumb"
+  },
+  "b160": {
+   "path": "core/details/details_io.cpp",
+   "name": "Details::scanFolderLazily"
+  },
+  "b161": {
+   "path": "core/details/details_io.cpp",
+   "name": "Details::findPage"
+  },
+  "b162": {
+   "path": "core/details/details_io.cpp",
+   "name": "Details::countRating"
+  },
+  "b163": {
+   "path": "core/details/details_cache.cpp",
+   "name": "Details::countQuery"
+  },
+  "b164": {
+   "path": "core/details/details_cache.cpp",
+   "name": "Details::loadPreview"
+  },
+  "b165": {
+   "path": "core/details/details_cache.cpp",
+   "name": "Details::queueQuery"
+  },
+  "b166": {
+   "path": "tests/test_details.py",
+   "name": "apply_job"
+  },
+  "b167": {
+   "path": "tests/test_details.py",
+   "name": "count_cache"
+  },
+  "b168": {
+   "path": "tests/test_details.py",
+   "name": "resolve_photo"
+  },
+  "b169": {
+   "path": "core/storage/storage.h",
+   "name": "resolveJob"
+  },
+  "b170": {
+   "path": "core/storage/storage.h",
+   "name": "resolveQuery"
+  },
+  "b171": {
+   "path": "core/storage/storage.h",
+   "name": "collectRecord"
+  },
+  "b172": {
+   "path": "core/storage/storage.h",
+   "name": "applyHeader"
+  },
+  "b786": {
+   "path": "core/storage/storage.h",
+   "name": "openCache"
+  },
+  "b173": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::resolveAlbum"
+  },
+  "b174": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::collectRecord"
+  },
+  "b175": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::applyThumb"
+  },
+  "b176": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::queueRange"
+  },
+  "b177": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::filterRange"
+  },
+  "b178": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::refreshRating"
+  },
+  "b179": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::trackPage"
+  },
+  "b180": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::buildHeader"
+  },
+  "b788": {
+   "path": "core/storage/storage.cpp",
+   "name": "Storage::isResident"
+  },
+  "b181": {
+   "path": "core/storage/storage_io.cpp",
+   "name": "Storage::collectRange"
+  },
+  "b182": {
+   "path": "core/storage/storage_io.cpp",
+   "name": "Storage::resolvePath"
+  },
+  "b183": {
+   "path": "core/storage/storage_io.cpp",
+   "name": "Storage::sortQuery"
+  },
+  "b184": {
+   "path": "core/storage/storage_io.cpp",
+   "name": "Storage::loadPage"
+  },
+  "b185": {
+   "path": "core/storage/storage_io.cpp",
+   "name": "Storage::mergeThumb"
+  },
+  "b186": {
+   "path": "core/storage/storage_query.cpp",
+   "name": "Storage::mergeSlot"
+  },
+  "b187": {
+   "path": "core/storage/storage_query.cpp",
+   "name": "Storage::resolveFolder"
+  },
+  "b188": {
+   "path": "core/storage/storage_query.cpp",
+   "name": "Storage::trackBatch"
+  },
+  "b189": {
+   "path": "core/storage/storage_query.cpp",
+   "name": "Storage::flushBatch"
+  },
+  "b190": {
+   "path": "core/storage/storage_jobs.cpp",
+   "name": "Storage::findAlbum"
+  },
+  "b191": {
+   "path": "core/storage/storage_jobs.cpp",
+   "name": "Storage::refreshPhoto"
+  },
+  "b192": {
+   "path": "core/storage/storage_jobs.cpp",
+   "name": "Storage::filterRange"
+  },
+  "b785": {
+   "path": "core/storage/storage_jobs.cpp",
+   "name": "Storage::filterRecord"
+  },
+  "b193": {
+   "path": "tests/test_storage.py",
+   "name": "count_batch"
+  },
+  "b194": {
+   "path": "tests/test_storage.py",
+   "name": "refresh_album"
+  },
+  "b195": {
+   "path": "tests/test_storage.py",
+   "name": "track_batch"
+  },
+  "b196": {
+   "path": "tests/test_storage.py",
+   "name": "filter_preview"
+  },
+  "b197": {
+   "path": "core/metadata/metadata.h",
+   "name": "mergeThumb"
+  },
+  "b198": {
+   "path": "core/metadata/metadata.h",
+   "name": "findQuery"
+  },
+  "b199": {
+   "path": "core/metadata/metadata.h",
+   "name": "readPath"
+  },
+  "b200": {
+   "path": "core/metadata/metadata.h",
+   "name": "flushPage"
+  },
+  "b201": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::loadRating"
+  },
+  "b202": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::mergeAlbum"
+  },
+  "b203": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::resolveRange"
+  },
+  "b204": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::refreshTag"
+  },
+  "b205": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::preparePath"
+  },
+  "b206": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::applyTag"
+  },
+  "b207": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::scanCache"
+  },
+  "b805": {
+   "path": "core/metadata/metadata.cpp",
+   "name": "Metadata::sortRange"
+  },
+  "b208": {
+   "path": "core/metadata/metadata_io.cpp",
+   "name": "Metadata::loadQuery"
+  },
+  "b209": {
+   "path": "core/metadata/metadata_io.cpp",
+   "name": "Metadata::collectTag"
+  },
+  "b210": {
+   "path": "core/metadata/metadata_io.cpp",
+   "name": "Metadata::openBatch"
+  },
+  "b211": {
+   "path": "core/metadata/metadata_cache.cpp",
+   "name": "Metadata::queuePage"
+  },
+  "b212": {
+   "path": "core/metadata/metadata_cache.cpp",
+   "name": "Metadata::applyAlbum"
+  },
+  "b213": {
+   "path": "core/metadata/metadata_cache.cpp",
+   "name": "Metadata::refreshRange"
+  },
+  "b214": {
+   "path": "core/metadata/metadata_cache.cpp",
+   "name": "Metadata::mergeFolder"
+  },
+  "b215": {
+   "path": "tests/test_metadata.py",
+   "name": "collect_album"
+  },
+  "b216": {
+   "path": "tests/test_metadata.py",
+   "name": "count_album"
+  },
+  "b217": {
+   "path": "tests/test_metadata.py",
+   "name": "apply_thumb"
+  },
+  "b218": {
+   "path": "tests/test_metadata.py",
+   "name": "build_entry"
+  },
+  "b780": {
+   "path": "tests/test_metadata.py",
+   "name": "count_rating"
+  },
+  "b219": {
+   "path": "core/albums/albums.h",
+   "name": "scanCache"
+  },
+  "b220": {
+   "path": "core/albums/albums.h",
+   "name": "preparePhoto"
+  },
+  "b221": {
+   "path": "core/albums/albums.h",
+   "name": "scanAlbum"
+  },
+  "b222": {
+   "path": "core/albums/albums.cpp",
+   "name": "Albums::findTag"
+  },
+  "b223": {
+   "path": "core/albums/albums.cpp",
+   "name": "Albums::resolvePhoto"
+  },
+  "b224": {
+   "path": "core/albums/albums.cpp",
+   "name": "Albums::flushJob"
+  },
+  "b225": {
+   "path": "core/albums/albums.cpp",
+   "name": "Albums::refreshAlbum"
+  },
+  "b226": {
+   "path": "core/albums/albums.cpp",
+   "name": "Albums::openRecord"
+  },
+  "b227": {
+   "path": "core/albums/albums_query.cpp",
+   "name": "Albums::trackSlot"
+  },
+  "b228": {
+   "path": "core/albums/albums_query.cpp",
+   "name": "Albums::loadTag"
+  },
+  "b229": {
+   "path": "core/albums/albums_query.cpp",
+   "name": "Albums::scanTag"
+  },
+  "b230": {
+   "path": "core/albums/albums_query.cpp",
+   "name": "Albums::buildCache"
+  },
+  "b778": {
+   "path": "core/albums/albums_query.cpp",
+   "name": "Albums::countJob"
+  },
+  "b231": {
+   "path": "core/albums/albums_cache.cpp",
+   "name": "Albums::preparePhoto"
+  },
+  "b232": {
+   "path": "core/albums/albums_cache.cpp",
+   "name": "Albums::countRating"
+  },
+  "b233": {
+   "path": "core/albums/albums_cache.cpp",
+   "name": "Albums::mergeHeader"
+  },
+  "b781": {
+   "path": "core/albums/albums_cache.cpp",
+   "name": "Albums::refreshHeader"
+  },
+  "b234": {
+   "path": "core/albums/albums_jobs.cpp",
+   "name": "Albums::findCache"
+  },
+  "b235": {
+   "path": "core/albums/albums_jobs.cpp",
+   "name": "Albums::applyPreview"
+  },
+  "b236": {
+   "path": "core/albums/albums_jobs.cpp",
+   "name": "Albums::readCache"
+  },
+  "b237": {
+   "path": "tests/test_albums.py",
+   "name": "count_folder"
+  },
+  "b238": {
+   "path": "tests/test_albums.py",
+   "name": "flush_preview"
+  },
+  "b239": {
+   "path": "tests/test_albums.py",
+   "name": "load_page"
+  },
+  "b240": {
+   "path": "tests/test_albums.py",
+   "name": "sort_entry"
+  },
+  "b783": {
+   "path": "tests/test_albums.py",
+   "name": "collect_thumb"
+  },
+  "b241": {
+   "path": "core/export/export.h",
+   "name": "scanHeader"
+  },
+  "b242": {
+   "path": "core/export/export.h",
+   "name": "openAlbum"
+  },
+  "b243": {
+   "path": "core/export/export.h",
+   "name": "scanCache"
+  },
+  "b244": {
+   "path": "core/export/export.cpp",
+   "name": "Export::filterPage"
+  },
+  "b245": {
+   "path": "core/export/export.cpp",
+   "name": "Export::applyJob"
+  },
+  "b246": {
+   "path": "core/export/export.cpp",
+   "name": "Export::queueRange"
+  },
+  "b247": {
+   "path": "core/export/export.cpp",
+   "name": "Export::applyRange"
+  },
+  "b248": {
+   "path": "core/export/export.cpp",
+   "name": "Export::sortHeader"
+  },
+  "b249": {
+   "path": "core/export/export.cpp",
+   "name": "Export::findFolder"
+  },
+  "b250": {
+   "path": "core/export/export.cpp",
+   "name": "Export::countHeader"
+  },
+  "b801": {
+   "path": "core/export/export.cpp",
+   "name": "Export::buildEntry"
+  },
+  "b251": {
+   "path": "core/export/export_io.cpp",
+   "name": "Export::mergeEntry"
+  },
+  "b252": {
+   "path": "core/export/export_io.cpp",
+   "name": "Export::preparePreview"
+  },
+  "b253": {
+   "path": "core/export/export_io.cpp",
+   "name": "Export::queueThumb"
+  },
+  "b254": {
+   "path": "core/export/export_io.cpp",
+   "name": "Export::applyPage"
+  },
+  "b256": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::openAlbum"
+  },
+  "b257": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::trackThumb"
+  },
+  "b258": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::countHeader"
+  },
+  "b259": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::trackHeader"
+  },
+  "b260": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::applyPhoto"
+  },
+  "b261": {
+   "path": "core/export/export_query.cpp",
+   "name": "Export::flushEntry"
+  },
+  "b262": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::countRange"
+  },
+  "b263": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::findPreview"
+  },
+  "b264": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::countRating"
+  },
+  "b265": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::countSlot"
+  },
+  "b266": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::readPreview"
+  },
+  "b267": {
+   "path": "core/export/export_jobs.cpp",
+   "name": "Export::buildQuery"
+  },
+  "b268": {
+   "path": "tests/test_export.py",
+   "name": "track_batch"
+  },
+  "b270": {
+   "path": "tests/test_export.py",
+   "name": "count_job"
+  },
+  "b271": {
+   "path": "tests/test_export.py",
+   "name": "flush_range"
+  },
+  "b272": {
+   "path": "tests/test_export.py",
+   "name": "merge_photo"
+  },
+  "b273": {
+   "path": "core/search/search.h",
+   "name": "openRange"
+  },
+  "b274": {
+   "path": "core/search/search.h",
+   "name": "refreshPage"
+  },
+  "b275": {
+   "path": "core/search/search.h",
+   "name": "countHeader"
+  },
+  "b276": {
+   "path": "core/search/search.cpp",
+   "name": "Search::collectAlbum"
+  },
+  "b277": {
+   "path": "core/search/search.cpp",
+   "name": "Search::buildSlot"
+  },
+  "b278": {
+   "path": "core/search/search.cpp",
+   "name": "Search::readRecord"
+  },
+  "b279": {
+   "path": "core/search/search.cpp",
+   "name": "Search::sortSlot"
+  },
+  "b280": {
+   "path": "core/search/search.cpp",
+   "name": "Search::sortFolder"
+  },
+  "b281": {
+   "path": "core/search/search_cache.cpp",
+   "name": "Search::scanRange"
+  },
+  "b282": {
+   "path": "core/search/search_cache.cpp",
+   "name": "Search::trackJob"
+  },
+  "b283": {
+   "path": "core/search/search_cache.cpp",
+   "name": "Search::sortJob"
+  },
+  "b284": {
+   "path": "core/search/search_cache.cpp",
+   "name": "Search::sortPhoto"
+  },
+  "b285": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::countRecord"
+  },
+  "b286": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::refreshHeader"
+  },
+  "b287": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::flushSlot"
+  },
+  "b288": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::resolvePath"
+  },
+  "b289": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::sortPath"
+  },
+  "b290": {
+   "path": "core/search/search_io.cpp",
+   "name": "Search::prepareThumb"
+  },
+  "b291": {
+   "path": "core/search/search_query.cpp",
+   "name": "Search::refreshRecord"
+  },
+  "b292": {
+   "path": "core/search/search_query.cpp",
+   "name": "Search::resolveJob"
+  },
+  "b293": {
+   "path": "core/search/search_query.cpp",
+   "name": "Search::flushQuery"
+  },
+  "b294": {
+   "path": "core/search/search_query.cpp",
+   "name": "Search::flushPhoto"
+  },
+  "b776": {
+   "path": "core/search/search_query.cpp",
+   "name": "Search::collectThumb"
+  },
+  "b295": {
+   "path": "tests/test_search.py",
+   "name": "prepare_entry"
+  },
+  "b296": {
+   "path": "tests/test_search.py",
+   "name": "merge_entry"
+  },
+  "b297": {
+   "path": "tests/test_search.py",
+   "name": "resolve_preview"
+  },
+  "b298": {
+   "path": "core/fernhall/types.h",
+   "name": "openFolder"
+  },
+  "b299": {
+   "path": "core/fernhall/types.h",
+   "name": "readBatch"
+  },
+  "b300": {
+   "path": "core/fernhall/types.h",
+   "name": "filterQuery"
+  },
+  "b301": {
+   "path": "plugins/raw_import.py",
+   "name": "build_entry"
+  },
+  "b302": {
+   "path": "plugins/raw_import.py",
+   "name": "resolve_tag"
+  },
+  "b303": {
+   "path": "plugins/face_hints.py",
+   "name": "sort_album"
+  },
+  "b304": {
+   "path": "plugins/face_hints.py",
+   "name": "load_folder"
+  },
+  "b305": {
+   "path": "plugins/face_hints.py",
+   "name": "find_query"
+  },
+  "b306": {
+   "path": "plugins/face_hints.py",
+   "name": "prepare_entry"
+  },
+  "b307": {
+   "path": "plugins/face_hints.py",
+   "name": "resolve_query"
+  },
+  "b308": {
+   "path": "plugins/geo_tags.py",
+   "name": "scan_path"
+  },
+  "b309": {
+   "path": "plugins/geo_tags.py",
+   "name": "flush_thumb"
+  },
+  "b310": {
+   "path": "plugins/dupe_finder.py",
+   "name": "track_rating"
+  },
+  "b311": {
+   "path": "plugins/dupe_finder.py",
+   "name": "count_range"
+  },
+  "b312": {
+   "path": "plugins/dupe_finder.py",
+   "name": "flush_query"
+  },
+  "b313": {
+   "path": "plugins/dupe_finder.py",
+   "name": "apply_folder"
+  },
+  "b784": {
+   "path": "plugins/dupe_finder.py",
+   "name": "apply_job"
+  },
+  "b314": {
+   "path": "plugins/slideshow.py",
+   "name": "merge_job"
+  },
+  "b315": {
+   "path": "plugins/slideshow.py",
+   "name": "collect_preview"
+  },
+  "b316": {
+   "path": "plugins/print_layout.py",
+   "name": "build_job"
+  },
+  "b317": {
+   "path": "plugins/print_layout.py",
+   "name": "load_rating"
+  },
+  "b318": {
+   "path": "plugins/print_layout.py",
+   "name": "open_tag"
+  },
+  "b319": {
+   "path": "plugins/print_layout.py",
+   "name": "load_query"
+  },
+  "b320": {
+   "path": "plugins/web_gallery.py",
+   "name": "queue_header"
+  },
+  "b321": {
+   "path": "plugins/web_gallery.py",
+   "name": "load_photo"
+  },
+  "b322": {
+   "path": "plugins/web_gallery.py",
+   "name": "collect_cache"
+  },
+  "b323": {
+   "path": "plugins/web_gallery.py",
+   "name": "read_rating"
+  },
+  "b324": {
+   "path": "plugins/color_labels.py",
+   "name": "prepare_cache"
+  },
+  "b325": {
+   "path": "plugins/color_labels.py",
+   "name": "filter_range"
+  },
+  "b326": {
+   "path": "plugins/batch_rename.py",
+   "name": "load_page"
+  },
+  "b327": {
+   "path": "plugins/batch_rename.py",
+   "name": "track_range"
+  },
+  "b328": {
+   "path": "plugins/batch_rename.py",
+   "name": "count_thumb"
+  },
+  "b329": {
+   "path": "plugins/watermark.py",
+   "name": "read_thumb"
+  },
+  "b331": {
+   "path": "plugins/watermark.py",
+   "name": "track_cache"
+  },
+  "b332": {
+   "path": "plugins/watermark.py",
+   "name": "sort_page"
+  },
+  "b333": {
+   "path": "plugins/calendar_view.py",
+   "name": "apply_folder"
+  },
+  "b334": {
+   "path": "plugins/calendar_view.py",
+   "name": "count_thumb"
+  },
+  "b335": {
+   "path": "plugins/map_view.py",
+   "name": "read_folder"
+  },
+  "b336": {
+   "path": "plugins/map_view.py",
+   "name": "prepare_folder"
+  },
+  "b337": {
+   "path": "plugins/map_view.py",
+   "name": "merge_preview"
+  },
+  "b338": {
+   "path": "plugins/backup.py",
+   "name": "count_entry"
+  },
+  "b339": {
+   "path": "plugins/backup.py",
+   "name": "track_tag"
+  },
+  "b340": {
+   "path": "plugins/backup.py",
+   "name": "load_job"
+  },
+  "b341": {
+   "path": "plugins/backup.py",
+   "name": "apply_album"
+  },
+  "b342": {
+   "path": "plugins/backup.py",
+   "name": "apply_rating"
+  },
+  "b343": {
+   "path": "plugins/cloud_stub.py",
+   "name": "count_range"
+  },
+  "b344": {
+   "path": "plugins/cloud_stub.py",
+   "name": "sort_range"
+  },
+  "b345": {
+   "path": "plugins/keyword_sets.py",
+   "name": "read_batch"
+  },
+  "b346": {
+   "path": "plugins/keyword_sets.py",
+   "name": "find_folder"
+  },
+  "b347": {
+   "path": "plugins/keyword_sets.py",
+   "name": "build_album"
+  },
+  "b348": {
+   "path": "plugins/keyword_sets.py",
+   "name": "track_entry"
+  },
+  "b349": {
+   "path": "plugins/keyword_sets.py",
+   "name": "apply_batch"
+  },
+  "b802": {
+   "path": "plugins/keyword_sets.py",
+   "name": "count_slot"
+  },
+  "b350": {
+   "path": "plugins/smart_albums.py",
+   "name": "queue_batch"
+  },
+  "b351": {
+   "path": "plugins/smart_albums.py",
+   "name": "open_record"
+  },
+  "b352": {
+   "path": "plugins/histogram.py",
+   "name": "load_thumb"
+  },
+  "b353": {
+   "path": "plugins/histogram.py",
+   "name": "refresh_thumb"
+  },
+  "b354": {
+   "path": "plugins/lens_stats.py",
+   "name": "collect_thumb"
+  },
+  "b355": {
+   "path": "plugins/lens_stats.py",
+   "name": "merge_header"
+  },
+  "b356": {
+   "path": "plugins/lens_stats.py",
+   "name": "build_header"
+  },
+  "b357": {
+   "path": "plugins/timeline.py",
+   "name": "prepare_header"
+  },
+  "b358": {
+   "path": "plugins/timeline.py",
+   "name": "read_entry"
+  },
+  "b359": {
+   "path": "plugins/timeline.py",
+   "name": "merge_album"
+  },
+  "b360": {
+   "path": "plugins/compare_view.py",
+   "name": "collect_slot"
+  },
+  "b361": {
+   "path": "plugins/compare_view.py",
+   "name": "track_query"
+  },
+  "b362": {
+   "path": "plugins/compare_view.py",
+   "name": "refresh_header"
+  },
+  "b806": {
+   "path": "plugins/compare_view.py",
+   "name": "merge_job"
+  },
+  "b363": {
+   "path": "tests/perf/test_scan_speed.py",
+   "name": "count_entry"
+  },
+  "b364": {
+   "path": "tests/perf/test_thumb_speed.py",
+   "name": "read_range"
+  },
+  "b365": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row0"
+  },
+  "b366": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row1"
+  },
+  "b367": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row2"
+  },
+  "b368": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row3"
+  },
+  "b369": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row4"
+  },
+  "b370": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row5"
+  },
+  "b371": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row6"
+  },
+  "b372": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row7"
+  },
+  "b373": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row8"
+  },
+  "b374": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row9"
+  },
+  "b375": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row10"
+  },
+  "b376": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row11"
+  },
+  "b377": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row12"
+  },
+  "b378": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row13"
+  },
+  "b379": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row14"
+  },
+  "b380": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row15"
+  },
+  "b381": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row16"
+  },
+  "b382": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row17"
+  },
+  "b383": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row18"
+  },
+  "b384": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row19"
+  },
+  "b385": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row20"
+  },
+  "b386": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row21"
+  },
+  "b387": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row22"
+  },
+  "b388": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row23"
+  },
+  "b389": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row24"
+  },
+  "b390": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row25"
+  },
+  "b391": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row26"
+  },
+  "b392": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row27"
+  },
+  "b393": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row28"
+  },
+  "b394": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row29"
+  },
+  "b395": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row30"
+  },
+  "b396": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row31"
+  },
+  "b397": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row32"
+  },
+  "b398": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row33"
+  },
+  "b399": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row34"
+  },
+  "b400": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row35"
+  },
+  "b401": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row36"
+  },
+  "b402": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row37"
+  },
+  "b403": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row38"
+  },
+  "b404": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row39"
+  },
+  "b405": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row40"
+  },
+  "b406": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row41"
+  },
+  "b407": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row42"
+  },
+  "b408": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row43"
+  },
+  "b409": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row44"
+  },
+  "b410": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row45"
+  },
+  "b411": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row46"
+  },
+  "b412": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row47"
+  },
+  "b413": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row48"
+  },
+  "b414": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row49"
+  },
+  "b415": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row50"
+  },
+  "b416": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row51"
+  },
+  "b417": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row52"
+  },
+  "b418": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row53"
+  },
+  "b419": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row54"
+  },
+  "b420": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row55"
+  },
+  "b421": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row56"
+  },
+  "b422": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row57"
+  },
+  "b423": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row58"
+  },
+  "b424": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row59"
+  },
+  "b425": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row60"
+  },
+  "b426": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row61"
+  },
+  "b427": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row62"
+  },
+  "b428": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row63"
+  },
+  "b429": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row64"
+  },
+  "b430": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row65"
+  },
+  "b431": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row66"
+  },
+  "b432": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row67"
+  },
+  "b433": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row68"
+  },
+  "b434": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row69"
+  },
+  "b435": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row70"
+  },
+  "b436": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row71"
+  },
+  "b437": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row72"
+  },
+  "b438": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row73"
+  },
+  "b439": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row74"
+  },
+  "b440": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row75"
+  },
+  "b441": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row76"
+  },
+  "b442": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row77"
+  },
+  "b443": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row78"
+  },
+  "b444": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row79"
+  },
+  "b445": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row80"
+  },
+  "b446": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row81"
+  },
+  "b447": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row82"
+  },
+  "b448": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row83"
+  },
+  "b449": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row84"
+  },
+  "b450": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row85"
+  },
+  "b451": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row86"
+  },
+  "b452": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row87"
+  },
+  "b453": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row88"
+  },
+  "b454": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row89"
+  },
+  "b455": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row90"
+  },
+  "b456": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row91"
+  },
+  "b457": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row92"
+  },
+  "b458": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row93"
+  },
+  "b459": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row94"
+  },
+  "b460": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row95"
+  },
+  "b461": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row96"
+  },
+  "b462": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row97"
+  },
+  "b463": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row98"
+  },
+  "b464": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row99"
+  },
+  "b465": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row100"
+  },
+  "b466": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row101"
+  },
+  "b467": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row102"
+  },
+  "b468": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row103"
+  },
+  "b469": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row104"
+  },
+  "b470": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row105"
+  },
+  "b471": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row106"
+  },
+  "b472": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row107"
+  },
+  "b473": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row108"
+  },
+  "b474": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row109"
+  },
+  "b475": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row110"
+  },
+  "b476": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row111"
+  },
+  "b477": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row112"
+  },
+  "b478": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row113"
+  },
+  "b479": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row114"
+  },
+  "b480": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row115"
+  },
+  "b481": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row116"
+  },
+  "b482": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row117"
+  },
+  "b483": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row118"
+  },
+  "b484": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row119"
+  },
+  "b485": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row120"
+  },
+  "b486": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row121"
+  },
+  "b487": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row122"
+  },
+  "b488": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row123"
+  },
+  "b489": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row124"
+  },
+  "b490": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row125"
+  },
+  "b491": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row126"
+  },
+  "b492": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row127"
+  },
+  "b493": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row128"
+  },
+  "b494": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row129"
+  },
+  "b495": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row130"
+  },
+  "b496": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row131"
+  },
+  "b497": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row132"
+  },
+  "b498": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row133"
+  },
+  "b499": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row134"
+  },
+  "b500": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row135"
+  },
+  "b501": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row136"
+  },
+  "b502": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row137"
+  },
+  "b503": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row138"
+  },
+  "b504": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row139"
+  },
+  "b505": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row140"
+  },
+  "b506": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row141"
+  },
+  "b507": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row142"
+  },
+  "b508": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row143"
+  },
+  "b509": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row144"
+  },
+  "b510": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row145"
+  },
+  "b511": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row146"
+  },
+  "b512": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row147"
+  },
+  "b513": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row148"
+  },
+  "b514": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row149"
+  },
+  "b515": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row150"
+  },
+  "b516": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row151"
+  },
+  "b517": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row152"
+  },
+  "b518": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row153"
+  },
+  "b519": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row154"
+  },
+  "b520": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row155"
+  },
+  "b521": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row156"
+  },
+  "b522": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row157"
+  },
+  "b523": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row158"
+  },
+  "b524": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row159"
+  },
+  "b525": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row160"
+  },
+  "b526": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row161"
+  },
+  "b527": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row162"
+  },
+  "b528": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row163"
+  },
+  "b529": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row164"
+  },
+  "b530": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row165"
+  },
+  "b531": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row166"
+  },
+  "b532": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row167"
+  },
+  "b533": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row168"
+  },
+  "b534": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row169"
+  },
+  "b535": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row170"
+  },
+  "b536": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row171"
+  },
+  "b537": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row172"
+  },
+  "b538": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row173"
+  },
+  "b539": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row174"
+  },
+  "b540": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row175"
+  },
+  "b541": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row176"
+  },
+  "b542": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row177"
+  },
+  "b543": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row178"
+  },
+  "b544": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row179"
+  },
+  "b545": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row180"
+  },
+  "b546": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row181"
+  },
+  "b547": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row182"
+  },
+  "b548": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row183"
+  },
+  "b549": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row184"
+  },
+  "b550": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row185"
+  },
+  "b551": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row186"
+  },
+  "b552": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row187"
+  },
+  "b553": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row188"
+  },
+  "b554": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row189"
+  },
+  "b555": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row190"
+  },
+  "b556": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row191"
+  },
+  "b557": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row192"
+  },
+  "b558": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row193"
+  },
+  "b559": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row194"
+  },
+  "b560": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row195"
+  },
+  "b561": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row196"
+  },
+  "b562": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row197"
+  },
+  "b563": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row198"
+  },
+  "b564": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row199"
+  },
+  "b565": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row200"
+  },
+  "b566": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row201"
+  },
+  "b567": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row202"
+  },
+  "b568": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row203"
+  },
+  "b569": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row204"
+  },
+  "b570": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row205"
+  },
+  "b571": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row206"
+  },
+  "b572": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row207"
+  },
+  "b573": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row208"
+  },
+  "b574": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row209"
+  },
+  "b575": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row210"
+  },
+  "b576": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row211"
+  },
+  "b577": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row212"
+  },
+  "b578": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row213"
+  },
+  "b579": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row214"
+  },
+  "b580": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row215"
+  },
+  "b581": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row216"
+  },
+  "b582": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row217"
+  },
+  "b583": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row218"
+  },
+  "b584": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row219"
+  },
+  "b585": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row220"
+  },
+  "b586": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row221"
+  },
+  "b587": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row222"
+  },
+  "b588": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row223"
+  },
+  "b589": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row224"
+  },
+  "b590": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row225"
+  },
+  "b591": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row226"
+  },
+  "b592": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row227"
+  },
+  "b593": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row228"
+  },
+  "b594": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row229"
+  },
+  "b595": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row230"
+  },
+  "b596": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row231"
+  },
+  "b597": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row232"
+  },
+  "b598": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row233"
+  },
+  "b599": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row234"
+  },
+  "b600": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row235"
+  },
+  "b601": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row236"
+  },
+  "b602": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row237"
+  },
+  "b603": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row238"
+  },
+  "b604": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row239"
+  },
+  "b605": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row240"
+  },
+  "b606": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row241"
+  },
+  "b607": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row242"
+  },
+  "b608": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row243"
+  },
+  "b609": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row244"
+  },
+  "b610": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row245"
+  },
+  "b611": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row246"
+  },
+  "b612": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row247"
+  },
+  "b613": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row248"
+  },
+  "b614": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row249"
+  },
+  "b615": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row250"
+  },
+  "b616": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row251"
+  },
+  "b617": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row252"
+  },
+  "b618": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row253"
+  },
+  "b619": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row254"
+  },
+  "b620": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row255"
+  },
+  "b621": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row256"
+  },
+  "b622": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row257"
+  },
+  "b623": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row258"
+  },
+  "b624": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row259"
+  },
+  "b625": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row260"
+  },
+  "b626": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row261"
+  },
+  "b627": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row262"
+  },
+  "b628": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row263"
+  },
+  "b629": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row264"
+  },
+  "b630": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row265"
+  },
+  "b631": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row266"
+  },
+  "b632": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row267"
+  },
+  "b633": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row268"
+  },
+  "b634": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row269"
+  },
+  "b635": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row270"
+  },
+  "b636": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row271"
+  },
+  "b637": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row272"
+  },
+  "b638": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row273"
+  },
+  "b639": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row274"
+  },
+  "b640": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row275"
+  },
+  "b641": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row276"
+  },
+  "b642": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row277"
+  },
+  "b643": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row278"
+  },
+  "b644": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row279"
+  },
+  "b645": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row280"
+  },
+  "b646": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row281"
+  },
+  "b647": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row282"
+  },
+  "b648": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row283"
+  },
+  "b649": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row284"
+  },
+  "b650": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row285"
+  },
+  "b651": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row286"
+  },
+  "b652": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row287"
+  },
+  "b653": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row288"
+  },
+  "b654": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row289"
+  },
+  "b655": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row290"
+  },
+  "b656": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row291"
+  },
+  "b657": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row292"
+  },
+  "b658": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row293"
+  },
+  "b659": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row294"
+  },
+  "b660": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row295"
+  },
+  "b661": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row296"
+  },
+  "b662": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row297"
+  },
+  "b663": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row298"
+  },
+  "b664": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row299"
+  },
+  "b665": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row300"
+  },
+  "b666": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row301"
+  },
+  "b667": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row302"
+  },
+  "b668": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row303"
+  },
+  "b669": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row304"
+  },
+  "b670": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row305"
+  },
+  "b671": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row306"
+  },
+  "b672": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row307"
+  },
+  "b673": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row308"
+  },
+  "b674": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row309"
+  },
+  "b675": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row310"
+  },
+  "b676": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row311"
+  },
+  "b677": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row312"
+  },
+  "b678": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row313"
+  },
+  "b679": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row314"
+  },
+  "b680": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row315"
+  },
+  "b681": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row316"
+  },
+  "b682": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row317"
+  },
+  "b683": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row318"
+  },
+  "b684": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row319"
+  },
+  "b685": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row320"
+  },
+  "b686": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row321"
+  },
+  "b687": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row322"
+  },
+  "b688": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row323"
+  },
+  "b689": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row324"
+  },
+  "b690": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row325"
+  },
+  "b691": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row326"
+  },
+  "b692": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row327"
+  },
+  "b693": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row328"
+  },
+  "b694": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row329"
+  },
+  "b695": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row330"
+  },
+  "b696": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row331"
+  },
+  "b697": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row332"
+  },
+  "b698": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row333"
+  },
+  "b699": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row334"
+  },
+  "b700": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row335"
+  },
+  "b701": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row336"
+  },
+  "b702": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row337"
+  },
+  "b703": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row338"
+  },
+  "b704": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row339"
+  },
+  "b705": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row340"
+  },
+  "b706": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row341"
+  },
+  "b707": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row342"
+  },
+  "b708": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row343"
+  },
+  "b709": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row344"
+  },
+  "b710": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row345"
+  },
+  "b711": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row346"
+  },
+  "b712": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row347"
+  },
+  "b713": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row348"
+  },
+  "b714": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row349"
+  },
+  "b715": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row350"
+  },
+  "b716": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row351"
+  },
+  "b717": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row352"
+  },
+  "b718": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row353"
+  },
+  "b719": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row354"
+  },
+  "b720": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row355"
+  },
+  "b721": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row356"
+  },
+  "b722": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row357"
+  },
+  "b723": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row358"
+  },
+  "b724": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row359"
+  },
+  "b725": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row360"
+  },
+  "b726": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row361"
+  },
+  "b727": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row362"
+  },
+  "b728": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row363"
+  },
+  "b729": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row364"
+  },
+  "b730": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row365"
+  },
+  "b731": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row366"
+  },
+  "b732": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row367"
+  },
+  "b733": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row368"
+  },
+  "b734": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row369"
+  },
+  "b735": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row370"
+  },
+  "b736": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row371"
+  },
+  "b737": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row372"
+  },
+  "b738": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row373"
+  },
+  "b739": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row374"
+  },
+  "b740": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row375"
+  },
+  "b741": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row376"
+  },
+  "b742": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row377"
+  },
+  "b743": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row378"
+  },
+  "b744": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row379"
+  },
+  "b745": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row380"
+  },
+  "b746": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row381"
+  },
+  "b747": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row382"
+  },
+  "b748": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row383"
+  },
+  "b749": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row384"
+  },
+  "b750": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row385"
+  },
+  "b751": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row386"
+  },
+  "b752": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row387"
+  },
+  "b753": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row388"
+  },
+  "b754": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row389"
+  },
+  "b755": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row390"
+  },
+  "b756": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row391"
+  },
+  "b757": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row392"
+  },
+  "b758": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row393"
+  },
+  "b759": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row394"
+  },
+  "b760": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row395"
+  },
+  "b761": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row396"
+  },
+  "b762": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row397"
+  },
+  "b763": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row398"
+  },
+  "b764": {
+   "path": "core/generated/schema_tables.cpp",
+   "name": "Schema::row399"
+  },
+  "b765": {
+   "path": "plugins/legacy_import.py",
+   "name": "read_page"
+  },
+  "b766": {
+   "path": "plugins/legacy_import.py",
+   "name": "queue_rating"
+  },
+  "b767": {
+   "path": "plugins/legacy_import.py",
+   "name": "collect_tag"
+  },
+  "b782": {
+   "path": "plugins/legacy_import.py",
+   "name": "resolve_entry"
+  },
+  "b768": {
+   "path": "core/albums/albums_legacy.cpp",
+   "name": "Albums::sortPage"
+  },
+  "b769": {
+   "path": "core/albums/albums_legacy.cpp",
+   "name": "Albums::applyTag"
+  },
+  "b770": {
+   "path": "core/albums/albums_legacy.cpp",
+   "name": "Albums::scanSlot"
+  },
+  "b771": {
+   "path": "core/albums/albums_legacy.cpp",
+   "name": "Albums::filterRating"
+  },
+  "b789": {
+   "path": "tests/perf/test_select_many.py",
+   "name": "sort_query"
+  },
+  "b790": {
+   "path": "tests/perf/test_select_many.py",
+   "name": "collect_batch"
+  },
+  "b792": {
+   "path": "core/tags/tags.cpp",
+   "name": "Tags::prepareRange"
+  },
+  "b793": {
+   "path": "core/tags/tags.cpp",
+   "name": "Tags::mergePhoto"
+  },
+  "b794": {
+   "path": "core/tags/tags.cpp",
+   "name": "Tags::mergePath"
+  },
+  "b795": {
+   "path": "core/tags/tags_store.cpp",
+   "name": "Tags::filterHeader"
+  },
+  "b796": {
+   "path": "core/tags/tags_store.cpp",
+   "name": "Tags::countRange"
+  },
+  "b797": {
+   "path": "core/tags/tags_store.cpp",
+   "name": "Tags::readBatch"
+  },
+  "b798": {
+   "path": "core/tags/tags_query.cpp",
+   "name": "Tags::findRecord"
+  },
+  "b799": {
+   "path": "core/tags/tags_query.cpp",
+   "name": "Tags::trackEntry"
+  },
+  "b800": {
+   "path": "core/tags/tags_query.cpp",
+   "name": "Tags::buildAlbum"
+  }
+ },
+ "edgeCases": [
+  {
+   "id": "overloads",
+   "what": "two blocks share one name in one file; a spike hunk edits the second",
+   "where": {
+    "path": "core/selection/selection.cpp",
+    "blocks": [
+     "b774",
+     "b773"
+    ],
+    "lineage": "L58"
+   },
+   "today": "designed",
+   "design": "LAYERED_DOCUMENT.md identity rules (signature first); BLOCK_DISCOVERY.md 4.1"
+  },
+  {
+   "id": "guarded-block",
+   "what": "a block inside #if/#endif; a spike hunk edits it",
+   "where": {
+    "path": "core/selection/selection.cpp",
+    "block": "b772",
+    "lineage": "L59"
+   },
+   "today": "gap",
+   "design": "BLOCK_DISCOVERY.md does not say whether the guard belongs to the span"
+  },
+  {
+   "id": "generated-file",
+   "what": "a 400-block generated file, regenerated wholesale on trunk (every block changes at once)",
+   "where": {
+    "path": "core/generated/schema_tables.cpp",
+    "commit": "ca4dd4fea8c20fa8a1d1a3ae0e6836b13f0f320f"
+   },
+   "today": "designed",
+   "design": "SCALE.md section 3, kinds before blocks (kinds@1); identity under wholesale regeneration is not designed"
+  },
+  {
+   "id": "line-endings-and-bom",
+   "what": "a file with CRLF line endings and a UTF-8 BOM",
+   "where": {
+    "path": "plugins/legacy_import.py"
+   },
+   "today": "gap",
+   "design": "line and column semantics for CRLF and BOM are unspecified"
+  },
+  {
+   "id": "tabs-and-non-ascii",
+   "what": "tab indentation and non-ASCII text (columns differ from bytes and characters)",
+   "where": {
+    "path": "core/albums/albums_legacy.cpp"
+   },
+   "today": "gap",
+   "design": "anchor column units are unspecified (BACKBONE.md 3.2)"
+  },
+  {
+   "id": "licence-header",
+   "what": "one trunk commit prepends two lines to every source file: every line number moves, no block changes",
+   "where": {
+    "commit": "43339ca79fabdee6bec6e3a51e8b897260dba2bd"
+   },
+   "today": "designed",
+   "design": "identity by signature, anchors re-resolved by quote (BACKBONE.md 5.1)"
+  },
+  {
+   "id": "block-moved-across-files",
+   "what": "a block the spike edits moves to another file on trunk; the hunk still applies there",
+   "where": {
+    "block": "b65",
+    "from": "core/index/index_query.cpp",
+    "commit": "7ee0454c317fade539ccf87c2d0b40f68d77ebfa"
+   },
+   "today": "designed",
+   "design": "SCALE.md section 4, cross-file moves through the LSH"
+  },
+  {
+   "id": "file-moved",
+   "what": "a file the topic edits moves to a new directory before carve-outs based on it merge",
+   "where": {
+    "from": "core/details/details_query.cpp",
+    "commit": "cdea98637d6b2f8f30ea27ca2eaa41f03f07cee6"
+   },
+   "today": "designed",
+   "design": "git rename detection in per-path replay (SCALE.md section 4)"
+  },
+  {
+   "id": "case-only-rename",
+   "what": "a file renamed by case only (fatal on case-insensitive file systems if both existed)",
+   "where": {
+    "from": "docs/performance.md",
+    "to": "docs/Performance.md",
+    "commit": "24878e494189dbfab86950fd13bb80dc1d061d24"
+   },
+   "today": "gap",
+   "design": "path identity on case-insensitive file systems is unspecified"
+  },
+  {
+   "id": "rename-under-open-change",
+   "what": "trunk renames a block that open changes (a stack, the integration change) modify",
+   "where": {
+    "block": "b160",
+    "commit": "7d75f4bb53f06c09c65f3446582fa578667b7273"
+   },
+   "today": "designed",
+   "design": "identity carries through renames (R-ID); footprints carried to the viewed revision (R-CHG-1)"
+  },
+  {
+   "id": "true-conflict",
+   "what": "two open changes, under different topics, replace the same line differently",
+   "where": {
+    "changes": [
+     "CF1",
+     "CF2"
+    ],
+    "block": "b281"
+   },
+   "today": "designed",
+   "design": "CHANGE_VIEWS.md section 3"
+  },
+  {
+   "id": "revert-and-reland",
+   "what": "a merged carve-out is reverted on trunk, then relanded by a new change",
+   "where": {
+    "changes": [
+     "C8",
+     "C8R"
+    ],
+    "revert": "b6f677c15d02f225e12dc34aae90ffede3938802"
+   },
+   "today": "gap",
+   "design": "CHANGE_VIEWS.md landing coverage has no reverted state; a holder that merged is not enough"
+  },
+  {
+   "id": "force-pushed-rebase",
+   "what": "the bottom of a stack is rebased (history rewritten); the changes above still sit on its old head",
+   "where": {
+    "changes": [
+     "K1",
+     "K2",
+     "K3"
+    ],
+    "heads": [
+     "cca8e07473b323a18dc44798e650ab88167f7e6b",
+     "3b5eff4a728188c250150324a556f9a1676d5ced"
+    ]
+   },
+   "today": "gap",
+   "design": "a stale stack and a non-linear change history are not designed"
+  },
+  {
+   "id": "back-merge",
+   "what": "trunk is merged into an open change: its branch now contains unrelated trunk work",
+   "where": {
+    "change": "C12",
+    "head": "8d77d780da3b124546433fe9d4f621281c8cb63a"
+   },
+   "today": "designed",
+   "design": "footprints are relative to the merge base (CHANGE_VIEWS.md section 2), which the back-merge moves"
+  },
+  {
+   "id": "evil-merge",
+   "what": "a merge commit carries a line that is in neither parent",
+   "where": {
+    "change": "C7",
+    "merge": "709e088c9d7328f9198af997b5f827726cba42ec",
+    "block": "b89",
+    "line": "selection.flushPending(2406); // resolved while merging"
+   },
+   "today": "gap",
+   "design": "content attributed to no change: blame and footprints miss it"
+  },
+  {
+   "id": "assets-only-change",
+   "what": "a change of binaries and sidecars only: no code block in its footprint",
+   "where": {
+    "change": "AS1",
+    "files": [
+     "assets/icons/clock.png",
+     "assets/icons/flag_2227.png",
+     "assets/icons/share.png"
+    ]
+   },
+   "today": "gap",
+   "design": "R-CHG-1 defines footprints as blocks only"
+  },
+  {
+   "id": "stale-change",
+   "what": "a change opened 300 days before the window, still open, its base far behind trunk",
+   "where": {
+    "change": "ST1",
+    "base": "7efc4391f28e1e202800edbae249878bf77f0d0d"
+   },
+   "today": "designed",
+   "design": "drift (CHANGE_VIEWS.md section 3)"
+  },
+  {
+   "id": "topic-key-placement",
+   "what": "a tracker key only in the branch name; a title naming two keys",
+   "where": {
+    "changes": [
+     "T2",
+     "REF"
+    ]
+   },
+   "today": "designed",
+   "design": "the topic policy (CHANGE_VIEWS.md section 2)"
+  },
+  {
+   "id": "feature-branch-merge",
+   "what": "a carve-out merged into a feature branch, not trunk",
+   "where": {
+    "change": "C4",
+    "branch": "feature/scan-v2"
+   },
+   "today": "designed",
+   "design": "landing is relative to a target branch"
+  },
+  {
+   "id": "port",
+   "what": "a change of landed hunks onto a release branch, rewritten",
+   "where": {
+    "change": "PORT",
+    "branch": "release/2.1"
+   },
+   "today": "designed",
+   "design": "ports links (CHANGE_VIEWS.md section 2)"
+  }
+ ],
+ "notModelled": [
+  "symbolic links and submodules (git modes 120000, 160000)",
+  "large-file pointers (LFS)",
+  "two paths differing only by case in one tree",
+  "committed conflict markers",
+  "a topic spanning several repositories (U10)",
+  "review comments replayed on a forge",
+  "hunks split across two carve-outs"
+ ]
+}

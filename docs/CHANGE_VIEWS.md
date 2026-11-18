@@ -136,7 +136,7 @@ The mechanisms of the backbone give agents a place in this work with nothing new
 | ground | public | what it proves |
 |---|---|---|
 | synthetic change sets from S0's corpus generator: a spike, carve-outs (some rewritten), supersessions, a stack, an integration change, a duplicate, an unrelated large change sharing files, a port onto a branch, with the true lineage and hunk states recorded | yes | every derivation of sections 2 and 3 against known truth, at small and at large scale |
-| **the synthetic mirror** (M0, [sessions/m0-synthetic-mirror.md](sessions/m0-synthetic-mirror.md)): a seeded, invented project with the reference topic's anonymised shape, its forge and tracker state captured as files, and the truth | yes | P0-P2 and P4 on realistic shape with known truth, small enough to run in `npm test` and `ctest` |
+| **the synthetic mirror** ([MIRROR.md](MIRROR.md), built): a seeded, invented project with the reference topic's anonymised shape, its forge and tracker state captured as files, and the truth | yes | P0-P2 and P4 on realistic shape with known truth, small enough to run in `npm test` and `ctest` |
 | this repository and Sub0Squad: their branches and pull requests | yes | the local git and forge adapters on real, small data (G2) |
 | **the owner's reference topic** (section 1), captured to a local folder outside every public repository | **no** | lineage, coverage and overlap against the owner's hand-checked truth on real work at scale. **Only numbers are published** (counts, precision and recall, timings); no names, titles, paths or links |
 
@@ -165,3 +165,20 @@ P0 to P2 are library work proved without a forge. P3 lands in the authoring tool
 | what marks a spike | title marker / label / long-held draft / stated only | title marker or label, set by the topic policy | the owner's use; the policy is data |
 | topic grouping | tracker key in title or branch / labels / milestone / by hand | tracker key, with hand grouping overriding | P4 on the reference topic |
 | areas in the topic map | directories by depth / ownership files / clusters of co-changed blocks | directories folded to the budget | P3, by what the owner reads fastest |
+
+## 10. Gaps the mirror exposes
+
+The synthetic mirror ([MIRROR.md](MIRROR.md)) contains edge cases on purpose. Those this design does not yet cover are open design work, each
+checkable on the fixture once designed (`truth.edgeCases`, `today: gap`):
+
+| gap | what the design must add |
+|---|---|
+| revert and reland | a `reverted` state: a holder that merged and was reverted no longer lands a hunk; a reland is a `relands` link |
+| a force-pushed rebase under a stack | a change's history is a sequence of heads, not a line; a change based on a superseded head is a **stale stack**, reported |
+| an evil merge | content in a merge commit from neither parent is attributed to the merge itself, and shown, not lost |
+| an assets-only change | a footprint includes files without blocks (binaries, sidecars), so R-CHG-1 widens from blocks to blocks and files |
+| a block inside `#if` | whether the guard is part of the block's span (BLOCK_DISCOVERY.md) |
+| CRLF, a BOM, tabs, non-ASCII | anchor line and column units (bytes, code points, display columns) stated once for every source |
+| a case-only rename | path identity on case-insensitive file systems |
+| wholesale regeneration of a generated file | identity when every block changes at once (generated files may be classified out of identity entirely: `kinds@1`) |
+

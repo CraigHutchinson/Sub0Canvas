@@ -44,6 +44,10 @@ monorepo (440,000 files, most not code; 430 GB of git; about 1,700 pull requests
 of a private 25-change reference topic. **The owner has not yet read either.** This public repository never names its private references; a
 local-only guard in the owner's clone enforces it (AGENTS.md).
 
+**The synthetic mirror (2026-11-18, built).** `tools/mirror/` generates an invented project with a work-dominated repository's shape, a 31-change
+topic and its exact truth, plus an edge-case register of what the canvas does not handle yet ([MIRROR.md](MIRROR.md)); `fixtures/mirror/seed-1/`
+is checked by `npm test`. Its gaps are [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10. A live forge sandbox is parked (M1).
+
 ## Known gaps and debts
 
 * Sub0Squad still carries its own `applyCanvasReply` and turn control; both now live here (`applyReply`, `turn_control.hpp`) and a Sub0Squad PR

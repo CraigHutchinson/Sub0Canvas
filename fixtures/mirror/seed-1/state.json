@@ -1,0 +1,4880 @@
+{
+ "schema": "mirror-state-1",
+ "seed": 1,
+ "product": {
+  "name": "Fernhall",
+  "description": "An invented desktop photo catalogue: scans folders, indexes photos, shows thumbnails, exports albums."
+ },
+ "repository": {
+  "defaultBranch": "main",
+  "branches": {
+   "bo/cat-1107-cf1-batch-the-search-index-lookups": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "cyra/cat-0990-ref-move-tag-storage-into-its-own-module-unb": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "esi/cat-0731-st1-warm-the-tracker-cache-on-startup": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "faro/cat-1042-orig-faster-scans-of-very-large-folders-with": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "feature/scan-v2": "d97d5c47a80509460de137589d97f53c8f20269f",
+   "iver/cat-1042-as1-refresh-the-selection-icons": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "main": "2f20ebc269a54ff8005675473752d2a815bbbadf",
+   "release/2.0": "42ecce16113dd2ac8b95dada690915bb75e11fd0",
+   "release/2.1": "43194d0fc76a104dde87053189034d0f2ddc27cd",
+   "rin/cat-1042-c1-per-folder-scan-fixes-from-the-investiga": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "rin/cat-1042-c10-let-a-scanner-thread-hand-the-store-lock": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "rin/cat-1042-c11-compute-the-details-footer-once-per-sele": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "rin/cat-1042-c12-count-the-selection-without-reading-sele": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "rin/cat-1042-c13-add-storage-isresident-to-check-a-record": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "rin/cat-1042-c2-stop-selection-code-from-reading-every-s": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "rin/cat-1042-c3-add-photo-queries-that-do-not-open-the-f": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "rin/cat-1042-c4-answer-type-questions-about-photos-witho": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "rin/cat-1042-c5-skip-the-decode-for-thumbnails-the-cache": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "rin/cat-1042-c6-stop-selection-history-reading-selected": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "rin/cat-1042-c7-classify-the-global-selection-without-re": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "rin/cat-1042-c8-stop-thumbnail-tracking-reading-selected": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "rin/cat-1042-c8r-reland-stop-thumbnail-tracking-reading-s": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "rin/cat-1042-c9-stop-panel-overlays-reading-selected-pho": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "rin/cat-1042-cf2-serve-search-lookups-from-the-resident-c": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "rin/cat-1042-int-integrate-the-remaining-scan-fixes": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "rin/cat-1042-k2-let-the-panels-skip-unread-photos-withou": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "rin/cat-1042-k3-keep-selected-photos-unread-when-a-resca": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "rin/cat-1042-port-port-photo-queries-and-thumbnail-decode": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "rin/cat-1042-r1-reproduce-docked-preview-outliving-its-p": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "rin/cat-1042-s3-keep-the-details-panel-responsive-with-t": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "rin/cat-1042-t1-add-a-performance-test-for-selecting-man": "ec09023ae18205357c6b210cad76decde66861d4",
+   "rin/cat-1042-t2-limit-atlas-test-setup-to-atlas-tests": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "rin/cat-1107-s2-let-storage-decide-whether-a-record-is-r": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e"
+  },
+  "window": {
+   "from": "2025-12-01T00:00:00Z",
+   "to": "2026-01-20T00:00:00Z"
+  }
+ },
+ "commits": [
+  {
+   "sha": "8ef01b87b2a6fb99d31f0ca75d26bcb9fb904166",
+   "parents": [],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-01-01T09:00:00Z",
+   "message": "Initial import of Fernhall",
+   "kind": "trunk"
+  },
+  {
+   "sha": "443b6bbf6ded126a274d66760c8a4c73499f12e6",
+   "parents": [
+    "8ef01b87b2a6fb99d31f0ca75d26bcb9fb904166"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2024-01-04T15:53:28Z",
+   "message": "Library: refresh folder after load",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1b3f328abbf175185aadfd22f2e4aee65fe33262",
+   "parents": [
+    "443b6bbf6ded126a274d66760c8a4c73499f12e6"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2024-01-05T00:58:29Z",
+   "message": "Presets: tune grid_loose",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c245b5f1cd775a9a48e9be886ca76746202c098f",
+   "parents": [
+    "1b3f328abbf175185aadfd22f2e4aee65fe33262"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-01-19T13:16:45Z",
+   "message": "Albums: open range after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b1f64e52694d269a41cadc29d5f8176765d80505",
+   "parents": [
+    "c245b5f1cd775a9a48e9be886ca76746202c098f"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-01-31T13:22:41Z",
+   "message": "Presets: tune thumb_small",
+   "kind": "trunk"
+  },
+  {
+   "sha": "62c68264691a4c5cca8346625d463725a1f3f67b",
+   "parents": [
+    "b1f64e52694d269a41cadc29d5f8176765d80505"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2024-02-12T14:16:50Z",
+   "message": "Storage: track cache after read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f500c7a7ba40d6ae7fb81d63a0800f01ed7d5bc2",
+   "parents": [
+    "62c68264691a4c5cca8346625d463725a1f3f67b"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-02-22T23:23:44Z",
+   "message": "Details: count entry after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9718f91d9bec968e9b6c41afd82e8a2bc20a3f05",
+   "parents": [
+    "f500c7a7ba40d6ae7fb81d63a0800f01ed7d5bc2"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-03-12T22:52:06Z",
+   "message": "Selection: prepare preview after count",
+   "kind": "trunk"
+  },
+  {
+   "sha": "e0a1dcfd72c5823a8a4f6d48ff33e0c080f8315f",
+   "parents": [
+    "9718f91d9bec968e9b6c41afd82e8a2bc20a3f05"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-03-14T22:26:32Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d7b9ce25570fe30a98628f3fbe773cfbe1b86e27",
+   "parents": [
+    "e0a1dcfd72c5823a8a4f6d48ff33e0c080f8315f"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2024-03-16T18:08:57Z",
+   "message": "Storage: apply photo after apply",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fe757dad6c2c25ff47f68b37736e61f264c2424b",
+   "parents": [
+    "d7b9ce25570fe30a98628f3fbe773cfbe1b86e27"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-03-18T09:57:36Z",
+   "message": "Assets: add rotate_2179 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "e335186abbdd9fc40ac1a78dabbd7ecb5e12b165",
+   "parents": [
+    "fe757dad6c2c25ff47f68b37736e61f264c2424b"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-03-24T08:03:18Z",
+   "message": "Assets: add heart_2180 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "181b31e2bea9bbc926c994a68eb34edb8b374450",
+   "parents": [
+    "e335186abbdd9fc40ac1a78dabbd7ecb5e12b165"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-03-30T12:29:32Z",
+   "message": "Docs: storage notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "272ee00e65ca1081968f485e644d5e31a215a0c9",
+   "parents": [
+    "181b31e2bea9bbc926c994a68eb34edb8b374450"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-04-01T19:03:01Z",
+   "message": "Tests: prepare preview after find",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3737790b18383e20019b0244e55c1cbdc9b5e19a",
+   "parents": [
+    "272ee00e65ca1081968f485e644d5e31a215a0c9"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-04-02T23:43:46Z",
+   "message": "Library: fix preview rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a571e8ee7d335fa8a25b3d2fc93d1d8d132727f1",
+   "parents": [
+    "3737790b18383e20019b0244e55c1cbdc9b5e19a"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-04-03T00:04:21Z",
+   "message": "Presets: tune keys_alt",
+   "kind": "trunk"
+  },
+  {
+   "sha": "93f8fbbd153a792199246ae858468f3f857c5e57",
+   "parents": [
+    "a571e8ee7d335fa8a25b3d2fc93d1d8d132727f1"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-04-03T05:00:23Z",
+   "message": "Docs: performance notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f38ade859f2956c7d4030aefd739302c48ffee76",
+   "parents": [
+    "93f8fbbd153a792199246ae858468f3f857c5e57"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-04-03T06:15:40Z",
+   "message": "Thumbs: apply batch after track",
+   "kind": "trunk"
+  },
+  {
+   "sha": "23186d575da5655bec0e52c0861fd4da4f8e77e5",
+   "parents": [
+    "f38ade859f2956c7d4030aefd739302c48ffee76"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-04-04T00:02:38Z",
+   "message": "Thumbs: fix job lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3e60944e791483a4ca1d08dc2b24b4dc9805253b",
+   "parents": [
+    "23186d575da5655bec0e52c0861fd4da4f8e77e5"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-04-05T18:09:47Z",
+   "message": "Tests: remove unused prepare_preview",
+   "kind": "trunk"
+  },
+  {
+   "sha": "826cb15918ad050a27b800c69e4af439a18add27",
+   "parents": [
+    "3e60944e791483a4ca1d08dc2b24b4dc9805253b"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-04-08T05:12:01Z",
+   "message": "Selection: scan album after collect",
+   "kind": "trunk"
+  },
+  {
+   "sha": "56f7181a08e4f2c4e3aae77f4ec9f53e4cb2cb5f",
+   "parents": [
+    "826cb15918ad050a27b800c69e4af439a18add27"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-04-08T19:00:19Z",
+   "message": "Presets: tune grid_loose",
+   "kind": "trunk"
+  },
+  {
+   "sha": "65abea9311efa702b680a2db91d7055ee19ee42e",
+   "parents": [
+    "56f7181a08e4f2c4e3aae77f4ec9f53e4cb2cb5f"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-04-15T05:18:41Z",
+   "message": "Search: rewrite flushSlot",
+   "kind": "trunk"
+  },
+  {
+   "sha": "20a2bd7900297440f03ba0e3e4dc637fd88edfb5",
+   "parents": [
+    "65abea9311efa702b680a2db91d7055ee19ee42e"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-04-19T05:21:55Z",
+   "message": "Tests: apply batch after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c3fed8f5f5f54cf83ae635a0e2caa3d98b913574",
+   "parents": [
+    "20a2bd7900297440f03ba0e3e4dc637fd88edfb5"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-05-10T03:34:37Z",
+   "message": "Assets: add eye_2195 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2b7df26681f1c7a125038ad4cca84dc6f92e14c3",
+   "parents": [
+    "c3fed8f5f5f54cf83ae635a0e2caa3d98b913574"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2024-05-14T09:17:49Z",
+   "message": "Assets: add sort_2196 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "67fc53c3f2a86dbfed4eec20c67d82a27e76882c",
+   "parents": [
+    "2b7df26681f1c7a125038ad4cca84dc6f92e14c3"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-05-21T22:41:50Z",
+   "message": "Storage: queue preview after apply",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7d9e173ac2dc023618f7336d3d083554425833c5",
+   "parents": [
+    "67fc53c3f2a86dbfed4eec20c67d82a27e76882c"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-05-23T08:33:06Z",
+   "message": "Tests: fix thumb lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "077b05f755ab567a6b8356b7e560d762ad202418",
+   "parents": [
+    "7d9e173ac2dc023618f7336d3d083554425833c5"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-05-26T18:36:34Z",
+   "message": "Tests: collect rating after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "979c2db0fdb52ab2ab6a887ca8e8ed3eb94efe70",
+   "parents": [
+    "077b05f755ab567a6b8356b7e560d762ad202418"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-05-29T15:39:35Z",
+   "message": "Docs: exporting notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "773d8af60c6e232dd38e8cd90ca1f5864fbbbc4b",
+   "parents": [
+    "979c2db0fdb52ab2ab6a887ca8e8ed3eb94efe70"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2024-06-01T02:26:46Z",
+   "message": "Docs: architecture notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0016e20e6b135ed10394950ae74d24869ce241f5",
+   "parents": [
+    "773d8af60c6e232dd38e8cd90ca1f5864fbbbc4b"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-06-13T18:55:57Z",
+   "message": "Docs: indexing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6976309e0200e422a83ec420a3a3d8eaba0c52a2",
+   "parents": [
+    "0016e20e6b135ed10394950ae74d24869ce241f5"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2024-06-14T02:33:06Z",
+   "message": "Tests: fix job bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "24e8887f2f78db246654eefa04475595ec4d632f",
+   "parents": [
+    "6976309e0200e422a83ec420a3a3d8eaba0c52a2"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-06-22T03:51:06Z",
+   "message": "Tests: add prepare_folder",
+   "kind": "trunk"
+  },
+  {
+   "sha": "29fd6e60a2aefef93934f2438ac21c32d85e4471",
+   "parents": [
+    "24e8887f2f78db246654eefa04475595ec4d632f"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-06-26T15:50:34Z",
+   "message": "Plugins: fix batch lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a97cce5a8b85ca5a3a67fef57adcf1997b0490de",
+   "parents": [
+    "29fd6e60a2aefef93934f2438ac21c32d85e4471"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-07-04T03:02:29Z",
+   "message": "Plugins: apply slot after read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "535f0aa59b2e9753cc3b62f2272566efe1d11a49",
+   "parents": [
+    "a97cce5a8b85ca5a3a67fef57adcf1997b0490de"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-07-06T12:53:58Z",
+   "message": "Thumbs: fix album lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bddb2cc1f4297ccd3dd90051a096ba2b8a79c952",
+   "parents": [
+    "535f0aa59b2e9753cc3b62f2272566efe1d11a49"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-07-13T00:12:14Z",
+   "message": "Thumbs: sort range after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a981f08e738ce694302d93d81c2b7457244db503",
+   "parents": [
+    "bddb2cc1f4297ccd3dd90051a096ba2b8a79c952"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-07-18T21:46:32Z",
+   "message": "Tests: fix query rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "94e9d9101476bafdb863e16245a0b7e0b1dc6257",
+   "parents": [
+    "a981f08e738ce694302d93d81c2b7457244db503"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-07-19T02:54:08Z",
+   "message": "Search: add collectThumb",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a322c603404276d96f9c88711d16df721def96c7",
+   "parents": [
+    "94e9d9101476bafdb863e16245a0b7e0b1dc6257"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-07-20T07:08:24Z",
+   "message": "Docs: releasing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f00093b3baf36a87ac866b573aec079a14f4e4da",
+   "parents": [
+    "a322c603404276d96f9c88711d16df721def96c7"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-07-20T09:47:29Z",
+   "message": "Scanner: collect thumb after apply",
+   "kind": "trunk"
+  },
+  {
+   "sha": "899a922704c6854298f3027f2817c4331c14e7fb",
+   "parents": [
+    "f00093b3baf36a87ac866b573aec079a14f4e4da"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-07-23T22:10:41Z",
+   "message": "Tests: add sort_photo",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fff655e386b3767333e2cabe51327dbb36ea954f",
+   "parents": [
+    "899a922704c6854298f3027f2817c4331c14e7fb"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-07-24T21:56:37Z",
+   "message": "Details: resolve entry after track",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3d53341d3e0c6fdfde1f1e08f362a6f3ebef4e42",
+   "parents": [
+    "fff655e386b3767333e2cabe51327dbb36ea954f"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-07-27T23:39:59Z",
+   "message": "Docs: architecture notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0f95217aa678b60a355b8d31841f72ed546fddb8",
+   "parents": [
+    "3d53341d3e0c6fdfde1f1e08f362a6f3ebef4e42"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-07-29T21:03:34Z",
+   "message": "Assets: add flag_2227 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f9e93a9b1a88f34e0c10ac75fd73d27bde95bd18",
+   "parents": [
+    "0f95217aa678b60a355b8d31841f72ed546fddb8"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-08-01T21:17:13Z",
+   "message": "Albums: add countJob",
+   "kind": "trunk"
+  },
+  {
+   "sha": "72eddfa8e2d44a2456e145dde01fd3b46b195d9f",
+   "parents": [
+    "f9e93a9b1a88f34e0c10ac75fd73d27bde95bd18"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-08-02T21:36:47Z",
+   "message": "Export: fix job bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "cda06b718e76ba75a957e7c8333323cd66e6acad",
+   "parents": [
+    "72eddfa8e2d44a2456e145dde01fd3b46b195d9f"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-08-03T15:38:53Z",
+   "message": "Tests: read rating after prepare",
+   "kind": "trunk"
+  },
+  {
+   "sha": "273edcda10688e5d33ec3c4f686520ce20c6b481",
+   "parents": [
+    "cda06b718e76ba75a957e7c8333323cd66e6acad"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2024-08-07T22:43:42Z",
+   "message": "Export: filter tag after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7a91a1014e97b165c861572d5a1e949c3c767b81",
+   "parents": [
+    "273edcda10688e5d33ec3c4f686520ce20c6b481"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-08-12T02:51:27Z",
+   "message": "Presets: tune thumb_large",
+   "kind": "trunk"
+  },
+  {
+   "sha": "61381ae23c202113b08a0a1b479be51ab4b3dc86",
+   "parents": [
+    "7a91a1014e97b165c861572d5a1e949c3c767b81"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-08-14T10:45:09Z",
+   "message": "Presets: tune backup_daily",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0c8963b1e2e4ceedf2fe09886b6335c4d25b0cdf",
+   "parents": [
+    "61381ae23c202113b08a0a1b479be51ab4b3dc86"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-08-15T10:44:24Z",
+   "message": "Tests: add read_photo",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f96cfe2f52e1acdc92a5f706cf84a4f2632426a9",
+   "parents": [
+    "0c8963b1e2e4ceedf2fe09886b6335c4d25b0cdf"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-08-26T14:39:01Z",
+   "message": "Plugins: rename collect_rating to track_entry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5613629ea8f972a15631ef59ed730ec8d843cb79",
+   "parents": [
+    "f96cfe2f52e1acdc92a5f706cf84a4f2632426a9"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2024-08-29T15:39:55Z",
+   "message": "Metadata: collect header after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "eb5bfbad20efdac91324217a78fe51cc97220102",
+   "parents": [
+    "5613629ea8f972a15631ef59ed730ec8d843cb79"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-09-05T00:38:10Z",
+   "message": "Index: sort record after queue",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fbfd91ee6afc67dd6990756075505c9088b1f0ee",
+   "parents": [
+    "eb5bfbad20efdac91324217a78fe51cc97220102"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-09-09T14:43:54Z",
+   "message": "Docs: exporting notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "702bc2d65bcff07bc9edbb0520fa62199762e2a0",
+   "parents": [
+    "fbfd91ee6afc67dd6990756075505c9088b1f0ee"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2024-09-17T10:40:08Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "acdbefe4fe912fc694765ee8b8e1eaf31ace655c",
+   "parents": [
+    "702bc2d65bcff07bc9edbb0520fa62199762e2a0"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-09-19T07:59:44Z",
+   "message": "Presets: tune export_web",
+   "kind": "trunk"
+  },
+  {
+   "sha": "93e0a855be0e33de63e4cb3efde7be9640671330",
+   "parents": [
+    "acdbefe4fe912fc694765ee8b8e1eaf31ace655c"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-09-22T14:48:42Z",
+   "message": "Details: fix query bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c623ee6b62aa812287f0a654ff2a8c0a4a615277",
+   "parents": [
+    "93e0a855be0e33de63e4cb3efde7be9640671330"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-09-23T18:55:06Z",
+   "message": "Export: apply cache after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c7ec991de0879dba90d9fe71fae41aa94f3cd5f0",
+   "parents": [
+    "c623ee6b62aa812287f0a654ff2a8c0a4a615277"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-09-25T19:15:56Z",
+   "message": "Thumbs: filter entry after prepare",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8f9f6ab974053f8c39e8725b5e8ae847ea83c6b3",
+   "parents": [
+    "c7ec991de0879dba90d9fe71fae41aa94f3cd5f0"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2024-09-29T06:52:15Z",
+   "message": "Selection: resolve page after read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1e14bdc1cd894c0ebdd0bd6d3dc4bc178f7e9b46",
+   "parents": [
+    "8f9f6ab974053f8c39e8725b5e8ae847ea83c6b3"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-10-08T22:21:05Z",
+   "message": "Tests: add count_rating",
+   "kind": "trunk"
+  },
+  {
+   "sha": "23d14c7642d34ed07bf19333ace66b6a4f36d55d",
+   "parents": [
+    "1e14bdc1cd894c0ebdd0bd6d3dc4bc178f7e9b46"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-10-09T22:35:15Z",
+   "message": "Scanner: fix album rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b0223f0d11f1c209bb6567509ebe3602be5b62b7",
+   "parents": [
+    "23d14c7642d34ed07bf19333ace66b6a4f36d55d"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-10-13T02:12:42Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8ece3a035b9fadd7f051042986a5ea49cbe0424f",
+   "parents": [
+    "b0223f0d11f1c209bb6567509ebe3602be5b62b7"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-10-16T16:19:35Z",
+   "message": "Assets: add cloud_2256 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3bb10cb5a0f7832d4c8f964102233471aa5ed723",
+   "parents": [
+    "8ece3a035b9fadd7f051042986a5ea49cbe0424f"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-10-22T13:30:56Z",
+   "message": "Tests: resolve header after find",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a876bd7bac8077c8b5f2062af4f3821e44eeab51",
+   "parents": [
+    "3bb10cb5a0f7832d4c8f964102233471aa5ed723"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2024-11-02T20:54:40Z",
+   "message": "Assets: add camera_2258 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "267f827455b9ef5a8e24527664d8abb74cfd600c",
+   "parents": [
+    "a876bd7bac8077c8b5f2062af4f3821e44eeab51"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2024-11-03T17:41:16Z",
+   "message": "Presets: tune scan_fast",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b9ae8c309175abf0896828eae6ecf3d11b7b7f70",
+   "parents": [
+    "267f827455b9ef5a8e24527664d8abb74cfd600c"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-11-07T14:31:13Z",
+   "message": "Export: read thumb after merge",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a19391dc3e4f1db616cfc3c41390bfa1f6d50c4e",
+   "parents": [
+    "b9ae8c309175abf0896828eae6ecf3d11b7b7f70"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2024-11-08T17:10:28Z",
+   "message": "Albums: add refreshHeader",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0406c7165a0ca602f58b188126020bdb91bddbf0",
+   "parents": [
+    "a19391dc3e4f1db616cfc3c41390bfa1f6d50c4e"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-11-10T15:27:36Z",
+   "message": "Presets: tune sort_date",
+   "kind": "trunk"
+  },
+  {
+   "sha": "deb7a301fb18df8e189eead8b236aa51f4dc39e9",
+   "parents": [
+    "0406c7165a0ca602f58b188126020bdb91bddbf0"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2024-11-16T16:32:04Z",
+   "message": "Tests: fix tag ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2125b75d184bc32adbc0191e22f8b81a1ef2b7a3",
+   "parents": [
+    "deb7a301fb18df8e189eead8b236aa51f4dc39e9"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-11-18T05:37:37Z",
+   "message": "Details: fix rating rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3f0f0afaebd6c41957a36f74cf9cd19876810466",
+   "parents": [
+    "2125b75d184bc32adbc0191e22f8b81a1ef2b7a3"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2024-11-18T11:36:14Z",
+   "message": "Tests: fix rating rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "80e5ffc1a761bce4d6a7ddcea78f8a5175a3d584",
+   "parents": [
+    "3f0f0afaebd6c41957a36f74cf9cd19876810466"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-11-26T03:19:30Z",
+   "message": "Presets: tune thumb_small",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fb4907a3ac36a02ed1825ed7680a3700991fd52c",
+   "parents": [
+    "80e5ffc1a761bce4d6a7ddcea78f8a5175a3d584"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2024-12-03T07:04:57Z",
+   "message": "Docs: indexing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b11cacd257e796b7392e6fc976bde97bc6843358",
+   "parents": [
+    "fb4907a3ac36a02ed1825ed7680a3700991fd52c"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2024-12-04T04:02:24Z",
+   "message": "Docs: plugins notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "88bbbbb73e7d008e90c36ed5eac06db45b7a4cff",
+   "parents": [
+    "b11cacd257e796b7392e6fc976bde97bc6843358"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2024-12-09T15:42:40Z",
+   "message": "Search: find page after count",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5dfb59e7f648a567d7611e942ef166474c20f917",
+   "parents": [
+    "88bbbbb73e7d008e90c36ed5eac06db45b7a4cff"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2024-12-14T02:37:35Z",
+   "message": "Plugins: rewrite count_range",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f67a3ba3aace07d81be9e75fefee367f392cb675",
+   "parents": [
+    "5dfb59e7f648a567d7611e942ef166474c20f917"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-12-23T17:32:47Z",
+   "message": "Tests: rename prepare_slot to sort_entry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9c87792284024e50b829965138238de12ab2cf63",
+   "parents": [
+    "f67a3ba3aace07d81be9e75fefee367f392cb675"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2024-12-30T20:55:03Z",
+   "message": "Presets: tune export_archive",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b57d6fc9a7eee1c8604217276959def8d0347c11",
+   "parents": [
+    "9c87792284024e50b829965138238de12ab2cf63"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-01-02T14:22:43Z",
+   "message": "Presets: tune thumb_large",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d8a54dfe36a9990fc123a78b5ab0ab694c9f3fa7",
+   "parents": [
+    "b57d6fc9a7eee1c8604217276959def8d0347c11"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-01-15T03:51:14Z",
+   "message": "Docs: storage notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2d9437e3d7e8fd5746c4e5c6e80d1f557eda9780",
+   "parents": [
+    "d8a54dfe36a9990fc123a78b5ab0ab694c9f3fa7"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-01-15T05:15:34Z",
+   "message": "Tests: rename count_record to build_album",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f4864314ce82a73b0220c4312277bb5813fabe70",
+   "parents": [
+    "2d9437e3d7e8fd5746c4e5c6e80d1f557eda9780"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2025-01-17T16:52:11Z",
+   "message": "Albums: fix slot bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6fa481b260f06f44b7020d3dcce24b46730fb89b",
+   "parents": [
+    "f4864314ce82a73b0220c4312277bb5813fabe70"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-01-19T07:39:38Z",
+   "message": "Docs: indexing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bd9175e4303c9620cf3057cae040fa55bc32372a",
+   "parents": [
+    "6fa481b260f06f44b7020d3dcce24b46730fb89b"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-01-23T17:51:44Z",
+   "message": "Index: collect query after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7efc4391f28e1e202800edbae249878bf77f0d0d",
+   "parents": [
+    "bd9175e4303c9620cf3057cae040fa55bc32372a"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-02-02T19:26:00Z",
+   "message": "Assets: add rotate_2284 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3fae80df3ba881964838704e04419b2b5f753f6c",
+   "parents": [
+    "7efc4391f28e1e202800edbae249878bf77f0d0d"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-02-04T12:09:13Z",
+   "message": "Details: fix query bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9ae917ea8f8c23b555df722e07db5bfe6b4ac6b4",
+   "parents": [
+    "3fae80df3ba881964838704e04419b2b5f753f6c"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-02-10T12:22:50Z",
+   "message": "Plugins: add resolve_entry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "4e95287ba920bb8aff4a4dab27c5d6e6c759f6cb",
+   "parents": [
+    "9ae917ea8f8c23b555df722e07db5bfe6b4ac6b4"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-02-13T06:00:02Z",
+   "message": "Tests: add collect_thumb",
+   "kind": "trunk"
+  },
+  {
+   "sha": "cf2561357c4d60be321a71aaa8922ac05ff1ce47",
+   "parents": [
+    "4e95287ba920bb8aff4a4dab27c5d6e6c759f6cb"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-02-19T16:11:12Z",
+   "message": "Export: prepare path after scan",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6d611f0cd088cf4d5fb53fa56dfdfbb64de7cf2a",
+   "parents": [
+    "cf2561357c4d60be321a71aaa8922ac05ff1ce47"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-02-20T04:16:06Z",
+   "message": "Scanner: fix folder rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "06e0f8d51aab02688c434e54f9f22ae5af59bfd9",
+   "parents": [
+    "6d611f0cd088cf4d5fb53fa56dfdfbb64de7cf2a"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-02-20T22:53:38Z",
+   "message": "Tests: open preview after flush",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d2ae0aa84ffd0c8d7eb334ba7fac456dc06ba740",
+   "parents": [
+    "06e0f8d51aab02688c434e54f9f22ae5af59bfd9"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-03-04T00:57:26Z",
+   "message": "Plugins: refresh folder after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3dba93f19522a6c1897aa0962da95033058b603b",
+   "parents": [
+    "d2ae0aa84ffd0c8d7eb334ba7fac456dc06ba740"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-03-04T18:42:36Z",
+   "message": "Presets: tune thumb_small",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a9770226f7f67e127689afa58215cf8990d1f5f9",
+   "parents": [
+    "3dba93f19522a6c1897aa0962da95033058b603b"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-03-09T12:26:05Z",
+   "message": "Assets: add filter_2302 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "038846da2c74eba910c93a026665557f35d54972",
+   "parents": [
+    "a9770226f7f67e127689afa58215cf8990d1f5f9"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-03-11T09:09:26Z",
+   "message": "Scanner: filter slot after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3cfb2a00e5aee5eac6dafa72692fe6ca7a332c73",
+   "parents": [
+    "038846da2c74eba910c93a026665557f35d54972"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-03-12T06:57:06Z",
+   "message": "Tests: fix header bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ce75360e17b4f7756e72531d1b1e6afe7c5f807f",
+   "parents": [
+    "3cfb2a00e5aee5eac6dafa72692fe6ca7a332c73"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-03-23T08:49:29Z",
+   "message": "Presets: tune sort_date",
+   "kind": "trunk"
+  },
+  {
+   "sha": "cddb464b1075b324890b31eae7629308c8279881",
+   "parents": [
+    "ce75360e17b4f7756e72531d1b1e6afe7c5f807f"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-03-30T00:33:47Z",
+   "message": "Tests: open entry after count",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d9857dedb62d3d0d707764d23a77f5cceb01e78f",
+   "parents": [
+    "cddb464b1075b324890b31eae7629308c8279881"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-04-01T06:48:43Z",
+   "message": "Plugins: rename build_slot to load_photo",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1e8ef346c42191320505fc6855e95569b0dd9df0",
+   "parents": [
+    "d9857dedb62d3d0d707764d23a77f5cceb01e78f"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-04-02T14:20:11Z",
+   "message": "Assets: add map_2306 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bcf8e43fbb9154fd1cc6479839a0c7acc220f9df",
+   "parents": [
+    "1e8ef346c42191320505fc6855e95569b0dd9df0"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-04-05T20:22:34Z",
+   "message": "Presets: tune export_web",
+   "kind": "trunk"
+  },
+  {
+   "sha": "818262c970473fc5e5212795975020cfcbcd91b6",
+   "parents": [
+    "bcf8e43fbb9154fd1cc6479839a0c7acc220f9df"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-04-12T03:30:22Z",
+   "message": "Docs: scanning notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fae2d680d395b51b7ebd81cc19914d7931ba2ce1",
+   "parents": [
+    "818262c970473fc5e5212795975020cfcbcd91b6"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-04-21T23:13:48Z",
+   "message": "Tests: queue header after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ac1cb4b5c39340a4d847a03812e8ae214164bffe",
+   "parents": [
+    "fae2d680d395b51b7ebd81cc19914d7931ba2ce1"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-04-22T16:26:54Z",
+   "message": "Plugins: fix record lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "58481eb9bb4a89e3aedcad38bf31754f6b9b0141",
+   "parents": [
+    "ac1cb4b5c39340a4d847a03812e8ae214164bffe"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-04-23T15:36:25Z",
+   "message": "Presets: tune jpeg_default",
+   "kind": "trunk"
+  },
+  {
+   "sha": "16b76ed14f644eefebaa3cea414742b9fca99162",
+   "parents": [
+    "58481eb9bb4a89e3aedcad38bf31754f6b9b0141"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-04-25T15:54:33Z",
+   "message": "Plugins: rewrite merge_header",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b59b4a153e8df8e2e5f6c7c1756015c9fbb41455",
+   "parents": [
+    "16b76ed14f644eefebaa3cea414742b9fca99162"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-05-01T20:06:18Z",
+   "message": "Details: fix rating lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a1c285ac9df9209d1d161c3e05f3fab7d6795aed",
+   "parents": [
+    "b59b4a153e8df8e2e5f6c7c1756015c9fbb41455"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-05-10T05:37:58Z",
+   "message": "Presets: tune raw_default",
+   "kind": "trunk"
+  },
+  {
+   "sha": "38d562032c95fb9834a4da976a4b05b1905f7fd8",
+   "parents": [
+    "a1c285ac9df9209d1d161c3e05f3fab7d6795aed"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-05-11T00:44:04Z",
+   "message": "Docs: releasing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "4b6ff46855f09705e9b403a4f62edcef80df21f2",
+   "parents": [
+    "38d562032c95fb9834a4da976a4b05b1905f7fd8"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-05-19T09:09:09Z",
+   "message": "Bridge: track preview after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bab63b2e1c299df6fa12fcf10199525690a8503a",
+   "parents": [
+    "4b6ff46855f09705e9b403a4f62edcef80df21f2"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-05-22T00:04:48Z",
+   "message": "Plugins: add apply_job",
+   "kind": "trunk"
+  },
+  {
+   "sha": "864abf941c0f9da4d88d968fb460e409207eeef9",
+   "parents": [
+    "bab63b2e1c299df6fa12fcf10199525690a8503a"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-05-24T04:49:16Z",
+   "message": "Tests: rename count_slot to build_album",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6bde365cf83c7890cbeaa43cdc2c4d09b1fc5add",
+   "parents": [
+    "864abf941c0f9da4d88d968fb460e409207eeef9"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-05-31T01:28:55Z",
+   "message": "Albums: rewrite preparePhoto",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a87813968c93578e1c6ad9518ea603e4791b734e",
+   "parents": [
+    "6bde365cf83c7890cbeaa43cdc2c4d09b1fc5add"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-06-01T09:53:16Z",
+   "message": "Selection: fix header ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bb33682e95a46e1cee040bd0788317d21778bdbf",
+   "parents": [
+    "a87813968c93578e1c6ad9518ea603e4791b734e"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-06-23T08:07:34Z",
+   "message": "Search: fix entry bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ba35a717d8276e37f376bf6215cf47cf4f5c91aa",
+   "parents": [
+    "bb33682e95a46e1cee040bd0788317d21778bdbf"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-06-24T03:26:29Z",
+   "message": "Library: resolve slot after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c16eb1d93a80ee4dbb237e05985180437ae669ad",
+   "parents": [
+    "ba35a717d8276e37f376bf6215cf47cf4f5c91aa"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-06-24T13:35:06Z",
+   "message": "Plugins: log slot timing",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f3ec80b7e029aa958ba923102d9c8b31a334bada",
+   "parents": [
+    "c16eb1d93a80ee4dbb237e05985180437ae669ad"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-06-28T01:00:09Z",
+   "message": "Docs: plugins notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "30e0c1edd1f3c0be38dd108d233a3226207fc4a3",
+   "parents": [
+    "f3ec80b7e029aa958ba923102d9c8b31a334bada"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-06-30T20:09:16Z",
+   "message": "Assets: add search_2335 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6b71971cace0de7b0f81b50c87400a9334857a79",
+   "parents": [
+    "30e0c1edd1f3c0be38dd108d233a3226207fc4a3"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-07-11T00:46:29Z",
+   "message": "Tests: rewrite load_page",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1dc47e8f6e9e7492c7b11a1edf69c073005a0f46",
+   "parents": [
+    "6b71971cace0de7b0f81b50c87400a9334857a79"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-07-14T15:29:19Z",
+   "message": "Plugins: fix slot rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d961393d8209899586ae126f04aac8b1437ea5da",
+   "parents": [
+    "1dc47e8f6e9e7492c7b11a1edf69c073005a0f46"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-07-17T15:58:58Z",
+   "message": "Index: queue rating after read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "74bb9d2eaebf5ffdf23002de091cb658b4246b2f",
+   "parents": [
+    "d961393d8209899586ae126f04aac8b1437ea5da"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-08-02T11:19:02Z",
+   "message": "Details: rename flushPhoto to loadFolder",
+   "kind": "trunk"
+  },
+  {
+   "sha": "4fad4a9fc435653b56ba89d8d894ac0abfa96275",
+   "parents": [
+    "74bb9d2eaebf5ffdf23002de091cb658b4246b2f"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-08-03T07:21:48Z",
+   "message": "Index: fix cache ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5d7cffa0422252a3cfde7accc2416d57fe202427",
+   "parents": [
+    "4fad4a9fc435653b56ba89d8d894ac0abfa96275"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-08-10T02:05:13Z",
+   "message": "Presets: tune jpeg_default",
+   "kind": "trunk"
+  },
+  {
+   "sha": "63d52f6fd7156fec387984b9a57e5ac261748eaa",
+   "parents": [
+    "5d7cffa0422252a3cfde7accc2416d57fe202427"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-08-16T06:44:35Z",
+   "message": "Docs: architecture notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "afe18c3e304aaf066ba969a823852b4fd2988781",
+   "parents": [
+    "63d52f6fd7156fec387984b9a57e5ac261748eaa"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-08-18T00:20:53Z",
+   "message": "Tests: rewrite apply_thumb",
+   "kind": "trunk"
+  },
+  {
+   "sha": "37499f9875b994a24563864e26ea01dce8feb645",
+   "parents": [
+    "afe18c3e304aaf066ba969a823852b4fd2988781"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-08-18T07:34:11Z",
+   "message": "Albums: fix range bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "733a7f3ba3fd330c9c89f4eb2eacd71dee74fcef",
+   "parents": [
+    "37499f9875b994a24563864e26ea01dce8feb645"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-08-24T15:01:38Z",
+   "message": "Plugins: fix query lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "49e23bd3c4cfa2163ce89243efec41b03a97e985",
+   "parents": [
+    "733a7f3ba3fd330c9c89f4eb2eacd71dee74fcef"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-09-02T23:31:59Z",
+   "message": "Plugins: build folder after collect",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b5914694e2a387ff670a486e902ed7a0dfcf489d",
+   "parents": [
+    "49e23bd3c4cfa2163ce89243efec41b03a97e985"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2025-09-06T04:02:24Z",
+   "message": "Storage: add filterRecord",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1fa757b1d106c4f526d96b5df463547a52d3ec38",
+   "parents": [
+    "b5914694e2a387ff670a486e902ed7a0dfcf489d"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-09-13T03:42:52Z",
+   "message": "Albums: build job after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3c754e26e445792be546323867837ca79f519dfb",
+   "parents": [
+    "1fa757b1d106c4f526d96b5df463547a52d3ec38"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-09-15T18:42:44Z",
+   "message": "Docs: performance notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b4064443222da48705805582ce692c2fb9e1b716",
+   "parents": [
+    "3c754e26e445792be546323867837ca79f519dfb"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-09-18T14:12:40Z",
+   "message": "Assets: add share_2359 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d4f017897f68e22e8a13e0470acb3814a02c15d7",
+   "parents": [
+    "b4064443222da48705805582ce692c2fb9e1b716"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2025-09-19T03:39:10Z",
+   "message": "Docs: plugins notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5c08494f37fbf9bf3ba72820488d8a38820789c2",
+   "parents": [
+    "d4f017897f68e22e8a13e0470acb3814a02c15d7"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2025-10-10T02:56:26Z",
+   "message": "Assets: add share_2361 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2bf54f17d575958f9ccde25c5226f3e2450e8017",
+   "parents": [
+    "5c08494f37fbf9bf3ba72820488d8a38820789c2"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-10-20T10:31:42Z",
+   "message": "Storage: track folder after prepare",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a35f97d9c025c6f393d267bf15f9e57a3e053573",
+   "parents": [
+    "2bf54f17d575958f9ccde25c5226f3e2450e8017"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2025-10-22T05:06:44Z",
+   "message": "Assets: add filter_2363 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7c828ebca11eb3a3122700de561ebf9803f5b48e",
+   "parents": [
+    "a35f97d9c025c6f393d267bf15f9e57a3e053573"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-10-26T17:58:55Z",
+   "message": "Tests: rename apply_range to merge_slot",
+   "kind": "trunk"
+  },
+  {
+   "sha": "26353686d23a7587d201b7b106d026311bd5248d",
+   "parents": [
+    "7c828ebca11eb3a3122700de561ebf9803f5b48e"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-11-03T09:55:27Z",
+   "message": "Export: queue job after read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "e2b573d6fd94ce1dcf51b9b1f953da776a341e92",
+   "parents": [
+    "26353686d23a7587d201b7b106d026311bd5248d"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-11-05T07:16:25Z",
+   "message": "Plugins: refresh job after apply",
+   "kind": "trunk"
+  },
+  {
+   "sha": "733bd9c6146b30aefed53eb02527f13a49a01f1a",
+   "parents": [
+    "e2b573d6fd94ce1dcf51b9b1f953da776a341e92"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-11-08T21:45:32Z",
+   "message": "Thumbs: prepare cache after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "528102c053fbf4857afaf3b5de3939728b372dd2",
+   "parents": [
+    "733bd9c6146b30aefed53eb02527f13a49a01f1a"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-11-09T16:40:26Z",
+   "message": "Storage: add openCache",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c6a5938d8f0df3042619dc3d5406ab7e4a8bf0e7",
+   "parents": [
+    "528102c053fbf4857afaf3b5de3939728b372dd2"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-11-15T13:56:36Z",
+   "message": "Plugins: fix tag ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "df703125a83e3bcee742d1cb69a0513d88c7dabe",
+   "parents": [
+    "c6a5938d8f0df3042619dc3d5406ab7e4a8bf0e7"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-11-16T16:57:50Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d9fca5d47f560fb635394ac33b093bc10a5886c1",
+   "parents": [
+    "df703125a83e3bcee742d1cb69a0513d88c7dabe"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-11-17T22:35:03Z",
+   "message": "Storage: track preview after find",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9cd5ee6b54bb1d8848ebc6183129e930d1683417",
+   "parents": [
+    "c7ec991de0879dba90d9fe71fae41aa94f3cd5f0"
+   ],
+   "branch": "release/2.0",
+   "author": "bo.lindqvist",
+   "time": "2025-01-14T09:53:22Z",
+   "message": "[2.x] Backport: guard record reentry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0d8a6a626743e88d95ddacf9b9d46207d9d660b3",
+   "parents": [
+    "864abf941c0f9da4d88d968fb460e409207eeef9"
+   ],
+   "branch": "release/2.1",
+   "author": "hana.kowal",
+   "time": "2025-05-29T23:18:44Z",
+   "message": "[2.x] Backport: guard range reentry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c5c2dc6cd8188a84299f9047ca14cb5fcdfdc4de",
+   "parents": [
+    "0d8a6a626743e88d95ddacf9b9d46207d9d660b3"
+   ],
+   "branch": "release/2.1",
+   "author": "juno.park",
+   "time": "2025-06-01T13:28:27Z",
+   "message": "[2.x] Backport: guard thumb null read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "43194d0fc76a104dde87053189034d0f2ddc27cd",
+   "parents": [
+    "c5c2dc6cd8188a84299f9047ca14cb5fcdfdc4de"
+   ],
+   "branch": "release/2.1",
+   "author": "faro.ito",
+   "time": "2025-06-27T22:46:11Z",
+   "message": "[2.x] Backport: guard entry reentry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "97f887d72a6a6d6b85268be5a6903e49cf493365",
+   "parents": [
+    "9cd5ee6b54bb1d8848ebc6183129e930d1683417"
+   ],
+   "branch": "release/2.0",
+   "author": "ada.wren",
+   "time": "2025-07-04T12:15:11Z",
+   "message": "[2.x] Backport: guard path overflow",
+   "kind": "trunk"
+  },
+  {
+   "sha": "42ecce16113dd2ac8b95dada690915bb75e11fd0",
+   "parents": [
+    "97f887d72a6a6d6b85268be5a6903e49cf493365"
+   ],
+   "branch": "release/2.0",
+   "author": "dov.achterberg",
+   "time": "2025-10-22T12:35:04Z",
+   "message": "[2.x] Backport: guard batch null read",
+   "kind": "trunk"
+  },
+  {
+   "sha": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "parents": [
+    "7efc4391f28e1e202800edbae249878bf77f0d0d"
+   ],
+   "branch": "esi/cat-0731-st1-warm-the-tracker-cache-on-startup",
+   "author": "esi.boateng",
+   "time": "2025-02-04T12:14:24Z",
+   "message": "[CAT-0731] Warm the tracker cache on startup",
+   "kind": "change",
+   "change": "ST1"
+  },
+  {
+   "sha": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "parents": [
+    "d9fca5d47f560fb635394ac33b093bc10a5886c1"
+   ],
+   "branch": "faro/cat-1042-orig-faster-scans-of-very-large-folders-with",
+   "author": "faro.ito",
+   "time": "2025-12-01T05:02:24Z",
+   "message": "Draft: faster scans of very large folders, with investigation notes",
+   "kind": "change",
+   "change": "ORIG"
+  },
+  {
+   "sha": "d7b141262c67760299a5f257e46fd943243d5c35",
+   "parents": [
+    "d9fca5d47f560fb635394ac33b093bc10a5886c1"
+   ],
+   "branch": "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep",
+   "author": "rin.okafor",
+   "time": "2025-12-02T00:14:24Z",
+   "message": "[CAT-1042] Library scan stalls on large folders: reproducer, spikes, background scan",
+   "kind": "change",
+   "change": "S1"
+  },
+  {
+   "sha": "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4",
+   "parents": [
+    "d9fca5d47f560fb635394ac33b093bc10a5886c1"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-02T00:46:05Z",
+   "message": "Assets: add crop_2488 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "parents": [
+    "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4"
+   ],
+   "branch": "rin/cat-1042-c1-per-folder-scan-fixes-from-the-investiga",
+   "author": "rin.okafor",
+   "time": "2025-12-02T12:14:24Z",
+   "message": "[CAT-1042] Per-folder scan fixes from the investigation draft, updated to trunk",
+   "kind": "change",
+   "change": "C1"
+  },
+  {
+   "sha": "8dc5e801b5622b4e4b3999d2fa971eed42a0b310",
+   "parents": [
+    "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4"
+   ],
+   "branch": "rin/cat-1042-c2-stop-selection-code-from-reading-every-s",
+   "author": "rin.okafor",
+   "time": "2025-12-03T00:14:24Z",
+   "message": "[CAT-1042] Stop selection code from reading every selected photo",
+   "kind": "change",
+   "change": "C2"
+  },
+  {
+   "sha": "d600920c80988d1de285c809bc9d10174119e3ee",
+   "parents": [
+    "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-03T05:56:51Z",
+   "message": "Tests: rewrite count_entry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "468b334de6ae23ac5512f9f979ef3d899f31f1be",
+   "parents": [
+    "d600920c80988d1de285c809bc9d10174119e3ee"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-04T01:40:02Z",
+   "message": "Bridge: fix folder rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "41bfa637d6b1f13b56527cab0f979920f537c8ef",
+   "parents": [
+    "468b334de6ae23ac5512f9f979ef3d899f31f1be"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-04T07:28:04Z",
+   "message": "Storage: fix album bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3a7cad561e542a22c5bb97f39c71ba47f58f71fa",
+   "parents": [
+    "41bfa637d6b1f13b56527cab0f979920f537c8ef"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-04T08:06:22Z",
+   "message": "Export: add buildEntry",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f918b70d731d8de7917eba3b3f786b6dc445f434",
+   "parents": [
+    "3a7cad561e542a22c5bb97f39c71ba47f58f71fa"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-04T17:55:38Z",
+   "message": "Details: rename mergeRecord to readPage",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b74d47191879a7999045a90251305b45068ef764",
+   "parents": [
+    "f918b70d731d8de7917eba3b3f786b6dc445f434"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-05T00:57:18Z",
+   "message": "Assets: add tag_2500 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "78ba463d4a14e6e08d219ae3cd5ef1be54a8f58c",
+   "parents": [
+    "d7b141262c67760299a5f257e46fd943243d5c35"
+   ],
+   "branch": "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep",
+   "author": "rin.okafor",
+   "time": "2025-12-06T00:14:24Z",
+   "message": "Address review: track jobs",
+   "kind": "change",
+   "change": "S1"
+  },
+  {
+   "sha": "502a30dcfa82e82042efc3bec188d0149c3677d3",
+   "parents": [
+    "b74d47191879a7999045a90251305b45068ef764"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-06T10:28:22Z",
+   "message": "Plugins: resolve preview after collect",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "parents": [
+    "8dc5e801b5622b4e4b3999d2fa971eed42a0b310"
+   ],
+   "branch": "rin/cat-1042-c2-stop-selection-code-from-reading-every-s",
+   "author": "rin.okafor",
+   "time": "2025-12-07T00:14:24Z",
+   "message": "Address review: build folders",
+   "kind": "change",
+   "change": "C2"
+  },
+  {
+   "sha": "ce391e0f64ce4abe9aaf0ca52da7587428441050",
+   "parents": [
+    "502a30dcfa82e82042efc3bec188d0149c3677d3"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-07T18:17:55Z",
+   "message": "Metadata: rename filterPhoto to mergeAlbum",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b689f6955816c66d1ae4e630c2bd6b7d61e28e50",
+   "parents": [
+    "ce391e0f64ce4abe9aaf0ca52da7587428441050"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-07T21:16:58Z",
+   "message": "Assets: add export_2502 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "parents": [
+    "b689f6955816c66d1ae4e630c2bd6b7d61e28e50"
+   ],
+   "branch": "rin/cat-1042-c3-add-photo-queries-that-do-not-open-the-f",
+   "author": "rin.okafor",
+   "time": "2025-12-08T00:14:24Z",
+   "message": "[CAT-1042] Add photo queries that do not open the file",
+   "kind": "change",
+   "change": "C3"
+  },
+  {
+   "sha": "e172dcec173f33050f5292161e7bc6c51649540a",
+   "parents": [
+    "b689f6955816c66d1ae4e630c2bd6b7d61e28e50"
+   ],
+   "branch": "rin/cat-1042-int-integrate-the-remaining-scan-fixes",
+   "author": "rin.okafor",
+   "time": "2025-12-08T12:14:24Z",
+   "message": "[CAT-1042] Integrate the remaining scan fixes",
+   "kind": "change",
+   "change": "INT"
+  },
+  {
+   "sha": "dd4e8108384bf28b184152737da1eeae268258bc",
+   "parents": [
+    "b689f6955816c66d1ae4e630c2bd6b7d61e28e50"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-08T18:35:37Z",
+   "message": "Details: collect page after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "30089e217a3544e2015d57b56c141517baf693d1",
+   "parents": [
+    "dd4e8108384bf28b184152737da1eeae268258bc"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-08T22:34:23Z",
+   "message": "Export: filter page after prepare",
+   "kind": "trunk"
+  },
+  {
+   "sha": "dca5df03d656788f1145b8d86e3a064e1ec413be",
+   "parents": [
+    "30089e217a3544e2015d57b56c141517baf693d1"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2025-12-09T16:49:41Z",
+   "message": "Plugins: add count_slot",
+   "kind": "trunk"
+  },
+  {
+   "sha": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "parents": [
+    "30089e217a3544e2015d57b56c141517baf693d1"
+   ],
+   "branch": "rin/cat-1042-c4-answer-type-questions-about-photos-witho",
+   "author": "rin.okafor",
+   "time": "2025-12-10T00:14:24Z",
+   "message": "[CAT-1042] Answer type questions about photos without opening them",
+   "kind": "change",
+   "change": "C4"
+  },
+  {
+   "sha": "ee92f5afc6dd16cf57b8a76babfcfe26bc2543d2",
+   "parents": [
+    "dca5df03d656788f1145b8d86e3a064e1ec413be"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-10T05:57:43Z",
+   "message": "Details: add scanTag",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f19f6d2524cf8cb5495063b71051cf8ef4aa2134",
+   "parents": [
+    "ee92f5afc6dd16cf57b8a76babfcfe26bc2543d2"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-10T20:38:34Z",
+   "message": "Presets: tune export_print",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6d3397d57004edaa09a90c3f8e410476ee0962f1",
+   "parents": [
+    "f19f6d2524cf8cb5495063b71051cf8ef4aa2134"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-10T23:03:38Z",
+   "message": "Assets: add star_2515 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3e47ef790d3a66024678ccf7f86348336ca016a1",
+   "parents": [
+    "6d3397d57004edaa09a90c3f8e410476ee0962f1"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-11T09:41:16Z",
+   "message": "Assets: add filter_2516 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9a4e4c424c0f9c900a67451b0b9b3c1185d7f85a",
+   "parents": [
+    "3e47ef790d3a66024678ccf7f86348336ca016a1"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-11T11:58:38Z",
+   "message": "Export: fix header lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6223b1357206762aa0a1305f236a77f092be85b3",
+   "parents": [
+    "9a4e4c424c0f9c900a67451b0b9b3c1185d7f85a"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2025-12-11T14:56:08Z",
+   "message": "Selection: find batch after merge",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b337bef12b18527db21b9c8fe61c611c8f54bb3a",
+   "parents": [
+    "78ba463d4a14e6e08d219ae3cd5ef1be54a8f58c"
+   ],
+   "branch": "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep",
+   "author": "rin.okafor",
+   "time": "2025-12-12T00:14:24Z",
+   "message": "Address review: collect paths",
+   "kind": "change",
+   "change": "S1"
+  },
+  {
+   "sha": "a85963733cf3428bd84f24896ea703396d4fdd52",
+   "parents": [
+    "6223b1357206762aa0a1305f236a77f092be85b3"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-12T22:10:05Z",
+   "message": "Search: apply record after load",
+   "kind": "trunk"
+  },
+  {
+   "sha": "d97d5c47a80509460de137589d97f53c8f20269f",
+   "parents": [
+    "30089e217a3544e2015d57b56c141517baf693d1",
+    "28bb1ef904d5b8660529e67698a01fdfd087ef8f"
+   ],
+   "branch": "feature/scan-v2",
+   "author": "rin.okafor",
+   "time": "2025-12-13T00:00:00Z",
+   "message": "Merge pull request 407 from rin/cat-1042-c4-answer-type-questions-about-photos-witho",
+   "kind": "merge",
+   "change": "C4"
+  },
+  {
+   "sha": "a8066f2b6d84af73302d00253badda04bb495678",
+   "parents": [
+    "a85963733cf3428bd84f24896ea703396d4fdd52"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-13T00:08:18Z",
+   "message": "Docs: plugins notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7e52e5853b10db3d0ea7b8df4106be0974df5b3b",
+   "parents": [
+    "a8066f2b6d84af73302d00253badda04bb495678"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-13T21:52:25Z",
+   "message": "Export: read preview after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "33c974b4ae13fd35242f5f855bf88779778a34d2",
+   "parents": [
+    "7e52e5853b10db3d0ea7b8df4106be0974df5b3b"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-15T04:41:17Z",
+   "message": "Docs: storage notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8f5525ba8441a793543a6142ec060b8a7634b430",
+   "parents": [
+    "33c974b4ae13fd35242f5f855bf88779778a34d2"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-15T14:45:29Z",
+   "message": "Albums: prepare job after merge",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2f8c058eb583f110d142723c7ca2e4e73e44b5bc",
+   "parents": [
+    "8f5525ba8441a793543a6142ec060b8a7634b430"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-15T23:18:39Z",
+   "message": "Assets: add flag_2524 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "43339ca79fabdee6bec6e3a51e8b897260dba2bd",
+   "parents": [
+    "2f8c058eb583f110d142723c7ca2e4e73e44b5bc"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-16T00:00:00Z",
+   "message": "Add a licence header to every source file",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5d680c623dc0125eb27bcbbe8d844950d124dae4",
+   "parents": [
+    "43339ca79fabdee6bec6e3a51e8b897260dba2bd"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-16T11:41:41Z",
+   "message": "Docs: thumbnails notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "83555b8845831437b029359090c7be0aee8588a4",
+   "parents": [
+    "5d680c623dc0125eb27bcbbe8d844950d124dae4"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-16T11:49:57Z",
+   "message": "Albums: rename filterPhoto to trackSlot",
+   "kind": "trunk"
+  },
+  {
+   "sha": "579b2d7c8b7c59a60bd694cec9821784481bfab9",
+   "parents": [
+    "83555b8845831437b029359090c7be0aee8588a4"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-16T16:26:27Z",
+   "message": "Details: add trackTag",
+   "kind": "trunk"
+  },
+  {
+   "sha": "189791f18fac00290d3242a7e53992352c33981f",
+   "parents": [
+    "579b2d7c8b7c59a60bd694cec9821784481bfab9"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2025-12-17T00:16:05Z",
+   "message": "Presets: tune keys_alt",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8c7e303079682d33d7c3f493a045addfc73eacbf",
+   "parents": [
+    "189791f18fac00290d3242a7e53992352c33981f"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-17T02:45:26Z",
+   "message": "Bridge: fix query ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3b8970a4cfd82a37543f3f8f51e4d42307279675",
+   "parents": [
+    "8c7e303079682d33d7c3f493a045addfc73eacbf"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-17T07:05:39Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ccaa5e7d1c080a35429e4a61167f34d0c889c842",
+   "parents": [
+    "3b8970a4cfd82a37543f3f8f51e4d42307279675"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-17T21:37:22Z",
+   "message": "Thumbs: fix photo bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2b6b805b20352b55dc75346f47c42781b86b7245",
+   "parents": [
+    "ccaa5e7d1c080a35429e4a61167f34d0c889c842"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-17T21:38:02Z",
+   "message": "Assets: add star_2535 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8b0729287155cbd6588540348e1db964c0161a69",
+   "parents": [
+    "2b6b805b20352b55dc75346f47c42781b86b7245"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-18T09:13:54Z",
+   "message": "Details: fix job rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "efb6afa5015cdbb396e964db94a9f3ffa7b059ae",
+   "parents": [
+    "8b0729287155cbd6588540348e1db964c0161a69"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-19T09:04:08Z",
+   "message": "Presets: tune export_archive",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c2429e6a028aa63a046a3eaba8f307ee5c9cbaaa",
+   "parents": [
+    "efb6afa5015cdbb396e964db94a9f3ffa7b059ae"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-19T23:26:47Z",
+   "message": "Assets: add cloud_2537 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "parents": [
+    "b337bef12b18527db21b9c8fe61c611c8f54bb3a"
+   ],
+   "branch": "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep",
+   "author": "rin.okafor",
+   "time": "2025-12-20T00:14:24Z",
+   "message": "Address review: refresh albums",
+   "kind": "change",
+   "change": "S1"
+  },
+  {
+   "sha": "eae7a041ae7bcfe0f153f2e9bbb4679d749cba66",
+   "parents": [
+    "c2429e6a028aa63a046a3eaba8f307ee5c9cbaaa"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-20T00:24:41Z",
+   "message": "Docs: exporting notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "35e4f77e5f8dc88dc6f1c786080fe907ec3e8e9e",
+   "parents": [
+    "eae7a041ae7bcfe0f153f2e9bbb4679d749cba66"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-20T01:37:24Z",
+   "message": "Metadata: add sortRange",
+   "kind": "trunk"
+  },
+  {
+   "sha": "b89563657088763394e8f6f55e66748316067a70",
+   "parents": [
+    "35e4f77e5f8dc88dc6f1c786080fe907ec3e8e9e"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-20T15:05:12Z",
+   "message": "Tests: build path after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a381c45cf3bdc18e8d91e8d1000fcfcea2cec668",
+   "parents": [
+    "b89563657088763394e8f6f55e66748316067a70"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-20T21:11:05Z",
+   "message": "Selection: apply photo after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c5855cc36c8f244a672a6f5f2440b48633893d93",
+   "parents": [
+    "a381c45cf3bdc18e8d91e8d1000fcfcea2cec668"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-20T23:44:45Z",
+   "message": "Export: rename applyPage to findFolder",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0b75b45de5ce98f828c42e89908abbf4d7a94763",
+   "parents": [
+    "c5855cc36c8f244a672a6f5f2440b48633893d93",
+    "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2025-12-21T00:00:00Z",
+   "message": "Merge pull request 405 from rin/cat-1042-c3-add-photo-queries-that-do-not-open-the-f",
+   "kind": "merge",
+   "change": "C3"
+  },
+  {
+   "sha": "31d4ec367be4d423e865339f75a3ee6766274eae",
+   "parents": [
+    "0b75b45de5ce98f828c42e89908abbf4d7a94763"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-22T14:12:26Z",
+   "message": "Metadata: log entry timing",
+   "kind": "trunk"
+  },
+  {
+   "sha": "99d7e1b33976b62449fafbbe03c9c0924a72a8f1",
+   "parents": [
+    "31d4ec367be4d423e865339f75a3ee6766274eae"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-23T00:00:00Z",
+   "message": "Index: rewrite readPage around the new page table",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1cb4b7cac1857de7b6f83aa6903c38df3e2c0d67",
+   "parents": [
+    "99d7e1b33976b62449fafbbe03c9c0924a72a8f1"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-23T02:23:03Z",
+   "message": "Plugins: add merge_job",
+   "kind": "trunk"
+  },
+  {
+   "sha": "aed3863a07534fabe7c21f475b17ceb2f3a01cee",
+   "parents": [
+    "1cb4b7cac1857de7b6f83aa6903c38df3e2c0d67"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-23T16:40:49Z",
+   "message": "Selection: build photo after scan",
+   "kind": "trunk"
+  },
+  {
+   "sha": "247b9fe95df98736a41aa1b5ac4145f0f6e7169a",
+   "parents": [
+    "aed3863a07534fabe7c21f475b17ceb2f3a01cee"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-24T18:44:30Z",
+   "message": "Selection: merge batch after filter",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7ee0454c317fade539ccf87c2d0b40f68d77ebfa",
+   "parents": [
+    "247b9fe95df98736a41aa1b5ac4145f0f6e7169a"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-25T00:00:00Z",
+   "message": "Index: move page lookups next to the page table",
+   "kind": "trunk"
+  },
+  {
+   "sha": "819841c68b7d63f2bd03f40d36408305b6efaeb9",
+   "parents": [
+    "7ee0454c317fade539ccf87c2d0b40f68d77ebfa"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2025-12-25T14:25:39Z",
+   "message": "Selection: fix query ordering",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a2a00dd0bac68dbce8d846adc6025717369295f6",
+   "parents": [
+    "819841c68b7d63f2bd03f40d36408305b6efaeb9"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-25T15:51:41Z",
+   "message": "Presets: tune sort_name",
+   "kind": "trunk"
+  },
+  {
+   "sha": "314ca1bb3c938720335a19dfa5bdd6edae7f3c65",
+   "parents": [
+    "a2a00dd0bac68dbce8d846adc6025717369295f6"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-26T00:00:00Z",
+   "message": "Index: rewrite mergePage around the new page table",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "parents": [
+    "a2a00dd0bac68dbce8d846adc6025717369295f6"
+   ],
+   "branch": "rin/cat-1042-c5-skip-the-decode-for-thumbnails-the-cache",
+   "author": "rin.okafor",
+   "time": "2025-12-26T00:14:24Z",
+   "message": "[CAT-1042] Skip the decode for thumbnails the cached type rules out",
+   "kind": "change",
+   "change": "C5"
+  },
+  {
+   "sha": "9ff496f7e17c5841b5aa77edb80efad57c521e91",
+   "parents": [
+    "314ca1bb3c938720335a19dfa5bdd6edae7f3c65"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-26T01:08:25Z",
+   "message": "Plugins: count batch after filter",
+   "kind": "trunk"
+  },
+  {
+   "sha": "5c0fd0187444e92ea4bcd2349af2cbd9a08f55aa",
+   "parents": [
+    "9ff496f7e17c5841b5aa77edb80efad57c521e91"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-26T08:09:06Z",
+   "message": "Assets: add cloud_2562 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "67226b4d8a2fc95acdff3f83485de9c16ed1fea3",
+   "parents": [
+    "5c0fd0187444e92ea4bcd2349af2cbd9a08f55aa"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-26T08:17:10Z",
+   "message": "Presets: tune keys_alt",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3a4c9bb7e011fc797458957d3e27300683857ede",
+   "parents": [
+    "67226b4d8a2fc95acdff3f83485de9c16ed1fea3"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2025-12-26T17:33:34Z",
+   "message": "Assets: add sort_2563 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ca4dd4fea8c20fa8a1d1a3ae0e6836b13f0f320f",
+   "parents": [
+    "3a4c9bb7e011fc797458957d3e27300683857ede"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-27T00:00:00Z",
+   "message": "Regenerate schema tables",
+   "kind": "trunk"
+  },
+  {
+   "sha": "11e025adfbee46ad5de25b2e94c2a54053dcfba7",
+   "parents": [
+    "ca4dd4fea8c20fa8a1d1a3ae0e6836b13f0f320f"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2025-12-27T10:05:19Z",
+   "message": "Docs: scanning notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "16cc4d6cb0787abe92cf34d84a228976d9599cc3",
+   "parents": [
+    "11e025adfbee46ad5de25b2e94c2a54053dcfba7"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2025-12-27T11:07:40Z",
+   "message": "Bridge: prepare path after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0086e188af06341638bda76c49eed53a9cf3437a",
+   "parents": [
+    "16cc4d6cb0787abe92cf34d84a228976d9599cc3"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-27T11:58:36Z",
+   "message": "Assets: add share_2566 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "25bc7d625cc67c309254c8ceaf8043d161123e6f",
+   "parents": [
+    "0086e188af06341638bda76c49eed53a9cf3437a"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-27T20:58:18Z",
+   "message": "Thumbs: fix record rounding",
+   "kind": "trunk"
+  },
+  {
+   "sha": "95ce5418611318bfe0e6e8b43e5a99a694ac361c",
+   "parents": [
+    "25bc7d625cc67c309254c8ceaf8043d161123e6f"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2025-12-28T13:48:44Z",
+   "message": "Plugins: queue query after scan",
+   "kind": "trunk"
+  },
+  {
+   "sha": "cdea98637d6b2f8f30ea27ca2eaa41f03f07cee6",
+   "parents": [
+    "95ce5418611318bfe0e6e8b43e5a99a694ac361c"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-29T00:00:00Z",
+   "message": "Details: move panel sources under panel/",
+   "kind": "trunk"
+  },
+  {
+   "sha": "be143264d60df087ca596c74a01716ce47550456",
+   "parents": [
+    "cdea98637d6b2f8f30ea27ca2eaa41f03f07cee6"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-29T04:59:40Z",
+   "message": "Docs: architecture notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c7d0653f18cf9e3a2911347bd0420b4cb856530e",
+   "parents": [
+    "be143264d60df087ca596c74a01716ce47550456"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-29T09:46:50Z",
+   "message": "Assets: add heart_2570 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "81e5fdaf272d27e9111fb8eb1866762d501149ea",
+   "parents": [
+    "c7d0653f18cf9e3a2911347bd0420b4cb856530e"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2025-12-29T12:14:18Z",
+   "message": "Docs: thumbnails notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "20f2b8f50b3bb83ca61611cd3e93f9d7f7f63e96",
+   "parents": [
+    "81e5fdaf272d27e9111fb8eb1866762d501149ea"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2025-12-29T21:25:57Z",
+   "message": "Assets: add search_2572 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "842c536473a6b5cf6a50db300b782b3d58b48ad1",
+   "parents": [
+    "20f2b8f50b3bb83ca61611cd3e93f9d7f7f63e96"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-30T08:25:12Z",
+   "message": "Scanner: count entry after find",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3b00a6c0505e773204db2a7dd69a15f4dfbeea30",
+   "parents": [
+    "842c536473a6b5cf6a50db300b782b3d58b48ad1"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2025-12-30T13:12:18Z",
+   "message": "Docs: exporting notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8325468d3bcd6e634c3fcda97fca8f574e3a1ff0",
+   "parents": [
+    "3b00a6c0505e773204db2a7dd69a15f4dfbeea30"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-30T18:14:55Z",
+   "message": "Selection: rewrite openRecord",
+   "kind": "trunk"
+  },
+  {
+   "sha": "24878e494189dbfab86950fd13bb80dc1d061d24",
+   "parents": [
+    "8325468d3bcd6e634c3fcda97fca8f574e3a1ff0"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2025-12-31T00:00:00Z",
+   "message": "Docs: capitalise Performance.md",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ec09023ae18205357c6b210cad76decde66861d4",
+   "parents": [
+    "8325468d3bcd6e634c3fcda97fca8f574e3a1ff0"
+   ],
+   "branch": "rin/cat-1042-t1-add-a-performance-test-for-selecting-man",
+   "author": "rin.okafor",
+   "time": "2025-12-31T00:14:24Z",
+   "message": "[CAT-1042] Add a performance test for selecting many photos",
+   "kind": "change",
+   "change": "T1"
+  },
+  {
+   "sha": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "parents": [
+    "24878e494189dbfab86950fd13bb80dc1d061d24"
+   ],
+   "branch": "rin/cat-1042-c6-stop-selection-history-reading-selected",
+   "author": "rin.okafor",
+   "time": "2025-12-31T05:02:24Z",
+   "message": "[CAT-1042] Stop selection history reading selected photos",
+   "kind": "change",
+   "change": "C6"
+  },
+  {
+   "sha": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "parents": [
+    "24878e494189dbfab86950fd13bb80dc1d061d24"
+   ],
+   "branch": "rin/cat-1042-t2-limit-atlas-test-setup-to-atlas-tests",
+   "author": "rin.okafor",
+   "time": "2025-12-31T09:50:24Z",
+   "message": "Limit atlas test setup to atlas tests",
+   "kind": "change",
+   "change": "T2"
+  },
+  {
+   "sha": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "parents": [
+    "24878e494189dbfab86950fd13bb80dc1d061d24"
+   ],
+   "branch": "rin/cat-1042-c7-classify-the-global-selection-without-re",
+   "author": "rin.okafor",
+   "time": "2025-12-31T14:38:24Z",
+   "message": "[CAT-1042] Classify the global selection without reading photos",
+   "kind": "change",
+   "change": "C7"
+  },
+  {
+   "sha": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "parents": [
+    "24878e494189dbfab86950fd13bb80dc1d061d24"
+   ],
+   "branch": "rin/cat-1042-c8-stop-thumbnail-tracking-reading-selected",
+   "author": "rin.okafor",
+   "time": "2025-12-31T19:26:24Z",
+   "message": "[CAT-1042] Stop thumbnail tracking reading selected photos",
+   "kind": "change",
+   "change": "C8"
+  },
+  {
+   "sha": "5e5178c22feebae3d34dede20aa557cd1ccd43fd",
+   "parents": [
+    "24878e494189dbfab86950fd13bb80dc1d061d24"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2025-12-31T23:46:33Z",
+   "message": "Search: rename mergeFolder to sortPath",
+   "kind": "trunk"
+  },
+  {
+   "sha": "adb4b8f091e8a56a7b3a61578216c32bf1031d88",
+   "parents": [
+    "5e5178c22feebae3d34dede20aa557cd1ccd43fd",
+    "e104428064adacecf8c2559b2c3a97f85ae8738e"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-01T00:00:00Z",
+   "message": "Merge pull request 411 from rin/cat-1042-t2-limit-atlas-test-setup-to-atlas-tests",
+   "kind": "merge",
+   "change": "T2"
+  },
+  {
+   "sha": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "parents": [
+    "5e5178c22feebae3d34dede20aa557cd1ccd43fd"
+   ],
+   "branch": "rin/cat-1042-c9-stop-panel-overlays-reading-selected-pho",
+   "author": "rin.okafor",
+   "time": "2026-01-01T00:14:24Z",
+   "message": "[CAT-1042] Stop panel overlays reading selected photos",
+   "kind": "change",
+   "change": "C9"
+  },
+  {
+   "sha": "02452bbd6d1d8ae6ea8ae518b3bd33cd8da33c55",
+   "parents": [
+    "adb4b8f091e8a56a7b3a61578216c32bf1031d88"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2026-01-01T00:41:43Z",
+   "message": "Assets: add camera_2583 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "93fc46bd4b74c2723dee1da523148e9578233610",
+   "parents": [
+    "02452bbd6d1d8ae6ea8ae518b3bd33cd8da33c55"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-01T20:55:52Z",
+   "message": "Details: track path after refresh",
+   "kind": "trunk"
+  },
+  {
+   "sha": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e",
+   "parents": [
+    "93fc46bd4b74c2723dee1da523148e9578233610"
+   ],
+   "branch": "rin/cat-1107-s2-let-storage-decide-whether-a-record-is-r",
+   "author": "rin.okafor",
+   "time": "2026-01-02T00:14:24Z",
+   "message": "[CAT-1107] Let storage decide whether a record is resident",
+   "kind": "change",
+   "change": "S2"
+  },
+  {
+   "sha": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "parents": [
+    "93fc46bd4b74c2723dee1da523148e9578233610"
+   ],
+   "branch": "rin/cat-1042-s3-keep-the-details-panel-responsive-with-t",
+   "author": "rin.okafor",
+   "time": "2026-01-02T07:26:24Z",
+   "message": "[CAT-1042] Keep the details panel responsive with thousands selected",
+   "kind": "change",
+   "change": "S3"
+  },
+  {
+   "sha": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "parents": [
+    "93fc46bd4b74c2723dee1da523148e9578233610"
+   ],
+   "branch": "rin/cat-1042-c10-let-a-scanner-thread-hand-the-store-lock",
+   "author": "rin.okafor",
+   "time": "2026-01-02T14:38:24Z",
+   "message": "[CAT-1042] Let a scanner thread hand the store lock to the UI thread",
+   "kind": "change",
+   "change": "C10"
+  },
+  {
+   "sha": "cd237d9af347a45c0665b91496dc7cd4d277418b",
+   "parents": [
+    "93fc46bd4b74c2723dee1da523148e9578233610"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-02T16:00:22Z",
+   "message": "Tests: collect folder after merge",
+   "kind": "trunk"
+  },
+  {
+   "sha": "01b4ab4184b8aee3c939ea3731f4e8a47285f318",
+   "parents": [
+    "cd237d9af347a45c0665b91496dc7cd4d277418b"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2026-01-02T23:06:21Z",
+   "message": "Assets: add grid_2586 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0585d0c7bf6821a385b891cf4070e4311c2cf40c",
+   "parents": [
+    "01b4ab4184b8aee3c939ea3731f4e8a47285f318",
+    "ec09023ae18205357c6b210cad76decde66861d4"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-03T00:00:00Z",
+   "message": "Merge pull request 409 from rin/cat-1042-t1-add-a-performance-test-for-selecting-man",
+   "kind": "merge",
+   "change": "T1"
+  },
+  {
+   "sha": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "parents": [
+    "01b4ab4184b8aee3c939ea3731f4e8a47285f318"
+   ],
+   "branch": "rin/cat-1042-c11-compute-the-details-footer-once-per-sele",
+   "author": "rin.okafor",
+   "time": "2026-01-03T00:14:24Z",
+   "message": "[CAT-1042] Compute the details footer once per selection",
+   "kind": "change",
+   "change": "C11"
+  },
+  {
+   "sha": "3032509d5e3f342ed0b7864317913a347f6eaa92",
+   "parents": [
+    "0585d0c7bf6821a385b891cf4070e4311c2cf40c"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2026-01-03T01:31:15Z",
+   "message": "Details: flush job after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "edf5dbd23df9af92d147b6208698d647326c4680",
+   "parents": [
+    "3032509d5e3f342ed0b7864317913a347f6eaa92"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2026-01-03T07:58:59Z",
+   "message": "Presets: tune grid_dense",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8f2a986b34114ca55e09c4008e026511ce6f47f3",
+   "parents": [
+    "edf5dbd23df9af92d147b6208698d647326c4680"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2026-01-03T12:02:16Z",
+   "message": "Selection: find batch after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ab97b200090a6b6b87ed770e05c0ed3426acdd1f",
+   "parents": [
+    "8f2a986b34114ca55e09c4008e026511ce6f47f3"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2026-01-03T13:51:26Z",
+   "message": "Export: resolve folder after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "f7bf1dad96c1dba55f682988c4964ae0be9d5c49",
+   "parents": [
+    "ab97b200090a6b6b87ed770e05c0ed3426acdd1f"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2026-01-03T20:49:11Z",
+   "message": "Docs: releasing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "929efa1d2de3d33461954a771c43ccf0431f9872",
+   "parents": [
+    "f7bf1dad96c1dba55f682988c4964ae0be9d5c49",
+    "7f5332378261a76cd1af993bfe9ba4073805a04a"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-04T00:00:00Z",
+   "message": "Merge pull request 410 from rin/cat-1042-c6-stop-selection-history-reading-selected",
+   "kind": "merge",
+   "change": "C6"
+  },
+  {
+   "sha": "0c921c4ff258f7861be9b3f0b2d0aebf4339681e",
+   "parents": [
+    "929efa1d2de3d33461954a771c43ccf0431f9872",
+    "2d035aae6542e7c04484bf265019e6d1c7064454"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-04T00:00:00Z",
+   "message": "Merge pull request 413 from rin/cat-1042-c8-stop-thumbnail-tracking-reading-selected",
+   "kind": "merge",
+   "change": "C8"
+  },
+  {
+   "sha": "c385f60038126e578bf62a456fcdece60cac9384",
+   "parents": [
+    "0c921c4ff258f7861be9b3f0b2d0aebf4339681e"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-04T14:28:51Z",
+   "message": "Thumbs: fix rating lifetime",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ee951b8389cc2a7736fcab0b7ce76914e085f991",
+   "parents": [
+    "c385f60038126e578bf62a456fcdece60cac9384",
+    "f0cc0976f95246b29c61eedf4a8211252c4c23b8"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-05T00:00:00Z",
+   "message": "Merge pull request 408 from rin/cat-1042-c5-skip-the-decode-for-thumbnails-the-cache",
+   "kind": "merge",
+   "change": "C5"
+  },
+  {
+   "sha": "709e088c9d7328f9198af997b5f827726cba42ec",
+   "parents": [
+    "ee951b8389cc2a7736fcab0b7ce76914e085f991",
+    "ae2452fdc278cb7b529a527bd38a3da753ef040e"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-05T00:00:00Z",
+   "message": "Merge pull request 412 from rin/cat-1042-c7-classify-the-global-selection-without-re",
+   "kind": "merge",
+   "change": "C7"
+  },
+  {
+   "sha": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "parents": [
+    "c385f60038126e578bf62a456fcdece60cac9384"
+   ],
+   "branch": "cyra/cat-0990-ref-move-tag-storage-into-its-own-module-unb",
+   "author": "cyra.mendez",
+   "time": "2026-01-05T00:14:24Z",
+   "message": "[CAT-0990] Move tag storage into its own module (unblocks CAT-1107)",
+   "kind": "change",
+   "change": "REF"
+  },
+  {
+   "sha": "581f299a7007f7950fa445b3d0107579bb9cc201",
+   "parents": [
+    "709e088c9d7328f9198af997b5f827726cba42ec"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-05T00:45:51Z",
+   "message": "Details: track path after open",
+   "kind": "trunk"
+  },
+  {
+   "sha": "22294a6d292ee7ac09a0f805e6525d964b604dd8",
+   "parents": [
+    "581f299a7007f7950fa445b3d0107579bb9cc201"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-05T02:36:43Z",
+   "message": "Index: add resolveAlbum",
+   "kind": "trunk"
+  },
+  {
+   "sha": "25bafde1cf362d227f1af2f1f3d6e870d0d89730",
+   "parents": [
+    "22294a6d292ee7ac09a0f805e6525d964b604dd8"
+   ],
+   "branch": "main",
+   "author": "esi.boateng",
+   "time": "2026-01-05T03:11:20Z",
+   "message": "Assets: add grid_2601 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "22dd3f13237642044c4c343b692ca8723af51f99",
+   "parents": [
+    "25bafde1cf362d227f1af2f1f3d6e870d0d89730"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2026-01-05T09:08:08Z",
+   "message": "Assets: add pin_2602 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "619d6ebbc06f0416b84037f007c93e110e685276",
+   "parents": [
+    "22dd3f13237642044c4c343b692ca8723af51f99",
+    "ff1e1f727fb0395bceeed7552585077b42588a08"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-06T00:00:00Z",
+   "message": "Merge pull request 414 from rin/cat-1042-c9-stop-panel-overlays-reading-selected-pho",
+   "kind": "merge",
+   "change": "C9"
+  },
+  {
+   "sha": "cca8e07473b323a18dc44798e650ab88167f7e6b",
+   "parents": [
+    "22dd3f13237642044c4c343b692ca8723af51f99"
+   ],
+   "branch": "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet",
+   "author": "rin.okafor",
+   "time": "2026-01-06T00:14:24Z",
+   "message": "[CAT-1042] Build the shared tracker only when something reads it",
+   "kind": "change",
+   "change": "K1"
+  },
+  {
+   "sha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "parents": [
+    "cca8e07473b323a18dc44798e650ab88167f7e6b"
+   ],
+   "branch": "rin/cat-1042-k2-let-the-panels-skip-unread-photos-withou",
+   "author": "rin.okafor",
+   "time": "2026-01-06T05:02:24Z",
+   "message": "[CAT-1042] Let the panels skip unread photos without a details view",
+   "kind": "change",
+   "change": "K2"
+  },
+  {
+   "sha": "767d447f79e6d0a3a60da1e316d3fbfb28b957fe",
+   "parents": [
+    "619d6ebbc06f0416b84037f007c93e110e685276"
+   ],
+   "branch": "rin/cat-1042-c12-count-the-selection-without-reading-sele",
+   "author": "rin.okafor",
+   "time": "2026-01-06T09:50:24Z",
+   "message": "[CAT-1042] Count the selection without reading selected photos",
+   "kind": "change",
+   "change": "C12"
+  },
+  {
+   "sha": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "parents": [
+    "e172dcec173f33050f5292161e7bc6c51649540a"
+   ],
+   "branch": "rin/cat-1042-int-integrate-the-remaining-scan-fixes",
+   "author": "rin.okafor",
+   "time": "2026-01-06T12:14:24Z",
+   "message": "Address review: filter ratings",
+   "kind": "change",
+   "change": "INT"
+  },
+  {
+   "sha": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "parents": [
+    "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353"
+   ],
+   "branch": "rin/cat-1042-k3-keep-selected-photos-unread-when-a-resca",
+   "author": "rin.okafor",
+   "time": "2026-01-06T14:38:24Z",
+   "message": "[CAT-1042] Keep selected photos unread when a rescan rebuilds the selection",
+   "kind": "change",
+   "change": "K3"
+  },
+  {
+   "sha": "35dd7c83e3b97dc3ada24ab2aa3dc7b078d951af",
+   "parents": [
+    "619d6ebbc06f0416b84037f007c93e110e685276"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-06T16:47:47Z",
+   "message": "Tests: fix cache bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "243976e9310a9440662deb28ed34116acf062a81",
+   "parents": [
+    "35dd7c83e3b97dc3ada24ab2aa3dc7b078d951af"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2026-01-06T19:56:13Z",
+   "message": "Docs: releasing notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "0cecd8ed61854f7566add0ac9260bc7351951b33",
+   "parents": [
+    "243976e9310a9440662deb28ed34116acf062a81",
+    "d08a42cc0188f4dae357d163c686c8cce2b4eaac"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2026-01-07T00:00:00Z",
+   "message": "Merge pull request 419 from cyra/cat-0990-ref-move-tag-storage-into-its-own-module-unb",
+   "kind": "merge",
+   "change": "REF"
+  },
+  {
+   "sha": "8fc0769eb38145e2a2388833c3174252a8ba94f9",
+   "parents": [
+    "0cecd8ed61854f7566add0ac9260bc7351951b33"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2026-01-07T06:59:25Z",
+   "message": "Assets: add heart_2605 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "fb1193d071aba12a6a4e8b7e997f58cbd683a74f",
+   "parents": [
+    "8fc0769eb38145e2a2388833c3174252a8ba94f9"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-07T23:16:56Z",
+   "message": "Metadata: flush query after open",
+   "kind": "trunk"
+  },
+  {
+   "sha": "7d75f4bb53f06c09c65f3446582fa578667b7273",
+   "parents": [
+    "fb1193d071aba12a6a4e8b7e997f58cbd683a74f"
+   ],
+   "branch": "main",
+   "author": "gil.navarro",
+   "time": "2026-01-08T00:00:00Z",
+   "message": "Library: name the lazy tracker path",
+   "kind": "trunk"
+  },
+  {
+   "sha": "6d0e1c900f6fc0aa3e7066e1b3b7fa2793fa23f1",
+   "parents": [
+    "7d75f4bb53f06c09c65f3446582fa578667b7273",
+    "d51752929dff25bc8f1f355a477fb559b83bdf53"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-08T00:00:00Z",
+   "message": "Merge pull request 418 from rin/cat-1042-c11-compute-the-details-footer-once-per-sele",
+   "kind": "merge",
+   "change": "C11"
+  },
+  {
+   "sha": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "parents": [
+    "fb1193d071aba12a6a4e8b7e997f58cbd683a74f"
+   ],
+   "branch": "rin/cat-1042-c13-add-storage-isresident-to-check-a-record",
+   "author": "rin.okafor",
+   "time": "2026-01-08T00:14:24Z",
+   "message": "[CAT-1042] Add Storage::isResident to check a record exists without loading it",
+   "kind": "change",
+   "change": "C13"
+  },
+  {
+   "sha": "ac4f180ce7e253dad93c5ee984bbe982a145b1ec",
+   "parents": [
+    "6d0e1c900f6fc0aa3e7066e1b3b7fa2793fa23f1"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-08T07:16:45Z",
+   "message": "Presets: tune thumb_small",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ef7069d70eb1c3934d673f128f19b7c04ed5e7d3",
+   "parents": [
+    "ac4f180ce7e253dad93c5ee984bbe982a145b1ec"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2026-01-08T10:56:50Z",
+   "message": "Albums: prepare batch after resolve",
+   "kind": "trunk"
+  },
+  {
+   "sha": "39965807c36b06cf941d585863af1393b9e54a1c",
+   "parents": [
+    "ef7069d70eb1c3934d673f128f19b7c04ed5e7d3",
+    "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-09T00:00:00Z",
+   "message": "Merge pull request 424 from rin/cat-1042-c13-add-storage-isresident-to-check-a-record",
+   "kind": "merge",
+   "change": "C13"
+  },
+  {
+   "sha": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "parents": [
+    "ef7069d70eb1c3934d673f128f19b7c04ed5e7d3"
+   ],
+   "branch": "bo/cat-1107-cf1-batch-the-search-index-lookups",
+   "author": "bo.lindqvist",
+   "time": "2026-01-09T00:14:24Z",
+   "message": "[CAT-1107] Batch the search index lookups",
+   "kind": "change",
+   "change": "CF1"
+  },
+  {
+   "sha": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "parents": [
+    "39965807c36b06cf941d585863af1393b9e54a1c"
+   ],
+   "branch": "rin/cat-1042-cf2-serve-search-lookups-from-the-resident-c",
+   "author": "rin.okafor",
+   "time": "2026-01-09T12:14:24Z",
+   "message": "[CAT-1042] Serve search lookups from the resident cache",
+   "kind": "change",
+   "change": "CF2"
+  },
+  {
+   "sha": "b6f677c15d02f225e12dc34aae90ffede3938802",
+   "parents": [
+    "39965807c36b06cf941d585863af1393b9e54a1c"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2026-01-10T00:00:00Z",
+   "message": "Revert \"[CAT-1042] Stop thumbnail tracking reading selected photos\"",
+   "kind": "trunk"
+  },
+  {
+   "sha": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "parents": [
+    "43194d0fc76a104dde87053189034d0f2ddc27cd"
+   ],
+   "branch": "rin/cat-1042-port-port-photo-queries-and-thumbnail-decode",
+   "author": "rin.okafor",
+   "time": "2026-01-10T00:14:24Z",
+   "message": "[CAT-1188] Port: photo queries and thumbnail decode skip to 2.1",
+   "kind": "change",
+   "change": "PORT"
+  },
+  {
+   "sha": "95116c4a4d3626db47c948cc0142295d15898407",
+   "parents": [
+    "b6f677c15d02f225e12dc34aae90ffede3938802"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2026-01-10T01:58:27Z",
+   "message": "Tests: fix preview bounds",
+   "kind": "trunk"
+  },
+  {
+   "sha": "1d972fbd9d8a7ce08e3fa5e7efbc76c882adc81b",
+   "parents": [
+    "95116c4a4d3626db47c948cc0142295d15898407"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2026-01-10T11:09:30Z",
+   "message": "Plugins: collect preview after build",
+   "kind": "trunk"
+  },
+  {
+   "sha": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "parents": [
+    "1d972fbd9d8a7ce08e3fa5e7efbc76c882adc81b"
+   ],
+   "branch": "iver/cat-1042-as1-refresh-the-selection-icons",
+   "author": "iver.sato",
+   "time": "2026-01-11T00:14:24Z",
+   "message": "[CAT-1042] Refresh the selection icons",
+   "kind": "change",
+   "change": "AS1"
+  },
+  {
+   "sha": "f4a0758b578d15a0b080e923e93e8b49383c61da",
+   "parents": [
+    "1d972fbd9d8a7ce08e3fa5e7efbc76c882adc81b",
+    "56fc3059a7291c9578264e43e98de859a4187c06"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-11T12:00:00Z",
+   "message": "Merge pull request 428 from iver/cat-1042-as1-refresh-the-selection-icons",
+   "kind": "merge",
+   "change": "AS1"
+  },
+  {
+   "sha": "e3356f70fb4aa243fc34325a5ed176443c3a45e0",
+   "parents": [
+    "f4a0758b578d15a0b080e923e93e8b49383c61da"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2026-01-11T22:20:16Z",
+   "message": "Thumbs: rewrite scanRange",
+   "kind": "trunk"
+  },
+  {
+   "sha": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "parents": [
+    "e3356f70fb4aa243fc34325a5ed176443c3a45e0"
+   ],
+   "branch": "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet",
+   "author": "rin.okafor",
+   "time": "2026-01-12T00:00:00Z",
+   "message": "[CAT-1042] Build the shared tracker only when something reads it",
+   "kind": "change",
+   "change": "K1"
+  },
+  {
+   "sha": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "parents": [
+    "e3356f70fb4aa243fc34325a5ed176443c3a45e0"
+   ],
+   "branch": "rin/cat-1042-c8r-reland-stop-thumbnail-tracking-reading-s",
+   "author": "rin.okafor",
+   "time": "2026-01-12T00:14:24Z",
+   "message": "[CAT-1042] Reland: stop thumbnail tracking reading selected photos",
+   "kind": "change",
+   "change": "C8R"
+  },
+  {
+   "sha": "45e059be4a45d15034ddaf61413b5aa4fbeb9605",
+   "parents": [
+    "e3356f70fb4aa243fc34325a5ed176443c3a45e0"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-12T07:16:36Z",
+   "message": "Index: rename resolveAlbum to mergeRating",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "parents": [
+    "767d447f79e6d0a3a60da1e316d3fbfb28b957fe",
+    "45e059be4a45d15034ddaf61413b5aa4fbeb9605"
+   ],
+   "branch": "rin/cat-1042-c12-count-the-selection-without-reading-sele",
+   "author": "rin.okafor",
+   "time": "2026-01-14T00:00:00Z",
+   "message": "Merge branch 'main' into rin/cat-1042-c12-count-the-selection-without-reading-sele",
+   "kind": "change",
+   "change": "C12"
+  },
+  {
+   "sha": "8724d4693e2a133a5ef472691fab269d21fe1f00",
+   "parents": [
+    "45e059be4a45d15034ddaf61413b5aa4fbeb9605",
+    "af422e8b9e89b77f00c1e4904b819fbc7302fc2e"
+   ],
+   "branch": "main",
+   "author": "rin.okafor",
+   "time": "2026-01-15T00:00:00Z",
+   "message": "Merge pull request 429 from rin/cat-1042-c8r-reland-stop-thumbnail-tracking-reading-s",
+   "kind": "merge",
+   "change": "C8R"
+  },
+  {
+   "sha": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "parents": [
+    "45e059be4a45d15034ddaf61413b5aa4fbeb9605"
+   ],
+   "branch": "rin/cat-1042-r1-reproduce-docked-preview-outliving-its-p",
+   "author": "rin.okafor",
+   "time": "2026-01-15T00:14:24Z",
+   "message": "[CAT-1042] Reproduce docked preview outliving its parent",
+   "kind": "change",
+   "change": "R1"
+  },
+  {
+   "sha": "c0639d0047b95567e92be546e0e72779fe7b0845",
+   "parents": [
+    "8724d4693e2a133a5ef472691fab269d21fe1f00"
+   ],
+   "branch": "main",
+   "author": "iver.sato",
+   "time": "2026-01-15T20:21:43Z",
+   "message": "Presets: tune theme_light",
+   "kind": "trunk"
+  },
+  {
+   "sha": "662e99b9328e0f692cd15da1c31dc91ce61e0ff7",
+   "parents": [
+    "c0639d0047b95567e92be546e0e72779fe7b0845"
+   ],
+   "branch": "main",
+   "author": "hana.kowal",
+   "time": "2026-01-16T00:17:10Z",
+   "message": "Search: queue job after sort",
+   "kind": "trunk"
+  },
+  {
+   "sha": "c39baec86582d8c031508439cda3a80575c5fd94",
+   "parents": [
+    "662e99b9328e0f692cd15da1c31dc91ce61e0ff7"
+   ],
+   "branch": "main",
+   "author": "dov.achterberg",
+   "time": "2026-01-16T10:36:53Z",
+   "message": "Tests: add read_job",
+   "kind": "trunk"
+  },
+  {
+   "sha": "984c152019ce8bcc06488cb89ba9f6f01f1a2d88",
+   "parents": [
+    "c39baec86582d8c031508439cda3a80575c5fd94"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2026-01-16T18:44:31Z",
+   "message": "Tests: rename collect_batch to count_batch",
+   "kind": "trunk"
+  },
+  {
+   "sha": "8e06d239d03d11e775f393947ec1365d9a6d65ad",
+   "parents": [
+    "984c152019ce8bcc06488cb89ba9f6f01f1a2d88"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-17T00:01:05Z",
+   "message": "Assets: add clock_2617 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "49c17c33505f92c83197f8159298d7cad065c53e",
+   "parents": [
+    "8e06d239d03d11e775f393947ec1365d9a6d65ad"
+   ],
+   "branch": "main",
+   "author": "bo.lindqvist",
+   "time": "2026-01-17T00:37:58Z",
+   "message": "Docs: architecture notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "ce9734107d15890cd68981385465988014eacb37",
+   "parents": [
+    "49c17c33505f92c83197f8159298d7cad065c53e"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-17T02:41:43Z",
+   "message": "Assets: add star_2619 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "16dfd69ce52e1e221e68a60e7ab4ff1b5ef65ebe",
+   "parents": [
+    "ce9734107d15890cd68981385465988014eacb37"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-17T05:36:02Z",
+   "message": "Docs: selection notes",
+   "kind": "trunk"
+  },
+  {
+   "sha": "9cf28da46eb29314ec1bbf01ecc8a22bca330223",
+   "parents": [
+    "16dfd69ce52e1e221e68a60e7ab4ff1b5ef65ebe"
+   ],
+   "branch": "main",
+   "author": "faro.ito",
+   "time": "2026-01-17T12:49:59Z",
+   "message": "Assets: add star_2621 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "186335f7cc9f7aba9d5cba1514c04bd2cd62a9b4",
+   "parents": [
+    "9cf28da46eb29314ec1bbf01ecc8a22bca330223"
+   ],
+   "branch": "main",
+   "author": "cyra.mendez",
+   "time": "2026-01-17T23:27:35Z",
+   "message": "Assets: add crop_2622 icon",
+   "kind": "trunk"
+  },
+  {
+   "sha": "a020af7e22a5f8ab4d032ba46d305e7900ea582a",
+   "parents": [
+    "186335f7cc9f7aba9d5cba1514c04bd2cd62a9b4"
+   ],
+   "branch": "main",
+   "author": "ada.wren",
+   "time": "2026-01-18T21:33:53Z",
+   "message": "Tags: collect header after flush",
+   "kind": "trunk"
+  },
+  {
+   "sha": "2f20ebc269a54ff8005675473752d2a815bbbadf",
+   "parents": [
+    "a020af7e22a5f8ab4d032ba46d305e7900ea582a"
+   ],
+   "branch": "main",
+   "author": "juno.park",
+   "time": "2026-01-18T22:13:56Z",
+   "message": "Bridge: fix photo rounding",
+   "kind": "trunk"
+  }
+ ],
+ "pulls": [
+  {
+   "number": 401,
+   "key": "ORIG",
+   "title": "Draft: faster scans of very large folders, with investigation notes",
+   "body": "Tracker: CAT-1042",
+   "author": "faro.ito",
+   "state": "closed",
+   "draft": true,
+   "labels": [],
+   "base": "main",
+   "head": "faro/cat-1042-orig-faster-scans-of-very-large-folders-with",
+   "headSha": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "baseSha": "d9fca5d47f560fb635394ac33b093bc10a5886c1",
+   "createdAt": "2025-12-01T04:48:00Z",
+   "mergedAt": null,
+   "closedAt": "2025-12-10T00:00:00Z",
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 402,
+   "key": "S1",
+   "title": "SPIKE-NO-MERGE [CAT-1042] Library scan stalls on large folders: reproducer, spikes, background scan",
+   "body": "Exploration only: not for merging.\n\nTracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [
+    "spike"
+   ],
+   "base": "main",
+   "head": "rin/cat-1042-s1-library-scan-stalls-on-large-folders-rep",
+   "headSha": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "baseSha": "d9fca5d47f560fb635394ac33b093bc10a5886c1",
+   "createdAt": "2025-12-02T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 4
+  },
+  {
+   "number": 403,
+   "key": "C1",
+   "title": "[CAT-1042] Per-folder scan fixes from the investigation draft, updated to trunk",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "closed",
+   "draft": true,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c1-per-folder-scan-fixes-from-the-investiga",
+   "headSha": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "baseSha": "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4",
+   "createdAt": "2025-12-02T12:00:00Z",
+   "mergedAt": null,
+   "closedAt": "2025-12-27T00:00:00Z",
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 404,
+   "key": "C2",
+   "title": "[CAT-1042] Stop selection code from reading every selected photo",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "closed",
+   "draft": true,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c2-stop-selection-code-from-reading-every-s",
+   "headSha": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "baseSha": "f7f0c1a670c055d7ed0e40a3d40ad6f7cd0eccf4",
+   "createdAt": "2025-12-03T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": "2025-12-28T00:00:00Z",
+   "mergeSha": null,
+   "commits": 2
+  },
+  {
+   "number": 405,
+   "key": "C3",
+   "title": "[CAT-1042] Add photo queries that do not open the file",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c3-add-photo-queries-that-do-not-open-the-f",
+   "headSha": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "baseSha": "b689f6955816c66d1ae4e630c2bd6b7d61e28e50",
+   "createdAt": "2025-12-08T00:00:00Z",
+   "mergedAt": "2025-12-21T00:00:00Z",
+   "closedAt": "2025-12-21T00:00:00Z",
+   "mergeSha": "0b75b45de5ce98f828c42e89908abbf4d7a94763",
+   "commits": 1
+  },
+  {
+   "number": 406,
+   "key": "INT",
+   "title": "[CAT-1042] Integrate the remaining scan fixes",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-int-integrate-the-remaining-scan-fixes",
+   "headSha": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "baseSha": "b689f6955816c66d1ae4e630c2bd6b7d61e28e50",
+   "createdAt": "2025-12-08T12:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 2
+  },
+  {
+   "number": 407,
+   "key": "C4",
+   "title": "[CAT-1042] Answer type questions about photos without opening them",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "feature/scan-v2",
+   "head": "rin/cat-1042-c4-answer-type-questions-about-photos-witho",
+   "headSha": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "baseSha": "30089e217a3544e2015d57b56c141517baf693d1",
+   "createdAt": "2025-12-10T00:00:00Z",
+   "mergedAt": "2025-12-13T00:00:00Z",
+   "closedAt": "2025-12-13T00:00:00Z",
+   "mergeSha": "d97d5c47a80509460de137589d97f53c8f20269f",
+   "commits": 1
+  },
+  {
+   "number": 408,
+   "key": "C5",
+   "title": "[CAT-1042] Skip the decode for thumbnails the cached type rules out",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c5-skip-the-decode-for-thumbnails-the-cache",
+   "headSha": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "baseSha": "a2a00dd0bac68dbce8d846adc6025717369295f6",
+   "createdAt": "2025-12-26T00:00:00Z",
+   "mergedAt": "2026-01-05T00:00:00Z",
+   "closedAt": "2026-01-05T00:00:00Z",
+   "mergeSha": "ee951b8389cc2a7736fcab0b7ce76914e085f991",
+   "commits": 1
+  },
+  {
+   "number": 409,
+   "key": "T1",
+   "title": "[CAT-1042] Add a performance test for selecting many photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-t1-add-a-performance-test-for-selecting-man",
+   "headSha": "ec09023ae18205357c6b210cad76decde66861d4",
+   "baseSha": "8325468d3bcd6e634c3fcda97fca8f574e3a1ff0",
+   "createdAt": "2025-12-31T00:00:00Z",
+   "mergedAt": "2026-01-03T00:00:00Z",
+   "closedAt": "2026-01-03T00:00:00Z",
+   "mergeSha": "0585d0c7bf6821a385b891cf4070e4311c2cf40c",
+   "commits": 1
+  },
+  {
+   "number": 410,
+   "key": "C6",
+   "title": "[CAT-1042] Stop selection history reading selected photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c6-stop-selection-history-reading-selected",
+   "headSha": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "baseSha": "24878e494189dbfab86950fd13bb80dc1d061d24",
+   "createdAt": "2025-12-31T04:48:00Z",
+   "mergedAt": "2026-01-04T00:00:00Z",
+   "closedAt": "2026-01-04T00:00:00Z",
+   "mergeSha": "929efa1d2de3d33461954a771c43ccf0431f9872",
+   "commits": 1
+  },
+  {
+   "number": 411,
+   "key": "T2",
+   "title": "Limit atlas test setup to atlas tests",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-t2-limit-atlas-test-setup-to-atlas-tests",
+   "headSha": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "baseSha": "24878e494189dbfab86950fd13bb80dc1d061d24",
+   "createdAt": "2025-12-31T09:36:00Z",
+   "mergedAt": "2026-01-01T00:00:00Z",
+   "closedAt": "2026-01-01T00:00:00Z",
+   "mergeSha": "adb4b8f091e8a56a7b3a61578216c32bf1031d88",
+   "commits": 1
+  },
+  {
+   "number": 412,
+   "key": "C7",
+   "title": "[CAT-1042] Classify the global selection without reading photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c7-classify-the-global-selection-without-re",
+   "headSha": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "baseSha": "24878e494189dbfab86950fd13bb80dc1d061d24",
+   "createdAt": "2025-12-31T14:24:00Z",
+   "mergedAt": "2026-01-05T00:00:00Z",
+   "closedAt": "2026-01-05T00:00:00Z",
+   "mergeSha": "709e088c9d7328f9198af997b5f827726cba42ec",
+   "commits": 1
+  },
+  {
+   "number": 413,
+   "key": "C8",
+   "title": "[CAT-1042] Stop thumbnail tracking reading selected photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c8-stop-thumbnail-tracking-reading-selected",
+   "headSha": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "baseSha": "24878e494189dbfab86950fd13bb80dc1d061d24",
+   "createdAt": "2025-12-31T19:12:00Z",
+   "mergedAt": "2026-01-04T00:00:00Z",
+   "closedAt": "2026-01-04T00:00:00Z",
+   "mergeSha": "0c921c4ff258f7861be9b3f0b2d0aebf4339681e",
+   "commits": 1
+  },
+  {
+   "number": 414,
+   "key": "C9",
+   "title": "[CAT-1042] Stop panel overlays reading selected photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c9-stop-panel-overlays-reading-selected-pho",
+   "headSha": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "baseSha": "5e5178c22feebae3d34dede20aa557cd1ccd43fd",
+   "createdAt": "2026-01-01T00:00:00Z",
+   "mergedAt": "2026-01-06T00:00:00Z",
+   "closedAt": "2026-01-06T00:00:00Z",
+   "mergeSha": "619d6ebbc06f0416b84037f007c93e110e685276",
+   "commits": 1
+  },
+  {
+   "number": 415,
+   "key": "S2",
+   "title": "SPIKE-NO-MERGE [CAT-1107] Let storage decide whether a record is resident",
+   "body": "Exploration only: not for merging.\n\nTracker: CAT-1107",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [
+    "spike"
+   ],
+   "base": "main",
+   "head": "rin/cat-1107-s2-let-storage-decide-whether-a-record-is-r",
+   "headSha": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e",
+   "baseSha": "93fc46bd4b74c2723dee1da523148e9578233610",
+   "createdAt": "2026-01-02T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 416,
+   "key": "S3",
+   "title": "SPIKE-NO-MERGE [CAT-1042] Keep the details panel responsive with thousands selected",
+   "body": "Exploration only: not for merging.\n\nTracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [
+    "spike"
+   ],
+   "base": "main",
+   "head": "rin/cat-1042-s3-keep-the-details-panel-responsive-with-t",
+   "headSha": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "baseSha": "93fc46bd4b74c2723dee1da523148e9578233610",
+   "createdAt": "2026-01-02T07:12:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 417,
+   "key": "C10",
+   "title": "[CAT-1042] Let a scanner thread hand the store lock to the UI thread",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "closed",
+   "draft": true,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c10-let-a-scanner-thread-hand-the-store-lock",
+   "headSha": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "baseSha": "93fc46bd4b74c2723dee1da523148e9578233610",
+   "createdAt": "2026-01-02T14:24:00Z",
+   "mergedAt": null,
+   "closedAt": "2026-01-10T00:00:00Z",
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 418,
+   "key": "C11",
+   "title": "[CAT-1042] Compute the details footer once per selection",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c11-compute-the-details-footer-once-per-sele",
+   "headSha": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "baseSha": "01b4ab4184b8aee3c939ea3731f4e8a47285f318",
+   "createdAt": "2026-01-03T00:00:00Z",
+   "mergedAt": "2026-01-08T00:00:00Z",
+   "closedAt": "2026-01-08T00:00:00Z",
+   "mergeSha": "6d0e1c900f6fc0aa3e7066e1b3b7fa2793fa23f1",
+   "commits": 1
+  },
+  {
+   "number": 419,
+   "key": "REF",
+   "title": "[CAT-0990] Move tag storage into its own module (unblocks CAT-1107)",
+   "body": "Tracker: CAT-0990",
+   "author": "cyra.mendez",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "cyra/cat-0990-ref-move-tag-storage-into-its-own-module-unb",
+   "headSha": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "baseSha": "c385f60038126e578bf62a456fcdece60cac9384",
+   "createdAt": "2026-01-05T00:00:00Z",
+   "mergedAt": "2026-01-07T00:00:00Z",
+   "closedAt": "2026-01-07T00:00:00Z",
+   "mergeSha": "0cecd8ed61854f7566add0ac9260bc7351951b33",
+   "commits": 1
+  },
+  {
+   "number": 420,
+   "key": "K1",
+   "title": "[CAT-1042] Build the shared tracker only when something reads it",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet",
+   "headSha": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "baseSha": "e3356f70fb4aa243fc34325a5ed176443c3a45e0",
+   "createdAt": "2026-01-06T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 2
+  },
+  {
+   "number": 421,
+   "key": "K2",
+   "title": "[CAT-1042] Let the panels skip unread photos without a details view",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [],
+   "base": "rin/cat-1042-k1-build-the-shared-tracker-only-when-somet",
+   "head": "rin/cat-1042-k2-let-the-panels-skip-unread-photos-withou",
+   "headSha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "baseSha": "cca8e07473b323a18dc44798e650ab88167f7e6b",
+   "createdAt": "2026-01-06T04:48:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 422,
+   "key": "C12",
+   "title": "[CAT-1042] Count the selection without reading selected photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c12-count-the-selection-without-reading-sele",
+   "headSha": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "baseSha": "619d6ebbc06f0416b84037f007c93e110e685276",
+   "createdAt": "2026-01-06T09:36:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 2
+  },
+  {
+   "number": 423,
+   "key": "K3",
+   "title": "[CAT-1042] Keep selected photos unread when a rescan rebuilds the selection",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [],
+   "base": "rin/cat-1042-k2-let-the-panels-skip-unread-photos-withou",
+   "head": "rin/cat-1042-k3-keep-selected-photos-unread-when-a-resca",
+   "headSha": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "baseSha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "createdAt": "2026-01-06T14:24:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 424,
+   "key": "C13",
+   "title": "[CAT-1042] Add Storage::isResident to check a record exists without loading it",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c13-add-storage-isresident-to-check-a-record",
+   "headSha": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "baseSha": "fb1193d071aba12a6a4e8b7e997f58cbd683a74f",
+   "createdAt": "2026-01-08T00:00:00Z",
+   "mergedAt": "2026-01-09T00:00:00Z",
+   "closedAt": "2026-01-09T00:00:00Z",
+   "mergeSha": "39965807c36b06cf941d585863af1393b9e54a1c",
+   "commits": 1
+  },
+  {
+   "number": 427,
+   "key": "PORT",
+   "title": "[CAT-1188] Port: photo queries and thumbnail decode skip to 2.1",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": true,
+   "labels": [],
+   "base": "release/2.1",
+   "head": "rin/cat-1042-port-port-photo-queries-and-thumbnail-decode",
+   "headSha": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "baseSha": "43194d0fc76a104dde87053189034d0f2ddc27cd",
+   "createdAt": "2026-01-10T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 430,
+   "key": "R1",
+   "title": "SPIKE-NO-MERGE [CAT-1042] Reproduce docked preview outliving its parent",
+   "body": "Exploration only: not for merging.\n\nTracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "closed",
+   "draft": true,
+   "labels": [
+    "spike"
+   ],
+   "base": "main",
+   "head": "rin/cat-1042-r1-reproduce-docked-preview-outliving-its-p",
+   "headSha": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "baseSha": "45e059be4a45d15034ddaf61413b5aa4fbeb9605",
+   "createdAt": "2026-01-15T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": "2026-01-16T00:00:00Z",
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 400,
+   "key": "ST1",
+   "title": "[CAT-0731] Warm the tracker cache on startup",
+   "body": "Tracker: CAT-0731",
+   "author": "esi.boateng",
+   "state": "open",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "esi/cat-0731-st1-warm-the-tracker-cache-on-startup",
+   "headSha": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "baseSha": "7efc4391f28e1e202800edbae249878bf77f0d0d",
+   "createdAt": "2025-02-04T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 425,
+   "key": "CF1",
+   "title": "[CAT-1107] Batch the search index lookups",
+   "body": "Tracker: CAT-1107",
+   "author": "bo.lindqvist",
+   "state": "open",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "bo/cat-1107-cf1-batch-the-search-index-lookups",
+   "headSha": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "baseSha": "ef7069d70eb1c3934d673f128f19b7c04ed5e7d3",
+   "createdAt": "2026-01-09T00:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 426,
+   "key": "CF2",
+   "title": "[CAT-1042] Serve search lookups from the resident cache",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "open",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-cf2-serve-search-lookups-from-the-resident-c",
+   "headSha": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "baseSha": "39965807c36b06cf941d585863af1393b9e54a1c",
+   "createdAt": "2026-01-09T12:00:00Z",
+   "mergedAt": null,
+   "closedAt": null,
+   "mergeSha": null,
+   "commits": 1
+  },
+  {
+   "number": 428,
+   "key": "AS1",
+   "title": "[CAT-1042] Refresh the selection icons",
+   "body": "Tracker: CAT-1042",
+   "author": "iver.sato",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "iver/cat-1042-as1-refresh-the-selection-icons",
+   "headSha": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "baseSha": "1d972fbd9d8a7ce08e3fa5e7efbc76c882adc81b",
+   "createdAt": "2026-01-11T00:00:00Z",
+   "mergedAt": "2026-01-11T12:00:00Z",
+   "closedAt": "2026-01-11T12:00:00Z",
+   "mergeSha": "f4a0758b578d15a0b080e923e93e8b49383c61da",
+   "commits": 1
+  },
+  {
+   "number": 429,
+   "key": "C8R",
+   "title": "[CAT-1042] Reland: stop thumbnail tracking reading selected photos",
+   "body": "Tracker: CAT-1042",
+   "author": "rin.okafor",
+   "state": "merged",
+   "draft": false,
+   "labels": [],
+   "base": "main",
+   "head": "rin/cat-1042-c8r-reland-stop-thumbnail-tracking-reading-s",
+   "headSha": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "baseSha": "e3356f70fb4aa243fc34325a5ed176443c3a45e0",
+   "createdAt": "2026-01-12T00:00:00Z",
+   "mergedAt": "2026-01-15T00:00:00Z",
+   "closedAt": "2026-01-15T00:00:00Z",
+   "mergeSha": "8724d4693e2a133a5ef472691fab269d21fe1f00",
+   "commits": 1
+  }
+ ],
+ "reviews": [
+  {
+   "pull": 410,
+   "path": "core/selection/selection.cpp",
+   "line": 115,
+   "commit": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "blockId": "b772",
+   "author": "dov.achterberg",
+   "body": "Can this skip the decode entirely?",
+   "state": "resolved",
+   "at": "2026-01-01T00:48:00Z"
+  },
+  {
+   "pull": 420,
+   "path": "core/details/details_io.cpp",
+   "line": 17,
+   "commit": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "blockId": "b160",
+   "author": "dov.achterberg",
+   "body": "Can this skip the decode entirely?",
+   "state": "open",
+   "at": "2026-01-06T20:00:00Z"
+  },
+  {
+   "pull": 422,
+   "path": "core/selection/selection.cpp",
+   "line": 22,
+   "commit": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "blockId": "b78",
+   "author": "dov.achterberg",
+   "body": "Is the order of these checks deliberate?",
+   "state": "open",
+   "at": "2026-01-07T05:36:00Z"
+  },
+  {
+   "pull": 405,
+   "path": "core/library/library.cpp",
+   "line": 46,
+   "commit": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "blockId": "b787",
+   "author": "dov.achterberg",
+   "body": "Does this still read the photo when the cache is cold?",
+   "state": "resolved",
+   "at": "2025-12-08T20:00:00Z"
+  }
+ ],
+ "checks": [
+  {
+   "pull": 401,
+   "sha": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 401,
+   "sha": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 401,
+   "sha": "419e751f050ece06dff86c4cfd2ed6a6a42d9242",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 402,
+   "sha": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 402,
+   "sha": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 402,
+   "sha": "56a8706163794e77317d391ff5eb36f0783518bb",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 403,
+   "sha": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 403,
+   "sha": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 403,
+   "sha": "db2d7b70b9eb9c0e2476748e1f7d6c4cbe985e57",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 404,
+   "sha": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 404,
+   "sha": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 404,
+   "sha": "6a1f5525c3a36f622c71078bfa69df447812983c",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 405,
+   "sha": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 405,
+   "sha": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 405,
+   "sha": "8d2465455325e3d6c46e3d83ed9e3dd847cadbb4",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 406,
+   "sha": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 406,
+   "sha": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 406,
+   "sha": "b51ff8fe24caed056fb6bacc70116fa9520e2395",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 407,
+   "sha": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 407,
+   "sha": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 407,
+   "sha": "28bb1ef904d5b8660529e67698a01fdfd087ef8f",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 408,
+   "sha": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 408,
+   "sha": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 408,
+   "sha": "f0cc0976f95246b29c61eedf4a8211252c4c23b8",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 409,
+   "sha": "ec09023ae18205357c6b210cad76decde66861d4",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 409,
+   "sha": "ec09023ae18205357c6b210cad76decde66861d4",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 409,
+   "sha": "ec09023ae18205357c6b210cad76decde66861d4",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 410,
+   "sha": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 410,
+   "sha": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 410,
+   "sha": "7f5332378261a76cd1af993bfe9ba4073805a04a",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 411,
+   "sha": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 411,
+   "sha": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 411,
+   "sha": "e104428064adacecf8c2559b2c3a97f85ae8738e",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 412,
+   "sha": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 412,
+   "sha": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 412,
+   "sha": "ae2452fdc278cb7b529a527bd38a3da753ef040e",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 413,
+   "sha": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 413,
+   "sha": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 413,
+   "sha": "2d035aae6542e7c04484bf265019e6d1c7064454",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 414,
+   "sha": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 414,
+   "sha": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 414,
+   "sha": "ff1e1f727fb0395bceeed7552585077b42588a08",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 415,
+   "sha": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 415,
+   "sha": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 415,
+   "sha": "eb8f55758ea1b78c41ad8b9dfa04b082a5a2927e",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 416,
+   "sha": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 416,
+   "sha": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 416,
+   "sha": "0be82ce541cb350ecddc668536ee3f7b0a208001",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 417,
+   "sha": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 417,
+   "sha": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 417,
+   "sha": "e97c15a8cbef80c049c53d193f8cea41346ab3ef",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 418,
+   "sha": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 418,
+   "sha": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 418,
+   "sha": "d51752929dff25bc8f1f355a477fb559b83bdf53",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 419,
+   "sha": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 419,
+   "sha": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 419,
+   "sha": "d08a42cc0188f4dae357d163c686c8cce2b4eaac",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 420,
+   "sha": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 420,
+   "sha": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 420,
+   "sha": "3b5eff4a728188c250150324a556f9a1676d5ced",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 421,
+   "sha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 421,
+   "sha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 421,
+   "sha": "bfca3c2dd1f17f349c86f5a97aaf2aca3f14e353",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 422,
+   "sha": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 422,
+   "sha": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 422,
+   "sha": "8d77d780da3b124546433fe9d4f621281c8cb63a",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 423,
+   "sha": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 423,
+   "sha": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 423,
+   "sha": "ff926c1f0dccab3ca883cb244c359f13b2e32310",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 424,
+   "sha": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 424,
+   "sha": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 424,
+   "sha": "bbe0b16b6c87a06374251b9312d6fe5031a5cc6b",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 427,
+   "sha": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 427,
+   "sha": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 427,
+   "sha": "40cbc0397b4e3df1c8068fa4818113b05fbf2533",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 430,
+   "sha": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 430,
+   "sha": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 430,
+   "sha": "87641a2741bf06007d0082c42030b14ede69b39b",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 400,
+   "sha": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "name": "build",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 400,
+   "sha": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 400,
+   "sha": "bb5b54470627bb841a08257d8d5111dc6a57d1e3",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 425,
+   "sha": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 425,
+   "sha": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "name": "tests",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 425,
+   "sha": "42934c5a2d4578264746e5dc771279d722cdc144",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 426,
+   "sha": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 426,
+   "sha": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 426,
+   "sha": "edb1c35c18d89e10053c6e03516989d3299cfb39",
+   "name": "perf",
+   "conclusion": "failure"
+  },
+  {
+   "pull": 428,
+   "sha": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 428,
+   "sha": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 428,
+   "sha": "56fc3059a7291c9578264e43e98de859a4187c06",
+   "name": "perf",
+   "conclusion": "success"
+  },
+  {
+   "pull": 429,
+   "sha": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "name": "build",
+   "conclusion": "success"
+  },
+  {
+   "pull": 429,
+   "sha": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "name": "tests",
+   "conclusion": "success"
+  },
+  {
+   "pull": 429,
+   "sha": "af422e8b9e89b77f00c1e4904b819fbc7302fc2e",
+   "name": "perf",
+   "conclusion": "success"
+  }
+ ],
+ "issues": [
+  {
+   "key": "CAT-1042",
+   "type": "bug",
+   "title": "Library scan stalls on folders with tens of thousands of photos",
+   "status": "In Review",
+   "labels": [
+    "theme:hang",
+    "branch:2.1"
+   ],
+   "links": [
+    {
+     "type": "is implemented by",
+     "key": "CAT-1188"
+    }
+   ],
+   "origin": {
+    "pull": 401,
+    "document": "docs/investigation-large-folders.md"
+   }
+  },
+  {
+   "key": "CAT-1188",
+   "type": "port",
+   "title": "Port for 2.1: library scan stalls on folders with tens of thousands of photos",
+   "status": "Open",
+   "labels": [
+    "branch:2.1"
+   ],
+   "links": [
+    {
+     "type": "implements",
+     "key": "CAT-1042"
+    }
+   ]
+  },
+  {
+   "key": "CAT-1107",
+   "type": "task",
+   "title": "Let storage decide whether a record is resident",
+   "status": "Open",
+   "labels": [],
+   "links": [
+    {
+     "type": "relates to",
+     "key": "CAT-1042"
+    }
+   ]
+  },
+  {
+   "key": "CAT-0990",
+   "type": "task",
+   "title": "Move tag storage into its own module",
+   "status": "Done",
+   "labels": [],
+   "links": []
+  }
+ ]
+}

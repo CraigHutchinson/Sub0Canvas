@@ -63,6 +63,12 @@ lines, agrees with what the producer recorded). B0 adds byte-for-byte writer che
 diagnostics at several places, which no golden attempt has yet (R-U1-4). When the producer's
 output changes on purpose, the golden files are re-captured from a real run, and the diff is reviewed as part of the change.
 
+## The synthetic mirror (L2)
+
+`fixtures/mirror/seed-1/` and its generator ([MIRROR.md](MIRROR.md)): an invented project with a topic of changes and their exact truth,
+including real-world edge cases the canvas does not handle yet. `test/mirror.test.js` keeps the fixture equal to its generator. Change views
+(P0-P2) and the git adapter (G1) are checked against it.
+
 ## The synthetic corpus (L3, S0)
 
 A generator (to be built in S0) produces a project of any size on the fly from a seed: files in a directory tree, functions with realistic token
