@@ -15,6 +15,7 @@ hold up on codebases of billions of lines.
 |---|---|
 | [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
 | [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | block identity, layers, the issues layer, formats, prior art (built: slices 1 and 2) |
+| [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, and the ordered slices |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for and what each use case demands |
 | [docs/TESTING.md](docs/TESTING.md) | the proving ladder: unit, golden, use case, scale, consumer |

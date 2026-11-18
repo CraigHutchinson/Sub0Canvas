@@ -140,6 +140,7 @@ Start with [AGENTS.md](AGENTS.md) (working here: layout, style, rules) and [docs
 |---|---|
 | [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
 | [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | stable block identity, layers, the issues layer, formats, prior art (built) |
+| [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim: the backbone idea, sources and the GitHub project view |
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters (git, GitHub), history, scale to billions of lines; ordered slices with checks |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for: an agent's document, the squad's backbone, a GitHub project view, very large codebases, editors, review |
 | [docs/TESTING.md](docs/TESTING.md) | the proving ladder: unit, golden, use case, scale, consumer |

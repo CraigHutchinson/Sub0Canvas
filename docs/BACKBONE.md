@@ -1,6 +1,6 @@
 # The sub0canvas backbone: layers as the place where agents, people and sources meet
 
-Status: **design, for the owner to read.** Nothing here is implemented. Written 2026-11-17 from Sub0Squad's `docs/LAYERED_DOCUMENT.md` (the sections
+Status: **design, for the owner to read.** Nothing here is implemented. Written 2026-11-17 from the owner's direction ([DIRECTION.md](DIRECTION.md), originally Sub0Squad's `docs/LAYERED_DOCUMENT.md`; the sections
 "Direction: sub0canvas as the squad's backbone" and "Sources"), the slice 1 and slice 2 code in `lib/`, the viewer in `src/`, and the viewer's schema
 requests in [the README](../README.md#optional-fields-the-viewer-understands).
 
