@@ -50,6 +50,12 @@ local-only guard in the owner's clone enforces it (AGENTS.md).
 topic and its exact truth, plus an edge-case register of what the canvas does not handle yet ([MIRROR.md](MIRROR.md)); `fixtures/mirror/seed-1/`
 is checked by `npm test`. Its gaps are [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10. A live forge sandbox is parked (M1).
 
+**Real-repository scale and the viewer's interactivity (2026-11-18, later).** `sub0canvas snapshot` (`app/`) and `tools/serve.mjs` view a local
+repository's subtree straight from git. Measured up to 19,000 files ([SCALE.md](SCALE.md) section 6.1): snapshots take seconds, whole bundles grow
+as files times turns, and the page breaks first (about 1 s per click at 20,000 blocks). The answer is designed, not built: live views patched by
+events ([AUTHORING.md](AUTHORING.md) section 3.1, V1a), interactivity budgets with baselines (section 3.2), and in the backlog K0 (a brief:
+[sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md)), the file tree and content on demand, and a scoped block list.
+
 ## Known gaps and debts
 
 * Sub0Squad still carries its own `applyCanvasReply` and turn control; both now live here (`applyReply`, `turn_control.hpp`) and a Sub0Squad PR

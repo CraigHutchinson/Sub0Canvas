@@ -31,7 +31,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **K0: the viewer's interactivity KPIs** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): a scripted browser benchmark (local, label
   `timing`) that times every interaction in the budget table on the synthetic mirror and on a large local subtree, 20 repetitions, 95th
   percentile, and records the numbers with the machine. Baselines are in the table (about 1 s per click at 20,000 blocks). First, so V1a's work
-  is steered by measurement.
+  is steered by measurement. Brief: [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
 * **The file tree on demand**: render only open folders, windowed; a toggle patches its rows; list a folder's children when it is opened (from
   the server, streamed for very large folders), with the whole listing up front as the first step. Budget: 50 ms to expand a 1,588-file folder.
 * **File content on demand**: the page holds texts by content id, fetches a file when it is opened and prefetches likely next files; the
