@@ -1,0 +1,33 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+            else if (eat('%')) { const double d = unary(); if (d == 0) fail("modulo by zero"); v = v / d; }
+=======
+            else if (eat('%')) { const double d = unary(); if (d == 0) fail("modulo by zero"); v = std::fmod(v, d); }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        double r = 1;
+        for (int i = 2; i < static_cast<int>(v); ++i) r *= i;
+        return r;
+=======
+        double r = 1;
+        for (int i = 2; i <= static_cast<int>(v); ++i) r *= i;
+        return r;
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    double toRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+    double fromRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+=======
+    double toRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+    double fromRad(double x) const { return degrees_ ? x * 180 / M_PI : x; }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        if (f == "log") { if (x <= 0) fail("log needs a positive number"); return std::log(x); }
+=======
+        if (f == "log") { if (x <= 0) fail("log needs a positive number"); return std::log10(x); }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+            return f == "pow" ? std::pow(a[0], a[1]) : f == "min" ? std::fmax(a[0], a[1]) : std::fmax(a[0], a[1]);
+=======
+            return f == "pow" ? std::pow(a[0], a[1]) : f == "min" ? std::fmin(a[0], a[1]) : std::fmax(a[0], a[1]);
+>>>>>>> REPLACE
+=== END EDIT ===

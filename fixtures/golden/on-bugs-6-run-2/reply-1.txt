@@ -1,0 +1,8 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    double toRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+    double fromRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+=======
+    double toRad(double x) const { return degrees_ ? x * M_PI / 180 : x; }
+    double fromRad(double x) const { return degrees_ ? x * 180 / M_PI : x; }
+>>>>>>> REPLACE

@@ -1,0 +1,29 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    double primary()
+    {
+        skip();
+        if (pos_ >= s_.size()) fail("unexpected end of expression");
+        if (eat('(')) { const double v = expr(); (void)eat(')'); return v; }
+        const char c = s_[pos_];
+        if (std::isdigit(static_cast<unsigned char>(c)) || c == '.') return number();
+        if (std::isalpha(static_cast<unsigned char>(c))) return name();
+        fail(std::string("unexpected '") + c + "'");
+    }
+=======
+    double primary()
+    {
+        skip();
+        if (pos_ >= s_.size()) fail("unexpected end of expression");
+        if (eat('(')) {
+            const double v = expr();
+            if (!eat(')')) fail("missing closing parenthesis");
+            return v;
+        }
+        const char c = s_[pos_];
+        if (std::isdigit(static_cast<unsigned char>(c)) || c == '.') return number();
+        if (std::isalpha(static_cast<unsigned char>(c))) return name();
+        fail(std::string("unexpected '") + c + "'");
+    }
+>>>>>>> REPLACE
+=== END EDIT ===

@@ -1,0 +1,81 @@
+=== EDIT: src/calc.cpp SYMBOL expr ===
+    double expr()
+    {
+        double v = term();
+        for (;;) {
+            if (eat('+')) v += term();
+            else if (eat('-')) v -= term();
+            else return v;
+        }
+    }
+=== END EDIT ===
+=== EDIT: src/calc.cpp SYMBOL term ===
+    double term()
+    {
+        double v = unary();
+        for (;;) {
+            if (eat('*')) v *= unary();
+            else if (eat('/')) { const double d = unary(); if (d == 0) fail("division by zero"); v /= d; }
+            else if (eat('%')) { const double d = unary(); if (d == 0) fail("modulo by zero"); v = std::fmod(v, d); }
+            else return v;
+        }
+    }
+=== END EDIT ===
+=== EDIT: src/calc.cpp SYMBOL factorial ===
+    static double factorial(double v)
+    {
+        if (v < 0 || v != std::floor(v) || v > 170) fail("factorial needs an integer from 0 to 170");
+        double r = 1;
+        for (int i = 2; i <= static_cast<int>(v); ++i) r *= i;
+        return r;
+    }
+=== END EDIT ===
+=== EDIT: src/calc.cpp SYMBOL name ===
+    double name()
+    {
+        std::string id;
+        while (pos_ < s_.size() && (std::isalnum(static_cast<unsigned char>(s_[pos_])) || s_[pos_] == '_')) id += s_[pos_++];
+        if (id == "pi") return M_PI;
+        if (id == "e") return M_E;
+        if (id == "tau") return 2 * M_PI;
+        if (!eat('(')) fail("unknown name '" + id + "'");
+        std::vector<double> args;
+        if (!eat(')')) {
+            do args.push_back(expr()); while (eat(','));
+            if (!eat(')')) fail("missing closing parenthesis");
+        }
+        return call(id, args);
+    }
+=== END EDIT ===
+=== EDIT: src/calc.cpp SYMBOL call ===
+    double call(const std::string& f, const std::vector<double>& a)
+    {
+        if (f == "pow" || f == "min" || f == "max") {
+            if (a.size() != 2) fail(f + " takes two arguments");
+            return f == "pow" ? std::pow(a[0], a[1]) : f == "min" ? std::fmin(a[0], a[1]) : std::fmax(a[0], a[1]);
+        }
+        if (a.size() != 1) fail(f + " takes one argument");
+        const double x = a[0];
+        if (f == "sin") return std::sin(toRad(x));
+        if (f == "cos") return std::cos(toRad(x));
+        if (f == "tan") return std::tan(toRad(x));
+        if (f == "asin") return fromRad(std::asin(x));
+        if (f == "acos") return fromRad(std::acos(x));
+        if (f == "atan") return fromRad(std::atan(x));
+        if (f == "sinh") return std::sinh(x);
+        if (f == "cosh") return std::cosh(x);
+        if (f == "tanh") return std::tanh(x);
+        if (f == "ln") { if (x <= 0) fail("ln needs a positive number"); return std::log(x); }
+        if (f == "log") { if (x <= 0) fail("log needs a positive number"); return std::log10(x); }
+        if (f == "log2") { if (x <= 0) fail("log2 needs a positive number"); return std::log2(x); }
+        if (f == "sqrt") { if (x < 0) fail("sqrt of a negative number"); return std::sqrt(x); }
+        if (f == "cbrt") return std::cbrt(x);
+        if (f == "abs") return std::fabs(x);
+        if (f == "exp") return std::exp(x);
+        if (f == "floor") return std::floor(x);
+        if (f == "ceil") return std::ceil(x);
+        if (f == "round") return std::round(x);
+        if (f == "fact") return factorial(x);
+        fail("unknown function '" + f + "'");
+    }
+=== END EDIT ===

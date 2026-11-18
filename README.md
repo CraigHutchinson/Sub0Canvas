@@ -107,20 +107,20 @@ The canvas tooling that writes `layered-doc-1` lives here too, as a C++23 static
 | `sub0canvas/doc_layers.hpp` | Stable block ids (`BlockIndex`: reconciliation through edits, rewrites, renames, splits, merges and moves), layers and items with 1-N anchors, the issues layer, summaries, the first issues inline (`layerInline`) and READ ISSUE detail, and the `layered-doc-1` writer. |
 
 ```bash
-cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release   # fetches simdjson through CPM (set CPM_SOURCE_CACHE to share a cache)
-cmake --build build/mingw -j6
-ctest --test-dir build/mingw
+cmake --preset default -G Ninja   # fetches simdjson through CPM (set CPM_SOURCE_CACHE to share a cache)
+cmake --build --preset default
+ctest --preset quick
 ```
 
 To consume the library from another CMake project, pin it to a tag:
 
 ```cmake
-CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/sub0canvas.git GIT_TAG v0.2.1)
+CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.1)
 target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 ```
 
 `ctest --preset quick` runs the library's tests and, when node is installed, the viewer's (`test_viewer`); `ctest --preset full` adds any test
-labelled `full` (none yet).
+labelled `full` (none yet). The golden fixtures (`fixtures/golden/`, real Sub0Squad output) are checked by the viewer's tests.
 
 **CI** follows the family strategy (CraigHutchinson/.github `docs/ci-strategy.md`): the smoke tier (`ci.yml`, one Linux job) on every push to `main`
 and every pull request, documentation-only changes skipped; the full tier (`ci-full.yml`: Linux GCC and Clang, Windows MinGW-w64) on `v*` and
@@ -130,10 +130,18 @@ per clone with `git config core.hooksPath .githooks` (it checks private names, b
 
 When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_sub0canvas_SOURCE` to a checkout.
 
-The library came from Sub0Squad. `tools/import-sub0squad.sh <repo> <ref>` re-imports it from a git ref there, and `lib/IMPORTED_FROM` records which one. That script is for the cut-over only: after it, changes are made here first.
+The library came from Sub0Squad (imported from its commit d54758f on 2026-11-17). Changes are made here first, tagged, and reach Sub0Squad through a pull request there ([docs/INTEGRATION.md](docs/INTEGRATION.md)).
 
-## Where it is going
+## Documentation
 
-[docs/BACKBONE.md](docs/BACKBONE.md) is the design (not yet built) for sub0canvas as the backbone of agentic work: items with state, tags and links,
-an event log, subscriptions delivered as inboxes, claims, views, source adapters (local git, GitHub) and a block index replayed over a project's history,
-with ordered slices and their checks.
+Start with [AGENTS.md](AGENTS.md) (working here: layout, style, rules) and [docs/RESUME.md](docs/RESUME.md) (where it stands).
+
+| document | what it holds |
+|---|---|
+| [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
+| [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | stable block identity, layers, the issues layer, formats, prior art (built) |
+| [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters (git, GitHub), history, scale to billions of lines; ordered slices with checks |
+| [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for: an agent's document, the squad's backbone, a GitHub project view, very large codebases, editors, review |
+| [docs/TESTING.md](docs/TESTING.md) | the proving ladder: unit, golden, use case, scale, consumer |
+| [docs/INTEGRATION.md](docs/INTEGRATION.md) | the iterative loop with Sub0Squad: a tag here, a pull request there |
+| [docs/BACKLOG.md](docs/BACKLOG.md), [docs/sessions/](docs/sessions/README.md) | what is next, and briefs for follow-up sessions |

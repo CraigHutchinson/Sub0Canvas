@@ -18,7 +18,8 @@ This document fixes:
 * the **format** (`layered-doc-1`, extended additively) and the new event log file (section 7);
 * how **Sub0Squad's existing pieces** become layers and adapters, and which stay where they are (section 8);
 * the **consumers** outside Sub0Squad (section 9);
-* **ordered slices**, each with a check that can fail (section 10), and the open questions that need the owner (section 11).
+* **ordered slices**, each with a check that can fail (section 10), and the open questions that need the owner (section 11);
+* how it all scales to a codebase of **billions of lines** (section 12).
 
 It does not decide how use cases are built on the mechanisms (a scheduler's policy, a reviewer's prompt). Those are built on the backbone, not into it.
 
@@ -438,8 +439,17 @@ Ordered so that each slice is used by a consumer before the next is built. Each 
 | **E1** editor | an LSP-like process serving decorations and hovers from views | a VS Code session shows the issues and prose of a Sub0Squad attempt in the margin, and they follow a function moved by an edit |
 | **C1** collaborative review | review requests as tags plus subscriptions, presence from claims | two people and one agent review one file: every comment survives the author's subsequent edits on the right block, and the reviewer's inbox lists exactly the unaddressed ones |
 
+| **S0** scale harness | a deterministic synthetic corpus generator (files, blocks, commits with edits, renames, moves, merges; generated on the fly, never written whole) and benchmarks of today's index (`bench_index`, label `timing`, local only) | the budgets of section 12 are measured and recorded for 10^5, 10^7 and 10^9 lines; today's limits (memory per block, retired scan) are numbers, not guesses |
+| **S1** compact, lazy index | blocks keyed by blob hash and reused; no full texts held; fixed-size sketches instead of token sets; per-path laziness | S0 at 10^9 lines (streamed) within the memory budget; `test_doc_layers` unchanged; Sub0Squad's tier 0 cases unchanged (identity events byte-identical on the golden fixtures) |
+| **S2** sketch index and per-path history | MinHash/LSH candidates for revive and merge; per-path checkpoints; `RevisionIndex` per path | revive and merge recall against the exhaustive scan on S0's corpus (no lost ids at 10^7 blocks); a path's history over 10^5 commits under the budget |
+| **S3** large real repositories | G1's checks run against large public repositories cloned locally (the Linux kernel, Chromium; the owner approves each download) | the G1 identity-history check on five hand-checked functions per repository; the budgets hold on real code |
+| **S4** sharded store and log | the store and log partitioned by path prefix; queries and inboxes touch only their shards | an inbox over one area of a 10^9-line synthetic project reads only that area's shards (measured), and replays in bounded time |
+
 B0 is small and unblocks the viewer now. B1 and B2 are the core of the backbone and are proved on Sub0Squad, which has the most tests. G1 is the main
-strengthening of the design (identity across a project's history) and can start after B1, in parallel with B2 to B4.
+strengthening of the design (identity across a project's history) and can start after B1, in parallel with B2 to B4. **S0 runs first, in parallel
+with B0**: its numbers decide the data structures B1 (the store) and G1 (the revision index) are built on, and S1 changes `BlockIndex`'s internals
+before more code depends on them. Every slice climbs the proving ladder of [TESTING.md](TESTING.md) (unit, golden, use case, scale) before it is
+integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRATION.md)).
 
 ## 11. Open questions for the owner
 
@@ -454,7 +464,39 @@ strengthening of the design (identity across a project's history) and can start 
 5. **The C++ standard in the core.** `std::expected` (C++23) is used in the sketches, as Sub0Squad already builds C++23. Confirm sub0canvas keeps C++23
    rather than lowering it for wider reuse.
 
-## 12. Prior art this design borrows from
+## 12. Scale: a codebase of billions of lines
+
+The backbone must hold for a monorepo of billions of lines (use case U4 in [USE_CASES.md](USE_CASES.md): about 2 billion lines, 9 million files and
+35 million commits is the published size of the largest known one). The rule that follows: **cost is proportional to what is touched, never to the
+repository.** What is touched is the paths a view shows, an anchor names, a subscription's area covers, or a commit changes.
+
+**What changes in the core** (today's code, measured against that rule):
+
+| part | today | at scale |
+|---|---|---|
+| block discovery | `foldRegions` heuristic per file | unchanged per file (O(n)); a tree-sitter backend behind the same `FoldRegion` result for languages the heuristic gets wrong; chosen per path by extension |
+| block storage | `Block` holds `std::set<std::string>` of tokens and of literals; `BlockIndex::texts_` holds every indexed file's full text | a compact block: id, path id (interned), span, signature hash, name (interned), and a fixed-size **MinHash sketch** of its tokens (64 x 32 bits) instead of the sets; texts fetched from the `DocumentSource` when needed, never held |
+| reuse | a path is re-scanned when its text changes | blocks are computed **once per blob** (the git object id, or a hash of the text) and cached by it, so a file identical across 10^4 revisions and branches is scanned once |
+| reconciliation within a file | signature, then unique name, then Jaccard over token sets | the same order; similarity estimated from sketches (MinHash's estimate of Jaccard); exact comparison only for the few candidates the sketch keeps |
+| revive and merge across files | every retired block is scanned (`for (... : retired_)`) | an **LSH index** over retired sketches (bands of the sketch as bucket keys): candidates in O(1) per block, then the exact rule on those few; retired blocks expire from the index after a horizon (a revival after 10^4 commits is a new block) |
+| history | one `BlockIndex` follows one line of texts; `RevisionIndex` (section 6) replays a tree | **per-path replay**: a path's own revisions (`git log --follow`-style, with git's rename and copy detection to hand cross-file moves to the LSH), checkpoints per path every N revisions; a whole-tree replay is never needed to resolve one anchor |
+| store and log | not built (B1) | **sharded** by path prefix (a directory subtree per shard, split when large); each shard its own log segment and snapshot; a query names its area, and only those shards are read; cross-shard items (a PR touching many areas) are stored once and indexed in each shard they anchor into |
+| output | `layeredJson` writes every file, block and event | scoped writers: a view or snapshot takes a query (paths, layers) and writes only what it covers; the full form remains for U1 |
+
+**Budgets** (first targets; S0 replaces them with measurements): at least 1 million lines per second per core for cold indexing; an incremental
+update proportional to the changed files of a commit; a warm anchor resolution under 10 ms; a compact block under about 200 bytes; resident memory
+proportional to the paths touched. Performance is measured locally, never in CI (the family rule): benchmarks carry the ctest label `timing` and
+skip on battery.
+
+**What does not change:** the identity rules (section 2 and LAYERED_DOCUMENT.md), the item and anchor model, the event kinds, the adapter interfaces
+(a `DocumentSource` already returns files per revision and changed paths), and the format (scoped snapshots are still `layered-doc-1`).
+
+**Risks.** Sketch-estimated similarity can miss or invent a match near the thresholds: S2 measures recall and precision against the exhaustive rule
+on the synthetic corpus, and the exact rule always confirms a candidate. Heuristic folding on unusual code yields wrong blocks: tree-sitter for the
+languages that matter, chosen by measurement on S3's repositories. Interning and caching add state that must survive restarts: they are caches,
+rebuilt from the document source, never the truth.
+
+## 13. Prior art this design borrows from
 
 See LAYERED_DOCUMENT.md's "Prior art". The additions specific to the backbone: **event sourcing** (the log as truth, views as projections, replay for
 reproducibility); **Linear and GitHub Projects** (a small state lifecycle with free-form labels, status as a field); **LSP** (one process owns the

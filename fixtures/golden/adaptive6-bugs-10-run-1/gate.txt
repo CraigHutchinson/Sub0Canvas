@@ -1,0 +1,1 @@
+GATE PASS: app attempt 1 (16 tests, 0 failing against stubs where expected)

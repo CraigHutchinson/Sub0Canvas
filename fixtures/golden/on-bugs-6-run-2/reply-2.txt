@@ -1,0 +1,33 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    double term()
+    {
+        double v = unary();
+        for (;;) {
+            if (eat('*')) v *= unary();
+            else if (eat('/')) v /= unary();
+            else if (eat('%')) { const double d = unary(); if (d == 0) fail("modulo by zero"); v = std::fmod(v, d); }
+            else return v;
+        }
+    }
+=======
+    double term()
+    {
+        double v = unary();
+        for (;;) {
+            if (eat('*')) v *= unary();
+            else if (eat('/')) {
+                const double d = unary();
+                if (d == 0) fail("division by zero");
+                v /= d;
+            }
+            else if (eat('%')) {
+                const double d = unary();
+                if (d == 0) fail("modulo by zero");
+                v = std::fmod(v, d);
+            }
+            else return v;
+        }
+    }
+>>>>>>> REPLACE
+=== END EDIT ===
