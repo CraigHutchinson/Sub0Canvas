@@ -40,7 +40,7 @@ dependency (that is D3, after the owner's answer to BACKBONE.md question 8), and
 
 * `ctest --preset quick` green, with `test_golden_replay` unchanged and `test_outline` added; `npm test` green.
 * The probe of section 2 rerun gives names for every function in every row, and blocks in the block-comment case.
-* Sub0Squad still builds against the branch with `CPM_sub0canvas_SOURCE` (no API it uses removed); a Sub0Squad PR is needed only when it adopts the
+* Sub0Squad still builds against the branch with `CPM_Sub0Canvas_SOURCE` (no API it uses removed); a Sub0Squad PR is needed only when it adopts the
   new API.
 
 ## Environment and constraints

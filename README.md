@@ -115,7 +115,7 @@ ctest --preset quick
 To consume the library from another CMake project, pin it to a tag:
 
 ```cmake
-CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.1)
+CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.1)
 target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 ```
 
@@ -128,7 +128,7 @@ and every pull request, documentation-only changes skipped; the full tier (`ci-f
 per clone with `git config core.hooksPath .githooks` (it checks private names, builds and runs the quick tier), prove it with
 `python ../CraigHutchinson.github/tools/ci/hook_check.py --repo .`, and run `.ci/local.json` with that repository's `tools/ci/local_ci.py`.
 
-When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_sub0canvas_SOURCE` to a checkout.
+When the consumer already provides `simdjson::simdjson`, that target is reused. For local development, set `CPM_Sub0Canvas_SOURCE` (the consumer's package name) to a checkout.
 
 The library came from Sub0Squad (imported from its commit d54758f on 2026-11-17). Changes are made here first, tagged, and reach Sub0Squad through a pull request there ([docs/INTEGRATION.md](docs/INTEGRATION.md)).
 

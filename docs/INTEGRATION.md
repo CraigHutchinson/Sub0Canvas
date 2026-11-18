@@ -6,13 +6,13 @@ the ladder in [TESTING.md](TESTING.md), and only then integrated, one iteration 
 
 ## How Sub0Squad consumes the library
 
-* `cmake/dependencies.cmake` pins a tag: `CPMAddPackage(NAME sub0canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.x)`.
+* `cmake/dependencies.cmake` pins a tag: `CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.x)`.
 * `include/sub0squad/{outline,edits,canvas,doc_layers}.hpp` are forwarding headers (`using namespace sub0canvas`), so squad code is unchanged.
 * What stays in Sub0Squad: the canvas loop (`src/canvas_agent.cpp`: `layeredVerdict`, READ ISSUE, the `SUB0SQUAD_ISSUE_LAYER` and
   `SUB0SQUAD_ISSUE_INLINE` switches, `layers/turn-N.json` per turn), the shim that passes those switches to jobs (`src/shim.cpp`), the gate's
   `failures.txt` (`src/harness_common.cpp`), and the tests `test_canvas_agent` and `test_blocks` (whose recorded replies in `tests/data/replies`
   exercise the edits code).
-* For local work, Sub0Squad's `. scripts/dev-env.sh` exports `CPM_sub0canvas_SOURCE` pointing at a sibling checkout of this repository, so an
+* For local work, Sub0Squad's `. scripts/dev-env.sh` exports `CPM_Sub0Canvas_SOURCE` (a user-level variable on the Windows dev machine) pointing at a sibling checkout of this repository, so an
   unreleased change can be built there. **That override masks a missing tag**: before pushing a pin, configure once with it unset.
 
 ## One iteration
