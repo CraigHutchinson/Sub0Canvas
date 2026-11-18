@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "sub0canvas local checks (CraigHutchinson/.github docs/ci-strategy.md); run: python <.github repo>/tools/ci/local_ci.py --level quick|full",
+  "description": "Sub0Canvas local checks (CraigHutchinson/.github docs/ci-strategy.md); run: python <.github repo>/tools/ci/local_ci.py --level quick|full",
   "levels": {
     "quick": {
       "steps": [

@@ -4,13 +4,13 @@ Status: **source material, kept verbatim.** These are the two sections of Sub0Sq
 for this project, moved here on 2026-11-18. [BACKBONE.md](BACKBONE.md) is the design written from them; where the two differ, BACKBONE.md is the newer
 decision and this file is the intent it answers. Wording such as "this repository" and "the squad" refers to Sub0Squad, where it was written.
 
-## 1. Direction: sub0canvas as the squad's backbone (owner, 2026-11-17)
+## 1. Direction: Sub0Canvas as the squad's backbone (owner, 2026-11-17)
 
 The full design (mechanisms, the store, adapter interfaces, the revision-aware index, the format extension, how the squad's pieces map, consumers, slices
 with checks, open questions) is in sub0canvas: [BACKBONE.md](BACKBONE.md). This
 section and the next are the owner's direction it was written from.
 
-**Scope.** The canvas tooling (the canvas core, folding, the block index and layers, their build and their tests) becomes the **sub0canvas** project: a
+**Scope.** The canvas tooling (the canvas core, folding, the block index and layers, their build and their tests) becomes the **Sub0Canvas** project: a
 tool for agentic workflows that works on its own, outside Sub0Squad. Sub0Squad is its first and most integrated consumer. Sub0Squad keeps what is
 squad-specific: the attempt loop, the gates and harnesses, the prompts. The code in this repository is the starting point, moved, not rewritten. Other
 consumers keep the design honest: a text editor over layers; a collaborative multi-user document editor with review, comments and explainers; a prose-first
@@ -40,10 +40,10 @@ what others write:
 | events | an append-only log of every change: item written, tag added, block retired, claim taken | the index's events plus the canvas log |
 | subscriptions | a standing query over layers, anchors, tags and events, delivered as an inbox (a summary first, detail on request, as `READ ISSUE n`) | the summary and READ machinery |
 | claims | a time-limited hold on an item or a block, with an expiry ([CANVAS.md](CANVAS.md)) | design |
-| views | any layer at the centre, with drill-down to what it anchors (sub0canvas's viewer) | sub0canvas |
+| views | any layer at the centre, with drill-down to what it anchors (Sub0Canvas's viewer) | Sub0Canvas |
 | sources | adapters that feed documents, items and events (the squad's canvas and gate, local git, GitHub), anchored in their own terms and resolved by the core ("Sources" below) | new |
 
-**Path.** Integrate today: move the slice-1 library and the canvas core into sub0canvas, consume it from Sub0Squad, and keep the canvas loop working
+**Path.** Integrate today: move the slice-1 library and the canvas core into Sub0Canvas, consume it from Sub0Squad, and keep the canvas loop working
 unchanged. Then iterate towards the backbone: tags and state, subscriptions as inboxes, item links, claims. Planning and designing the backbone is a major
 item of work of its own, for a later session. It must start from what the squad already does (the planner's plan, the workflow's items and decisions, the
 journal, concerns, mends), and show which of them become layers and which stay where they are.
@@ -101,7 +101,7 @@ Five rules keep adapters small and the core trustworthy:
 **What changes in the design.**
 
 * The Sub0Squad canvas becomes one document adapter among several, and the gate verdict, concerns and prose become item adapters. This is the boundary that
-  lets sub0canvas stand alone: the library has no dependency on the squad, and the squad plugs in as adapters.
+  lets Sub0Canvas stand alone: the library has no dependency on the squad, and the squad plugs in as adapters.
 * `layered-doc-1` gains:
   * a `sources` map (name, adapter kind, capabilities, cursor);
   * a `source` on every item and event;

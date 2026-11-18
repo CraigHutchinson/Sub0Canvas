@@ -1,4 +1,4 @@
-# Where sub0canvas stands (2026-11-18)
+# Where Sub0Canvas stands (2026-11-18)
 
 Read this first when resuming. What is next, in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
 

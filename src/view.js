@@ -1,4 +1,4 @@
-// sub0canvas view: renders a layered document and lets you interrogate it. Plain DOM, no framework; every state change re-renders from `state`,
+// Sub0Canvas view: renders a layered document and lets you interrogate it. Plain DOM, no framework; every state change re-renders from `state`,
 // and the state lives in the URL hash so a view can be linked, reloaded and screenshotted.
 //
 //   centre   which layer the main pane shows: "code", or any key of `layers` (never a fixed list)

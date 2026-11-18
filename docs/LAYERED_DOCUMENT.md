@@ -186,7 +186,7 @@ A layer is a producer that turns its source into `std::vector<LayerItem>`, ancho
 | (any) | a workflow over other layers (see below) | a workflow stage | derived | as its sources |
 
 Prose sits **above** the code: a worker can be shown the prose summary of a file (one line per function) instead of its folded code, and drill into a
-function's code from its prose (and from code to its prose). That view is what sub0canvas demonstrates first.
+function's code from its prose (and from code to its prose). That view is what Sub0Canvas demonstrates first.
 
 ## Relations between layers, and collapsing duplicates
 

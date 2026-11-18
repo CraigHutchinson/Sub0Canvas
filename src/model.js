@@ -1,4 +1,4 @@
-// sub0canvas model: the layered document as data, and the queries the viewer asks of it. Pure (no DOM, no I/O), so Node tests load it directly.
+// Sub0Canvas model: the layered document as data, and the queries the viewer asks of it. Pure (no DOM, no I/O), so Node tests load it directly.
 //
 // Input is a set of files from one or more attempt directories, as Sub0Squad's canvas writes them:
 //   <attempt>/layers/turn-N.json   one `layered-doc-1` snapshot per turn (files, live blocks, retired ids, id events, layers)

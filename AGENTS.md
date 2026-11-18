@@ -1,4 +1,4 @@
-# Working in sub0canvas
+# Working in Sub0Canvas
 
 Instructions for agents and people continuing this project. Start with [docs/RESUME.md](docs/RESUME.md) (where it stands) and
 [docs/BACKLOG.md](docs/BACKLOG.md) (what is next). A task with its own brief is in [docs/sessions/](docs/sessions/README.md): start a session with
@@ -6,7 +6,7 @@ Instructions for agents and people continuing this project. Start with [docs/RES
 
 ## What this is
 
-sub0canvas is a library and a viewer for **layered documents**: a codebase held as revisioned files (the canvas), seen through layers (issues,
+Sub0Canvas is a library and a viewer for **layered documents**: a codebase held as revisioned files (the canvas), seen through layers (issues,
 review notes, prose, plans, history) that are bound to **stable block identities** rather than line numbers. It began inside Sub0Squad, a local-model
 coding squad, which remains its first consumer. Its direction is to become the backbone where agents, people and sources (git, GitHub) meet, and to
 hold up on codebases of billions of lines.
@@ -54,12 +54,27 @@ and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --rep
 
 ## Rules (the owner's standing rules)
 
+This list is complete. Everything an agent or a person needs to work here is in this repository; nothing depends on notes kept outside it (an
+assistant's local memory, a chat, a session card). When the owner gives a new standing instruction, add it here in the same change.
+
 * **Nothing leaves the machine**: no frontier model, no uploading of code or data. Ask before downloads, installs or credentials.
 * **Commit as you go** to `main` (fetch, rebase, build, test); **confirm with the owner before pushing**; never force-push or skip hooks; never
-  stash, reset or switch branches in a checkout another session shares; commit only your own files.
+  stash, reset or switch branches in a checkout another session shares; commit only your own files. Commit as the owner's GitHub identity already
+  set in the clone, with a `Co-Authored-By` trailer for the agent.
+* **Clean up as you go** (standing permission): once work is merged, superseded or obsolete, delete its branches (local and remote), worktrees and
+  stale folders (old run data under `out/`) without asking, after checking that it really is merged or superseded. Retire legacy documents once
+  their content is integrated; git keeps them. "Never throw work away" protects unique, unmerged work only.
 * **This is a public repository: never name or link a private repository** (the pre-push gate checks, `private_names.py`).
 * **Report faithfully**: regressions named, skipped steps said, numbers with their noise. Never throw work away.
-* **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. No full run per push;
-  performance is measured locally only.
+* **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. **Never dispatch the
+  full tier after a routine push**: verify locally (`ctest --preset quick`, or `full`) and check only the smoke run after pushing. Full runs are for
+  releases and version bumps; the one exception is a change that only another platform can prove (a Windows runner's behaviour): batch such
+  changes and dispatch once. Performance is measured locally only.
+* **Follow-up work** that belongs in its own session is written as a brief in [docs/sessions/](docs/sessions/README.md) (its workflow: write, pick
+  up, close with an `## Outcome`, move to *Done*), listed there and pointed at from the backlog. Not left in a chat or a session card, which other
+  devices cannot open.
+* **The name**: the project is **Sub0Canvas** in prose, docs, commit messages and URLs (`https://github.com/CraigHutchinson/Sub0Canvas.git`). Code and
+  build identifiers stay lower-case: namespace `sub0canvas`, target `sub0canvas::sub0canvas`, headers `sub0canvas/*.hpp`, the CMake project and
+  CPM package name `sub0canvas` (`CPM_sub0canvas_SOURCE`), `SUB0CANVAS_*` options, the npm package name. Do not rename those without the owner.
 * **Changes the squad consumes** go here first, are tagged, then reach Sub0Squad through a pull request there ([docs/INTEGRATION.md](docs/INTEGRATION.md)).
 * **Docs**: each piece of evidence has one home; a brief links to it rather than copying it. Retire a document once its content is integrated.

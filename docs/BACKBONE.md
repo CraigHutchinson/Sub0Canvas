@@ -1,12 +1,12 @@
-# The sub0canvas backbone: layers as the place where agents, people and sources meet
+# The Sub0Canvas backbone: layers as the place where agents, people and sources meet
 
 Status: **design, for the owner to read.** Nothing here is implemented. Written 2026-11-17 from the owner's direction ([DIRECTION.md](DIRECTION.md), originally Sub0Squad's `docs/LAYERED_DOCUMENT.md`; the sections
-"Direction: sub0canvas as the squad's backbone" and "Sources"), the slice 1 and slice 2 code in `lib/`, the viewer in `src/`, and the viewer's schema
+"Direction: Sub0Canvas as the squad's backbone" and "Sources"), the slice 1 and slice 2 code in `lib/`, the viewer in `src/`, and the viewer's schema
 requests in [the README](../README.md#optional-fields-the-viewer-understands).
 
 ## 1. What this document decides
 
-sub0canvas today is a library (`outline`, `edits`, `canvas`, `doc_layers`) and a viewer. It holds one document, a turn at a time, with one layer that
+Sub0Canvas today is a library (`outline`, `edits`, `canvas`, `doc_layers`) and a viewer. It holds one document, a turn at a time, with one layer that
 anyone produces (the gate's issues). The owner's direction is that it becomes the **backbone** of agentic work: the place where a planner, a scheduler, a
 worker, a reviewer, an owner and outside sources (git, GitHub) all read and write, each in its own layer, anchored to the same stable block identities.
 
@@ -431,7 +431,7 @@ Ordered so that each slice is used by a consumer before the next is built. Each 
 | **B2** inbox | `Query`, `Subscription`, `inbox`, `acknowledge`; Sub0Squad's verdict rebuilt as an inbox | Sub0Squad's `test_canvas_agent` and `test_blocks` pass unchanged, and the verdict text is byte-identical with the store in the path (an A/B with no expected difference: 0 changed bytes over the recorded replies) |
 | **B3** claims and notes | `Claim`, expiry by a passed clock, block claims that follow merges, `note` events | unit tests for every rule in 3.5; Sub0Squad's fork executor (two workers, one file) takes write claims per section, and a seeded conflict is refused with the holder named |
 | **B4** source anchors and the resolver | `Anchor.revision/quote/name`, text-quote re-anchoring, name anchors | a corpus of 50 anchors made at revision r and resolved at r+k (k up to 20, with moves, renames, deletions) from Sub0Squad's own canvas logs: each resolves to the right block or is marked outdated, against hand-checked truth; zero silent moves |
-| **G1** git document adapter and `RevisionIndex` | `DocumentSource` over a local repository (reading `git` plumbing output), checkpoints, `history`, `carry` | the identity history of five known functions across Sub0Squad's last 200 commits, renames and the move to sub0canvas included, against hand-checked truth; a replay of 200 commits under 30 s |
+| **G1** git document adapter and `RevisionIndex` | `DocumentSource` over a local repository (reading `git` plumbing output), checkpoints, `history`, `carry` | the identity history of five known functions across Sub0Squad's last 200 commits, renames and the move to Sub0Canvas included, against hand-checked truth; a replay of 200 commits under 30 s |
 | **G2** GitHub items, read-only | `sub0canvas::github`: PRs as a `pulls` layer, review comments as source anchors | each review comment on this repository's last 20 PRs lands on the right block at main's head or is outdated, against hand-checked truth |
 | **G3** issues, discussions, project items | items with tags and state from project fields | the state mechanism is driven by a real project board: a status changed on GitHub shows in the view after one fetch |
 | **G4** events and subscriptions over GitHub | the GitHub event feed into the log; an owner's subscription | "failing checks or new review comments on blocks under `lib/src/doc_*`" delivers an inbox summary with exactly the expected items |
@@ -460,8 +460,8 @@ integrated into Sub0Squad through a pull request there ([INTEGRATION.md](INTEGRA
 3. **Ids across replay roots** (section 6). Proposed: local to a root, named in the file. A content-addressed id is the alternative, at the cost of
    identity changing on every body edit.
 4. **The GitHub adapter and the network rule.** It reads from github.com with the user's `gh` login. It is a separate target that Sub0Squad never links.
-   Confirm that this is acceptable for sub0canvas, or keep G2 to G5 on a local mirror only (`gh` export to files, then read offline).
-5. **The C++ standard in the core.** `std::expected` (C++23) is used in the sketches, as Sub0Squad already builds C++23. Confirm sub0canvas keeps C++23
+   Confirm that this is acceptable for Sub0Canvas, or keep G2 to G5 on a local mirror only (`gh` export to files, then read offline).
+5. **The C++ standard in the core.** `std::expected` (C++23) is used in the sketches, as Sub0Squad already builds C++23. Confirm Sub0Canvas keeps C++23
    rather than lowering it for wider reuse.
 
 ## 12. Scale: a codebase of billions of lines

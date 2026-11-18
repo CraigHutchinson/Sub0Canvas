@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sub0canvas pre-push gate: CraigHutchinson/.github templates/pre-push, with the public-repository guard of
+# Sub0Canvas pre-push gate: CraigHutchinson/.github templates/pre-push, with the public-repository guard of
 # templates/pre-push-public-names in front of it (docs/ci-strategy.md, "Local gates must self-test" and
 # "Public repositories never name private ones").
 #

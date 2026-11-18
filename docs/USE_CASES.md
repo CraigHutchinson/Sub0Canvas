@@ -1,4 +1,4 @@
-# Use cases: who sub0canvas is for, and what each one demands
+# Use cases: who Sub0Canvas is for, and what each one demands
 
 Each use case is a consumer the design must serve **without a mechanism of its own** (if one needs a new mechanism, the design is incomplete, see
 [BACKBONE.md](BACKBONE.md) section 9). Each has a proving ground: something that can be run and that fails when the design is wrong

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-# sub0canvas: the layered document's C++ library (lib/) beside its static viewer (index.html, src/*.js). The viewer has no build step; this file builds
+# Sub0Canvas: the layered document's C++ library (lib/) beside its static viewer (index.html, src/*.js). The viewer has no build step; this file builds
 # only the library and its tests. Sub0Squad consumes the library through CPM (CPMAddPackage NAME sub0canvas), pinned to a tag.
 project(sub0canvas VERSION 0.2.1 LANGUAGES CXX)
 
@@ -7,7 +7,7 @@ set(SUB0CANVAS_TOP_LEVEL OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(SUB0CANVAS_TOP_LEVEL ON)
 endif()
-option(SUB0CANVAS_BUILD_TESTING "Build sub0canvas's tests" ${SUB0CANVAS_TOP_LEVEL})
+option(SUB0CANVAS_BUILD_TESTING "Build Sub0Canvas's tests" ${SUB0CANVAS_TOP_LEVEL})
 
 if(SUB0CANVAS_TOP_LEVEL)
   set(CMAKE_CXX_STANDARD 23)
@@ -55,7 +55,7 @@ if(SUB0CANVAS_BUILD_TESTING)
     file(GLOB viewerTests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.test.js)
     add_test(NAME test_viewer COMMAND ${SUB0CANVAS_NODE} --test ${viewerTests} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   else()
-    message(STATUS "sub0canvas: node not found; the viewer's tests (test_viewer) are not registered")
+    message(STATUS "Sub0Canvas: node not found; the viewer's tests (test_viewer) are not registered")
   endif()
   # Test tiers (CraigHutchinson/.github docs/ci-strategy.md): every test is fast, so all are smoke; `ctest --preset quick` excludes only the label
   # full, which no test carries yet. A long suite added later is labelled full.
