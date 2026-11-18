@@ -295,10 +295,59 @@
                                  onclick: holder ? () => set({ block: holder.id }) : undefined },
                 h('span', { class: 'ln' }, n), h('span', { class: 'gut' }, mark ? '●' : ''), h('code', null, text || ' ')));
         });
-        put($('#centre'), 
-            h('div', { class: 'tabs' }, paths.map((p) => h('button', { class: `tab ${p === path ? 'on' : ''}`, onclick: () => set({ file: p }) },
-                p, h('span', { class: 'muted' }, ` r${t.files[p].revision}`)))),
-            h('div', { class: 'code' }, rows));
+        // The tree and the code scroll separately, and every render rebuilds them: keep each one's position, the code's only on the same file.
+        const was = { tree: $('#centre .filetree')?.scrollTop ?? 0, code: $('#centre .code')?.scrollTop ?? 0, file: $('#centre .code')?.dataset.file };
+        const code = h('div', { class: 'code', 'data-file': path }, rows);
+        const tree = fileTree(paths, path, t, counts);
+        put($('#centre'), h('div', { class: 'codeview' }, tree, code));
+        tree.scrollTop = was.tree;
+        if (was.file === path) code.scrollTop = was.code;
+    }
+
+    // ---- the file tree ------------------------------------------------------------------------------------------------------------------------------
+
+    // Directories the reader opened or closed by hand. The rest follow the default: open when on the path to the open file, or all open when the
+    // turn has few files (the demo's three).
+    const dirToggles = new Map();
+
+    function fileTree(paths, current, t, counts) {
+        const root = { dirs: new Map(), files: [] };
+        for (const p of paths) {
+            let node = root;
+            for (const d of p.split('/').slice(0, -1)) {
+                if (!node.dirs.has(d)) node.dirs.set(d, { dirs: new Map(), files: [] });
+                node = node.dirs.get(d);
+            }
+            node.files.push(p);
+        }
+        const size = (node) => node.files.length + [...node.dirs.values()].reduce((n, c) => n + size(c), 0);
+        // Layer anchors per file, so the tree shows where layers land without opening each file.
+        const anchored = (p) => M.blocksOf(state.doc, state.turn, p).reduce((n, b) => n + Object.values(counts.get(b.id) || {}).reduce((x, y) => x + y, 0), 0);
+        const few = paths.length <= 12;
+        const rows = [];
+        const walk = (node, prefix, depth) => {
+            for (const [first, firstNode] of [...node.dirs].sort(([a], [b]) => (a < b ? -1 : 1))) {
+                // A chain of directories with one child each is one row (core/details/panel), as editors show compact folders.
+                let name = first, child = firstNode, full = prefix + first;
+                while (!child.files.length && child.dirs.size === 1) {
+                    const [nextName, next] = [...child.dirs][0];
+                    name += `/${nextName}`; full += `/${nextName}`; child = next;
+                }
+                const open = dirToggles.has(full) ? dirToggles.get(full) : few || current.startsWith(`${full}/`);
+                rows.push(h('button', { class: 'trow dir', style: `--depth:${depth}`, title: full, 'aria-expanded': String(open),
+                                        onclick: () => { dirToggles.set(full, !open); render(); } },
+                    h('span', { class: 'caret' }, open ? '▾' : '▸'), h('span', { class: 'tname' }, `${name}/`), h('span', { class: 'muted' }, String(size(child)))));
+                if (open) walk(child, `${full}/`, depth + 1);
+            }
+            for (const p of node.files.slice().sort()) {
+                const k = anchored(p);
+                rows.push(h('button', { class: `trow file ${p === current ? 'on' : ''}`, style: `--depth:${depth}`, title: p, onclick: () => set({ file: p }) },
+                    h('span', { class: 'caret' }), h('span', { class: 'tname' }, p.split('/').pop()), h('span', { class: 'muted' }, `r${t.files[p].revision}`),
+                    k ? h('span', { class: 'tcount', title: `${k} layer anchors in this file` }, String(k)) : null));
+            }
+        };
+        walk(root, '', 0);
+        return h('nav', { class: 'filetree', 'aria-label': 'Files' }, rows);
     }
 
     // ---- centre: a layer --------------------------------------------------------------------------------------------------------------------------

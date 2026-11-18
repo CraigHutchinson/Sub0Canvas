@@ -87,10 +87,18 @@ h3 { font-size: 13px; margin: 18px 0 6px; }
 .blockrow.st-orphan .bname, .blockrow.st-unknown .bname { text-decoration: line-through; color: var(--muted); }
 
 /* code */
-.tabs { display: flex; gap: 2px; padding: 8px 12px 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 1; flex-wrap: wrap; }
-.tab { border: 1px solid transparent; border-bottom: 0; background: transparent; padding: 5px 12px; border-radius: 6px 6px 0 0; cursor: pointer; font-family: var(--mono); font-size: 12.5px; }
-.tab.on { background: var(--panel); border-color: var(--line); }
-.code { padding: 8px 0 40px; background: var(--code-bg); }
+.centre:has(> .codeview) { overflow: hidden; }
+.codeview { display: grid; grid-template-columns: minmax(170px, 260px) minmax(0, 1fr); height: 100%; min-height: 0; }
+.filetree { overflow: auto; border-right: 1px solid var(--line); background: var(--panel); padding: 6px 0 20px; }
+.trow { display: flex; align-items: center; gap: 4px; width: 100%; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left;
+        padding: 2px 8px 2px calc(8px + var(--depth, 0) * 12px); font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+.trow:hover { background: var(--hover); }
+.trow.on { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
+.trow .caret { width: 12px; flex: none; color: var(--muted); font-size: 10px; }
+.trow .tname { overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
+.trow.dir .tname { color: var(--muted); }
+.trow .tcount { font-size: 11px; padding: 0 6px; border-radius: 999px; background: var(--hover); color: var(--accent); }
+.code { padding: 8px 0 40px; background: var(--code-bg); overflow: auto; }
 .line { display: grid; grid-template-columns: 48px 16px 1fr; white-space: pre; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; }
 .line .ln { color: var(--muted); text-align: right; padding-right: 8px; user-select: none; }
 .line .gut { color: var(--lc, var(--muted)); text-align: center; font-size: 10px; }
@@ -191,4 +199,7 @@ mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: in
   .nav, .inspector { border: 0; border-bottom: 1px solid var(--line); max-height: none; }
   .bar { gap: 8px; }
   .turns { margin-left: 0; }
+  .centre:has(> .codeview) { overflow: visible; }
+  .codeview { grid-template-columns: 1fr; height: auto; }
+  .filetree { max-height: 220px; border-right: 0; border-bottom: 1px solid var(--line); }
 }
