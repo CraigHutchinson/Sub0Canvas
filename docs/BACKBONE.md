@@ -481,6 +481,10 @@ Sub0Squad depends on them. The order that follows: D0 and S0 and B0 now; then V0
     local with export.
 11. **The authoring server's stack** (AUTHORING.md section 3; 14.5): a C++ `serve` process over stdio with a small Node bridge is proposed.
 
+**Every question above is worked through, with options, pros and cons and a recommendation, in [DECISIONS.md](DECISIONS.md)** (2026-11-18),
+which also adds amendments A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a liftable module).
+Question 9 is done.
+
 ## 12. Scale: a codebase of billions of lines
 
 The backbone must hold for a monorepo of billions of lines (use case U4 in [USE_CASES.md](USE_CASES.md): about 2 billion lines, 9 million files and
@@ -568,7 +572,7 @@ Each is folded into the section it names when its slice is built; until then thi
 | A9 | **One store per document; references across documents are links with document-qualified keys** (`<document>:<key>`), never anchors into another store. A workspace view composes stores. | keys, views | G2, later |
 | A10 | **The store's surface is a message protocol**: every mutation is an event and every read a query or view spec, both serialisable, so one process owns a store and pages, editors, agents and scenarios talk to it alike (AUTHORING.md section 3). | the store's API, a `serve` executable | V1 |
 | A11 | **Exports take a query**: snapshots, SARIF and write-back include only what the query selects, so a private item (by tag convention, `private/<actor>`) never leaves by default. Visibility is policy; the query is the mechanism. | writers, `WriteSink` callers | B1, G5 |
-| A12 | **Applying a parsed reply moves into the library**: the all-or-nothing application of a `CanvasReply` across files (Sub0Squad's `applyCanvasReply`) is library behaviour that every consumer (the squad, the authoring tool, an editor) needs. With it, the 32 recorded-reply cases become this library's own test (R-EDIT-7). | `canvas.hpp`; a Sub0Squad PR to call it | next minor |
+| A12 | **Applying a parsed reply moves into the library**: the all-or-nothing application of a `CanvasReply` across files (Sub0Squad's `applyCanvasReply`) is library behaviour that every consumer (the squad, the authoring tool, an editor) needs. With it, the 30 recorded-reply cases become this library's own test (R-EDIT-7). **Done 2026-11-18** (`applyReply`, atomic by construction; turn control moved too; [DECISIONS.md](DECISIONS.md) section 2). | `canvas.hpp`; a Sub0Squad PR to call it | next minor |
 | A13 | **Policies are named and recorded** (14.3): every output records the policy versions that produced it, so two runs can be compared and a change of policy is visible in the data. | the format (`policies`), views | B0 onward |
 | A14 | **Views take budgets**: a scope, item and character limits, and cursors; the summary-first rendering of R-REN generalised to every view (R-AUTH-1). | `ViewSpec` (3.6) | V2 |
 
@@ -592,9 +596,10 @@ cheap. The pattern for each:
 | issue localisation | name, then literals / plus the call graph / none | name, then literals | Sub0Squad tier 0: a wrong pointer costs more than none | the issues producer's policy |
 | verdict rendering | off / adaptive (threshold 6) / always; inline count | adaptive 6, inline 3 | measured in Sub0Squad (slice 2); continuing | Sub0Squad's switches, recorded in `agent.json` |
 | events in a snapshot | per turn / cumulative | per turn (open question 2) | the viewer copes with both; settle at B0 | `eventsFrom` in the format |
-| identity scheme | local to a replay root / content-addressed | local to a root (open question 3) | G1 and S4: does identity survive what users do | A2 |
-| where the store lives in Sub0Squad | per attempt / per workflow | per attempt (open question 1) | B2 in the squad | the squad's option |
-| where the review log lives | committed under `.sub0canvas/` / local only | to ask (open question 10) | the owner's use (V1) | the server's configuration |
+| identity scheme | counter per root / random / content-addressed / deterministic birth ids | deterministic birth ids proposed (DECISIONS.md section 4) | G1 and S4: does identity survive what users do, and agree across clones | A2, A16 |
+| where the store lives in Sub0Squad | per attempt / per workflow / per project | per attempt first, in the per-project format (DECISIONS.md section 5) | B2 in the squad | the squad's option |
+| where the review log lives | working-tree files / git refs of its own / git notes / local only / a database / the forge | git refs per writer, caches in the git directory, state per user (DECISIONS.md section 3) | the owner's use (V1) | the `Log` interface (A17) |
+| a shared orchestration layer (Sub0Fabric) | build now / build here behind a liftable boundary / extend Sub0Log | here, liftable (A18) | the second consumer of the log mechanics (likely Sub0Squad's journal) | DECISIONS.md section 9 |
 | the authoring server's stack | C++ `serve` over stdio with a Node bridge / a C++ HTTP server / Node only | C++ over stdio with a bridge (AUTHORING.md section 3) | V1: build cost and one truth for the store's rules | the protocol (A10), which every arm speaks |
 
 This register is the place to add a decision when a design choice turns out not to be clear-cut. A decision leaves the register with its evidence.

@@ -186,3 +186,22 @@ Answered by [BACKBONE.md](BACKBONE.md) sections 14.4 (policies as data, supplied
 > their notes via the inbox etc.
 
 Answered by [AUTHORING.md](AUTHORING.md); the use case is U7 in [USE_CASES.md](USE_CASES.md).
+
+## 5. Forward-looking answers, moving the proving grounds, where data lives (owner, 2026-11-18)
+
+> For all the questions - we prefer a forward looking design, working harder and in more depth to get the best capable solution first time where
+> viable. So for many of the questions we should brainstorm the options, weigh up the pros and cons for each. Moving prooving ground and needed other
+> peripheral code from sub0squad here is highly relevant and go ahead is given. As for where the data lives, consider existing tooling like .git etc
+> and also if there is a 'glue' library of tools like Sub0Platform, Sub0Pipeline, Sub0Pub, Sub0Math etc that need to be iterated/adopted or other new
+> or existing prior art tooling that can be considered where there is overlap/reuse to be had.
+
+And:
+
+> We could extend the Sub0Log achitecture for example and coin the Sub0Fabric as the shared orchestration layer abstraction - this is a concept, and
+> not necessarily fitting today but somethign to keep open if the review finds this sort of shape
+
+And:
+
+> Agreed, Sub0MemPage may also be fitting for Fabric
+
+Answered by [DECISIONS.md](DECISIONS.md).

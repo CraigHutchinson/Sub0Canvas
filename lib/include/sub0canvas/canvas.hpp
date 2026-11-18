@@ -6,7 +6,9 @@
 
 #include "sub0canvas/outline.hpp"
 
+#include <expected>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -95,5 +97,31 @@ struct CanvasReply
     [[nodiscard]] bool hasEdits() const { return !transactions.empty() || !wholeFiles.empty() || !searchEdits.empty(); }
 };
 [[nodiscard]] CanvasReply parseCanvasReply(const std::string& reply);
+
+/// How a parsed reply is applied to a canvas (`applyReply`).
+struct ApplyOptions
+{
+    std::set<std::string> allowed;   ///< the files the author may write; anything else is refused
+    std::string by;                  ///< who made the reply: every revision it produces names them
+    bool partial = false;            ///< false: all or nothing; true: every part that can apply does, and each part that cannot is reported
+};
+
+/// What applying a reply did. In partial mode, the parts that could not apply, each named; empty in all-or-nothing mode.
+struct ReplyApplied
+{
+    std::vector<std::string> skipped;
+};
+
+/// Apply a parsed reply to the canvas, as one unit (docs/REQUIREMENTS.md R-EDIT-7, R-CAN-1): whole files first, then each file's operations as one
+/// transaction against the revision the author was shown, then the search/replace edits (committed as whole-text revisions, since a snippet names its
+/// place by its text). All or nothing: when any part cannot apply, the canvas is left exactly as it was and the error names the part (a path not
+/// allowed, a file edited before it exists, a file both rewritten and edited, the canvas's own refusal). Partial: each operation and each snippet applies
+/// on its own, against the revision shown (rebased over the parts before it), so one bad part never costs the good ones beside it; the unapplied parts are
+/// listed. A reply that failed to parse (`reply.error`) is refused whole in either mode.
+[[nodiscard]] std::expected<ReplyApplied, std::string> applyReply(Canvas& canvas, const CanvasReply& reply, const ApplyOptions& options);
+
+/// Parse `reply` and apply it, all or nothing, to a canvas holding `files`: the files afterwards, or why it was refused (a reply with no edit is refused).
+[[nodiscard]] std::expected<std::map<std::string, std::string>, std::string> applyReplyText(const std::string& reply, const std::map<std::string, std::string>& files,
+                                                                                          const std::set<std::string>& allowed, const std::string& by);
 
 }  // namespace sub0canvas

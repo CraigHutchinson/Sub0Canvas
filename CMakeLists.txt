@@ -33,7 +33,7 @@ endif()
 
 # The library: folded views and READ requests (outline), search/replace and line edits (edits), the revisioned canvas and its transactions (canvas),
 # stable block ids and layers (doc_layers).
-add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp)
+add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/turn_control.cpp)
 add_library(sub0canvas::sub0canvas ALIAS sub0canvas)
 target_compile_features(sub0canvas PUBLIC cxx_std_23)
 target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/src)
@@ -43,14 +43,16 @@ target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
-  foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay)
+  foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay test_replies test_turn_control)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
     target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson)
     set(args "")
     if(name STREQUAL "test_golden_replay")
-      set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)   # real producer output
+      set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)    # real producer output
+    elseif(name STREQUAL "test_replies")
+      set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/replies)   # recorded reply shapes
     endif()
     add_test(NAME ${name} COMMAND ${name} ${args})
   endforeach()

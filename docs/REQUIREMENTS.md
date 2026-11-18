@@ -41,7 +41,18 @@ Status: living (2026-11-18). The catalogue the tests check. Use cases are in [US
 | R-EDIT-4 | Tolerance for what models really write: a copied number column, markers inside a LINES edit, indented markers, a merge conflict inside a SEARCH, a first line that lost its start, and indentation re-based to the file's. | built | `test_edits` |
 | R-EDIT-5 | A path outside the allowed set is refused. | built | `test_edits` |
 | R-EDIT-6 | Malformed replies (unclosed block, no edit block, an empty block) are refused naming what is wrong; a header written twice is read once. | built | `test_edits` |
-| R-EDIT-7 | Every recorded reply shape seen on real runs gives its intended result, and the classic applier agrees where it applies. | built **in Sub0Squad only** | Sub0Squad `test_blocks` block 1 (32 cases). **Gap**: the all-or-nothing application of a parsed reply (`applyCanvasReply`) lives in Sub0Squad, so the corpus cannot run here. BACKBONE.md A12 moves it. |
+| R-EDIT-7 | Every recorded reply shape seen on real runs gives its intended result, and the classic applier agrees where it applies; a refused reply leaves the canvas exactly as it was. | built | `test_replies` over `fixtures/replies` (30 cases, moved from Sub0Squad 2026-11-18 with `applyReply`) |
+| R-EDIT-8 | A reply may be applied partially: every operation that can apply does, each against the revision the author was shown, and each part that cannot is named; a reply that failed to parse is refused whole. | built | `test_replies` |
+
+### Turn control (R-TURN)
+
+| id | requirement | status | check |
+|---|---|---|---|
+| R-TURN-1 | A reply cut off by the output limit and its continuation join into the reply that was meant: at a line boundary, with the overlap the model repeated removed once. | built | `test_turn_control` |
+| R-TURN-2 | The continuation request quotes where the reply stopped and asks for the text that follows (mid-line or from the next line); a reply cut inside an edit block is recognised, so it is continued by appending. | built | `test_turn_control` |
+| R-TURN-3 | A whole file cut off by the limit is completed from the previous revision (back to its last complete definition, then the previous functions after it), so no code on either side is lost. | built | `test_turn_control` |
+| R-TURN-4 | A runaway reply is detected while it streams (a long SEARCH, a repeated cycle, a run of comments, a restated draft or echoed view), and a normal reply is left alone. | built | `test_turn_control` |
+| R-TURN-5 | An edit overrun is detected: a SEARCH covering most of an existing file (a rewrite in disguise) or one edit past the size limit; a stub or new file is not judged. | built | `test_turn_control` |
 
 ### Views and reads (R-VIEW)
 
@@ -141,7 +152,8 @@ Sub0Squad is a gap here.
 | `canvas_agent.cpp`: READ ISSUE answered by `layerDetail` | R-REN-2, R-REN-5 | yes |
 | `canvas_agent.cpp`, `llm_agent.cpp`: reads (`parseReadRequests`, `answerRead`) | R-VIEW-6 | yes |
 | `canvas_agent.cpp`, `blocks.cpp`, `fork.cpp`: `parseCanvasReply`, `applyEdits`, `replaceText`, `revertTo`, `textAt`, `logJson` | R-EDIT-1..6, R-CAN-1..8 | yes |
-| `canvas_agent.cpp` (`applyCanvasReply`, squad code): a parsed reply applied all or nothing across files | R-EDIT-7 | **no** (BACKBONE.md A12) |
+| `canvas_agent.cpp` (`applyCanvasReply`, now `applyReply` here): a parsed reply applied all or nothing across files | R-EDIT-7, R-EDIT-8, R-CAN-1 | yes (moved here 2026-11-18; a Sub0Squad PR adopts it) |
+| `canvas_agent.cpp`, `llm_agent.cpp`: `joinContinuation`, `continuationText`, `continuationPrompt`, `detectRunaway`, `detectEditOverrun` (turn control, moved here) | R-TURN-1..5 | yes (moved here 2026-11-18; a Sub0Squad PR adopts it) |
 | `fork.cpp`, `contract.cpp`, `test_mends`: `expandSkeleton`, `sectionView`, `foldRegions(…, all)` | R-SKEL-1..3, R-VIEW-4, R-VIEW-5 | yes (moved here from Sub0Squad's `test_blocks`) |
 | `agent_card.cpp`, `fork.cpp`: `foldedView` | R-VIEW-1, R-VIEW-2 | yes |
 | 19 calls of `isPythonPath` to choose the language | R-VIEW-7 | yes (and replaced by R-BLK-8 at D0) |

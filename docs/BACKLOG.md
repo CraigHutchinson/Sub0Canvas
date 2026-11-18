@@ -27,8 +27,10 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **V2: the agent's inbox**: B2's inbox over the review layer, the CLI, views with budgets; **the acceptance test is a real review round on this
   repository's docs** (AUTHORING.md section 1).
 * **G1: the git document adapter and per-path history** (after D0). Brief: [sessions/g1-git-history.md](sessions/g1-git-history.md).
-* **A12: apply a parsed reply in the library** (after the owner's answer to question 9), then move Sub0Squad's 32 recorded-reply cases here
-  (R-EDIT-7) and a Sub0Squad PR to call it.
+* **Sub0Squad adopts `applyReply` and turn control** (moved here 2026-11-18, A12 done): after a tag here, a Sub0Squad PR replaces its
+  `applyCanvasReply` and `turn_control` with these, drops the copied tests and cases, keeps `run-v11-test-app-reply.txt` (its platform test).
+* **The owner confirms [DECISIONS.md](DECISIONS.md)**: storage layered by kind (git refs per writer), deterministic birth ids, Sub0Platform's C++ layer
+  in the tools (a reason to finish its move out of Sub0Squad), Sub0Fabric kept open behind a liftable log module (A15-A18).
 * **D1: the conformance corpus** per language, hand-checked outlines.
 * **S1: the compact, lazy index** (after S0's numbers).
 * **B3 claims and notes, B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).

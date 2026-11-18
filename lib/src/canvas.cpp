@@ -320,4 +320,107 @@ CanvasReply parseCanvasReply(const std::string& reply)
     return out;
 }
 
+namespace {
+
+/// `=== EDIT: path ===` blocks of SEARCH/REPLACE pairs split into one block per pair, so each can apply on its own. Text that is not a recognisable pair
+/// (an unclosed block) is passed on whole, so `applyEdits` names what is wrong with it.
+std::vector<std::string> splitSnippets(const std::string& edits)
+{
+    std::vector<std::string> out;
+    std::size_t at = 0;
+    while ((at = edits.find("=== EDIT:", at)) != std::string::npos) {
+        const std::size_t headEnd = edits.find('\n', at);
+        if (headEnd == std::string::npos) { out.push_back(edits.substr(at)); break; }
+        const std::string head = edits.substr(at, headEnd - at + 1);
+        const std::size_t end = edits.find("=== END EDIT ===", headEnd);
+        const std::string body = edits.substr(headEnd + 1, (end == std::string::npos ? edits.size() : end) - headEnd - 1);
+        std::size_t b = 0;
+        bool any = false;
+        while (true) {
+            const std::size_t s0 = body.find("<<<<<<< SEARCH", b);
+            if (s0 == std::string::npos) break;
+            const std::size_t r0 = body.find(">>>>>>> REPLACE", s0);
+            if (r0 == std::string::npos) { out.push_back(head + body.substr(s0) + "\n=== END EDIT ===\n"); any = true; break; }
+            const std::size_t r1 = r0 + std::string_view{">>>>>>> REPLACE"}.size();
+            out.push_back(head + body.substr(s0, r1 - s0) + "\n=== END EDIT ===\n");
+            any = true;
+            b = r1;
+        }
+        if (!any) out.push_back(head + body + "\n=== END EDIT ===\n");
+        at = end == std::string::npos ? edits.size() : end + 1;
+    }
+    if (out.empty()) out.push_back(edits);
+    return out;
+}
+
+/// The application itself, in place. All or nothing is made atomic by the caller (`applyReply` works on a copy and commits it only on success).
+std::string applyInPlace(Canvas& canvas, const CanvasReply& reply, const ApplyOptions& o, std::vector<std::string>* skipped)
+{
+    const auto fail = [&](const std::string& why) { if (skipped) skipped->push_back(why); return !skipped; };   // true: stop with this refusal
+    std::map<std::string, int> shown;   // the revision each file was at when the author saw it: every operation's line numbers are in that view
+    for (const auto& path : canvas.paths()) shown[path] = canvas.revision(path);
+    for (const auto& [path, text] : reply.wholeFiles) {
+        if (!o.allowed.count(path)) { const std::string why = "'" + path + "' is not one of the files you may write"; if (fail(why)) return why; continue; }
+        (void)canvas.replaceText(path, text, o.by);
+    }
+    for (Transaction tx : reply.transactions) {
+        std::string why;
+        if (!o.allowed.count(tx.path)) why = "'" + tx.path + "' is not one of the files you may write";
+        else if (!shown.count(tx.path)) why = "there is no '" + tx.path + "' yet: write it whole with === FILE: " + tx.path + " ===";
+        else if (reply.wholeFiles.count(tx.path)) why = "'" + tx.path + "' is both rewritten whole and edited in one reply: use one or the other";
+        if (!why.empty()) { if (fail(why)) return why; continue; }
+        tx.by = o.by;
+        if (!skipped) {   // all or nothing: the file's operations as one transaction
+            tx.baseRevision = canvas.revision(tx.path);
+            if (const TxResult r = canvas.apply(tx); !r.ok) return tx.path + ": " + r.error;
+            continue;
+        }
+        for (const auto& op : tx.ops) {   // partial: each operation on its own, against the revision shown (rebased over those applied before it)
+            const Transaction one{tx.path, shown[tx.path], o.by, {op}};
+            if (const TxResult r = canvas.apply(one); !r.ok) skipped->push_back(tx.path + ": " + r.error);
+        }
+    }
+    const auto applySnippets = [&](const std::string& edits) {
+        std::string err;
+        const auto before = canvas.files();
+        const auto merged = applyEdits(edits, before, o.allowed, err);
+        if (!merged) return err;
+        for (const auto& [path, text] : *merged)
+            if (!before.count(path) || before.at(path) != text) (void)canvas.replaceText(path, text, o.by);
+        return std::string{};
+    };
+    if (!reply.searchEdits.empty()) {
+        if (!skipped) { if (std::string err = applySnippets(reply.searchEdits); !err.empty()) return err; }
+        else for (const auto& one : splitSnippets(reply.searchEdits)) if (std::string err = applySnippets(one); !err.empty()) skipped->push_back(err);
+    }
+    return {};
+}
+
+}  // namespace
+
+std::expected<ReplyApplied, std::string> applyReply(Canvas& canvas, const CanvasReply& reply, const ApplyOptions& options)
+{
+    if (!reply.error.empty()) return std::unexpected(reply.error);
+    ReplyApplied out;
+    if (options.partial) {
+        if (std::string err = applyInPlace(canvas, reply, options, &out.skipped); !err.empty()) return std::unexpected(err);
+        return out;
+    }
+    Canvas work = canvas;   // all or nothing: a refusal must leave the canvas exactly as it was, whole files written before it included
+    if (std::string err = applyInPlace(work, reply, options, nullptr); !err.empty()) return std::unexpected(err);
+    canvas = std::move(work);
+    return out;
+}
+
+std::expected<std::map<std::string, std::string>, std::string> applyReplyText(const std::string& reply, const std::map<std::string, std::string>& files,
+                                                                             const std::set<std::string>& allowed, const std::string& by)
+{
+    Canvas canvas;
+    for (const auto& [path, text] : files) canvas.addFile(path, text);
+    const CanvasReply parsed = parseCanvasReply(reply);
+    if (parsed.error.empty() && !parsed.hasEdits()) return std::unexpected(std::string{"the reply holds no edit blocks"});
+    if (auto r = applyReply(canvas, parsed, {allowed, by, false}); !r) return std::unexpected(r.error());
+    return canvas.files();
+}
+
 }  // namespace sub0canvas

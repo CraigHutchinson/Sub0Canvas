@@ -19,6 +19,7 @@ hold up on codebases of billions of lines.
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, the ordered slices; section 14: the later use cases, amendments, the register of open decisions, policies as data |
 | [docs/AUTHORING.md](docs/AUTHORING.md) | the viewer becoming an authoring tool (the first use case to invest in): concise views, the server, comments and inboxes, scenarios, slices V0-V5 |
 | [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | the open questions worked through: options, pros and cons, recommendations; where data lives (git refs), the Sub0 libraries to adopt, Sub0Fabric kept open |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | what consumers rely on, independent of implementation, each with the test that checks it; Sub0Squad's use mapped |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for and what each use case demands |
 | [docs/TESTING.md](docs/TESTING.md) | the proving ladder (unit, golden, use case, scale, consumer) and testing requirements rather than implementations |
@@ -32,7 +33,7 @@ hold up on codebases of billions of lines.
 * `lib/tests/`: C++ tests (`check.hpp`, one executable per area; `doc_driver.hpp`, the driver requirement tests go through so they survive
   architectural change, TESTING.md).
 * `index.html`, `src/*.js`, `test/*.test.js`, `tools/*.mjs`: the static viewer (no build step, no dependencies, Node 20+ for its tests).
-* `fixtures/demo/`: the viewer's hand-made demo; `fixtures/golden/`: real producer output, frozen.
+* `fixtures/demo/`: the viewer's hand-made demo; `fixtures/golden/`: real producer output, frozen. `fixtures/replies/`: recorded model replies with their intended outcome (`test_replies`).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.
 
 ## Build and test
