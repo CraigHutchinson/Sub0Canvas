@@ -136,6 +136,7 @@ The mechanisms of the backbone give agents a place in this work with nothing new
 | ground | public | what it proves |
 |---|---|---|
 | synthetic change sets from S0's corpus generator: a spike, carve-outs (some rewritten), supersessions, a stack, an integration change, a duplicate, an unrelated large change sharing files, a port onto a branch, with the true lineage and hunk states recorded | yes | every derivation of sections 2 and 3 against known truth, at small and at large scale |
+| **the synthetic mirror** (M0, [sessions/m0-synthetic-mirror.md](sessions/m0-synthetic-mirror.md)): a seeded, invented project with the reference topic's anonymised shape, its forge and tracker state captured as files, and the truth | yes | P0-P2 and P4 on realistic shape with known truth, small enough to run in `npm test` and `ctest` |
 | this repository and Sub0Squad: their branches and pull requests | yes | the local git and forge adapters on real, small data (G2) |
 | **the owner's reference topic** (section 1), captured to a local folder outside every public repository | **no** | lineage, coverage and overlap against the owner's hand-checked truth on real work at scale. **Only numbers are published** (counts, precision and recall, timings); no names, titles, paths or links |
 

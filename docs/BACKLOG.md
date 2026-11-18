@@ -16,6 +16,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
   Markdown and code. The first step of the authoring tool. Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
 * **S0: the scale harness.** A deterministic synthetic corpus and benchmarks of today's index, so the data structures are chosen by measurement.
   Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
+* **M0: the synthetic mirror.** A seeded generator of a small invented project with the shape of a work-dominated monorepo and a 25-change topic
+  (spikes, carve-outs, stacks, supersessions, ports), its captured forge and tracker state, and the truth; a small fixture checked for
+  regeneration. The public stand-in for the private reference topic. Brief: [sessions/m0-synthetic-mirror.md](sessions/m0-synthetic-mirror.md).
 * **B0: format catch-up.** The producer writes the fields the viewer already understands, plus A1 (revision ids as strings), A3 (ranges) and A13
   (policies recorded); a golden set is checked on both sides; re-capture one attempt with compiler diagnostics (R-U1-4). Brief:
   [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
