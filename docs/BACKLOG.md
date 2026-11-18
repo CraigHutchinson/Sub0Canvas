@@ -1,5 +1,7 @@
 # Backlog
 
+Status: living (2026-11-18). Updated whenever work starts, lands or is reordered.
+
 What is next, in order. Each item names its slice ([BACKBONE.md](BACKBONE.md) section 10, [AUTHORING.md](AUTHORING.md) section 7,
 [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) section 5) and, when it has one, its brief in [sessions/](sessions/README.md). Items in *Now* can run in
 parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIREMENTS.md).

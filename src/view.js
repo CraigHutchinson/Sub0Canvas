@@ -113,7 +113,7 @@
     $('#load-demo').addEventListener('click', () => loadDemo(false));
 
     function loadDemo(keepHash) {
-        if (!window.SUB0CANVAS_DEMO) { $('#problems').hidden = false; $('#problems').textContent = 'fixtures/demo.js is missing: run npm run fixtures.'; return; }
+        if (!window.SUB0CANVAS_DEMO) { $('#problems').hidden = false; $('#problems').textContent = 'fixtures/demo.js is missing: run npm run fixtures:demo.'; return; }
         load(window.SUB0CANVAS_DEMO, keepHash ? 'demo' : 'demo-fresh');
     }
 

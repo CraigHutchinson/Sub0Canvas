@@ -29,7 +29,7 @@ npm run mirror -- source  --seed 1 [--serve]             # state and truth as JS
 npm run mirror -- local   --seed 1 --out <dir>           # <dir>/repo, a git repository; every commit id checked against the generator's
 npm run mirror -- canvas  --seed 1 --out <dir>           # layered-doc-1 turns, one per week, for the viewer
 npm run mirror -- github  --seed 1 --repo <name>         # the steps that publish it to a new forge repository: printed only
-npm run mirror -- fixture --seed 1                       # rewrite fixtures/mirror/seed-1
+npm run fixtures:mirror                                  # rewrite fixtures/mirror/seed-1
 ```
 
 * **source**: the mirror as a runtime data source. In process, `generateMirror()` returns `source` with `revisions`, `files`, `changedPaths`

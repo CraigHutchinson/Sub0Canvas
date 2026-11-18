@@ -35,9 +35,13 @@ hold up on codebases of billions of lines.
   threads, no clock reads, no environment.
 * `lib/tests/`: C++ tests (`check.hpp`, one executable per area; `doc_driver.hpp`, the driver requirement tests go through so they survive
   architectural change, TESTING.md).
-* `index.html`, `src/*.js`, `test/*.test.js`, `tools/*.mjs`: the static viewer (no build step, no dependencies, Node 20+ for its tests).
-* `tools/mirror/`: the synthetic mirror generator (`npm run mirror -- <mode>`); `fixtures/mirror/`: its committed output and truth.
-* `fixtures/demo/`: the viewer's hand-made demo; `fixtures/golden/`: real producer output, frozen. `fixtures/replies/`: recorded model replies with their intended outcome (`test_replies`).
+* `app/` (none yet): C++ executables that link the library and do its I/O (`sub0canvas` with `snapshot`, `serve`, `inbox`; AUTHORING.md section 3).
+  Never under `src/`, which is the viewer's.
+* `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.
+* `tools/*.mjs`: the viewer's tools (demo generator, static server, screenshots). `tools/mirror/`: the synthetic mirror generator
+  (`npm run mirror -- <mode>`, [docs/MIRROR.md](docs/MIRROR.md)).
+* `fixtures/`: test data by kind, indexed with origin, checking test and refresh command in [fixtures/README.md](fixtures/README.md): `demo/`
+  (generated), `golden/` (captured), `replies/` (hand-written), `mirror/` (generated).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.
 
 ## Build and test
@@ -62,7 +66,9 @@ and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --rep
   saying what it is for and its contract, not restating the name.
 * `[[nodiscard]]` on functions whose result matters; `std::format` and `std::print`; `std::expected` for fallible operations in new code.
 * Line length about 160; comments explain why, and cite the doc section a rule comes from.
-* JavaScript: classic scripts (the page runs from `file://`), no dependencies, `node:test`.
+* JavaScript, no dependencies, Node 20+, `node:test`; the module kind follows the directory: `src/*.js` are classic scripts that also export
+  CommonJS (the page runs from `file://` and tests `require` them); `tools/*.mjs` are ES-module entry points; `tools/mirror/*.js` are CommonJS,
+  because tests `require` them. Do not mix kinds within a directory.
 
 ## Rules (the owner's standing rules)
 

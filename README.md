@@ -1,7 +1,9 @@
 # Sub0Canvas
 
-A viewer for the **layered document** that [Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad)'s canvas worker produces: one canvas seen through any number of layers
-(code, gate issues, review notes, prose per function, decisions, or anything else). Each layer binds to **stable block ids**, never to line
+A library and a viewer for **layered documents**: a codebase held as revisioned files, seen through any number of layers (code, gate issues,
+review notes, prose per function, decisions, pull requests, or anything else). Its first producer and consumer is
+[Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad)'s canvas worker; the design ahead (AGENTS.md) makes it the place where agents, people and
+sources such as git and GitHub meet. Each layer binds to **stable block ids**, never to line
 numbers. Lines are resolved only when the view renders.
 
 It is a static web app with no build step and no dependencies. Open `index.html`, then open an attempt directory, drop its files on the page, or load
@@ -81,7 +83,7 @@ These fields are not yet in the producer. The demo uses them, and the viewer wor
 
 ```bash
 npm test             # node:test, no dependencies (Node 20+)
-npm run fixtures     # regenerate fixtures/demo and fixtures/demo.js from tools/gen-fixtures.mjs
+npm run fixtures     # regenerate every generated fixture (fixtures:demo, fixtures:mirror; fixtures/README.md)
 npm run serve        # http://127.0.0.1:8765 (only needed where a browser refuses scripts from file://)
 node tools/screenshots.mjs   # regenerate docs/screenshots with headless Edge or Chrome
 ```
@@ -137,13 +139,4 @@ The library came from Sub0Squad (imported from its commit d54758f on 2026-11-17)
 
 Start with [AGENTS.md](AGENTS.md) (working here: layout, style, rules) and [docs/RESUME.md](docs/RESUME.md) (where it stands).
 
-| document | what it holds |
-|---|---|
-| [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
-| [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | stable block identity, layers, the issues layer, formats, prior art (built) |
-| [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim: the backbone idea, sources and the GitHub project view |
-| [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters (git, GitHub), history, scale to billions of lines; ordered slices with checks |
-| [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for: an agent's document, the squad's backbone, a GitHub project view, very large codebases, editors, review |
-| [docs/TESTING.md](docs/TESTING.md) | the proving ladder: unit, golden, use case, scale, consumer |
-| [docs/INTEGRATION.md](docs/INTEGRATION.md) | the iterative loop with Sub0Squad: a tag here, a pull request there |
-| [docs/BACKLOG.md](docs/BACKLOG.md), [docs/sessions/](docs/sessions/README.md) | what is next, and briefs for follow-up sessions |
+Every document, with what it holds, is listed once: in [AGENTS.md](AGENTS.md), "What this is".

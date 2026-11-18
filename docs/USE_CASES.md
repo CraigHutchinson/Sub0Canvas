@@ -1,5 +1,7 @@
 # Use cases: who Sub0Canvas is for, and what each one demands
 
+Status: living (2026-11-18). U1 and the viewer part of U7 are built; the rest is design.
+
 Each use case is a consumer the design must serve **without a mechanism of its own** (if one needs a new mechanism, the design is incomplete, see
 [BACKBONE.md](BACKBONE.md) section 9; section 14 walks U3-U11 against it). Each has a proving ground: something that can be run and that fails when
 the design is wrong ([TESTING.md](TESTING.md)). What each one requires, stated so that it outlives any implementation, is in

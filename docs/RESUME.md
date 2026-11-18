@@ -1,5 +1,7 @@
 # Where Sub0Canvas stands (2026-11-18, evening)
 
+Status: living (2026-11-18, evening). Rewritten at the end of each working session.
+
 Read this first when resuming. What is next, in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
 
 ## Released

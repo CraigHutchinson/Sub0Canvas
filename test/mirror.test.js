@@ -21,7 +21,7 @@ test('generation is deterministic', () => {
     assert.deepEqual(roundTrip(again.truth), roundTrip(m.truth));
 });
 
-test('the committed fixture is what the generator writes (regenerate: npm run mirror -- fixture)', () => {
+test('the committed fixture is what the generator writes (regenerate: npm run fixtures:mirror)', () => {
     for (const [name, value] of [['state', m.state], ['truth', m.truth], ['shape', shape(m)]]) {
         const committed = JSON.parse(fs.readFileSync(path.join(fixtureDir, `${name}.json`), 'utf8'));
         assert.deepEqual(roundTrip(value), committed, `${name}.json differs from the generator`);

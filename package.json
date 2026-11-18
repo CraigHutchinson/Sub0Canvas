@@ -1,14 +1,16 @@
 {
   "name": "sub0canvas",
-  "version": "0.1.0",
-  "description": "A viewer for Sub0Squad's layered document: one canvas seen through code, issues, prose, review and any other layer, bound to stable block ids.",
+  "version": "0.2.1",
+  "description": "Sub0Canvas: a library and viewer for layered documents, a codebase seen through layers bound to stable block ids. This package holds the viewer, its tests and tools.",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
-    "fixtures": "node tools/gen-fixtures.mjs",
-    "serve": "node tools/serve.mjs",
-    "mirror": "node tools/mirror/cli.js"
+    "fixtures": "npm run fixtures:demo && npm run fixtures:mirror",
+    "fixtures:demo": "node tools/gen-fixtures.mjs",
+    "fixtures:mirror": "node tools/mirror/cli.js fixture --seed 1",
+    "mirror": "node tools/mirror/cli.js",
+    "serve": "node tools/serve.mjs"
   },
   "engines": {
     "node": ">=20"

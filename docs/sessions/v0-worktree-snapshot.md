@@ -25,7 +25,7 @@ provider in a way D0 can absorb, and say so.
 
 1. A Markdown provider: ATX and Setext headings as nested `heading` nodes named by the heading path; fenced code blocks as children, tagged with their
    language; R-BLK-1, 3, 4 checks on a small hand-checked corpus (`fixtures/languages/markdown/`).
-2. `tools/sub0canvas` (C++, `src/tools/` or `cli/`): `snapshot <dir> [paths]` walks the given paths (default: tracked text files), indexes them, and
+2. `sub0canvas` (C++, in `app/`, AGENTS.md "Layout"): `snapshot <dir> [paths]` walks the given paths (default: tracked text files), indexes them, and
    writes one snapshot (`layers/turn-0.json`) plus revision texts, as the viewer already reads. Deterministic: sorted paths, no timestamps.
 3. A golden snapshot of a small fixture tree, byte-compared in a test; and `sub0canvas snapshot . docs` run by hand on this repository.
 4. The viewer: render `.md` files as Markdown (a small renderer in `src/`, no dependency), with sections as blocks (select, fold, history); code

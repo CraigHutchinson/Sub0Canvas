@@ -25,8 +25,8 @@ test('fixtures are up to date with tools/gen-fixtures.mjs', () => {
         // The generator also rewrites fixtures/demo.js; compare it before and after so a stale bundle fails here too.
         const bundle = fs.readFileSync(path.join(root, 'fixtures', 'demo.js'), 'utf8');
         execFileSync(process.execPath, [path.join(root, 'tools', 'gen-fixtures.mjs'), tmp]);
-        assert.deepEqual(tree(tmp), tree(path.join(root, 'fixtures', 'demo', 'attempt-1')), 'run: npm run fixtures');
-        assert.equal(fs.readFileSync(path.join(root, 'fixtures', 'demo.js'), 'utf8'), bundle, 'run: npm run fixtures');
+        assert.deepEqual(tree(tmp), tree(path.join(root, 'fixtures', 'demo', 'attempt-1')), 'run: npm run fixtures:demo');
+        assert.equal(fs.readFileSync(path.join(root, 'fixtures', 'demo.js'), 'utf8'), bundle, 'run: npm run fixtures:demo');
     } finally {
         fs.rmSync(tmp, { recursive: true, force: true });
     }

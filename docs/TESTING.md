@@ -1,5 +1,7 @@
 # Testing: the proving ladder
 
+Status: in force (2026-11-18). L0, L1 and L4 run today; L2 has its first fixture (the synthetic mirror) and no scenario tests yet; L3 waits for S0.
+
 Every change climbs the ladder as far as its kind requires (the table at the end), **in this repository first**, before it is integrated into
 Sub0Squad ([INTEGRATION.md](INTEGRATION.md)). A rung that is skipped is said so in the commit or pull request, never skipped silently.
 

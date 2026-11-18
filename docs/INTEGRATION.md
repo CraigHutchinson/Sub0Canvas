@@ -1,5 +1,7 @@
 # Integration with Sub0Squad: an iterative, parallel proving loop
 
+Status: in force (2026-11-18). The process every change the squad consumes follows.
+
 Sub0Squad ([github.com/CraigHutchinson/Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad)) is this library's first and most demanding consumer.
 It is where a change meets real models and real agent loops. But it is **not** where a change is first proved: every change is proved here first, by
 the ladder in [TESTING.md](TESTING.md), and only then integrated, one iteration at a time, through a **pull request** in Sub0Squad.
