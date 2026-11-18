@@ -28,6 +28,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 * **The owner reads [SCALE.md](SCALE.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md)** (2026-11-18): the second scale profile and its requirements
   (R-SCALE-5 to 9, A19-A21), and change views (U12, R-CHG, slices P0-P5, four open decisions).
+* **Two owner questions from the register consolidation** (2026-11-18): which policy owns "what counts as a spike" (CHANGE_VIEWS.md
+  section 2 gives it to both the topic policy and `lineage@1`; the register, BACKBONE.md 14.3, follows the topic policy); and whether
+  BACKBONE.md section 11's confirmations (questions 4, 5, 6) should also fold into the register or stay a question list.
 
 * **V1: comments** (after the owner's answers to questions 10 and 11): `sub0canvas serve`, a minimal store and file log (B1's core), the bridge;
   comment, reply and resolve from the viewer; scenarios as tests.
