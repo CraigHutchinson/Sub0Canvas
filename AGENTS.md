@@ -35,8 +35,8 @@ hold up on codebases of billions of lines.
   threads, no clock reads, no environment.
 * `lib/tests/`: C++ tests (`check.hpp`, one executable per area; `doc_driver.hpp`, the driver requirement tests go through so they survive
   architectural change, TESTING.md).
-* `app/` (none yet): C++ executables that link the library and do its I/O (`sub0canvas` with `snapshot`, `serve`, `inbox`; AUTHORING.md section 3).
-  Never under `src/`, which is the viewer's.
+* `app/`: C++ executables that link the library and do its I/O. `sub0canvas snapshot` reads a local git repository into a viewer bundle (`serve` and
+  `inbox` follow, AUTHORING.md section 3). Never under `src/`, which is the viewer's.
 * `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.
 * `tools/*.mjs`: the viewer's tools (demo generator, static server, screenshots). `tools/mirror/`: the synthetic mirror generator
   (`npm run mirror -- <mode>`, [docs/MIRROR.md](docs/MIRROR.md)).

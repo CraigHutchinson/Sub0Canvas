@@ -14,8 +14,10 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
   faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1 and G1. Brief:
   [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
-* **V0: a worktree snapshot and Markdown in the viewer.** The `sub0canvas` executable writes a snapshot of this repository's docs; the viewer renders
-  Markdown and code. The first step of the authoring tool. Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
+* **V0: a worktree snapshot and Markdown in the viewer.** The first step of the authoring tool. **Started 2026-11-18**: `sub0canvas snapshot`
+  (`app/`) reads a git repository's history for a pathspec into a viewer bundle, and `tools/serve.mjs` serves it straight from git. Left: Markdown
+  blocks and rendering, the worktree's uncommitted state, and a trunk's merge commits titled by the change they merge (first-parent history is
+  all "Merge PR" subjects). Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
 * **S0: the scale harness.** A deterministic synthetic corpus and benchmarks of today's index, so the data structures are chosen by measurement.
   Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
 * **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10): reverted state, stale stacks, evil merges,

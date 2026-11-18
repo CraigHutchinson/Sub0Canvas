@@ -40,6 +40,16 @@ target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/inc
 target_compile_options(sub0canvas PRIVATE ${SUB0CANVAS_STRICT})
 target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 
+# The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
+option(SUB0CANVAS_BUILD_APP "Build the sub0canvas command line" ${SUB0CANVAS_TOP_LEVEL})
+if(SUB0CANVAS_BUILD_APP)
+  add_executable(sub0canvas_app app/sub0canvas.cpp)
+  set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
+  target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
+  target_include_directories(sub0canvas_app PRIVATE lib/src)     # json_util.hpp: one JSON writer for the library and its tools
+  target_link_libraries(sub0canvas_app PRIVATE sub0canvas simdjson::simdjson)
+endif()
+
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
@@ -61,6 +71,9 @@ if(SUB0CANVAS_BUILD_TESTING)
   if(SUB0CANVAS_NODE)
     file(GLOB viewerTests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.test.js)
     add_test(NAME test_viewer COMMAND ${SUB0CANVAS_NODE} --test ${viewerTests} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    if(SUB0CANVAS_BUILD_APP)
+      set_tests_properties(test_viewer PROPERTIES ENVIRONMENT "SUB0CANVAS_EXE=$<TARGET_FILE:sub0canvas_app>")   # test/snapshot.test.js runs it
+    endif()
   else()
     message(STATUS "Sub0Canvas: node not found; the viewer's tests (test_viewer) are not registered")
   endif()

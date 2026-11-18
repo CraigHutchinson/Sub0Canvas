@@ -99,6 +99,21 @@ node tools/screenshots.mjs   # regenerate docs/screenshots with headless Edge or
 
 The page uses classic scripts, not ES modules, so it runs when opened straight from disk. The demo is bundled into `fixtures/demo.js` for the same reason.
 
+## Viewing a local git repository
+
+`sub0canvas snapshot` (built with the library, `app/`) turns the recent history of part of a local repository into a bundle the viewer opens:
+one turn per commit that touched the pathspec, the library's block identities carried across them, and a `commits` layer anchoring each commit to
+the blocks it changed. A pathspec is required (a view is scoped, never the whole repository), and `--max-files` and `--history` bound the size.
+
+```bash
+build/default/sub0canvas snapshot --repo ../SomeRepo --history 8 -- src/parser > out/parser.bundle.json
+```
+
+`npm run serve` also serves snapshots straight from git, so no copy of the code is written:
+`http://127.0.0.1:8765/?bundle=%2Fsnapshot%3Frepo%3Dself%26paths%3Dlib%2Fsrc`. Repositories are named, never given by path in a request: `self`
+is this one, and others are registered locally in `.git/sub0canvas/repos.json` (`{"name": "path"}`) or `SUB0CANVAS_REPOS`, so a private
+repository's location never enters this tree.
+
 ## The C++ library (`lib/`)
 
 The canvas tooling that writes `layered-doc-1` lives here too, as a C++23 static library, `sub0canvas::sub0canvas`. It works on its own and does not depend on Sub0Squad. Sub0Squad is its first consumer.
