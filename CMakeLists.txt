@@ -52,12 +52,21 @@ endif()
 
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
+  # The test helper (sub0platform/testing/check.hpp) comes from Sub0Platform. Only the tests link it: the library and the viewer gain no dependency.
+  # The pin is main's commit until Sub0Platform is tagged; then it moves to the tag.
+  if(NOT TARGET Sub0Platform::sub0platform)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
+    CPMAddPackage(NAME Sub0Platform
+      GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Platform.git
+      GIT_TAG 5feccdf226046cc790214bc30793832a1888ce4b
+      SOURCE_SUBDIR cpp)
+  endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
   foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay test_replies test_turn_control)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
-    target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson)
+    target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson Sub0Platform::sub0platform)
     set(args "")
     if(name STREQUAL "test_golden_replay")
       set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)    # real producer output
