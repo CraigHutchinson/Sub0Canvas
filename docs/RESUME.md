@@ -74,7 +74,7 @@ needs none of it except the release (O1).
 * `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or
   scale (SCALE.md, slices S0-S2).
 * The test helper `lib/tests/check.hpp` calls `getenv`, which clang on Windows (MSVC runtime) flags as deprecated under `-Werror`; the Linux Clang
-  CI leg is unaffected.
+  CI leg is unaffected. The fix belongs in Sub0Platform's C++ layer (BACKLOG, Tidy-ups), not in this copy.
 * Turn files' `events` are cumulative today, and every turn repeats every file's text; B0's one format revision fixes both (PLAN.md O5).
 
 ## Where things are

@@ -88,4 +88,4 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Tidy-ups
 
-* `lib/tests/check.hpp`: avoid `getenv`'s deprecation under clang on Windows (`_dupenv_s` there, or read once through a small helper).
+* `lib/tests/check.hpp`: `getenv` is deprecated under clang on Windows. The helper is platform code (temp directories, environment), so the fix belongs in Sub0Platform's C++ layer, not here: Sub0Platform has no C++ layer yet (2026-11-19: only `python/sub0platform/env.py`), so the helper moves with Sub0Squad's layer 0 and reads the variable through `_dupenv_s` on Windows once. Until then Canvas keeps its copy unchanged.
