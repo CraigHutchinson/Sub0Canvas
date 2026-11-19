@@ -78,6 +78,8 @@ Named so the groundwork is checked against them (BACKBONE.md section 14.1). Each
 (A4) and ranges (A3); a prose-first reader needs Markdown blocks (A8) and name anchors; several repositories need document-qualified links (A9); an
 agent's memory is `note` events in the log, resolved across history by B4 and G1.
 
+For U8, a reader should be able to go from an observed failure to its recorded execution and from an observed block to the checks that reached it. The [runtime evidence brief](sessions/canvas-runtime-evidence.md#review-of-related-uses) reviews crashes, per-test coverage, profiling and diagnostics against that need. The first receiving test remains the Sub0Squad C++ repair.
+
 ## U12. Change views (design)
 
 A topic of work in a large repository is rarely one pull request. It is an exploratory spike, focused changes carved out of it, stacks, supersessions, an integration change and ports to release branches, spread over weeks. The forge shows a flat list. U12 shows the set: what each change came from and depends on, where changes meet at block level (not file level, which is noise), what of a spike has landed, and every pending variant of one block side by side. It needs no new mechanism: changes and topics are items, lineage is links, footprints are anchors ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)).

@@ -210,6 +210,8 @@ Each part is recorded:
 So "what happened to `term()`, and what is attached to it?" is answered by its id: its events, the canvas revisions whose spans overlap its lines, and every
 item in every layer whose anchors resolve to it.
 
+Runtime evidence adds a receiving test for this navigation. The same recorded execution should be discoverable from a failure or crash and from the source blocks observed in its stack. Opening a frame shows the source revision that ran. See [runtime evidence on canvas](sessions/canvas-runtime-evidence.md#navigate-in-both-directions).
+
 ## Formats
 
 There are two audiences, and they get two formats:
