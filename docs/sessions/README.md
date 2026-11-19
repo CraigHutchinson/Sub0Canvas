@@ -47,6 +47,7 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 | [d0-block-discovery-seam.md](d0-block-discovery-seam.md) | D0: one outline result and a provider per language, today's heuristics behind it, the measured faults fixed | 2026-11-18 |
 | [k0-ui-kpis.md](k0-ui-kpis.md) | K0: a scripted headless-browser benchmark of every viewer interaction against its budget, recorded with the machine | 2026-11-18 |
 | [v0-worktree-snapshot.md](v0-worktree-snapshot.md) | V0: a `sub0canvas snapshot` of this repository's docs, Markdown blocks, Markdown rendered in the viewer | 2026-11-18 |
+| [platform-migration.md](platform-migration.md) | Move Sub0Squad's platform layer to Sub0Platform, with the getenv fix; Squad and Canvas consume it | 2026-11-19 |
 
 ## Done
 
