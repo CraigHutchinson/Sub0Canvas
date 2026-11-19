@@ -62,6 +62,10 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Any time
 
+* **Runtime evidence on canvas**: prototype an on-demand trace read in Sub0Squad using the existing issues and layers. Verify historical reads and
+  bounded detail on a real repair before routing any required interchange fields through B0 and the viewer read through V1a.
+  Brief: [sessions/canvas-runtime-evidence.md](sessions/canvas-runtime-evidence.md).
+
 * **Sub0Squad: measure the layer where it acts**: off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the
   summary alone. A Sub0Squad PR with no library change ([INTEGRATION.md](INTEGRATION.md)).
 * **Sub0Platform: finish moving the C++ layer out of Sub0Squad**, so `app/` and `serve` adopt it (DECISIONS.md section 8). Before or during V1a.
