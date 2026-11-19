@@ -78,7 +78,7 @@ Named so the groundwork is checked against them (BACKBONE.md section 14.1). Each
 (A4) and ranges (A3); a prose-first reader needs Markdown blocks (A8) and name anchors; several repositories need document-qualified links (A9); an
 agent's memory is `note` events in the log, resolved across history by B4 and G1.
 
-For U8, a reader should be able to go from an observed failure to its recorded execution and from an observed block to the checks that reached it. The [runtime evidence brief](sessions/canvas-runtime-evidence.md#review-of-related-uses) reviews crashes, per-test coverage, profiling and diagnostics against that need. The first receiving test remains the Sub0Squad C++ repair.
+For U8, a reader should be able to go from an observed failure to its recorded execution and from an observed block to the checks that reached it. The [runtime evidence brief](sessions/canvas-runtime-evidence.md#review-of-related-uses) reviews crashes, per-test coverage, profiling and diagnostics against that need. The first receiving test remains the Sub0Squad C++ repair. The later [coverage view](sessions/canvas-test-coverage.md) adds outcome-aware source ranges and a separate view of the available assertion evidence.
 
 ## U12. Change views (design)
 

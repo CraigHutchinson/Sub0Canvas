@@ -72,6 +72,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Later: phase 4, widening (ordered after phase 2's acceptance round)
 
+* **Test coverage and assertion evidence (U8)**: after the C++ runtime-evidence slice, prove per-test import and a revision-bound source overlay.
+  Scope assertion observations and behavioral sensitivity separately. [Brief](sessions/canvas-test-coverage.md).
+
 * **V3-V5**: edits and suggestions, checks and push, a second actor.
 * **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
 * **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.

@@ -29,7 +29,7 @@ After an edit or rename, the block identity can still lead to related historical
 | Profiling and performance regressions | Drill from a benchmark change or sampled hotspot into the measured caller paths, with the build, workload and sampling metadata. | Find workloads and measurements that included the block. Label sampled counts and keep comparisons tied to the runs that produced them. |
 | Compiler, sanitizer and CI diagnostics | Open the reported ranges and any recorded related locations. Preserve distinct stack roles when a sanitizer reports several stacks for one finding. | Find checks that cited the block and show whether each relation is a source location, a runtime observation or a diagnosis. |
 
-The common need is revision-bound evidence readable in either direction. Use the C++ test case to prove navigation and bounded detail first. Coverage, profiling, multi-thread and async cases each need their own receiving fixture before they shape a shared interface.
+The common need is revision-bound evidence readable in either direction. The separate [coverage brief](canvas-test-coverage.md) scopes the later source overlay, per-test attribution and assertion observations. Use the C++ test case to prove navigation and bounded detail first. Coverage, profiling, multi-thread and async cases each need their own receiving fixture before they shape a shared interface.
 
 ## First receiving slice
 
