@@ -147,7 +147,15 @@ int main()
             CHECK(!empty.error.empty());   // an empty block on its own is still refused
         }
         // R-EDIT-4: marked bodies; R-EDIT-2, R-EDIT-5, R-EDIT-6: refusals that name what is wrong.
+        {   // A SYMBOL reply ended in a SEARCH/REPLACE footer, with no separator.
+            const CanvasReply r = parseCanvasReply(
+                "=== EDIT: src/calc.cpp SYMBOL call ===\nint call() { return 1; }\n    >>>>>>> REPLACE\n=== END EDIT ===\n");
+            CHECK(r.error.empty() && r.transactions.size() == 1 && r.transactions[0].ops.size() == 1 &&
+                  r.transactions[0].ops[0].text == "int call() { return 1; }\n");
+        }
         CHECK(replacementOfMarkedBlock("a\nb\n") == "a\nb\n");
+        CHECK(replacementOfMarkedBlock("a\n>>>>>>> REPLACE\nb\n") == "a\n>>>>>>> REPLACE\nb\n");
+        CHECK(replacementOfMarkedBlock("a\n>>>>>>> REPLACE in example\n") == "a\n>>>>>>> REPLACE in example\n");
         CHECK(replacementOfMarkedBlock("<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE\n") == "new\n");
         CHECK(replacementOfMarkedBlock("old\n=======\n>>>>>>> REPLACE\n").empty());   // an empty replacement deletes
         CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a * b;\n=======\n  return 0;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.find("does not appear") != std::string::npos);

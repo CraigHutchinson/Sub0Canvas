@@ -160,10 +160,17 @@ bool parseLineSpec(std::string& path, LineEdit& e)
 std::string replacementOfMarkedBlock(const std::string& body)
 {
     const std::string s = "\n" + body;   // so a marker on the first line is found like any other
-    const std::size_t rep = markerLine(s, ">>>>>>> REPLACE", 0);
+    constexpr std::string_view closeMarker = ">>>>>>> REPLACE";
+    const std::size_t rep = markerLine(s, closeMarker, 0);
+    if (rep == std::string::npos) return body;
     std::size_t sep = std::string::npos;   // the last separator before the closing marker
     for (std::size_t at = markerLine(s, "=======", 0); at != std::string::npos && at < rep; at = markerLine(s, "=======", at + 1)) sep = at;
-    if (rep == std::string::npos || sep == std::string::npos) return body;
+    if (sep == std::string::npos) {
+        // A typed edit can carry a SEARCH/REPLACE footer even when its body is plain replacement text.
+        const auto first = s.find_first_not_of(" \t", rep + 1);
+        const auto last = s.find_last_not_of(" \t\r\n");
+        return std::string_view{s}.substr(first, last - first + 1) == closeMarker ? body.substr(0, rep) : body;
+    }
     const std::size_t from = s.find('\n', sep + 1) + 1;   // the line after the separator (the separator ends before rep, so there is one)
     return from > rep ? std::string{} : s.substr(from, rep - from) + "\n";
 }
