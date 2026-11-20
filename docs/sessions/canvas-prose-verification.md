@@ -8,6 +8,14 @@ A worker reading a folded function can see a short description of the invariant 
 
 Start with an explicit, bounded claim. A comment explaining why a parser can recurse is suitable when it states a checkable condition, such as the cursor advancing before that repeated call. A short explanation of why a named numerical limit exists may need a reviewed derivation as well as boundary tests. Give each claim its own scope so one verified sentence does not imply the rest of the comment was checked.
 
+## Code and comments in a bounded view
+
+A focused code-and-comments read returns the exact numbered source for the selected block and revision, with inline comments in their original order. A linked prose item can appear alongside it with its anchor and verification badge. When the body stays folded, show a short, explicitly sourced comment excerpt just above the fold marker if the requested view has room. The excerpt may be a quote from the hidden source or a linked prose item. Label the origin, mark omission or truncation, and keep projected text outside numbered editable source. Opening the original always returns the actual file text.
+
+Use the existing scoped view mechanism to select code, inline comments and optional linked items together. Keep enough room for relevant source and the response before spending the remaining budget on optional context. Let a worker request comment-only detail, the full source range, or a linked item by scope. Select default excerpts by the focused block, pending review or active failure and make other items available on request. Compare the modes on a small-context worker using prompt tokens, additional reads, chosen regions and accepted edits.
+
+Freeform comments and other attached information use extensible layer kinds, open item data and typed links. The canvas can assemble a view from these without making each kind a fixed property of a code block. Coverage, test outcomes and traces retain their own linked layers, identity, scope and revision. Avoid embedding a copy of coverage in the prose or moving source comments out of their files. A reader can combine the layers when needed and open the exact evidence on demand.
+
 ## Verification and the journal
 
 Use the existing item, revision anchor and link model for the prototype. A stable claim identity follows the block across moves. Bind each evidence record to the claim text revision or digest, its implementation revision and block range, the supporting test or assertion identity and revision, and the run or review that checked it. Include the checker or reviewer, outcome, and any scope or capture limits. Keep recorded evidence immutable. Keep the content identity that ran even if a later edit moves the block.

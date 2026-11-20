@@ -109,6 +109,10 @@ of the open file as an outline inside the tree (where editors put them); blocks 
 server, showing a page of matches; and the identity history views (retired, merged, orphaned) as their own query rather than rows mixed into
 the list. Whatever is chosen, it is scoped and windowed.
 
+A future compound view can scope code and comments to one block, with bounded excerpts above a fold and exact numbered source on expansion.
+Keep separately linked evidence available through a scoped query. The [prose verification brief](sessions/canvas-prose-verification.md#code-and-comments-in-a-bounded-view)
+describes the first small-context consumer.
+
 ## 4. The document and its layers
 
 | part | in the authoring tool |
