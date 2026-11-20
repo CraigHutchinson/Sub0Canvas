@@ -34,8 +34,8 @@ hold up on codebases of billions of lines.
 
 * `lib/include/sub0canvas/*.hpp`, `lib/src/*.cpp`: the C++23 library, target `sub0canvas::sub0canvas`, namespace `sub0canvas`. Pure: no I/O, no
   threads, no clock reads, no environment.
-* `lib/tests/`: C++ tests (`check.hpp`, one executable per area; `doc_driver.hpp`, the driver requirement tests go through so they survive
-  architectural change, TESTING.md).
+* `lib/tests/`: C++ tests, one executable per area. The test helper is Sub0Platform's `sub0platform/testing/check.hpp` (fetched for the tests
+  only, CMakeLists.txt). `doc_driver.hpp`, the driver requirement tests go through so they survive architectural change, TESTING.md.
 * `app/`: C++ executables that link the library and do its I/O. `sub0canvas snapshot` reads a local git repository into a viewer bundle (`serve` and
   `inbox` follow, AUTHORING.md section 3). Never under `src/`, which is the viewer's.
 * `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.

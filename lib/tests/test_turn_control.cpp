@@ -1,7 +1,7 @@
 // Turn control (docs/REQUIREMENTS.md, R-TURN-1 to R-TURN-5): pure rules over the text of a model's reply, used while it streams and after it ends:
 // cut-off replies joined at a line boundary (R-TURN-1, R-TURN-2), the re-prompt for a cut (R-TURN-3), runaway replies caught early (R-TURN-4), edits
 // that grow into rewrites (R-TURN-5). Moved from Sub0Squad's test_blocks (block 1, rows 34 to 36) with the code, 2026-11-18; every check is as it was.
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "sub0canvas/turn_control.hpp"
 
 #include <map>

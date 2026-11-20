@@ -2,7 +2,7 @@
 // must follow (fixtures/replies, format in its README), applied the way an agent applies a reply: continuations joined (turn control), the reply parsed
 // and applied all or nothing. Moved from Sub0Squad's test_blocks (block 1) with `applyReply` itself, 2026-11-18; the runner is restated here from the
 // case format, and the cases are unchanged. argv[1] is the fixture directory.
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/turn_control.hpp"

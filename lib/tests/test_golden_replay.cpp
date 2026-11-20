@@ -9,7 +9,7 @@
 //
 // The verdict of each turn is rebuilt from the recorded items' `detail` (the gate's own FAIL lines); the golden set holds only single-line test
 // failures, which the check below asserts so that a future capture with multi-place diagnostics is noticed rather than half-checked.
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "doc_driver.hpp"
 
 #include <simdjson.h>

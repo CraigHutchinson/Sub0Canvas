@@ -7,7 +7,7 @@
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/outline.hpp"
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 
 using namespace sub0canvas;
 

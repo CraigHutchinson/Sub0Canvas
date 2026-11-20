@@ -1,7 +1,7 @@
 // Views and skeletons the consumers depend on (docs/REQUIREMENTS.md, R-VIEW and R-SKEL), checked here and not only in Sub0Squad: the outline of a file,
 // one section open with its neighbours folded, a function addressed by name down to one line, and `@@ signature` lines completed into stubs per language.
 // These checks were first written in Sub0Squad's test_blocks (block 4, row 46); they state the library's contract, so they live with the library.
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/outline.hpp"
 
