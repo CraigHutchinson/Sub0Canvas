@@ -24,6 +24,24 @@ A scratch result is evidence about the actor's scratch snapshot. It may support 
 
 Add two receiving cases to the shared-address fixture. First, give two workers different blocks in one file. Let one worker insert lines and publish while the other holds an uncommitted edit. Both disjoint changes should survive, and a duplicate outside the second worker's view should have no effect on its resolution. Second, let the actors edit an overlapping range. The second apply should identify the overlap and retain both scratch histories. Run these after the single-worker resolver cases establish the base contract.
 
+
+## Clone a viewpoint at a pinned revision
+
+Sub0Squad's first receiving consumer is a manager-led isolated retry of a production job whose current attempt appears stuck. A worker must be able to start
+a new session from exactly the Canvas viewpoint the original job received, including a viewpoint saved before later source changes. Restore the source
+revision or per-file revision set, canonical content identities, visible ranges and folds, edit scope, and any scratch state included in that checkpoint.
+Record a versioned fingerprint of the canonical viewpoint manifest. Verify it when restoring the checkpoint and report a missing revision, unavailable
+content or mismatch explicitly.
+
+The clone has its own view and actor or session identity, scratch history and newly issued edit addresses. It records its parent view, source revision and
+checkpoint fingerprint for provenance. Changes in either branch stay local to that branch until explicitly integrated. Keep checks and trace evidence bound
+to the branch and revision that produced them. Canvas supplies the clone, verification and lineage. The caller decides when to fork and which result to use. Track the caller policy in [Sub0Squad #2](https://github.com/CraigHutchinson/Sub0Squad/issues/2).
+
+Prove the contract with a Sub0Squad repair. Capture the start, advance the original view, restore the pinned viewpoint into a second session, and check that
+both sessions see the expected content and writable ranges. Edit both branches independently, reject addresses issued to the other branch, and report
+a mismatched or unavailable checkpoint. Verify that the receiving path can inspect both histories and integrate one candidate through the usual revision
+and scope checks. Keep storage and copy strategy open until this receiving case establishes the required semantics.
+
 ## First receiving slice
 
 Use one Sub0Squad C++ repair. Produce a compiler diagnostic from a known revision, then request its historical source and a current guarded edit. Verify the base case, an unrelated insertion, a moved block, duplicate text and a changed target. Repeat with an independently recorded test assertion or stack frame anchored to the same function. From the current function, find both original records and distinguish their evidence types. A checked-out revision can have the same body and a different source line. The views should show the original and resolved locations clearly.

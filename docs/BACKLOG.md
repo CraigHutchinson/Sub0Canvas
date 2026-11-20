@@ -77,11 +77,13 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 * **Revision-bound prose verification**: attach a claim and its verification to one code block and a linked test. Record a new check
   when the code, prose or supporting test changes, with historical evidence still readable in both directions. Receive it after the
-  runtime evidence slice through the backbone's claims and revision-aware anchors. [Brief](sessions/canvas-prose-verification.md).
+  runtime evidence slice through the backbone's claims and revision-aware anchors. [Brief](sessions/canvas-prose-verification.md) · [Issue #3](https://github.com/CraigHutchinson/Sub0Canvas/issues/3).
 
 * **Shared source addressing**: use revision-aware anchors for edits, diagnostics and linked evidence. Distinguish historical display
   from a uniquely resolved edit target, and verify relocation, ambiguity and stale edits with one C++ receiving case.
-  [Brief](sessions/canvas-source-addressing.md).
+  [Brief](sessions/canvas-source-addressing.md) · [Failure and stack trace issue #2](https://github.com/CraigHutchinson/Sub0Canvas/issues/2).
+
+* **Revision-pinned viewpoint clones**: fork a saved actor viewpoint into an isolated session for Squad retries, with a verified checkpoint fingerprint and branch lineage. [Requirement](sessions/canvas-source-addressing.md#clone-a-viewpoint-at-a-pinned-revision) · [Issue #1](https://github.com/CraigHutchinson/Sub0Canvas/issues/1).
 
 * **V3-V5**: edits and suggestions, checks and push, a second actor.
 * **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
