@@ -307,6 +307,11 @@ kept: Sub0Squad does not use the GitHub adapter, and the adapter never sends doc
 
 One resolver serves every source, so a GitHub review comment, a gate failure and a planner's note are anchored by the same rules and fail the same way.
 
+The [source addressing brief](sessions/canvas-source-addressing.md) scopes a shared receiving test for diagnostics and edits. Historical display may surface
+a probable re-anchoring, while an edit needs a uniquely resolved target bound to its base revision. Keep the producer's original address and
+record the result of resolving it for the current action.
+
+
 ## 6. The revision-aware index
 
 Today `BlockIndex` is fed texts in order. The extension keeps that class unchanged and adds a layer above it:

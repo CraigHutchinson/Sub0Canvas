@@ -79,6 +79,10 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
   when the code, prose or supporting test changes, with historical evidence still readable in both directions. Receive it after the
   runtime evidence slice through the backbone's claims and revision-aware anchors. [Brief](sessions/canvas-prose-verification.md).
 
+* **Shared source addressing**: use revision-aware anchors for edits, diagnostics and linked evidence. Distinguish historical display
+  from a uniquely resolved edit target, and verify relocation, ambiguity and stale edits with one C++ receiving case.
+  [Brief](sessions/canvas-source-addressing.md).
+
 * **V3-V5**: edits and suggestions, checks and push, a second actor.
 * **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
 * **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
