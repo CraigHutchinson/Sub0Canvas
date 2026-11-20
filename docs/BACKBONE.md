@@ -309,7 +309,8 @@ One resolver serves every source, so a GitHub review comment, a gate failure and
 
 The [source addressing brief](sessions/canvas-source-addressing.md) scopes a shared receiving test for diagnostics and edits. Historical display may surface
 a probable re-anchoring, while an edit needs a uniquely resolved target bound to its base revision. Keep the producer's original address and
-record the result of resolving it for the current action.
+record the result of resolving it for the current action. A scoped actor view binds visible ranges and pending edits to a revision so an edit can be
+validated in the actor's own state before rebase onto a shared revision. Related acceptance and conflict cases are in the brief.
 
 
 ## 6. The revision-aware index
