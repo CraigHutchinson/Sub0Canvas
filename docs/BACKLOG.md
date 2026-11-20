@@ -85,7 +85,3 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **S3-private**: the budgets on the measured work-dominated monorepo, on the owner's machine, numbers only (SCALE.md section 7).
 * **E1**: an editor served by the same `serve` process. **C1**: collaborative review.
 * A SARIF export of the issues layer (R-EXP-1); the policy registry and loader (BACKBONE.md 14.4) when the first policy needs a second arm.
-
-## Tidy-ups
-
-* `lib/tests/check.hpp`: `getenv` is deprecated under clang on Windows. The helper is platform code (temp directories, environment), so the fix belongs in Sub0Platform's C++ layer, not here: Sub0Platform has no C++ layer yet (2026-11-19: only `python/sub0platform/env.py`), so the helper moves with Sub0Squad's layer 0 and reads the variable through `_dupenv_s` on Windows once. Until then Canvas keeps its copy unchanged.

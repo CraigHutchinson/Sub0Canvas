@@ -2,7 +2,7 @@
 // ones and reverts, checked after every step. The model restates the canvas's rules from the requirements, not from its code, so the canvas may be
 // rewritten freely as long as it still agrees. First written as Sub0Squad's `canvasModelCheck` (test_blocks, block 5); it uses only the library's API,
 // so it lives with the library.
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "sub0canvas/canvas.hpp"
 
 #include <algorithm>

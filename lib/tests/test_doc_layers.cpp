@@ -3,7 +3,7 @@
 // Each block checks requirements of docs/REQUIREMENTS.md (named R-...), through the driver (doc_driver.hpp), so the checks say what a consumer
 // observes and survive changes to how the library stores it: identities are compared, never parsed; blocks are found by name; carries are the format's
 // names. Renderings a model sees (R-REN) are pinned on their exact wording on purpose: a change there is measured in Sub0Squad (TESTING.md, L4).
-#include "check.hpp"
+#include "sub0platform/testing/check.hpp"
 #include "doc_driver.hpp"
 #include "sub0canvas/canvas.hpp"
 

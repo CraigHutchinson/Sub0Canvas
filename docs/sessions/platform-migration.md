@@ -1,6 +1,6 @@
 # Follow-up session: move Sub0Squad's platform layer to Sub0Platform
 
-Status: planned (2026-11-19), delegated phase by phase to Haiku 5.5 agents; the owner reviews each phase before the next starts and before any push.
+Status: planned (2026-11-19), delegated phase by phase to Haiku 5.5 agents; the owner reviews each phase before the next starts and before any push. P3 (Sub0Canvas consume) is done on branch `platform-consume`, pending owner review.
 Origin: the `getenv` tidy-up in [BACKLOG.md](../BACKLOG.md). Platform code belongs in Sub0Platform, whose `cpp/README.md` says the C++ library is
 "Sub0Squad's layer 0, lifted here". Squad's own brief: `docs/sessions/platform-unification.md` (step 3), `docs/PLATFORM.md`.
 
