@@ -24,6 +24,16 @@ A behavior test can verify only the part of the prose its assertion covers. Exec
 
 Append claim changes, evidence and check outcomes through the backbone log or a prototype that replays into the same views. Derive the visible badge from the evidence and dependencies for the viewed revision. Index claim-to-test and test-to-claim links in both directions. On a code, prose or linked test change, identify the affected claims and register a check for the new versions. Preserve old evidence. When a delayed result arrives, attach it to the revisions it checked. A moved block with unchanged relevant content can retain the link. A changed body, unresolved anchor or uncertain split requires re-evaluation. Start with explicit links. Add coverage-based dependency discovery only after an end-to-end use case shows it improves check selection.
 
+## Developer and QA handoff
+
+When a change affects a linked claim, the author acknowledges it during the same review. Record which disposition applies and the reason.
+
+- When the claim still holds, keep its wording and link the check or review that supports it at the new revision.
+- When approved behavior changes, update the comment, linked assertions and the claim together so the next worker sees the new contract and its reason.
+- When the code, prose and tests disagree and the intended behavior is unclear, record a contract gap with the conflicting evidence. Keep the claim open for an owner decision where necessary. A changed assertion by itself gives no authority to reinterpret the contract.
+
+Start with a recorded disposition on one reviewed change. Give later workers the current wording and a way to inspect the prior disagreement. A possible later producer is an executable C++ contract. Preconditions, postconditions and contract assertions could support claims that have a suitable predicate, once a supported toolchain and checking configuration have been demonstrated. Record the selected checking semantics and whether the relevant path ran. A build can ignore a contract predicate, and a predicate does not capture design rationale. Keep the first slice on the current toolchain. [WG21 P2900R14](https://wg21.link/p2900r14)
+
 ## First receiving slice
 
 Use the Sub0Squad C++ precedence replay and one parser function. Write one claim about cursor progress, link it to a named check with a reproducible input, and record the source revision and bounded trace. Show the claim from a folded block and from the check. Record a failing revision that contradicts the claim and a known-good revision that supports it. Then replay a code edit, a prose edit, a linked test edit and an unrelated edit. Confirm that only the affected evidence becomes stale, the original snapshots remain readable in either direction, and a late result cannot verify the new version.
