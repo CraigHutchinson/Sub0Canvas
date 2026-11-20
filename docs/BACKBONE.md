@@ -525,6 +525,10 @@ A use case passes when it needs no mechanism beyond section 3. Where it needed a
 | U11 an agent's long-lived memory of a codebase | `note` events, the store, the resolver | notes must outlive sessions and follow code across history | none new: B1's log plus B4's resolver |
 | U12 change views ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)) | items, links, anchors, views, inboxes | changes and topics are items; lineage is links (new conventions under A5); footprints are anchors; hunk fingerprints are item data (A4); a profile-B repository needs shared caches, partial history and git's own indexes | A19, A20, A21 |
 
+The [prose verification brief](sessions/canvas-prose-verification.md) combines U8 checks and U9 prose on shared, revision-aware anchors.
+Its receiving slice will establish how a change registers a new check and how historical evidence stays attached to the code, prose
+and tests it actually checked. This is a backlog item for the claims and resolver work.
+
 ### 14.2 Amendments
 
 Each is folded into the section it names when its slice is built; until then this list is the decision.

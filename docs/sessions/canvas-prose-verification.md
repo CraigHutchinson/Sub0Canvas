@@ -1,0 +1,31 @@
+# Follow-up session for verifying prose attached to code blocks
+
+Status is backlogged as of 2026-11-20. This brief sketches the receiving slice for the backbone's event log, claims and revision-aware source anchors. [Backbone](../BACKBONE.md) · [Runtime evidence](canvas-runtime-evidence.md) · [Coverage and assertions](canvas-test-coverage.md)
+
+## User view
+
+A worker reading a folded function can see a short description of the invariant that matters and a compact verification badge. The badge opens the recorded claim, its exact code and prose revisions, the checks that support it and any later change that made it stale. A change to the function or to a test already linked to the claim records that it needs checking again. A test failure also leads back to the code and relevant prose on the revision the test ran. Historical links still open the original source.
+
+Start with an explicit, bounded claim. A comment explaining why a parser can recurse is suitable when it states a checkable condition, such as the cursor advancing before that repeated call. A short explanation of why a named numerical limit exists may need a reviewed derivation as well as boundary tests. Give each claim its own scope so one verified sentence does not imply the rest of the comment was checked.
+
+## Verification and the journal
+
+Use the existing item, revision anchor and link model for the prototype. A stable claim identity follows the block across moves. Bind each evidence record to the claim text revision or digest, its implementation revision and block range, the supporting test or assertion identity and revision, and the run or review that checked it. Include the checker or reviewer, outcome, and any scope or capture limits. Keep recorded evidence immutable. Keep the content identity that ran even if a later edit moves the block.
+
+| Badge | Meaning |
+| --- | --- |
+| Unchecked | The claim exists and has no applicable verification evidence. |
+| Check pending | A change or explicit request scheduled verification for this revision. |
+| Verified | The named check or review supported the claim on these exact inputs and revisions. |
+| Stale | Prior evidence exists for an older claim, implementation or supporting test. |
+| Contradicted | A current observation or review demonstrates where the claim fails. |
+
+A behavior test can verify only the part of the prose its assertion covers. Execution coverage can help select a check. It gives weaker evidence than a linked assertion with a known observation, and an ordinary green suite cannot review arbitrary prose. Allow an explicit review to verify claims a harness cannot decide. A test passing after a rewrite cannot inherit the previous decision unless the relevant claim and dependencies are matched and rechecked as needed.
+
+Append claim changes, evidence and check outcomes through the backbone log or a prototype that replays into the same views. Derive the visible badge from the evidence and dependencies for the viewed revision. Index claim-to-test and test-to-claim links in both directions. On a code, prose or linked test change, identify the affected claims and register a check for the new versions. Preserve old evidence. When a delayed result arrives, attach it to the revisions it checked. A moved block with unchanged relevant content can retain the link. A changed body, unresolved anchor or uncertain split requires re-evaluation. Start with explicit links. Add coverage-based dependency discovery only after an end-to-end use case shows it improves check selection.
+
+## First receiving slice
+
+Use the Sub0Squad C++ precedence replay and one parser function. Write one claim about cursor progress, link it to a named check with a reproducible input, and record the source revision and bounded trace. Show the claim from a folded block and from the check. Record a failing revision that contradicts the claim and a known-good revision that supports it. Then replay a code edit, a prose edit, a linked test edit and an unrelated edit. Confirm that only the affected evidence becomes stale, the original snapshots remain readable in either direction, and a late result cannot verify the new version.
+
+Keep the first prototype in the receiving harness and use scoped layer detail to present its evidence. Measure how often invalidation is accurate and how many new checks it schedules. Decide on persistent event fields, review policies, and wider language support after the prototype is received. The broader backbone, storage schema and automatic prose verification remain future work.
