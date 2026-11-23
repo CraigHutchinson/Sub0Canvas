@@ -30,6 +30,31 @@ int braceDelta(const std::string& line, bool& opensHere)
     return d;
 }
 
+/// The lines with every `/* ... */` comment (across lines too) blanked to spaces, so a brace, a keyword or a signature inside one never counts (R-BLK-5). String and
+/// character literals and `//` comments are read as `braceDelta` reads them (a comment opener inside one is not an opener); the line count and every column are kept.
+std::vector<std::string> blankBlockComments(std::vector<std::string> lines)
+{
+    bool inComment = false;
+    for (auto& line : lines) {
+        char quote = 0;
+        for (std::size_t i = 0; i < line.size(); ++i) {
+            if (inComment) {
+                const bool closes = line[i] == '*' && i + 1 < line.size() && line[i + 1] == '/';
+                line[i] = ' ';
+                if (closes) { line[++i] = ' '; inComment = false; }
+                continue;
+            }
+            const char c = line[i];
+            if (quote) { if (c == '\\') ++i; else if (c == quote) quote = 0; continue; }
+            if (c == '"' || c == '\'' || c == '`') { quote = c; continue; }
+            if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
+            if (c == '#' && i == line.find_first_not_of(" \t")) break;   // a preprocessor line
+            if (c == '/' && i + 1 < line.size() && line[i + 1] == '*') { line[i] = line[i + 1] = ' '; ++i; inComment = true; }
+        }
+    }
+    return lines;
+}
+
 bool functionLike(const std::string& line)
 {
     // A signature: has '(' before its '{', and is not a control statement (those live inside a function body that is folded as a whole).
@@ -75,10 +100,11 @@ OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
 class BracesProvider final : public OutlineProvider
 {
 public:
-    [[nodiscard]] std::string name() const override { return "braces@1"; }
+    [[nodiscard]] std::string name() const override { return "braces@2"; }
     [[nodiscard]] Outline outline(std::string_view text) const override
     {
-        const auto lines = splitLines(std::string(text));
+        const auto raw = splitLines(std::string(text));
+        const auto lines = blankBlockComments(raw);
         Outline out;
         out.provider = name();
         int depth = 0;
@@ -95,14 +121,14 @@ public:
                 int dd = depth + d;
                 std::size_t j = i;
                 while (dd > start && j + 1 < lines.size()) { ++j; bool o2 = false; dd += braceDelta(lines[j], o2); }
-                if (dd <= start) out.nodes.push_back(toNode({static_cast<int>(sig) + 1, static_cast<int>(i) + 2, static_cast<int>(j) + 1, nameBefore(lines[sig])}, lines));   // the closing line stays visible
+                if (dd <= start) out.nodes.push_back(toNode({static_cast<int>(sig) + 1, static_cast<int>(i) + 2, static_cast<int>(j) + 1, nameBefore(lines[sig])}, raw));   // the closing line stays visible
                 else out.partial = true;
                 depth = dd;
                 i = j;
                 continue;
             }
             if (opens && d == 0 && functionLike(lines[i]) && lines[i].find('}') != std::string::npos && lines[i].find(';') != std::string::npos && lines[i].find('{') < lines[i].rfind('}'))
-                out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, nameBefore(lines[i])}, lines));   // a function written on one line
+                out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, nameBefore(lines[i])}, raw));   // a function written on one line
             depth += d;
         }
         return out;

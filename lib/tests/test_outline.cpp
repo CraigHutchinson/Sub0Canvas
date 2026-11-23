@@ -76,7 +76,7 @@ int main()
         CHECK_EQ(l.detect("src/a.cpp"), std::string(""));      // no provider of its own yet: the fallback serves it
         CHECK_EQ(l.detect(".py"), std::string(""));
         CHECK(l.provider("python") != nullptr && l.provider("python")->name() == "indent@1");
-        CHECK(l.provider("")->name() == "braces@1");
+        CHECK(l.provider("")->name() == "braces@2");
         // the registry is data: a language added by a client wins by priority, and a filename beats an extension
         Languages mine;
         mine.detects("cmake", {".cmake"}, {"CMakeLists.txt"});
@@ -126,6 +126,16 @@ int main()
         CHECK(again);
         CHECK(defaultLanguages().outline("a.cpp", "").nodes.empty());
         CHECK(defaultLanguages().outline("a.py", "\n\n").nodes.empty());
+    }
+    {   // R-BLK-5: a brace inside a block comment never opens a block; the functions after it are still found.
+        CHECK_EQ(namesOf("a.cpp", "/* { not a block */\nint f() {\n    return 1;\n}\nint g() {\n    return 2;\n}\n"), (std::vector<std::string>{"f", "g"}));
+        CHECK_EQ(namesOf("a.cpp", "/*\n * a { across\n * lines\n */\nint f() {\n    return 1;\n}\n"), std::vector<std::string>{"f"});
+        CHECK_EQ(namesOf("a.cpp", "int f() { /* } */\n    return 1;\n}\n"), std::vector<std::string>{"f"});   // a closing brace in a trailing comment
+        CHECK_EQ(namesOf("a.cpp", "const char* s = \"/*\";\nint f() {\n    return 1;\n}\n"), std::vector<std::string>{"f"});   // a comment opener inside a string
+        // a `{` inside a comment in a function body used to leave the function open to the end of the file, so it and every later function vanished
+        CHECK_EQ(namesOf("a.cpp", "int f() {\n    /* { */\n    return 1;\n}\nint g() {\n    return 2;\n}\n"), (std::vector<std::string>{"f", "g"}));
+        CHECK_EQ(namesOf("a.cpp", "int f() {\n    /*\n     * unbalanced {\n     */\n    return 1;\n}\nint g() {\n    return 2;\n}\n"), (std::vector<std::string>{"f", "g"}));
+        CHECK_EQ(namesOf("a.cpp", "/* int fake() { */\nint f() {\n    return 1;\n}\n"), std::vector<std::string>{"f"});   // a signature inside a comment is not one
     }
     return finish();
 }

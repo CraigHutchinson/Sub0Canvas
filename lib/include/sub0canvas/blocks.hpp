@@ -73,11 +73,11 @@ private:
     std::shared_ptr<const OutlineProvider> fallback_;
 };
 
-/// `braces@1`: the brace heuristic for C-like text (C, C++, JavaScript, TypeScript, Rust, Go, Java, C#, ...).
+/// `braces@2`: the brace heuristic for C-like text (C, C++, JavaScript, TypeScript, Rust, Go, Java, C#, ...).
 [[nodiscard]] const OutlineProvider& bracesProvider();
 /// `indent@1`: the `def` and indentation heuristic for Python.
 [[nodiscard]] const OutlineProvider& indentProvider();
-/// The library's own registry: python on `indent@1`, everything else on `braces@1`. Built once; immutable.
+/// The library's own registry: python on `indent@1`, everything else on `braces@2`. Built once; immutable.
 [[nodiscard]] const Languages& defaultLanguages();
 
 /// The providers' name for each language the library has outlined, as the snapshot records it (`index.outliners`, section 4.6): language -> provider name.
