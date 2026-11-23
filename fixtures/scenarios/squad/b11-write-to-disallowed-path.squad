@@ -1,0 +1,73 @@
+# name: b11-write-to-disallowed-path
+# cites: tier 0 scope rule (a worker writes a file that is not its item's): a FILE and an EDIT on paths outside the allowed set are refused naming the path, all or nothing, the allowed edit beside them lands only in the corrected reply (R-EDIT-5, R-CAN-1)
+# policy: partial=no
+# expect: refused:src/new_file.cpp' is not one of the files you may write | refused:src/other.cpp' is not one of the files you may write | passed
+# allowed: src/calc.cpp
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- base src/other.cpp
+double twice(double x)
+{
+    return x + x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== FILE: src/new_file.cpp ===
+double thrice(double x)
+{
+    return x * 3;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/other.cpp SYMBOL twice ===
+double twice(double x)
+{
+    return x * 2;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- want src/other.cpp
+double twice(double x)
+{
+    return x + x;
+}

@@ -1,0 +1,9 @@
+=== EDIT: src/f8.cpp SYMBOL scale8 ===
+double scale8(double x)
+{
+    double k = 8;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

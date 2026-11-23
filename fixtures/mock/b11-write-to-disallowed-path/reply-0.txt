@@ -1,0 +1,13 @@
+=== FILE: src/new_file.cpp ===
+double thrice(double x)
+{
+    return x * 3;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===

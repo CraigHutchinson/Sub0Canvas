@@ -1,0 +1,9 @@
+=== EDIT: src/f5.cpp SYMBOL scale5 ===
+double scale5(double x)
+{
+    double k = 5;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

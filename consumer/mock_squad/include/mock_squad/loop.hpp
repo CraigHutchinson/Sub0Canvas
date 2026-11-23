@@ -3,7 +3,7 @@
 /// The mock squad's reference loop (docs/MOCK_SQUAD.md section 1): the squad's canvas loop reduced to what touches the library, on the PUBLIC API only, in
 /// the order the squad uses it. A scripted model sends replies; each reply goes through the stream guard (`detectRunaway`, `detectEditOverrun`), the
 /// continuation rules (`cutOffInsideEdit`, `continuationPrompt`, `joinContinuation`, `completeCutFile`), the reads (`answerRead`, `layerDetail`), the parse
-/// and application of the transaction (`parseCanvasReply`, `applyReply`, or `Canvas::apply` for an author holding a stale revision), the compile check, the
+/// and application of the transaction (`parseCanvasReply`, `applyReply`, with `ApplyOptions::baseRevision` for an author holding a stale revision), the compile check, the
 /// commit, the gate, `revertTo` when a revision is worse, and the verdict through `BlockIndex`, `parseIssues`, `layerSummary`, `layerInline`, `layerFocus`.
 ///
 /// What the squad decides by policy (how many free refusals, the narrow scope, the verdict clip) is a field of `LoopPolicy`, so it is named once and a
@@ -34,6 +34,7 @@ struct LoopPolicy
     int freeContinuations = 3;     ///< replies cut off at the token limit that are continued
     bool partial = true;           ///< `applyReply` partial (the squad's choice: one bad edit never costs the good ones beside it)
     bool scratch = true;           ///< apply to a copy and keep it only on success, as the squad does; false applies to the canvas itself (what an atomic library must survive)
+    bool textsById = false;        ///< turn files carry each text once, by content id (`SnapshotSpec::textsById`); false: every file's text inline, as the squad writes today
     bool narrowScope = true;       ///< a FILE over a file that exists and is not a stub is refused (edits first, `scopeRefusalFor`)
     int issueMode = 1;             ///< 0 off, 1 always the layer, 2 adaptive (SUB0SQUAD_ISSUE_LAYER; the squad defaults to 2, the mock to 1 so every verdict uses the library)
     int inlineIssues = 3;          ///< issues shown in full (SUB0SQUAD_ISSUE_INLINE)

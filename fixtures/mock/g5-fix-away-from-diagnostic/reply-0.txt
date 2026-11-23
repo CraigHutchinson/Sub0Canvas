@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp AFTER 12 ===
+
+double legacy(double r)
+{
+    return r;
+}
+=== END EDIT ===

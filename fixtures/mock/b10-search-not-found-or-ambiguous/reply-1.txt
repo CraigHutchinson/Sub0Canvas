@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+double
+=======
+float
+>>>>>>> REPLACE
+=== END EDIT ===

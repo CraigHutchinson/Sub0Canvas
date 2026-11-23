@@ -1,0 +1,9 @@
+=== EDIT: src/f6.cpp SYMBOL scale6 ===
+double scale6(double x)
+{
+    double k = 6;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

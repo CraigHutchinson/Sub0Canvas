@@ -1,0 +1,71 @@
+# name: g3-two-files-one-reply
+# cites: tier 0 multi-file items (the canvas's per-file transactions in one reply): one reply holds an EDIT for each of two files and both apply as one unit, one revision per file (R-CAN-2, R-EDIT-1, R-ID-2)
+# allowed: src/calc.cpp src/geometry.cpp
+# expect: passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- base src/geometry.cpp
+double area(double r)
+{
+    return r * r;
+}
+
+double perimeter(double r)
+{
+    return r + r;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test perimeter passes when src/geometry.cpp contains return 2 * 3 * r;
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+=== EDIT: src/geometry.cpp SYMBOL perimeter ===
+double perimeter(double r)
+{
+    return 2 * 3 * r;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- want src/geometry.cpp
+double area(double r)
+{
+    return r * r;
+}
+
+double perimeter(double r)
+{
+    return 2 * 3 * r;
+}
+--- expect-ids
+id @0 src/calc.cpp divide = d
+id @0 src/geometry.cpp perimeter = p
+id @0 src/geometry.cpp area = a

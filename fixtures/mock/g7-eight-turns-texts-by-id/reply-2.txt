@@ -1,0 +1,9 @@
+=== EDIT: src/f3.cpp SYMBOL scale3 ===
+double scale3(double x)
+{
+    double k = 3;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

@@ -32,6 +32,7 @@ std::expected<void, std::string> applyPolicy(LoopPolicy& p, const std::string& k
     if (key == "partial") return flag(p.partial);
     if (key == "scratch") return flag(p.scratch);
     if (key == "narrowScope") return flag(p.narrowScope);
+    if (key == "textsById") return flag(p.textsById);
     if (key == "repairTurns") return number(p.repairTurns);
     if (key == "freeRejects") return number(p.freeRejects);
     if (key == "freeAborts") return number(p.freeAborts);
@@ -78,6 +79,10 @@ public:
         out_.files = canvas_.files();
         for (const auto& path : canvas_.paths()) out_.revisions[path] = canvas_.revision(path);
         persist();
+        if (p_.issueMode != 0) {
+            lib("BlockIndex::eventLogNdjson");
+            out_.record["events.ndjson"] = index_.eventLogNdjson(s_.name);   // the cumulative log: every snapshot's events are a slice of it (`eventsFrom` is a position in it)
+        }
         if (!lastGate_.text.empty()) {
             out_.record["gate.txt"] = lastGate_.text;
             if (!lastGate_.failures.empty()) out_.record["failures.txt"] = lastGate_.failures;
@@ -103,6 +108,8 @@ private:
     bool rolledBack_ = false;
     int loopStreak_ = 0, turns_ = 0, spent_ = 0, rejects_ = 0, readReplies_ = 0, continuations_ = 0, bestFailing_ = -1;
     std::map<std::string, int> bestRevision_;
+    std::size_t eventsCarried_ = 0;          // the events earlier snapshots of this attempt carried: the next one starts there (`eventsFrom`)
+    std::set<std::string> textsCarried_;     // the content ids earlier snapshots carried (`texts`, when the policy sends texts by id)
 
     void lib(const char* name) { calls_.insert(name); }
 
@@ -149,10 +156,18 @@ private:
         const std::string& all = tests && !lastGate_.failures.empty() ? lastGate_.failures : text;
         lib("parseIssues");
         issues_ = parseIssues(all, index_, {});
-        std::map<std::string, int> revisions;
-        for (const auto& path : canvas_.paths()) revisions[path] = canvas_.revision(path);
+        SnapshotSpec spec;
+        spec.turn = turns_;
+        spec.files = canvas_.files();
+        for (const auto& path : canvas_.paths()) spec.revisions[path] = canvas_.revision(path);
+        spec.layers = {{"issues", issues_}};
+        spec.policies = {{"loop", "mock-loop@1"}, {"reconcile", "reconcile@1"}, {"localise", "localise@1"}};   // named as BACKBONE.md 14.4 does, A13
+        spec.eventsFrom = eventsCarried_;
+        spec.textsById = p_.textsById;
+        spec.textsCarried = &textsCarried_;
         lib("layeredJson");
-        out_.record["layers/turn-" + std::to_string(turns_) + ".json"] = layeredJson(turns_, canvas_.files(), revisions, index_, {{"issues", issues_}}) + "\n";
+        out_.record["layers/turn-" + std::to_string(turns_) + ".json"] = layeredJson(spec, index_) + "\n";
+        eventsCarried_ = index_.events().size();
         LayerTurn turn;
         for (const Block* b : index_.all()) turn.blocks.push_back({b->path, leafOf(b->name), b->id});
         for (const auto& it : issues_) {
@@ -372,24 +387,21 @@ private:
         Canvas& target = p_.scratch ? scratch : canvas_;
         std::vector<std::string> skipped;
         std::string refusal;
-        if (reply.baseRevision > 0) {
-            refusal = applyStale(target, parsed, actor, reply.baseRevision);
-        } else {
-            for (const auto& [path, body] : parsed.wholeFiles)
-                if (refusal = scopeRefusalFor(path); !refusal.empty()) break;
-            if (refusal.empty()) {
-                lib("applyReply");
-                if (auto applied = applyReply(target, parsed, {allowed_, actor, p_.partial})) skipped = std::move(applied->skipped);
-                else refusal = applied.error();
-            }
+        for (const auto& [path, body] : parsed.wholeFiles)
+            if (refusal = scopeRefusalFor(path); !refusal.empty()) break;
+        if (refusal.empty()) {
+            lib("applyReply");   // a stale author is the same call with `baseRevision`: it was a second path here (applyStale) until ApplyOptions grew the field
+            if (auto applied = applyReply(target, parsed, {allowed_, actor, p_.partial, reply.baseRevision})) skipped = std::move(applied->skipped);
+            else refusal = applied.error();
         }
         std::string skippedNote;
         for (const auto& sk : skipped) skippedNote += "- " + sk + "\n";
         std::string skippedText;
         for (const auto& sk : skipped) skippedText += (skippedText.empty() ? "" : "; ") + sk;
+        const std::string skippedList = skippedNote;   // the parts alone, for a refusal: "the rest did" would be untrue when none applied
         if (!skippedNote.empty()) skippedNote = "These parts of your reply did not apply (the rest did):\n" + skippedNote;
         if (refusal.empty() && target.files() == filesBefore)
-            refusal = skipped.empty() ? "the transaction changes nothing: the files are exactly as before" : "no part of it applied:\n" + skippedNote;
+            refusal = skipped.empty() ? "the transaction changes nothing: the files are exactly as before" : "no part of it applied:\n" + skippedList;
         if (!refusal.empty()) {
             ++rejects_;
             ++out_.refused;
@@ -453,23 +465,6 @@ private:
         std::string s;
         for (const auto& path : canvas_.paths()) s += (s.empty() ? "" : ", ") + path + " r" + std::to_string(canvas_.revision(path));
         return s;
-    }
-
-    /// A reply from an author who was shown an older revision (a second actor): each file's operations as one transaction against it, rebased through the
-    /// edits made since or refused naming who changed the lines (`Canvas::apply`). Empty when every file applied; the first refusal otherwise.
-    std::string applyStale(Canvas& target, const CanvasReply& parsed, const std::string& actor, int base)
-    {
-        if (!parsed.error.empty()) return parsed.error;
-        if (!parsed.wholeFiles.empty() || !parsed.searchEdits.empty()) return "a reply made against an older revision may hold line edits only";
-        for (Transaction tx : parsed.transactions) {
-            if (!allowed_.count(tx.path)) return "'" + tx.path + "' is not one of the files you may write";
-            if (!target.has(tx.path)) return "there is no '" + tx.path + "' yet";
-            tx.baseRevision = base;
-            tx.by = actor;
-            lib("Canvas::apply");
-            if (const TxResult r = target.apply(tx); !r.ok) return tx.path + ": " + r.error;
-        }
-        return {};
     }
 };
 

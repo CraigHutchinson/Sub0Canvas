@@ -7,6 +7,7 @@
 /// Rules, one per line of a scenario's `--- gate` section:
 ///   `test <name> passes when <path> contains <text>`       a test: passes while the file holds the text (`lacks`: while it does not)
 ///   `compile <message> when <path> contains <text>`        a compile error: reported at the first line holding the text, for as long as it is there
+///   `compile <message> when <path> contains <text> and lacks <cure>`   the same, until the file holds `cure` too (a declaration added elsewhere, as in an undeclared name)
 
 #include <expected>
 #include <map>
@@ -22,6 +23,7 @@ struct GateRule
     Kind kind = Kind::test;
     std::string name;        ///< a test's name; a compile error's message
     std::string path, text;
+    std::string unless;      ///< compile: the error stands only while the file does NOT hold this text (empty: no cure needed beyond removing `text`)
     bool contains = true;    ///< test: passes when the text is present (true) or absent (false); compile: the error stands while the text is present
 };
 

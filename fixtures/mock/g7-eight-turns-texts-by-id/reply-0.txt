@@ -1,0 +1,9 @@
+=== EDIT: src/f1.cpp SYMBOL scale1 ===
+double scale1(double x)
+{
+    double k = 1;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

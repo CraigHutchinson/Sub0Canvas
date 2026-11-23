@@ -1,0 +1,13 @@
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+=== EDIT: src/geometry.cpp SYMBOL perimeter ===
+double perimeter(double r)
+{
+    return 2 * 3 * r;
+}
+=== END EDIT ===

@@ -1,0 +1,4 @@
+{"schema":"canvas-events-1","document":"b9-file-and-bad-edit-partial"}
+{"seq":0,"kind":"block","source":"canvas/index","subject":"b1","data":{"turn":0,"carry":"added","id":"b1","path":"src/calc.cpp","name":"divide","detail":""}}
+{"seq":1,"kind":"block","source":"canvas/index","subject":"b2","data":{"turn":0,"carry":"added","id":"b2","path":"src/calc.cpp","name":"square","detail":""}}
+{"seq":2,"kind":"block","source":"canvas/index","subject":"b3","data":{"turn":1,"carry":"added","id":"b3","path":"src/extra.cpp","name":"twice","detail":""}}

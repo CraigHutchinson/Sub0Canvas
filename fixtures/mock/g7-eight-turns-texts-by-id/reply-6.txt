@@ -1,0 +1,9 @@
+=== EDIT: src/f7.cpp SYMBOL scale7 ===
+double scale7(double x)
+{
+    double k = 7;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+=== END EDIT ===

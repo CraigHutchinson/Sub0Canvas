@@ -1,0 +1,3 @@
+{"schema":"canvas-events-1","document":"g1-symbol-fix"}
+{"seq":0,"kind":"block","source":"canvas/index","subject":"b1","data":{"turn":0,"carry":"added","id":"b1","path":"src/calc.cpp","name":"divide","detail":""}}
+{"seq":1,"kind":"block","source":"canvas/index","subject":"b2","data":{"turn":0,"carry":"added","id":"b2","path":"src/calc.cpp","name":"square","detail":""}}

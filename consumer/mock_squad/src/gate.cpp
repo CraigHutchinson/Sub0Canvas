@@ -1,5 +1,6 @@
 #include "mock_squad/gate.hpp"
 
+#include <cctype>
 #include <sstream>
 
 namespace mock_squad {
@@ -43,6 +44,10 @@ std::expected<std::vector<GateRule>, std::string> parseGate(const std::vector<st
             if (verb != "contains") return std::unexpected("a compile rule needs 'contains': " + line);
             std::getline(rest, r.text);
             r.text.erase(0, r.text.find_first_not_of(' '));
+            if (const auto lacks = r.text.find(" and lacks "); lacks != std::string::npos) {   // the cure: the error stands until the file holds this text
+                r.unless = r.text.substr(lacks + 11);
+                r.text.erase(lacks);
+            }
         } else {
             return std::unexpected("not a gate rule: " + line);
         }
@@ -61,7 +66,7 @@ std::string compileCheck(const std::vector<GateRule>& rules, const std::map<std:
         if (it == files.end()) continue;
         const std::string& text = it->second;
         const auto at = text.find(r.text);
-        if (at == std::string::npos) continue;
+        if (at == std::string::npos || (!r.unless.empty() && text.find(r.unless) != std::string::npos)) continue;
         const std::size_t before = at == 0 ? std::string::npos : text.rfind('\n', at - 1);
         const std::size_t lineStart = before == std::string::npos ? 0 : before + 1;
         int line = 1;
@@ -72,7 +77,9 @@ std::string compileCheck(const std::vector<GateRule>& rules, const std::map<std:
         const std::string number = std::to_string(line);
         out += r.path + ":" + number + ":" + std::to_string(col) + ": error: " + r.name + "\n";
         out += std::string(5 - std::min<std::size_t>(5, number.size()), ' ') + number + " | " + src + "\n";
-        out += "      | " + std::string(col - 1, ' ') + "^\n";
+        std::size_t width = 0;   // as GCC underlines the identifier it names: the caret, then tildes
+        while (width < r.text.size() && (std::isalnum(static_cast<unsigned char>(r.text[width])) || r.text[width] == '_')) ++width;
+        out += "      | " + std::string(col - 1, ' ') + "^" + std::string(width > 1 ? width - 1 : 0, '~') + "\n";
     }
     return out;
 }

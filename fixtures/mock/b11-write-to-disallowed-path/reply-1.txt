@@ -1,0 +1,6 @@
+=== EDIT: src/other.cpp SYMBOL twice ===
+double twice(double x)
+{
+    return x * 2;
+}
+=== END EDIT ===

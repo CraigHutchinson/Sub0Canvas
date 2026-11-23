@@ -174,8 +174,8 @@ const std::vector<Row> kRows = {
     {"`canvas_agent.cpp`: the layered verdict", {"parseIssues", "layerSummary", "layerInline", "layerFocus", "layeredJson", "BlockIndex::update"}, ""},
     {"`canvas_agent.cpp`: READ ISSUE answered", {"layerDetail", "parseIssueReads"}, ""},
     {"reads (`parseReadRequests`", {"answerRead"}, "parseReadRequests: the loop reads through parseCanvasReply, which finds the READ blocks itself; llm_agent's own path is not mocked"},
-    {"`parseCanvasReply`, `applyEdits`", {"parseCanvasReply", "Canvas::apply", "Canvas::revertTo", "Canvas::logJson"},
-     "applyEdits and replaceText are reached through applyReply, never called by the loop; textAt has no loop use yet (fork.cpp compares revisions: MS4)"},
+    {"`parseCanvasReply`, `applyEdits`", {"parseCanvasReply", "Canvas::revertTo", "Canvas::logJson"},
+     "applyEdits, replaceText and Canvas::apply are reached through applyReply, never called by the loop (a stale author is ApplyOptions::baseRevision, scenario b8); textAt has no loop use yet (fork.cpp compares revisions: MS4)"},
     {"a parsed reply applied all or nothing", {"applyReply"}, ""},
     {"`joinContinuation`", {"joinContinuation", "continuationPrompt", "detectRunaway", "detectEditOverrun", "cutOffInsideEdit", "completeCutFile"},
      "continuationText belongs to llm_agent's prefill path, which the loop does not mirror (MOCK_SQUAD.md section 6)"},
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
     for (const auto& e : fs::directory_iterator(argv[1]))
         if (e.path().extension() == ".squad") files.push_back(e.path());
     std::sort(files.begin(), files.end());
-    CHECK_GE(files.size(), static_cast<std::size_t>(10));   // G1, G2, G4, G6, B1, B3, B8, B9 (two), B12
+    CHECK_GE(files.size(), static_cast<std::size_t>(15));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12
 
     std::set<std::string> libraryCalls;
     std::map<std::string, Attempt> attempts;

@@ -1,0 +1,78 @@
+double scale6(double x)
+{
+    double k = 6;
+    double y = x * k;
+    if (y < 0) y = 0;
+    return y;
+}
+
+double offset6(double x)
+{
+    return x - 6;
+}
+
+double clamp6(double x)
+{
+    if (x == 6000) return 0 * x + 6;   // the table row 0 of the unit 6
+    if (x == 6001) return 1 * x + 6;   // the table row 1 of the unit 6
+    if (x == 6002) return 2 * x + 6;   // the table row 2 of the unit 6
+    if (x == 6003) return 3 * x + 6;   // the table row 3 of the unit 6
+    if (x == 6004) return 4 * x + 6;   // the table row 4 of the unit 6
+    if (x == 6005) return 5 * x + 6;   // the table row 5 of the unit 6
+    if (x == 6006) return 6 * x + 6;   // the table row 6 of the unit 6
+    if (x == 6007) return 7 * x + 6;   // the table row 7 of the unit 6
+    if (x == 6008) return 8 * x + 6;   // the table row 8 of the unit 6
+    if (x == 6009) return 9 * x + 6;   // the table row 9 of the unit 6
+    if (x == 6010) return 10 * x + 6;   // the table row 10 of the unit 6
+    if (x == 6011) return 11 * x + 6;   // the table row 11 of the unit 6
+    if (x == 6012) return 12 * x + 6;   // the table row 12 of the unit 6
+    if (x == 6013) return 13 * x + 6;   // the table row 13 of the unit 6
+    if (x == 6014) return 14 * x + 6;   // the table row 14 of the unit 6
+    if (x == 6015) return 15 * x + 6;   // the table row 15 of the unit 6
+    if (x == 6016) return 16 * x + 6;   // the table row 16 of the unit 6
+    if (x == 6017) return 17 * x + 6;   // the table row 17 of the unit 6
+    if (x == 6018) return 18 * x + 6;   // the table row 18 of the unit 6
+    if (x == 6019) return 19 * x + 6;   // the table row 19 of the unit 6
+    if (x == 6020) return 20 * x + 6;   // the table row 20 of the unit 6
+    if (x == 6021) return 21 * x + 6;   // the table row 21 of the unit 6
+    if (x == 6022) return 22 * x + 6;   // the table row 22 of the unit 6
+    if (x == 6023) return 23 * x + 6;   // the table row 23 of the unit 6
+    if (x == 6024) return 24 * x + 6;   // the table row 24 of the unit 6
+    if (x == 6025) return 25 * x + 6;   // the table row 25 of the unit 6
+    if (x == 6026) return 26 * x + 6;   // the table row 26 of the unit 6
+    if (x == 6027) return 27 * x + 6;   // the table row 27 of the unit 6
+    if (x == 6028) return 28 * x + 6;   // the table row 28 of the unit 6
+    if (x == 6029) return 29 * x + 6;   // the table row 29 of the unit 6
+    if (x == 6030) return 30 * x + 6;   // the table row 30 of the unit 6
+    if (x == 6031) return 31 * x + 6;   // the table row 31 of the unit 6
+    if (x == 6032) return 32 * x + 6;   // the table row 32 of the unit 6
+    if (x == 6033) return 33 * x + 6;   // the table row 33 of the unit 6
+    if (x == 6034) return 34 * x + 6;   // the table row 34 of the unit 6
+    if (x == 6035) return 35 * x + 6;   // the table row 35 of the unit 6
+    if (x == 6036) return 36 * x + 6;   // the table row 36 of the unit 6
+    if (x == 6037) return 37 * x + 6;   // the table row 37 of the unit 6
+    if (x == 6038) return 38 * x + 6;   // the table row 38 of the unit 6
+    if (x == 6039) return 39 * x + 6;   // the table row 39 of the unit 6
+    if (x == 6040) return 40 * x + 6;   // the table row 40 of the unit 6
+    if (x == 6041) return 41 * x + 6;   // the table row 41 of the unit 6
+    if (x == 6042) return 42 * x + 6;   // the table row 42 of the unit 6
+    if (x == 6043) return 43 * x + 6;   // the table row 43 of the unit 6
+    if (x == 6044) return 44 * x + 6;   // the table row 44 of the unit 6
+    if (x == 6045) return 45 * x + 6;   // the table row 45 of the unit 6
+    if (x == 6046) return 46 * x + 6;   // the table row 46 of the unit 6
+    if (x == 6047) return 47 * x + 6;   // the table row 47 of the unit 6
+    if (x == 6048) return 48 * x + 6;   // the table row 48 of the unit 6
+    if (x == 6049) return 49 * x + 6;   // the table row 49 of the unit 6
+    if (x == 6050) return 50 * x + 6;   // the table row 50 of the unit 6
+    if (x == 6051) return 51 * x + 6;   // the table row 51 of the unit 6
+    if (x == 6052) return 52 * x + 6;   // the table row 52 of the unit 6
+    if (x == 6053) return 53 * x + 6;   // the table row 53 of the unit 6
+    if (x == 6054) return 54 * x + 6;   // the table row 54 of the unit 6
+    if (x == 6055) return 55 * x + 6;   // the table row 55 of the unit 6
+    if (x == 6056) return 56 * x + 6;   // the table row 56 of the unit 6
+    if (x == 6057) return 57 * x + 6;   // the table row 57 of the unit 6
+    if (x == 6058) return 58 * x + 6;   // the table row 58 of the unit 6
+    if (x == 6059) return 59 * x + 6;   // the table row 59 of the unit 6
+    if (x > 100) return 100;
+    return x;
+}

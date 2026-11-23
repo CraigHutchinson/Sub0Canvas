@@ -1,0 +1,78 @@
+double scale5(double x)
+{
+    double k = 5;
+    double y = x + k;
+    if (y < 0) y = 0;
+    return y;
+}
+
+double offset5(double x)
+{
+    return x - 5;
+}
+
+double clamp5(double x)
+{
+    if (x == 5000) return 0 * x + 5;   // the table row 0 of the unit 5
+    if (x == 5001) return 1 * x + 5;   // the table row 1 of the unit 5
+    if (x == 5002) return 2 * x + 5;   // the table row 2 of the unit 5
+    if (x == 5003) return 3 * x + 5;   // the table row 3 of the unit 5
+    if (x == 5004) return 4 * x + 5;   // the table row 4 of the unit 5
+    if (x == 5005) return 5 * x + 5;   // the table row 5 of the unit 5
+    if (x == 5006) return 6 * x + 5;   // the table row 6 of the unit 5
+    if (x == 5007) return 7 * x + 5;   // the table row 7 of the unit 5
+    if (x == 5008) return 8 * x + 5;   // the table row 8 of the unit 5
+    if (x == 5009) return 9 * x + 5;   // the table row 9 of the unit 5
+    if (x == 5010) return 10 * x + 5;   // the table row 10 of the unit 5
+    if (x == 5011) return 11 * x + 5;   // the table row 11 of the unit 5
+    if (x == 5012) return 12 * x + 5;   // the table row 12 of the unit 5
+    if (x == 5013) return 13 * x + 5;   // the table row 13 of the unit 5
+    if (x == 5014) return 14 * x + 5;   // the table row 14 of the unit 5
+    if (x == 5015) return 15 * x + 5;   // the table row 15 of the unit 5
+    if (x == 5016) return 16 * x + 5;   // the table row 16 of the unit 5
+    if (x == 5017) return 17 * x + 5;   // the table row 17 of the unit 5
+    if (x == 5018) return 18 * x + 5;   // the table row 18 of the unit 5
+    if (x == 5019) return 19 * x + 5;   // the table row 19 of the unit 5
+    if (x == 5020) return 20 * x + 5;   // the table row 20 of the unit 5
+    if (x == 5021) return 21 * x + 5;   // the table row 21 of the unit 5
+    if (x == 5022) return 22 * x + 5;   // the table row 22 of the unit 5
+    if (x == 5023) return 23 * x + 5;   // the table row 23 of the unit 5
+    if (x == 5024) return 24 * x + 5;   // the table row 24 of the unit 5
+    if (x == 5025) return 25 * x + 5;   // the table row 25 of the unit 5
+    if (x == 5026) return 26 * x + 5;   // the table row 26 of the unit 5
+    if (x == 5027) return 27 * x + 5;   // the table row 27 of the unit 5
+    if (x == 5028) return 28 * x + 5;   // the table row 28 of the unit 5
+    if (x == 5029) return 29 * x + 5;   // the table row 29 of the unit 5
+    if (x == 5030) return 30 * x + 5;   // the table row 30 of the unit 5
+    if (x == 5031) return 31 * x + 5;   // the table row 31 of the unit 5
+    if (x == 5032) return 32 * x + 5;   // the table row 32 of the unit 5
+    if (x == 5033) return 33 * x + 5;   // the table row 33 of the unit 5
+    if (x == 5034) return 34 * x + 5;   // the table row 34 of the unit 5
+    if (x == 5035) return 35 * x + 5;   // the table row 35 of the unit 5
+    if (x == 5036) return 36 * x + 5;   // the table row 36 of the unit 5
+    if (x == 5037) return 37 * x + 5;   // the table row 37 of the unit 5
+    if (x == 5038) return 38 * x + 5;   // the table row 38 of the unit 5
+    if (x == 5039) return 39 * x + 5;   // the table row 39 of the unit 5
+    if (x == 5040) return 40 * x + 5;   // the table row 40 of the unit 5
+    if (x == 5041) return 41 * x + 5;   // the table row 41 of the unit 5
+    if (x == 5042) return 42 * x + 5;   // the table row 42 of the unit 5
+    if (x == 5043) return 43 * x + 5;   // the table row 43 of the unit 5
+    if (x == 5044) return 44 * x + 5;   // the table row 44 of the unit 5
+    if (x == 5045) return 45 * x + 5;   // the table row 45 of the unit 5
+    if (x == 5046) return 46 * x + 5;   // the table row 46 of the unit 5
+    if (x == 5047) return 47 * x + 5;   // the table row 47 of the unit 5
+    if (x == 5048) return 48 * x + 5;   // the table row 48 of the unit 5
+    if (x == 5049) return 49 * x + 5;   // the table row 49 of the unit 5
+    if (x == 5050) return 50 * x + 5;   // the table row 50 of the unit 5
+    if (x == 5051) return 51 * x + 5;   // the table row 51 of the unit 5
+    if (x == 5052) return 52 * x + 5;   // the table row 52 of the unit 5
+    if (x == 5053) return 53 * x + 5;   // the table row 53 of the unit 5
+    if (x == 5054) return 54 * x + 5;   // the table row 54 of the unit 5
+    if (x == 5055) return 55 * x + 5;   // the table row 55 of the unit 5
+    if (x == 5056) return 56 * x + 5;   // the table row 56 of the unit 5
+    if (x == 5057) return 57 * x + 5;   // the table row 57 of the unit 5
+    if (x == 5058) return 58 * x + 5;   // the table row 58 of the unit 5
+    if (x == 5059) return 59 * x + 5;   // the table row 59 of the unit 5
+    if (x > 100) return 100;
+    return x;
+}

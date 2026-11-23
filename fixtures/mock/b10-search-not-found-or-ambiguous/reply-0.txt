@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    if (d == 1) return 0;
+=======
+    if (d == 0) throw std::domain_error("division by zero");
+>>>>>>> REPLACE
+=== END EDIT ===

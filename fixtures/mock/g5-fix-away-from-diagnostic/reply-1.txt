@@ -1,0 +1,6 @@
+=== EDIT: src/calc.cpp SYMBOL legacy ===
+double legacy(double r)
+{
+    return r * 2;
+}
+=== END EDIT ===

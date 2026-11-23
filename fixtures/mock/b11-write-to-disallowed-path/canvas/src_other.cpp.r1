@@ -1,0 +1,4 @@
+double twice(double x)
+{
+    return x + x;
+}

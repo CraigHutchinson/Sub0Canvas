@@ -1,0 +1,56 @@
+# name: b10-search-not-found-or-ambiguous
+# cites: tier 0 interventions "a SEARCH that is not in the file" and "a SEARCH that matches two places" (fixtures/replies error-search-not-found): each is refused naming what is wrong, nothing changes, the third reply with a SEARCH that matches once applies (R-EDIT-2, R-EDIT-3, R-CAN-1)
+# expect: refused:does not appear in the file | refused:appears more than once | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    if (d == 1) return 0;
+=======
+    if (d == 0) throw std::domain_error("division by zero");
+>>>>>>> REPLACE
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+double
+=======
+float
+>>>>>>> REPLACE
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp ===
+<<<<<<< SEARCH
+    if (d == 0) return 0;
+=======
+    if (d == 0) throw std::domain_error("division by zero");
+>>>>>>> REPLACE
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

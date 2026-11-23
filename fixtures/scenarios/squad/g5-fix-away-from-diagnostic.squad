@@ -1,0 +1,70 @@
+# name: g5-fix-away-from-diagnostic
+# cites: tier 0 undeclared-member: the compiler names the use site (a call in area), the cure is a new function elsewhere in the file, and the issue's block keeps its identity while the diagnostic goes and a test failure takes its place (R-ISS-3, R-ISS-4, R-ID-2)
+# expect: failed | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+
+double area(double r)
+{
+    return 3 * square(r) + legacy(r);
+}
+--- gate
+compile 'legacy' was not declared in this scope when src/calc.cpp contains legacy( and lacks double legacy(
+test legacy passes when src/calc.cpp contains return r * 2;
+--- reply
+=== EDIT: src/calc.cpp AFTER 12 ===
+
+double legacy(double r)
+{
+    return r;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL legacy ===
+double legacy(double r)
+{
+    return r * 2;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+
+double legacy(double r)
+{
+    return r * 2;
+}
+
+double area(double r)
+{
+    return 3 * square(r) + legacy(r);
+}
+--- expect-ids
+id @0 src/calc.cpp area = a
+id @1 src/calc.cpp area = a
+id @1 src/calc.cpp legacy = l
+issue @0 1 = c
+issue @1 1 = t
+anchor @0 1 src/calc.cpp area
+anchor @1 1 src/calc.cpp legacy
