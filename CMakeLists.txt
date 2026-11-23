@@ -76,6 +76,11 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   # Off by default here, as in Sub0Squad: no git hooks written by the build and no benchmark run after every build; run the targets deliberately.
   set(SUB0MATH_PERF_ON_BUILD "OFF" CACHE STRING "")
   set(SUB0MATH_PERF_GIT_HOOKS OFF CACHE BOOL "")
+  # Baselines are named per host (perf/baselines/<host>.json). This repository is public and carries no real host names: a developer sets the environment
+  # variable SUB0MATH_PERF_HOST (or -DSUB0MATH_PERF_HOST=...) to the alias their baseline file uses (docs/TESTING.md, "Performance").
+  if(NOT DEFINED SUB0MATH_PERF_HOST AND DEFINED ENV{SUB0MATH_PERF_HOST})
+    set(SUB0MATH_PERF_HOST "$ENV{SUB0MATH_PERF_HOST}" CACHE STRING "Baseline name in perf/baselines/")
+  endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
   sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp METRICS perf/metrics.json SMOKE_TEST)

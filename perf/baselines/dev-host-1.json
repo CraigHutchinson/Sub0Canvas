@@ -1,0 +1,122 @@
+{
+  "format": 2,
+  "host": "dev-host-1",
+  "machine": "AMD64",
+  "system": "Windows 11",
+  "note": "Medians per op after calibration scaling, with robust CV across interleaved rounds. Regenerate deliberately; say why in the commit. Regressions are accepted with `accept`.",
+  "power": {
+    "state": "ac",
+    "saver": false,
+    "scheme": "Balanced",
+    "mode": {
+      "ac": "Balanced",
+      "dc": "Balanced"
+    }
+  },
+  "calibration_ns": 4744.101,
+  "calibration_sustained_ns": 4816.45,
+  "epochs": 0,
+  "cpu": 23,
+  "benchmarks": {
+    "applyReply 1 ops": {
+      "median_ns": 177100.118,
+      "cv": 0.0428,
+      "rounds": 5
+    },
+    "applyReply 10 ops": {
+      "median_ns": 504066.823,
+      "cv": 0.0179,
+      "rounds": 5
+    },
+    "applyReply 50 ops": {
+      "median_ns": 648599.071,
+      "cv": 0.0113,
+      "rounds": 5
+    },
+    "foldRegions C++ 1e5 lines, foldRegions()": {
+      "median_ns": 6708729.498,
+      "cv": 0.0086,
+      "rounds": 5
+    },
+    "foldRegions C++ 1e5 lines, hand-written brace scan": {
+      "median_ns": 572907.622,
+      "cv": 0.0055,
+      "rounds": 5
+    },
+    "foldRegions Python 1e5 lines, foldRegions()": {
+      "median_ns": 1528567.182,
+      "cv": 0.0067,
+      "rounds": 5
+    },
+    "foldRegions Python 1e5 lines, hand-written def scan": {
+      "median_ns": 302300.0,
+      "cv": 0.0181,
+      "rounds": 5
+    },
+    "index cold build 1e5 lines": {
+      "median_ns": 59201179.589,
+      "cv": 0.0024,
+      "rounds": 5
+    },
+    "index incremental update, 1e5 lines, per commit": {
+      "median_ns": 1456336.11,
+      "cv": 0.0104,
+      "rounds": 5
+    },
+    "index warm resolve and at, x1000": {
+      "median_ns": 3501.93,
+      "cv": 0.0334,
+      "rounds": 5,
+      "modes": [
+        3475.433,
+        3755.033
+      ]
+    },
+    "layeredJson 1 turn 2e4 lines": {
+      "median_ns": 2795097.357,
+      "cv": 0.0228,
+      "rounds": 5
+    },
+    "layeredJson 8 turns 2e4 lines, cumulative events and inline texts": {
+      "median_ns": 22726189.873,
+      "cv": 0.0192,
+      "rounds": 5
+    },
+    "layeredJson 8 turns 2e4 lines, per-turn events and texts by id": {
+      "median_ns": 17796802.954,
+      "cv": 0.0214,
+      "rounds": 5
+    },
+    "revive scan 1e4 lines, copy of the retired index only": {
+      "median_ns": 992438.453,
+      "cv": 0.0168,
+      "rounds": 5
+    },
+    "revive scan 1e4 lines, update of a file of novel blocks": {
+      "median_ns": 8730509.777,
+      "cv": 0.0117,
+      "rounds": 5
+    },
+    "revive scan 1e5 lines, copy of the retired index only": {
+      "median_ns": 14000865.909,
+      "cv": 0.0041,
+      "rounds": 5
+    },
+    "revive scan 1e5 lines, update of a file of novel blocks": {
+      "median_ns": 87558886.351,
+      "cv": 0.0247,
+      "rounds": 5
+    }
+  },
+  "pairs": {
+    "foldRegions C++ 1e5 lines, foldRegions()": {
+      "reference": "foldRegions C++ 1e5 lines, hand-written brace scan",
+      "ratio": 11.6972
+    },
+    "foldRegions Python 1e5 lines, foldRegions()": {
+      "reference": "foldRegions Python 1e5 lines, hand-written def scan",
+      "ratio": 5.0824
+    }
+  },
+  "accepted": []
+}
