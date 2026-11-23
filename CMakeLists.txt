@@ -8,6 +8,7 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(SUB0CANVAS_TOP_LEVEL ON)
 endif()
 option(SUB0CANVAS_BUILD_TESTING "Build Sub0Canvas's tests" ${SUB0CANVAS_TOP_LEVEL})
+option(SUB0CANVAS_BUILD_BENCHMARKS "Build the scale harness (bench/): the synthetic corpus generator, later the benchmarks" ${SUB0CANVAS_TOP_LEVEL})
 
 if(SUB0CANVAS_TOP_LEVEL)
   set(CMAKE_CXX_STANDARD 23)
@@ -50,6 +51,15 @@ if(SUB0CANVAS_BUILD_APP)
   target_link_libraries(sub0canvas_app PRIVATE sub0canvas simdjson::simdjson)
 endif()
 
+# The scale harness (bench/, docs/sessions/s0-scale-harness.md): the corpus generator is pure and links nothing; the tests use it as the truth for block identity.
+# The benchmark executable comes later and will be labelled timing (never CI).
+if(SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_BENCHMARKS)
+  add_library(sub0canvas_bench_corpus STATIC bench/corpus.cpp)
+  target_compile_features(sub0canvas_bench_corpus PUBLIC cxx_std_23)
+  target_include_directories(sub0canvas_bench_corpus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})   # #include "bench/corpus.hpp"
+  target_compile_options(sub0canvas_bench_corpus PRIVATE ${SUB0CANVAS_STRICT})
+endif()
+
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
   # The test helper (sub0platform/testing/check.hpp) comes from Sub0Platform. Only the tests link it: the library and the viewer gain no dependency.
@@ -75,6 +85,11 @@ if(SUB0CANVAS_BUILD_TESTING)
     endif()
     add_test(NAME ${name} COMMAND ${name} ${args})
   endforeach()
+  # The corpus generator's test: determinism, counts, the blocks the library finds in what it generates (bench/corpus.hpp).
+  add_executable(test_corpus lib/tests/test_corpus.cpp)
+  target_compile_options(test_corpus PRIVATE ${SUB0CANVAS_STRICT} -g)
+  target_link_libraries(test_corpus PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
+  add_test(NAME test_corpus COMMAND test_corpus)
   # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
   find_program(SUB0CANVAS_NODE node)
   if(SUB0CANVAS_NODE)
