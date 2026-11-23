@@ -39,7 +39,6 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 
 | Brief | Task | Written |
 |---|---|---|
-| [ms0-mock-squad-baseline.md](ms0-mock-squad-baseline.md) | MS0: the mock squad consumer project, reference loop and baseline scenarios, frozen in today's format | 2026-11-23 |
 | [s0-scale-harness.md](s0-scale-harness.md) | S0: a synthetic corpus at any size and benchmarks of today's index against the scale budgets | 2026-11-18 |
 | [canvas-test-coverage.md](canvas-test-coverage.md) | Later U8: per-test coverage in source and scoped assertion evidence | 2026-11-19 |
 | [canvas-prose-verification.md](canvas-prose-verification.md) | Backlogged: verify prose against the code and tests that support it, with revision-bound evidence | 2026-11-20 |
@@ -56,4 +55,5 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 
 | Brief | Task | Closed |
 |---|---|---|
+| [ms0-mock-squad-baseline.md](ms0-mock-squad-baseline.md) | MS0: the mock squad consumer project, reference loop and ten baseline scenarios, frozen in today's format | 2026-11-23 |
 | [m0-synthetic-mirror.md](m0-synthetic-mirror.md) | M0: the synthetic mirror, its fixture and edge-case register | 2026-11-18 |

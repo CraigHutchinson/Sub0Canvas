@@ -1,6 +1,6 @@
 # Testing: the proving ladder
 
-Status: in force (2026-11-18). L0, L1 and L4 run today; L2 has its first fixture (the synthetic mirror) and no scenario tests yet; L3 waits for S0.
+Status: in force (2026-11-23). L0, L1, L4a and L4 run today; L2 has its first fixture (the synthetic mirror) and no scenario tests yet; L3 waits for S0.
 
 Every change climbs the ladder as far as its kind requires (the table at the end), **in this repository first**, before it is integrated into
 Sub0Squad ([INTEGRATION.md](INTEGRATION.md)). A rung that is skipped is said so in the commit or pull request, never skipped silently.
@@ -11,6 +11,7 @@ Sub0Squad ([INTEGRATION.md](INTEGRATION.md)). A rung that is skipped is said so 
 | **L1 golden** | real producer output, frozen: Sub0Squad turn files and gate verdicts, validated by the viewer and **replayed through the library** (`test_golden_replay`: same blocks, identities one to one, same history, same issues); every recorded reply shape from real runs with its intended outcome (`test_replies`) | `fixtures/golden/`, `fixtures/replies/` | every change; CI smoke | `smoke` |
 | **L2 use case** | a scenario a consumer depends on, with **hand-checked truth**: a git history's block identities, PR review comments landing on blocks, a recorded squad workflow replayed through the store, a scripted authoring session (actors, commands, expected views; AUTHORING.md section 6); a language's conformance corpus (BLOCK_DISCOVERY.md, D1) | `fixtures/scenarios/<name>/` (inputs and `truth.json`), `fixtures/languages/<language>/`, a test per scenario | every change to what it covers; CI full when long | `smoke` or `full` |
 | **L3 scale** | the budgets of SCALE.md section 6 on a synthetic corpus (10^5 to 10^9 lines) and, locally, on large public repositories | `bench/` (S0) | locally before a release, and for any change to index internals; **never in CI** (shared runners are too noisy) | `timing` (skips on battery) |
+| **L4a mock consumer** | the library as a project the squad consumes: a separate CMake project (`consumer/mock_squad/`) that fetches it through CPM, a reference loop on the public API, a gate that reacts to the files, and hand-written scenarios (`fixtures/scenarios/squad`) with their persisted attempts (`fixtures/mock`); MOCK_SQUAD.md | `test_consumer_mock_squad` (`ctest --build-and-test`), `test_consumer_contract` | every change to what the squad calls or reads; before a Sub0Squad pull request exists | `full` |
 | **L4 consumer** | the change inside Sub0Squad: its tests, and a tier 0 A/B when what a model sees changes | a pull request in Sub0Squad | each integration iteration | (Sub0Squad's own) |
 
 ## Requirements, not implementations
@@ -70,6 +71,17 @@ output changes on purpose, the golden files are re-captured from a real run, and
 `fixtures/mirror/seed-1/` and its generator ([MIRROR.md](MIRROR.md)): an invented project with a topic of changes and their exact truth,
 including real-world edge cases the canvas does not handle yet. `test/mirror.test.js` keeps the fixture equal to its generator. Change views
 (P0-P2) and the git adapter (G1) are checked against it.
+
+## The mock squad (L4a)
+
+`consumer/mock_squad/` ([MOCK_SQUAD.md](MOCK_SQUAD.md)) is a CMake project of its own: it fetches this checkout through CPM, as Sub0Squad's
+`cmake/dependencies.cmake` does, links only `sub0canvas::sub0canvas` and compiles with its own `-Werror`, so it sees public headers and nothing else. The
+top-level build runs it as `test_consumer_mock_squad` (`ctest --build-and-test`, label `full`: the first run builds the library a second time, about
+30 s; later runs about 1 s). Its scripted model sends the replies of `fixtures/scenarios/squad/*.squad` through a reference loop and a gate that is a function
+of the files; `test_consumer_contract` compares the outcome of each reply, the final files, the refusal texts and the identities with what the scenario
+says, and the persisted attempt with `fixtures/mock/<name>/`. Those expectations are written by hand from the requirement and the T0 case each scenario
+cites; a regenerated attempt proves only the writer's bytes. The proof that the scenarios are real is a mutation: break one library rule (make
+`applyReply` non-atomic, accept a stale conflict, stop carrying identity through a rename) and a scenario goes red. Do it again when a scenario changes.
 
 ## The synthetic corpus (L3, S0)
 

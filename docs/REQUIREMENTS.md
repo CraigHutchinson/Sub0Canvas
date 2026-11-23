@@ -161,6 +161,18 @@ Sub0Squad is a gap here.
 | 19 calls of `isPythonPath` to choose the language | R-VIEW-7 | yes (and replaced by R-BLK-8 at D0) |
 | the adaptive threshold, clipping, the `SUB0SQUAD_ISSUE_*` switches | squad policy, not library behaviour | stays in Sub0Squad |
 
+## The consumer contract (R-CONS; MOCK_SQUAD.md section 3)
+
+What a consumer such as Sub0Squad relies on, proved by the mock squad (`consumer/mock_squad/`), a separate project that fetches this library through CPM and
+links only its public target.
+
+| id | requirement | status | check |
+|---|---|---|---|
+| R-CONS-1 | The library builds as a CPM dependency with public headers alone, under the consumer's own `-Werror`, and says the release it is: the same version in `CMakeLists.txt` and `package.json`, never older than the newest tag. | built | `test_consumer_mock_squad` (`ctest --build-and-test`), check (a) and (f) of `test_consumer_contract` |
+| R-CONS-2 | Whole attempts as the squad lives them (a one-shot fix, reads, a rename, a re-signing and a move over turns, a cut-off continuation, a loop rolled back, two actors, a FILE beside a bad EDIT, malformed blocks, a worse revision undone) end as the scenario's hand-written outcome sequence, final files, refusal texts and identity expectations say. | built | `test_consumer_contract` over `fixtures/scenarios/squad` |
+| R-CONS-3 | A refused reply leaves every file and revision as it was, checked on the canvas itself; every block anchor of a turn file resolves to a live block; a scenario run twice gives the same bytes, equal to the stored attempt in `fixtures/mock`. | built | `test_consumer_contract`, checks (d) and (e) |
+| R-CONS-4 | Every row of "Sub0Squad's use, mapped" is exercised by a scenario or deferred in writing with its reason; a new row fails the test until it is mapped. | built | `test_consumer_contract`, check (b) |
+
 ## U2-U11: requirements the groundwork must meet (design)
 
 Stated now so that B0-B4, G1-G5, S0-S4, D0-D3, E1 and C1 are built to them, and so that nothing built for U1 forecloses them. Each becomes a test when

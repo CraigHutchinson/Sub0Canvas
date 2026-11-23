@@ -41,8 +41,11 @@ hold up on codebases of billions of lines.
 * `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.
 * `tools/*.mjs`: the viewer's tools (demo generator, static server, screenshots). `tools/mirror/`: the synthetic mirror generator
   (`npm run mirror -- <mode>`, [docs/MIRROR.md](docs/MIRROR.md)).
+* `consumer/mock_squad/`: the mock squad ([docs/MOCK_SQUAD.md](docs/MOCK_SQUAD.md)): a separate CMake project that fetches this checkout through CPM as Sub0Squad
+  does and links only the public target; its scenario reader, gate, reference loop and record writer, and `test_consumer_contract`. The top-level build runs it as
+  `test_consumer_mock_squad` (label `full`).
 * `fixtures/`: test data by kind, indexed with origin, checking test and refresh command in [fixtures/README.md](fixtures/README.md): `demo/`
-  (generated), `golden/` (captured), `replies/` (hand-written), `mirror/` (generated).
+  (generated), `golden/` (captured), `replies/` (hand-written), `scenarios/` (hand-written attempts), `mock/` (their persisted attempts, generated), `mirror/` (generated).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.
 
 ## Build and test

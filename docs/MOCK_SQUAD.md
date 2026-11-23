@@ -1,6 +1,6 @@
 # The mock squad: Sub0Canvas tested as a project the squad consumes
 
-Status: design, in force for slice MS0 (2026-11-23). Evidence home for the consumer contract; the later Sub0Squad session reads section 6.
+Status: MS0 built (2026-11-23): the baseline runs and is frozen in today's format. Evidence home for the consumer contract; the later Sub0Squad session reads section 6, which now holds what the baseline taught.
 
 The squad is the first and most demanding consumer ([INTEGRATION.md](INTEGRATION.md)), but real models cannot be re-run on demand, and most of
 the squad's canvas loop is policy, not library calls (`src/canvas_agent.cpp` is about 1,100 lines, about 20 of them library calls). The **mock
@@ -13,7 +13,7 @@ a Sub0Squad pull request exists. Real goldens (`fixtures/golden/`) stay the trut
 A separate CMake project, `consumer/mock_squad/`, that fetches the library exactly as Sub0Squad's `cmake/dependencies.cmake` does
 (`CPMAddPackage(NAME Sub0Canvas)`, with `CPM_Sub0Canvas_SOURCE` pointing at this checkout in the test) and links `sub0canvas::sub0canvas`. It sees only
 public headers and compiles with the consumer's own `-Werror`. Today there is no `install(EXPORT)`, so CPM is the one consumption path proved.
-Run by a top-level `ctest --build-and-test` entry; labelled `full` unless its cost allows `smoke` (about 30 s).
+Run by a top-level `ctest --build-and-test` entry (`test_consumer_mock_squad`); labelled `full`: measured on the owner's machine (MinGW GCC, Ninja) the first run takes about 32 s (it builds the library and simdjson a second time) and later runs about 1.3 s, so the label is the owner's to move to `smoke`.
 
 | part | what it does |
 |---|---|
@@ -53,14 +53,14 @@ block anchor in a turn file resolves to a live block (R-VWR-7).
 (b) every row of REQUIREMENTS.md "Sub0Squad's use, mapped" is exercised by at least one scenario, from an explicit list that fails when a row is
 missing; (c) per scenario, the outcome sequence equals `# expect`, final files equal `--- want`, refusal texts contain the named strings, and
 `expect-ids` hold (ids compared, never spelled, R-ID-11); (d) the persisted attempt is byte-identical to `fixtures/mock/<name>`; (e) the invariants
-above; (f) `sub0canvas_VERSION` equals the release's version (the `v0.3.0` tag still says 0.2.1: fix at the next release). Behaviour comes from the
+above; (f) the library's version (read from its own directory scope) equals `package.json`'s and is not older than the newest `v*` tag of the checkout (the `v0.3.0` tag said 0.2.1; the check failed on that and passes since the bump to 0.3.0). Behaviour comes from the
 hand-written `expect` lines; regenerated files only prove the writer's bytes ([TESTING.md](TESTING.md): never compare against the code's own output).
 
 ## 4. Order of work
 
 | slice | what | how the mock drives it |
 |---|---|---|
-| **MS0** | the consumer project, loop, gate, record writer; about 8 scenarios (G1, G2, G4, B1, B3, B8, B9, B12) frozen in today's format | the "before" picture for B0; brief [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md) |
+| **MS0** (built) | the consumer project, loop, gate, record writer; ten scenarios (G1, G2, G4, G6, B1, B3, B8, B9 twice, B12) frozen in today's format | the "before" picture for B0; brief [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md) |
 | **MS1 = B0** | regenerate `fixtures/mock` with `id`, `column`, ranges, `layerMeta`, `policies`, string revision ids, per-turn `events` with `eventsFrom`, `texts` by content id; `test/mock.test.js` opens every mock attempt in the viewer, traces an item by `id` through G4 (title changes, so title matching would fail), checks per-turn and cumulative events agree, measures an 8-turn attempt against one turn | B0 step 3 ([sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md)); R-U1-4 still needs one real capture |
 | **MS2** | producer API proposal: diff the mock loop against the squad's loop; generic turn policy (partial and prefill, rollback and kept file, continuation budget, the attempt record) is a candidate for the library, for example a pure `attemptRecord(...)` so `%2F` naming and content ids live in one place, and a field-named `SnapshotSpec` for `layeredJson` | answers section 6 |
 | **MS3 = B1** | the loop optionally writes events through a `Store` over a memory log; replay equals the live snapshot; B15 and G4 give the hand-checked open, done, reopened truth | before any tier-0 attempt |
@@ -87,3 +87,36 @@ tier unless measured cheap enough.
 5. What does a second actor need: a stale-base inbox (changes to my blocks since rN), claims per block or file for the fork executor, and whether the
    model-facing refusal wording becomes a pinned text measured by an A/B there?
 6. Should the gate's text formats that `parseIssues` relies on be specified here (a localise or issue-source policy) instead of implicitly in the squad?
+
+### What the baseline taught (MS0, 2026-11-23)
+
+The loop is about 370 lines (`consumer/mock_squad/src/loop.cpp`), 14 policy fields (`LoopPolicy`) and 25 library call sites; the ten scenarios run in about 0.1 s.
+
+1. **Generic or the squad's own.** The order is generic: guard, join, parse, apply, compile check, commit, gate, revert, verdict. Candidates for the library, each
+   copied from the squad into the mock and so a second copy: the guard's allowance rule (`aborts >= freeAborts && kind != "repeat"`, and `loopKept = soFar.substr(0, keep)`);
+   `keptFileMadeWhole` (it parses a FILE header's path, a third place that does it after `parseCanvasReply` and the stream guard's scope check); the best-revision
+   bookkeeping (`markBest`, `restoreBest`); the outcome vocabulary itself (read, cancelled, continued, refused, staged, failed, reverted, passed), which every consumer
+   would otherwise invent. The policy struct they need is `LoopPolicy` as it stands. Not mirrored, so not yet a question the mock can answer: the prefill continuation,
+   which is the squad's first choice when the context allows; `joinContinuation` is only its fallback and the path after a loop's rollback, so it sees less real traffic than R-TURN suggests.
+2. **The attempt record.** The squad names a revision file by turning `/` into `_` (`src_calc.cpp.r1`; the design sketch said `%2F`): `src/a_b.cpp` and `src_a/b.cpp` give one name.
+   A library-owned `attemptRecord` would fix that once. `persistCanvas` itself is ten lines; the record is thin only because the per-turn layer file and the revision log
+   already come from the library (`layeredJson`, `logJson`).
+3. **`layeredJson`.** The caller builds `int turn`, a `map<string,int>` of revisions and a `map<string,vector<LayerItem>>` on every verdict. And the baseline is not wholly "before
+   B0": the issue items already carry `id` (the key), so MS1's diff shows `id` unchanged and the real additions are the rest (`column`, ranges, `layerMeta`, `policies`, string
+   revision ids, `events`, `texts`). A field-named `SnapshotSpec` would absorb them.
+4. **One scenario file for both runners.** A reply section is `fake::Reply` (content, finish, pieces), so a `.squad` file maps one to one onto `test_canvas_agent`'s
+   engine; what the squad does not have is the gate (its harness is real) and `# expect`, which would become the squad's own assertions.
+5. **A second actor.** `applyReply` cannot express a stale author: it applies every operation against the revision current when the call begins (`shown`). B8 therefore
+   needs a second apply path in the loop (`applyStale`: `Canvas::apply` per file with `baseRevision`), which has none of `applyReply`'s allowed-path check, partial mode or `skipped`
+   list. A `baseRevision` (or a per-path map) in `ApplyOptions` would give a stale reply the same semantics. The refusal itself already names the actor and the revision
+   (`lines 5-5 were changed by a in revision 2 (lines 5-5): read the current text and redo this edit`); whether that wording is pinned and measured is still open.
+6. **The gate's text formats.** `parseIssues` reads `FAIL n - name: message` and `path:line:col: error: message`, ignores lines holding ` | ` and appends indented lines to
+   the item above; a test is localised only when its name is a function's last name or its message quotes a literal the function holds. The mock gate had to emit exactly
+   that, so the formats are implicit in the library today. One consequence worth a decision: a compile diagnostic's key drops digits only, so two errors that differ only by a number
+   (`expected 3 arguments`, `expected 4`) are one issue.
+
+Smaller findings: the parser accepts an EDIT block that is never closed at the end of a reply (R-EDIT-6 refuses an empty block or one with no form, and a SEARCH that never closes),
+so a consumer must decide a cut-off by the finish reason, not by a parse error. The stream guard judges after each streamed piece, so a loop's `detail` counts what had arrived (11 copies at 48
+characters a piece, 10 being the limit): a message that quotes it is not stable across piece sizes. Partial application commits one revision per operation, so one reply of two operations
+is two revisions in the log. No library bug was found. Not built, from section 2: B2, B4-B7, B10, B11, B13-B18 and G3, G5; the split and merge steps of G4 (a rename, a re-signing and a move
+are there); `flap=<seed>` in the gate; the folded view the next message carries.
