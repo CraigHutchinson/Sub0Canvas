@@ -70,6 +70,7 @@ waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 
 ## Known gaps and debts
 
+* **The full tier is red on Linux clang** (parked 2026-11-23, [issue #4](https://github.com/CraigHutchinson/Sub0Canvas/issues/4)): five exact `layeredJson` byte metrics and the mock squad differ from gcc and MinGW, so some output depends on the standard library. Fix before the next release tag.
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
 * Measured faults of block discovery: a `{` in a block comment loses every block of the file; Rust/TypeScript generics, arrow functions and Go methods
   are named wrongly or not at all; decorators fall outside their block; YAML, JSON, XML and Markdown have no blocks (BLOCK_DISCOVERY.md section 2; D0).
