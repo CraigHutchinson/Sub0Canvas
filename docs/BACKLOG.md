@@ -23,8 +23,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
   faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1, G1 and V0's Markdown. Brief:
   [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
-* **S0: the scale harness.** A deterministic synthetic corpus (profile A's sizes, profile B's mix) and benchmarks of today's index, so S1's data
-  structures are chosen by measurement. Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
+* **S0: the scale harness. Generator and benchmarks at 10^5 lines done** (2026-11-23: `bench/corpus.hpp`, `Sub0Canvas_Bench` on the family's sub0perf tooling, `perf/metrics.json`, the first
+  baseline; numbers in [SCALE.md](SCALE.md) section 6.0). **Left**: 10^7 and streamed 10^9 lines, profile B, the change sets, the index-against-truth comparison, S1's choices stated.
+  Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
 * **B0: one format revision. Steps 1-3 done here** (MS1, 2026-11-23; the mock squad drives it): item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
   `eventsFrom` (O5 confirmed), texts by content id, additive, read by the viewer in both shapes. **Left**: re-capture one real attempt with compiler diagnostics
   (R-U1-4), the release (v0.4.0) and the Sub0Squad PR (`SnapshotSpec`, `%2F` naming). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).

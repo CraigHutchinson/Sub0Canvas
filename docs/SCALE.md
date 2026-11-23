@@ -97,20 +97,43 @@ layer of [DECISIONS.md](DECISIONS.md) section 3, sharded like the store.
 
 First targets; S0 replaces them with measurements, and R-SCALE-2 holds them at 10^5, 10^7 and 10^9 lines.
 
-| operation | budget |
-|---|---|
-| cold indexing of a code file | at least 1 million lines per second per core |
-| classification of a path | under 10 us, without reading the file for most paths |
-| a compact block | under about 200 bytes |
-| a warm anchor resolution | under 10 ms |
-| an incremental commit or merge | proportional to the paths it changed and the open changes it meets |
-| a change's footprint | proportional to its diff; computed once per (base, head) |
-| opening a topic of 25 changes (warm) | under 1 s to the summary |
-| first view of a 440,000-file worktree (cold) | reads only the files the view shows, plus the classifier's cache |
-| resident memory | proportional to the paths touched, not the repository |
-| disk per extra clone of the same repository | the per-clone state only: shared per-blob tables are not duplicated |
+| operation | budget | gated by |
+|---|---|---|
+| cold indexing of a code file | at least 1 million lines per second per core | timing: `index cold build 1e5 lines`; every tier: blocks found equal the generator's truth |
+| classification of a path | under 10 us, without reading the file for most paths | not yet benchmarked (the classifier is S2's) |
+| a compact block | under about 200 bytes | every tier: metric `index cold 1e5: live heap bytes per block`, an xfail until S1; its ceiling (total live heap bytes) holds meanwhile |
+| a warm anchor resolution | under 10 ms | timing: `index warm resolve and at, x1000` |
+| an incremental commit or merge | proportional to the paths it changed and the open changes it meets | timing: `index incremental update, 1e5 lines, per commit`; every tier: events, live blocks and allocations over a fixed 100-commit stream |
+| a change's footprint | proportional to its diff; computed once per (base, head) | not yet benchmarked (P0) |
+| opening a topic of 25 changes (warm) | under 1 s to the summary | not yet benchmarked (P1) |
+| first view of a 440,000-file worktree (cold) | reads only the files the view shows, plus the classifier's cache | not yet benchmarked (S2) |
+| resident memory | proportional to the paths touched, not the repository | every tier: metric `index cold 1e5: live heap bytes` (a ceiling) |
+| disk per extra clone of the same repository | the per-clone state only: shared per-blob tables are not duplicated | not yet benchmarked (B1) |
+| the interchange file of a turn (`layeredJson`) | proportional to what changed in the turn, not to the document | every tier: bytes written per turn against cumulative (below); timing: `layeredJson` rows |
 
-Performance is measured locally, never in CI (the family rule): benchmarks carry the ctest label `timing` and skip on battery.
+Timing is measured locally only (the family rule) and judged against a per-host baseline by the family's sub0perf tooling; the deterministic metrics
+(`perf/metrics.json`, the `Sub0Canvas_Bench_metrics` test) run in every tier. How: [TESTING.md](TESTING.md), "Performance".
+
+### 6.0 Measured on the synthetic corpus (2026-11-23, S0 step 3 in part)
+
+`Sub0Canvas_Bench` on the seeded profile A corpus ([bench/corpus.hpp](../bench/corpus.hpp), seed 1), library only, one machine (baseline alias `dev-host-1`: Windows 11,
+MinGW-w64 GCC 16.2, Release, mains power, load 5-6%, 5 interleaved rounds, noise 0.2% to 4%). Not yet measured: 10^7 and 10^9 lines (the stream exists; the benchmark does not use it),
+profile B, a real repository. Medians:
+
+| what | size | result | against the budget |
+|---|---|---|---|
+| cold index build | 100,145 lines, 262 files, 4,800 blocks | 59 ms: 1.7 million lines per second | meets the 1 M lines per second guess |
+| incremental update | a commit of a stream (1-4 edits, 2.6 files) | 1.46 ms per commit (0.56 ms per file touched) | about 2.5 times the cold cost per file: reconciliation and revival, not just parsing |
+| warm resolve and `at` | 1,000 ids of the 1e5 index | 3.5 us each | far under 10 ms |
+| `foldRegions` | 190 C++ files, 3,597 regions; 72 Python files, 1,203 regions | 6.7 ms and 1.5 ms: 11.7 and 5.1 times a hand-written scan of the same text | the brace heuristic is not the dominant cost of the cold build |
+| revive scan | a file of 22 novel blocks against 486 and 4,800 retired blocks | 7.7 ms and 73.6 ms (the copy of the index is subtracted): linear, 0.7 us per (new block, retired block) | extrapolated, at 10^6 retired blocks one novel block costs about 0.7 s: the scan must go before history is indexed (S1) |
+| `applyReply` | 1, 10, 50 single-line operations over five files (the canvas copy included) | 0.18, 0.50 and 0.65 ms | not a scale concern |
+| `layeredJson` | 58 files, 988 blocks, 2e4 lines | 2.8 ms for one turn; eight turns 17.8 ms per-turn against 22.7 ms cumulative | |
+| heap | the cold 1e5 index | 12.5 MB live: 2,613 bytes per block, 2,122 without the held texts; 85 allocations per block | **13 times the 200-byte target**: S1's compact layout is needed (the xfail) |
+
+Bytes written for eight turns of the 2e4-line corpus (22 files changed over the turns): cumulative events with inline texts, which Sub0Squad writes today, 6.23 MB; per-turn
+events with inline texts 5.49 MB; cumulative events with texts by content id 2.87 MB; per-turn events with texts by id 2.13 MB, **34% of today's**. Texts by id carry most of
+the saving; per-turn events matter more as the event log grows. All are exact metrics, so a change to the format shows as a number that moved.
 
 ### 6.1 Measured: whole-bundle snapshots of profile B (2026-11-18)
 

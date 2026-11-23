@@ -1,6 +1,6 @@
 # Follow-up session: S0, the scale harness
 
-Status: in progress (written 2026-11-18; step 1's generator, without change sets or branches, done 2026-11-23: see Outcome so far). Backlog: "S0: the scale harness" under *Now*. Design: [SCALE.md](../SCALE.md) and [BACKBONE.md](../BACKBONE.md) slice S0;
+Status: in progress (written 2026-11-18; step 1's generator, without change sets or branches, and step 3's benchmarks at 10^5 lines, done 2026-11-23: see Outcome so far). Backlog: "S0: the scale harness" under *Now*. Design: [SCALE.md](../SCALE.md) and [BACKBONE.md](../BACKBONE.md) slice S0;
 [USE_CASES.md](../USE_CASES.md) U4; [TESTING.md](../TESTING.md) rung L3.
 
 ## Goal
@@ -29,7 +29,7 @@ SCALE.md section 6. Do not optimise the index in this session: S1 does that, fro
    truth for CHANGE_VIEWS.md's P0-P2. The change sets may land after the identity truth, in the same generator.
 2. **A correctness test at small scale** (`lib/tests/test_corpus.cpp`, label `smoke`): run the index over a few hundred generated commits and
    compare every identity outcome with the generator's truth. Disagreements are findings (either rule or generator), each explained.
-3. **Benchmarks** (`bench/bench_index.cpp`, ctest label `timing`, excluded from the quick and CI presets): cold indexing rate; incremental update cost
+3. **Benchmarks** (`bench/bench_canvas.cpp` as built, through the family's sub0perf tooling: timing local only, deterministic metrics in every tier): cold indexing rate; incremental update cost
    per commit against files changed; anchor resolution (`resolve`, `at`); resident memory per block and per line; the revive scan's cost against the
    number of retired blocks. At 10^5, 10^7 and (streamed, sampled) 10^9 lines. Record machine, compiler, power state and build in the output.
 4. **Write the numbers** into SCALE.md section 6 (a "Measured" table replacing the guesses) and the findings that decide S1 and S2 (which
@@ -79,3 +79,22 @@ lineage (spike, carve-outs, supersession, stack, port) and **wide branching**, w
   the index), and bodies are statement soup that compiles nowhere: they exist for token distributions and block structure only.
 
 Remaining for this session: steps 2-4 as written, then the change sets and branching on top of this generator.
+
+## Outcome so far, part 2 of 4 (2026-11-23: the benchmarks, adopted on the family's performance tooling)
+
+Done: `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench` (`sub0math_add_benchmark`, [TESTING.md](../TESTING.md) "Performance"), 17 timing rows and 47 deterministic metrics
+(`perf/metrics.json`), the first baseline (`perf/baselines/dev-host-1.json`, a steady full run on mains), and the numbers in [SCALE.md](../SCALE.md) section 6.0. The brief's name
+`bench_index` and its `timing` ctest label for the benchmarks changed: the tooling runs timing itself (`Sub0Canvas_Bench_check`, a `timing`-labelled ctest test wraps it for the
+`timing` preset), and the metrics and a smoke run are `smoke` tests in every tier. Not done: 10^7 and (streamed, sampled) 10^9 lines, profile B, the change sets, step 2's comparison of
+the index with the identity truth, and step 4's decision of S1's structure choices (sketch size, LSH bands): the numbers so far say only what follows.
+
+* **What decides S1.** The block costs 2,613 bytes against the 200 target (13 times; 85 allocations per block; two `std::set<std::string>` and a held copy of the text dominate);
+  an incremental update costs about 2.5 times the cold cost per file touched; the revive scan is linear in retired blocks (0.7 us per pair), which is a wall at history scale. The
+  cold build (1.7 M lines per second) and warm resolution (3.5 us) are inside their first guesses. foldRegions is 11.7 times a hand-written brace scan on C++ and 5.1 times on
+  Python, and together about 14% of the cold build.
+* **The writer's bytes.** Eight turns written the way Sub0Squad does today (cumulative events, inline texts) are 6.2 MB; per-turn events with texts by id are 2.1 MB (34%).
+* **Faults found.** MinGW's `libstdc++` DLL and a replaced `operator new` in the executable corrupt the heap (0xC0000374): the benchmark links the runtime statically on MinGW.
+  Allocation counts differ by up to 2x between GCC's standard library and MSVC's, so their ceilings are wide (25%) and exact only for what is machine-independent.
+  The first incremental row was 92% noisy (commit sizes are heavy-tailed): it now times whole laps of a 100-commit stream, which brought it to 1-7%.
+* **Controls.** Two hand-written scans (brace and `def`) of the corpus text are the sub0perf environment controls and the pair references for `foldRegions`.
+

@@ -42,9 +42,10 @@ Tests state what consumers rely on, so that the architecture can move under them
    bundle of a small repository) and tests read the files. Capturing needs the owner's go-ahead for anything not already local; the GitHub adapter's
    live mode is exercised by hand, not by ctest.
 3. **Deterministic.** Generators take a seed; outputs are byte-compared; no clock reads (time is passed in, BACKBONE.md section 4).
-4. **Performance only locally.** `timing`-labelled tests and benchmarks print `SKIP timing: <reason>` on battery (the family convention), and their
-   results are compared against a baseline recorded on mains.
-5. **Long suites are labelled `full`.** `ctest --preset quick` excludes them, `ctest --preset full` runs everything; the pre-push gate runs quick.
+4. **Timing only locally; deterministic metrics everywhere.** Wall-clock numbers are measured locally on mains power and never in CI; a count or a size that does not
+   depend on the machine is an ordinary test that gates in every tier ([Performance](#performance), below).
+5. **Long suites are labelled `full`; wall-clock runs `timing`.** `ctest --preset quick` excludes `full` and `timing`, `ctest --preset full` runs everything but `timing`,
+   `ctest --preset timing` runs only the timing run; the pre-push gate runs quick.
 6. **Every claim in a design doc that a test can check is checked by one** (a budget, a recall, a byte-identical rendering).
 
 ## Running
@@ -53,7 +54,8 @@ Tests state what consumers rely on, so that the architecture can move under them
 cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # CPM_SOURCE_CACHE set to share a cache
 cmake --build --preset default
 ctest --preset quick          # L0 and L1 (what the pre-push gate and CI smoke run)
-ctest --preset full           # everything not timing-only
+ctest --preset full           # everything except the timing run
+ctest --preset timing         # the local timing run (Sub0Canvas_Bench_check); mains power, quiet machine
 npm test                      # the viewer's tests alone
 python ../CraigHutchinson.github/tools/ci/local_ci.py --level quick   # the declared local checks (.ci/local.json), all local compilers
 ```
@@ -85,9 +87,36 @@ cites; a regenerated attempt proves only the writer's bytes. The proof that the 
 
 ## The synthetic corpus (L3, S0)
 
-A generator (to be built in S0) produces a project of any size on the fly from a seed: files in a directory tree, functions with realistic token
-distributions, and a commit stream with edits, signature changes, renames, splits, merges, deletions, revivals and cross-file moves **at known
-places**, so the generator is also the truth for identity at scale. Nothing at 10^9 lines is written to disk whole: the benchmark streams it.
+A generator (`bench/corpus.hpp`, built; its test is `test_corpus`) produces a project of any size on the fly from a seed: files in a directory tree, functions with realistic
+token distributions, and a commit stream with edits, signature changes, renames, splits, merges, deletions, revivals and cross-file moves **at known places**, so the
+generator is also the truth for identity at scale. Nothing at 10^9 lines is written to disk whole: a benchmark streams it.
+
+## Performance
+
+The benchmarks are `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench`, built with `SUB0CANVAS_BUILD_BENCHMARKS` (on at the top level) through the family's performance
+tooling (sub0perf, in the Sub0Math repository, fetched by CPM for its tooling only: a placeholder pin until it is pushed, `CPM_Sub0Math_SOURCE` on the dev machine). Library only,
+on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two kinds of result, kept apart (the family rule):
+
+| kind | what | where it runs |
+|---|---|---|
+| **deterministic metrics** | counts and sizes: blocks found against the generator's truth, events, bytes `layeredJson` writes (per turn against cumulative, texts by id on and off), live heap bytes and allocations (a counting `operator new` in the executable), regions found | every tier, as the ctest tests `Sub0Canvas_Bench_metrics` (judged against `perf/metrics.json`) and `Sub0Canvas_Bench_smoke` (every workload once), label `smoke`; about 11 s |
+| **timing** | the benchmarks' wall-clock times, interleaved and calibrated, against `perf/baselines/<host>.json` | local only: the pre-push gate, the full level of `.ci/local.json` (a `perf` step marked `timing`, untimed on battery), and a developer's own runs |
+
+Metric kinds in `perf/metrics.json`: `exact` for what must not move (counts, bytes written), `max` for a ceiling. Allocation counts differ between standard libraries (GCC's and
+MSVC's differ by up to 2x here), so their ceilings are the larger of the two plus 25%, heap bytes plus 10%: they catch a blow-up, not a drift; the timing rows catch the drift.
+The `max` metric `index cold 1e5: live heap bytes per block` is an **xfail** against SCALE.md's 200 bytes until S1; when it starts to pass the check says so and the xfail goes.
+
+```bash
+export SUB0PERF_OUTPUT=brief                           # one verdict line per command (the improve loop is Sub0Math docs/PERF_LOOP.md)
+ctest --preset quick                                    # includes the metrics and the smoke run
+cmake --build build/default --target Sub0Canvas_Bench_check        # timing: interleaved rounds, judged against this host's baseline (mains power only)
+cmake --build build/default --target Sub0Canvas_Bench_compare      # A/B against the previous build, after a change
+SUB0MATH_PERF_REASON="why" cmake --build build/default --target Sub0Canvas_Bench_metrics_accept   # a deliberate change of a metric (logged in perf/metrics.json)
+```
+
+The baseline file is named by `SUB0MATH_PERF_HOST` (an environment variable or `-D`): this repository is public, so the committed baseline uses the alias `dev-host-1`, and a
+machine that measures sets that variable to the alias (or adds its own alias file). The pre-push gate measures only after `cmake -DSUB0MATH_PERF_GIT_HOOKS=ON` (once per clone) has
+recorded its configuration; the build leaves it off. A change to a deterministic fact (a metric) is made deliberately with the `_metrics_accept` target and a reason.
 
 ## Which rungs a change needs
 

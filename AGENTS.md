@@ -45,7 +45,10 @@ hold up on codebases of billions of lines.
   does and links only the public target; its scenario reader, gate, reference loop and record writer, and `test_consumer_contract`. The top-level build runs it as
   `test_consumer_mock_squad` (label `full`).
 * `bench/`: the scale harness (S0, [docs/sessions/s0-scale-harness.md](docs/sessions/s0-scale-harness.md)): `corpus.hpp`/`corpus.cpp`, the seeded synthetic corpus and edit stream
-  (library target `sub0canvas_bench_corpus`, option `SUB0CANVAS_BUILD_BENCHMARKS`; tested by `lib/tests/test_corpus.cpp`); the benchmarks join it later.
+  (library target `sub0canvas_bench_corpus`, option `SUB0CANVAS_BUILD_BENCHMARKS`; tested by `lib/tests/test_corpus.cpp`), and `bench_canvas.cpp`, the benchmarks
+  (`Sub0Canvas_Bench`, run through the family's sub0perf tooling; [docs/TESTING.md](docs/TESTING.md), "Performance").
+* `perf/`: `metrics.json`, the deterministic metrics `Sub0Canvas_Bench` reports (judged by the ctest tests `Sub0Canvas_Bench_metrics` and `_smoke`, label `smoke`, in every tier);
+  `baselines/<host>.json`, the recorded timings of one machine (the host is an alias, `SUB0MATH_PERF_HOST`; a public repository carries no real host names).
 * `fixtures/`: test data by kind, indexed with origin, checking test and refresh command in [fixtures/README.md](fixtures/README.md): `demo/`
   (generated), `golden/` (captured), `replies/` (hand-written), `scenarios/` (hand-written attempts), `mock/` (their persisted attempts, generated), `mirror/` (generated).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.
@@ -55,7 +58,8 @@ hold up on codebases of billions of lines.
 ```bash
 cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # CPM_SOURCE_CACHE: the global cache, below
 cmake --build --preset default
-ctest --preset quick      # what the pre-push gate and CI smoke run; ctest --preset full for everything
+ctest --preset quick      # what the pre-push gate and CI smoke run (the benchmark metrics included); ctest --preset full for everything but timing
+ctest --preset timing     # the local timing run (mains power, quiet machine); never in CI
 npm test                  # the viewer alone
 ```
 
@@ -100,7 +104,8 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
 * **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. **Never dispatch the
   full tier after a routine push**: verify locally (`ctest --preset quick`, or `full`) and check only the smoke run after pushing. Full runs are for
   releases and version bumps; the one exception is a change that only another platform can prove (a Windows runner's behaviour): batch such
-  changes and dispatch once. Performance is measured locally only.
+  changes and dispatch once. **Timing is measured locally only; deterministic metrics gate in every tier; the improve loop is Sub0Math docs/PERF_LOOP.md** (one verdict
+  line per step; the family's performance tooling, fetched for its tooling only).
 * **Follow-up work** that belongs in its own session is written as a brief in [docs/sessions/](docs/sessions/README.md) (its workflow: write, pick
   up, close with an `## Outcome`, move to *Done*), listed there and pointed at from the backlog. Not left in a chat or a session card, which other
   devices cannot open.

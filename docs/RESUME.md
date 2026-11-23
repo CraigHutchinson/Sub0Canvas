@@ -19,6 +19,7 @@ in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](ses
 | the viewer | built, tested (`npm test`, `test_viewer` under ctest) | [README.md](../README.md) |
 | CI (family standard), test presets, `.ci/local.json`, pre-push gate | built | [AGENTS.md](../AGENTS.md) |
 | `applyReply` (atomic), turn control, the 30 recorded-reply cases, moved from Sub0Squad | built, released in v0.3.0 | `test_replies`, `test_turn_control`; [DECISIONS.md](DECISIONS.md) section 2 |
+| the scale harness (S0, in part): the seeded corpus generator and `Sub0Canvas_Bench` (timing local only; 47 deterministic metrics in every tier), a first baseline, the numbers in SCALE.md section 6.0 | built, not yet released | `test_corpus`, `Sub0Canvas_Bench_metrics`, [TESTING.md](TESTING.md) "Performance" |
 | the mock squad (MS0): a consumer project fetching the library through CPM, a reference loop and gate, ten hand-written scenarios frozen in `fixtures/mock`, the consumer contract (R-CONS); the version bumped to 0.3.0 | built, not yet released (the next tag carries it) | `test_consumer_mock_squad` (label `full`), [MOCK_SQUAD.md](MOCK_SQUAD.md) |
 | requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, released in v0.3.0 | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
 
@@ -75,7 +76,9 @@ waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 
 * **B0 steps 1-3 are done here** (MS1, 2026-11-23): the library writes item `id`, anchor `column` and range, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom` and texts by id (`SnapshotSpec`), and the viewer reads both shapes. Not done: a real Sub0Squad attempt through it (R-U1-4), the release and the Sub0Squad PR (`%2F` naming included).
 * `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or
-  scale (SCALE.md, slices S0-S2).
+  scale (SCALE.md, slices S0-S2). Measured (S0, SCALE.md section 6.0): 2,613 bytes per block against the 200 target, and 0.7 us per (new block, retired block) in the revive scan.
+* The benchmarks run through the family's performance tooling fetched from a Sub0Math commit that is **not pushed yet** (`CMakeLists.txt` pins it with a TODO): until it is, a build needs
+  `CPM_Sub0Math_SOURCE`, and the workflows (pinned to a shared-workflows commit that is not pushed either) must not be pushed first.
 * Sub0Squad still calls the first-version `layeredJson`, which writes every event from 0 (cumulative, with `eventsFrom` 0) and inline texts; it moves to `SnapshotSpec` in its PR.
 
 ## Where things are
