@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "sub0canvas/blocks.hpp"
+
 namespace sub0canvas {
 
 /// A foldable region: a function-like block. Line numbers are 1-based and inclusive; `first` is the signature line, `bodyFrom..bodyTo` the body: for braces `bodyTo` is the closing line, which stays visible, so a fold hides bodyFrom..bodyTo-1; for Python it is the last body line, all of it hidden.
@@ -16,10 +18,15 @@ struct FoldRegion
     std::string name;   ///< the identifier before the first '(' of the signature line ("" when none)
 };
 
-/// The foldable regions of `text` (outermost function-like blocks only: namespaces, classes and structs stay open so their members show).
+/// The foldable regions of `text`, kept as a wrapper over the heuristic providers `braces@1` and `indent@1` (blocks.hpp) for callers that choose the language themselves (outermost function-like blocks only: namespaces, classes and structs stay open so their members show).
 /// `python` selects indentation instead of braces. By default only regions worth folding are returned (a body of two lines or more); with `all` every
 /// function-like block is, down to a one-line function, which is what addressing a function BY NAME needs (`replaceSymbol`, a section of a fork).
 [[nodiscard]] std::vector<FoldRegion> foldRegions(const std::string& text, bool python, bool all = false);
+
+/// The fold policy over an outline: its function-like nodes as regions, only those worth folding unless `all`. Nothing here changes what a block is (R-BLK-12).
+[[nodiscard]] std::vector<FoldRegion> foldRegionsOf(const Outline& outline, bool all = false);
+/// The regions of a file chosen by its PATH (the language is detected, BLOCK_DISCOVERY.md 4.2): what new code calls instead of `foldRegions(text, python, ...)`.
+[[nodiscard]] std::vector<FoldRegion> foldRegionsFor(const std::string& path, const std::string& text, bool all = false);
 
 /// The file as a numbered view (`  12| code`). Whole when it fits `budget` characters; otherwise bodies are folded
 /// (`      ... (45 lines folded: 13-57; READ them to see)`), except regions that contain any of `focusLines` (lines named by a failure), which stay open

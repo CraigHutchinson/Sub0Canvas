@@ -71,7 +71,7 @@ TxResult Canvas::apply(const Transaction& tx)
         Span s;
         if (op.kind == CanvasOp::Kind::replaceSymbol) {
             bool found = false;
-            for (const auto& reg : foldRegions(baseText, isPythonPath(tx.path), true)) {
+            for (const auto& reg : foldRegionsFor(tx.path, baseText, true)) {
                 const std::string leaf = reg.name.substr(reg.name.rfind(':') == std::string::npos ? 0 : reg.name.rfind(':') + 1);
                 if (reg.name == op.symbol || leaf == op.symbol) { s.from = reg.first; s.to = reg.bodyTo; found = true; break; }
             }

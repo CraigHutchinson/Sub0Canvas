@@ -151,10 +151,9 @@ void BlockIndex::update(const std::string& path, const std::string& text)
     if (const auto t = texts_.find(path); t != texts_.end() && t->second == text) return;
     texts_[path] = text;
     const auto lines = splitLines(text);
-    const bool python = isPythonPath(path);
     std::vector<Block> fresh;
     std::vector<std::size_t> hashes;
-    for (const auto& r : foldRegions(text, python, true)) {
+    for (const auto& r : foldRegionsFor(path, text, true)) {
         Block b;
         b.path = path;
         b.name = r.name;
@@ -492,7 +491,7 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
         const std::string testLeaf = name.substr(name.find_last_of(".:") == std::string::npos ? 0 : name.find_last_of(".:") + 1);
         for (const auto& [path, text] : sources) {
             const auto srcLines = splitLines(text);
-            for (const auto& r : foldRegions(text, isPythonPath(path), true)) {
+            for (const auto& r : foldRegionsFor(path, text, true)) {
                 if (leaf(r.name) != testLeaf) continue;
                 for (int k = r.first; k <= std::max(r.first, r.bodyTo) && k <= static_cast<int>(srcLines.size()); ++k) {
                     const std::string& src = srcLines[static_cast<std::size_t>(k) - 1];

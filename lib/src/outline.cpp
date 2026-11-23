@@ -1,5 +1,7 @@
 #include "sub0canvas/outline.hpp"
 
+#include "scan.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -10,54 +12,8 @@ namespace sub0canvas {
 
 namespace {
 
-std::vector<std::string> splitLines(const std::string& text)
-{
-    std::vector<std::string> lines;
-    std::istringstream in(text);
-    for (std::string l; std::getline(in, l);) lines.push_back(l);
-    return lines;
-}
-
-std::string nameBefore(const std::string& line)
-{
-    const auto paren = line.find('(');
-    if (paren == std::string::npos) return {};
-    std::size_t e = paren;
-    while (e > 0 && std::isspace(static_cast<unsigned char>(line[e - 1]))) --e;
-    std::size_t b = e;
-    while (b > 0 && (std::isalnum(static_cast<unsigned char>(line[b - 1])) || line[b - 1] == '_' || line[b - 1] == ':' || line[b - 1] == '~' || line[b - 1] == '$')) --b;
-    return line.substr(b, e - b);
-}
-
-/// Net brace change of a line, ignoring string and character literals and // comments (block comments are rare in generated code and not tracked).
-int braceDelta(const std::string& line, bool& opensHere)
-{
-    int d = 0;
-    char quote = 0;
-    opensHere = false;
-    for (std::size_t i = 0; i < line.size(); ++i) {
-        const char c = line[i];
-        if (quote) { if (c == '\\') ++i; else if (c == quote) quote = 0; continue; }
-        if (c == '"' || c == '\'' || c == '`') { quote = c; continue; }
-        if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
-        if (c == '#' && i == line.find_first_not_of(" \t")) break;   // a preprocessor line
-        if (c == '{') { ++d; opensHere = true; }
-        else if (c == '}') --d;
-    }
-    return d;
-}
-
-bool functionLike(const std::string& line)
-{
-    // A signature: has '(' before its '{', and is not a control statement (those live inside a function body that is folded as a whole).
-    const auto brace = line.find('{');
-    const auto paren = line.find('(');
-    if (paren == std::string::npos || (brace != std::string::npos && brace < paren)) return false;
-    const std::string t = line.substr(line.find_first_not_of(" \t") == std::string::npos ? 0 : line.find_first_not_of(" \t"));
-    for (const char* kw : {"if", "for", "while", "switch", "catch", "else", "return"})
-        if (t.rfind(kw, 0) == 0 && (t.size() == std::string(kw).size() || !(std::isalnum(static_cast<unsigned char>(t[std::string(kw).size()])) || t[std::string(kw).size()] == '_'))) return false;
-    return true;
-}
+using scan::nameBefore;
+using scan::splitLines;
 
 /// The last component of a qualified name (`Parser::term` -> `term`).
 std::string leafName(const std::string& name) { const auto c = name.rfind(':'); return c == std::string::npos ? name : name.substr(c + 1); }
@@ -190,56 +146,24 @@ Skeleton expandSkeleton(const std::string& declared, const std::string& path)
 
 bool isPythonPath(const std::string& path) { return path.size() > 3 && path.compare(path.size() - 3, 3, ".py") == 0; }
 
+std::vector<FoldRegion> foldRegionsOf(const Outline& outline, bool all)
+{
+    // The fold policy over the outline (BLOCK_DISCOVERY.md 4.7): a body of two lines or more is worth folding; `all` keeps every node, which is what
+    // addressing a function by name needs. A node's body is empty when bodyFrom == bodyTo (a one-line function, or an indentation block with no more than one body line).
+    std::vector<FoldRegion> out;
+    for (const auto& n : outline.nodes)
+        if (all || n.bodyTo > n.bodyFrom) out.push_back({n.first, n.bodyFrom, n.bodyTo, n.qualifiedName});
+    return out;
+}
+
+std::vector<FoldRegion> foldRegionsFor(const std::string& path, const std::string& text, bool all)
+{
+    return foldRegionsOf(defaultLanguages().outline(path, text), all);
+}
+
 std::vector<FoldRegion> foldRegions(const std::string& text, bool python, bool all)
 {
-    const auto lines = splitLines(text);
-    std::vector<FoldRegion> out;
-    if (python) {
-        const auto indentOf = [](const std::string& l) { return l.find_first_not_of(" \t"); };
-        for (std::size_t i = 0; i < lines.size(); ++i) {
-            const auto ind = indentOf(lines[i]);
-            if (ind == std::string::npos) continue;
-            const std::string t = lines[i].substr(ind);
-            if (t.rfind("def ", 0) != 0 && t.rfind("async def ", 0) != 0) continue;
-            std::size_t j = i + 1, lastBody = i;
-            for (; j < lines.size(); ++j) {
-                const auto in2 = indentOf(lines[j]);
-                if (in2 == std::string::npos) continue;   // blank line
-                if (in2 <= ind) break;
-                lastBody = j;
-            }
-            if (lastBody > i + 1 || all) {
-                // a multi-line signature: the body starts after the line that ends the signature
-                out.push_back({static_cast<int>(i) + 1, static_cast<int>(std::min(i + 1, lastBody)) + 1, static_cast<int>(lastBody) + 1, nameBefore(lines[i])});
-                i = lastBody;
-            }
-        }
-        return out;
-    }
-    int depth = 0;
-    for (std::size_t i = 0; i < lines.size(); ++i) {
-        bool opens = false;
-        const int d = braceDelta(lines[i], opens);
-        // Allman style: the signature is on the line before a lone '{'.
-        const auto firstNonBlank = lines[i].find_first_not_of(" \t");
-        const bool loneBrace = firstNonBlank != std::string::npos && lines[i][firstNonBlank] == '{' && lines[i].find_first_not_of(" \t", firstNonBlank + 1) == std::string::npos;
-        const bool allman = loneBrace && i > 0 && lines[i - 1].find('(') != std::string::npos && lines[i - 1].find('{') == std::string::npos && lines[i - 1].find(';') == std::string::npos && functionLike(lines[i - 1] + " {");
-        if (opens && d > 0 && (allman || functionLike(lines[i]))) {
-            const int start = depth;
-            const std::size_t sig = allman ? i - 1 : i;
-            int dd = depth + d;
-            std::size_t j = i;
-            while (dd > start && j + 1 < lines.size()) { ++j; bool o2 = false; dd += braceDelta(lines[j], o2); }
-            if (dd <= start && (j > i + 1 || all)) out.push_back({static_cast<int>(sig) + 1, static_cast<int>(i) + 2, static_cast<int>(j) + 1, nameBefore(lines[sig])});   // the closing line stays visible
-            depth = dd;
-            i = j;
-            continue;
-        }
-        if (all && opens && d == 0 && functionLike(lines[i]) && lines[i].find('}') != std::string::npos && lines[i].find(';') != std::string::npos && lines[i].find('{') < lines[i].rfind('}'))
-            out.push_back({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, nameBefore(lines[i])});   // a function written on one line
-        depth += d;
-    }
-    return out;
+    return foldRegionsOf((python ? indentProvider() : bracesProvider()).outline(text), all);
 }
 
 std::string foldedView(const std::string& text, bool python, const std::vector<int>& focus, std::size_t budget)
