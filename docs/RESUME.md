@@ -7,7 +7,7 @@ in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](ses
 
 ## Released
 
-**v0.2.1** (tag on 593dff3, full CI tier green): Sub0Squad pins it.
+**v0.3.0** (tag on 8bf7024, full CI tier green): Sub0Squad pins it (2026-11-23). Adds `applyReply` (atomic) and turn control, moved from Sub0Squad, with `Runaway::detail` and `endsInsideBlock`.
 
 | part | state | evidence |
 |---|---|---|
@@ -18,8 +18,8 @@ in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](ses
 | issues layer: `parseIssues`, `layerSummary`, `layerDetail`, `layerInline` (slice 2), `layerFocus`, READ ISSUE, `layered-doc-1` | built, tested | [LAYERED_DOCUMENT.md](LAYERED_DOCUMENT.md); measured on Sub0Squad tier 0 (slice 1, slice 2) |
 | the viewer | built, tested (`npm test`, `test_viewer` under ctest) | [README.md](../README.md) |
 | CI (family standard), test presets, `.ci/local.json`, pre-push gate | built | [AGENTS.md](../AGENTS.md) |
-| `applyReply` (atomic), turn control, the 30 recorded-reply cases, moved from Sub0Squad | built, unreleased (2026-11-18) | `test_replies`, `test_turn_control`; [DECISIONS.md](DECISIONS.md) section 2 |
-| requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, unreleased (2026-11-18) | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
+| `applyReply` (atomic), turn control, the 30 recorded-reply cases, moved from Sub0Squad | built, released in v0.3.0 | `test_replies`, `test_turn_control`; [DECISIONS.md](DECISIONS.md) section 2 |
+| requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, released in v0.3.0 | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
 
 ## The last measured result
 
@@ -63,8 +63,6 @@ needs none of it except the release (O1).
 
 ## Known gaps and debts
 
-* Sub0Squad still carries its own `applyCanvasReply` and turn control; both now live here (`applyReply`, `turn_control.hpp`) and a Sub0Squad PR
-  should adopt them after a tag.
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
 * Measured faults of block discovery: a `{` in a block comment loses every block of the file; Rust/TypeScript generics, arrow functions and Go methods
   are named wrongly or not at all; decorators fall outside their block; YAML, JSON, XML and Markdown have no blocks (BLOCK_DISCOVERY.md section 2; D0).

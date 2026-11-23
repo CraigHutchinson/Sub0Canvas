@@ -55,6 +55,30 @@ One sheet, so the answers can be given in one sitting. Each line has a recommend
 | O12 | The second scale profile and change views as designed | confirm R-SCALE-5 to 9, A19-A21, U12 and R-CHG as requirements | SCALE.md; CHANGE_VIEWS.md | S0's profile B mix; P0 |
 | O13 | Spikes | the topic policy marks them; `lineage@1` reads the mark | CHANGE_VIEWS.md 2 | P2 |
 
+### 3.1 The owner's answers (2026-11-23)
+
+| # | answer | note |
+|---|---|---|
+| O1 | **Confirmed**: release v0.3.0 at the start of phase 1 | not tagged yet |
+| O2 | **Confirmed, amended**: layered by kind, shared annotations in git refs per writer (option B) | the storage seam must admit at least two other backends (proposed: A committed files, D local only) as smoke tests that nothing is locked to git refs; settled by the review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D9): A and D are one implementation with two roots, so the proofs are **git notes (C) and SQLite (E)** as proofs of concept, run only as optional build and release gates, promoted only if good |
+| O3 | **Confirmed** | the log interface is the seam for O2's smoke-test backends |
+| O4 | **Confirmed**: deterministic birth ids | |
+| O5 | **Confirmed**: per-turn events with `eventsFrom`; opaque string revision ids | |
+| O6 | **Deferred**: needs a wider architecture review first | Sub0Squad's portal must extend the canvas views (beside, integrated or within); the review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D7) settles the transport: protocol first, **native HTTP the local default** (HTTP/2 ideally where tooling supports it, HTTP/1.1 the baseline), stdio as the second transport, the Node bridge optional; the portal is joined to the canvas views in three steps, beside (deep links), integrated shell, then within at the data layer (D8, owner 2026-11-23) |
+| O7 | **Confirmed**: read-only through `gh`, separate target, write-back on confirmation | |
+| O8 | **Confirmed**: C++23 | |
+| O9 | **Confirmed**: optional target, per-grammar approval, adopted by measurement | |
+| O10 | **Deferred** with O6 | the portal may change where the squad's store lives |
+| O11 | **Decided differently**: build Sub0Fabric now | replaces "kept open"; the `log` module (O3) starts there and Canvas consumes it; first consumers Sub0Squad, Sub0Log and the portal; scope to be set in the O6 review |
+| O12 | **Confirmed**: R-SCALE-5 to 9, A19-A21, U12, R-CHG | |
+| O13 | **Confirmed**: the topic policy marks spikes | |
+
+**Cross-cutting rule (owner, 2026-11-23)**: every decision above, and every later one, is judged on three axes together: **data-driven** (behaviour
+in policies and formats a client may supply, not hard-coded), **extensible** (a seam with more than one implementation proved, as in O2), and
+**performance at the core** (scale is a design input, not a later optimisation; R-SCALE and SCALE.md budgets apply to every new module).
+
+**Next**: an architecture review across Canvas, Squad and the proposed Sub0Fabric settles O6, O10 and O11's scope.
+
 **Not blocking**: phase 1 below needs none of O2-O13. It is groundwork every arm needs, so it starts now and the answers shape phase 2.
 
 ## 4. The phases
