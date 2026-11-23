@@ -1,0 +1,70 @@
+# name: b3-loop-rolled-back
+# cites: tier 0 intervention 2026-11-18 (the 35B repeating one line inside a new file; Runaway::keep and detail, completeCutFile): the loop is stopped, what came before it is kept, the worker moves on to another block and the kept file is made whole (R-TURN-3, R-TURN-4, R-TURN-6)
+# allowed: src/calc.cpp src/table.cpp
+# expect: cancelled:repeat (the line | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+test table passes when src/table.cpp contains firstSquare
+--- reply
+=== FILE: src/table.cpp ===
+int firstSquare()
+{
+    return 1;
+}
+
+int pad()
+{
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+}
+=== END FILE ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- want src/table.cpp
+int firstSquare()
+{
+    return 1;
+}

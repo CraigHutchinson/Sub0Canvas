@@ -1,0 +1,20 @@
+=== FILE: src/table.cpp ===
+int firstSquare()
+{
+    return 1;
+}
+
+int pad()
+{
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += pad;
+    total += 

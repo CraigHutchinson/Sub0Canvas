@@ -1,0 +1,8 @@
+=== FILE: src/geometry.cpp ===
+double square(double x)
+{
+    return x * x;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp LINES 10-14 ===
+=== END EDIT ===

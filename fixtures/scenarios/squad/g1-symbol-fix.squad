@@ -1,0 +1,45 @@
+# name: g1-symbol-fix
+# cites: tier 0 bugs-6 (golden on-bugs-6-run-2): one function wrong, one SYMBOL edit repairs it in one reply (R-CAN-6, R-ID-2, R-ISS-3)
+# expect: passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- expect-ids
+id @0 src/calc.cpp divide = d
+id @0 src/calc.cpp square = s
+issue @0 1 = k
+anchor @0 1 src/calc.cpp divide

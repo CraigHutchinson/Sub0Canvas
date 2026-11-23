@@ -1,0 +1,93 @@
+# name: g4-rename-resign-move
+# cites: tier 0 undeclared-member and the viewer's demo story (docs/LAYERED_DOCUMENT.md): over four replies a function is renamed, another re-signed and a third moved to a new file while one compile error stays open; its key and the block it names keep their identity as its title changes (R-ID-4, R-ID-5, R-ID-6, R-ISS-5, R-VWR-5)
+# allowed: src/calc.cpp src/geometry.cpp
+# expect: staged:legacy | staged:legacy | staged:legacy | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+
+double area(double r)
+{
+    return 3 * square(r) + legacy(r);
+}
+--- gate
+compile 'legacy' was not declared in this scope when src/calc.cpp contains legacy(
+test area passes when src/calc.cpp contains square(r)
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+// Divides, refusing a zero divisor.
+double safeDivide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL area ===
+double area(double r, double k)
+{
+    return k * square(r) + legacy(r);
+}
+=== END EDIT ===
+--- reply
+=== FILE: src/geometry.cpp ===
+double square(double x)
+{
+    return x * x;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp LINES 10-14 ===
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL area ===
+double area(double r, double k)
+{
+    return k * square(r);
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+// Divides, refusing a zero divisor.
+double safeDivide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double area(double r, double k)
+{
+    return k * square(r);
+}
+--- want src/geometry.cpp
+double square(double x)
+{
+    return x * x;
+}
+--- expect-ids
+id @0 src/calc.cpp divide = d
+id @0 src/calc.cpp square = s
+id @0 src/calc.cpp area = a
+id @1 src/calc.cpp safeDivide = d
+id @1 src/calc.cpp square = s
+id @1 src/calc.cpp area = a
+id @2 src/calc.cpp area = a
+id @3 src/geometry.cpp square = s
+gone @3 src/calc.cpp square
+issue @0 1 = k
+issue @1 1 = k
+issue @2 1 = k
+issue @3 1 = k
+retitled k
+anchor @0 1 src/calc.cpp area
+anchor @3 1 src/calc.cpp area

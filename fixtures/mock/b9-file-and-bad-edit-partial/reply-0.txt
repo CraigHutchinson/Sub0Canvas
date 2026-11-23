@@ -1,0 +1,9 @@
+=== FILE: src/extra.cpp ===
+double twice(double x)
+{
+    return x + x;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp LINES 99 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===

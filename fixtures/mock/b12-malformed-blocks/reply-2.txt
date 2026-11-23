@@ -1,0 +1,1 @@
+I will make divide throw on a zero divisor and leave square alone.

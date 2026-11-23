@@ -1,0 +1,53 @@
+# name: b12-malformed-blocks
+# cites: tier 0 interventions "an EDIT with no form" and "prose instead of an edit" (fixtures/replies error-edit-without-form, error-prose-only): a malformed block is refused naming what is wrong, an empty SYMBOL block likewise, and a reply without any edit is told so (R-EDIT-6)
+# expect: refused:names no LINES a-b | refused:is empty | empty:no transaction | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== EDIT: src/calc.cpp ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+=== END EDIT ===
+--- reply
+I will make divide throw on a zero divisor and leave square alone.
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

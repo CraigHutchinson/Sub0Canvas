@@ -1,0 +1,47 @@
+# name: b8-stale-base
+# cites: tier 0 forked sessions (fork executor): two actors share one canvas, each holding the revision it was shown; a stale edit is rebased where lines do not overlap and refused naming the other actor where they do (R-CAN-4)
+# actors: a b
+# expect: failed | refused:were changed by a in revision 2 | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x + x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply as=a base=r1
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+    // a quotient of anything over a nonzero divisor
+=== END EDIT ===
+--- reply as=b base=r1
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) return -1;
+=== END EDIT ===
+--- reply as=b base=r1
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    // a quotient of anything over a nonzero divisor
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

@@ -1,0 +1,47 @@
+# name: g2-read-symbol-then-issue
+# cites: tier 0 intervention "reads before edits" (the squad answers two read replies per attempt without spending a turn): READ SYMBOL, READ ISSUE, then the edit (R-VIEW-6, R-REN-2, R-REN-5)
+# expect: read:divide | read:=== ISSUE 1 (test) === | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== READ: src/calc.cpp SYMBOL divide ===
+--- reply
+=== READ: ISSUE 1 ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- expect-ids
+id @0 src/calc.cpp divide = d
+anchor @0 1 src/calc.cpp divide

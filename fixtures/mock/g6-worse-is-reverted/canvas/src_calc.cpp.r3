@@ -1,0 +1,12 @@
+#include <cmath>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x + x;
+}

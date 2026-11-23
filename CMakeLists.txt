@@ -90,4 +90,24 @@ if(SUB0CANVAS_BUILD_TESTING)
   # full, which no test carries yet. A long suite added later is labelled full.
   get_property(sub0canvasTests DIRECTORY PROPERTY TESTS)
   set_tests_properties(${sub0canvasTests} PROPERTIES LABELS smoke)
+
+  # The consumer rung (docs/MOCK_SQUAD.md, docs/TESTING.md): consumer/mock_squad is a separate CMake project that fetches this checkout through CPM, exactly as
+  # Sub0Squad does, and links only the public target. `ctest --build-and-test` configures, builds and runs it; CPM_Sub0Canvas_SOURCE points it at this source tree,
+  # so what it proves is this checkout as a consumer sees it. Labelled full: it builds the library a second time (see the measured cost in docs/MOCK_SQUAD.md).
+  option(SUB0CANVAS_BUILD_CONSUMER_TESTS "Register the mock squad consumer project as a test (test_consumer_mock_squad)" ${SUB0CANVAS_TOP_LEVEL})
+  if(SUB0CANVAS_BUILD_CONSUMER_TESTS)
+    set(consumerOptions -DCPM_Sub0Canvas_SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release)
+    if(DEFINED Sub0Platform_SOURCE_DIR)
+      list(APPEND consumerOptions -DCPM_Sub0Platform_SOURCE=${Sub0Platform_SOURCE_DIR})   # the pin this build already resolved
+    endif()
+    if(DEFINED CPM_SOURCE_CACHE AND NOT "${CPM_SOURCE_CACHE}" STREQUAL "")
+      list(APPEND consumerOptions -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE})                # the global cache, never one under out/ or build/
+    endif()
+    add_test(NAME test_consumer_mock_squad
+      COMMAND ${CMAKE_CTEST_COMMAND} --build-and-test ${CMAKE_CURRENT_SOURCE_DIR}/consumer/mock_squad ${CMAKE_CURRENT_BINARY_DIR}/consumer_mock_squad
+              --build-generator ${CMAKE_GENERATOR} --build-makeprogram ${CMAKE_MAKE_PROGRAM} --build-noclean
+              --build-options ${consumerOptions}
+              --test-command ${CMAKE_CTEST_COMMAND} --output-on-failure)
+    set_tests_properties(test_consumer_mock_squad PROPERTIES LABELS full TIMEOUT 900)
+  endif()
 endif()

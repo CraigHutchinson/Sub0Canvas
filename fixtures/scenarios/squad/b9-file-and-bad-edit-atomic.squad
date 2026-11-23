@@ -1,0 +1,48 @@
+# name: b9-file-and-bad-edit-atomic
+# cites: tier 0 intervention "a new file written beside an edit that does not apply" (fixtures/replies repair-new-file-and-edit): all or nothing, applied to the canvas itself, leaves everything as it was (R-CAN-1, R-EDIT-7)
+# allowed: src/calc.cpp src/extra.cpp
+# policy: partial=no scratch=no
+# expect: refused:the file has 12 lines | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== FILE: src/extra.cpp ===
+double twice(double x)
+{
+    return x + x;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp LINES 99 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

@@ -1,0 +1,4 @@
+int firstSquare()
+{
+    return 1;
+}

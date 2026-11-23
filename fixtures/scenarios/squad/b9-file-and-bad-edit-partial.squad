@@ -1,0 +1,52 @@
+# name: b9-file-and-bad-edit-partial
+# cites: the same reply as b9-file-and-bad-edit-atomic under the squad's own policy (partial, on a scratch copy): the FILE lands and the bad EDIT is listed as skipped (R-EDIT-8)
+# allowed: src/calc.cpp src/extra.cpp
+# expect: failed:lines 99-99: the file has 12 lines | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply
+=== FILE: src/extra.cpp ===
+double twice(double x)
+{
+    return x + x;
+}
+=== END FILE ===
+=== EDIT: src/calc.cpp LINES 99 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- want src/extra.cpp
+double twice(double x)
+{
+    return x + x;
+}

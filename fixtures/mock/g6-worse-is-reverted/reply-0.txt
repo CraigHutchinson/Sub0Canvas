@@ -1,0 +1,6 @@
+=== EDIT: src/calc.cpp LINES 1 ===
+#include <cmath>
+=== END EDIT ===
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x + x;
+=== END EDIT ===

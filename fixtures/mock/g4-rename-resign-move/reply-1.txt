@@ -1,0 +1,6 @@
+=== EDIT: src/calc.cpp SYMBOL area ===
+double area(double r, double k)
+{
+    return k * square(r) + legacy(r);
+}
+=== END EDIT ===
