@@ -141,6 +141,22 @@ int main()
         RunawayLimits off;
         off.maxSearchLines = 0;
         CHECK(!detectRunaway(search + "int v41 = 41;\nint v42 = 42;\n", {}, off));                  // a limit of 0 turns its rule off
+
+        // R-TURN-6: a loop names what repeated in `detail`, for a message of the caller's own; other runaways have none.
+        const auto looping = detectRunaway(repeat + "    total += value;\n", {});
+        CHECK(!looping.detail.empty());
+        CHECK(detectRunaway(echo, {}).detail.empty());
+        // R-TURN-7: endsInsideBlock: a half-written function is open, a closed one is not; braces in strings, characters and comments are ignored.
+        CHECK(endsInsideBlock("int a() {\n    if (x) {\n        return 1;\n"));
+        CHECK(!endsInsideBlock("int a() {\n    return 1;\n}\n"));
+        CHECK(!endsInsideBlock("int a() {\n    return 1;   // {{{\n}\n"));
+        CHECK(!endsInsideBlock("const char* s = \"{\";\nchar c = '{';\nchar q = '\'';\n"));
+        CHECK(!endsInsideBlock("/* { open\n   still { in the comment */\nint a;\n"));
+        CHECK(endsInsideBlock("int a() { /* } */\n    return 1;\n"));
+        CHECK(endsInsideBlock("int a() {\n    return 1;"));                 // an unfinished last line counts
+        CHECK(endsInsideBlock("int a() {"));
+        CHECK(!endsInsideBlock("int a() { return 1; }"));
+        CHECK(!endsInsideBlock(""));
     }
     return finish();
 }

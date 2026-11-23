@@ -53,6 +53,8 @@ Status: living (2026-11-18). The catalogue the tests check. Use cases are in [US
 | R-TURN-3 | A whole file cut off by the limit is completed from the previous revision (back to its last complete definition, then the previous functions after it), so no code on either side is lost. | built | `test_turn_control` |
 | R-TURN-4 | A runaway reply is detected while it streams (a long SEARCH, a repeated cycle, a run of comments, a restated draft or echoed view), and a normal reply is left alone. | built | `test_turn_control` |
 | R-TURN-5 | An edit overrun is detected: a SEARCH covering most of an existing file (a rewrite in disguise) or one edit past the size limit; a stub or new file is not judged. | built | `test_turn_control` |
+| R-TURN-6 | A runaway that is a loop says what repeated (`Runaway::detail`, for example the same lines some times over), so a caller can write a message of its own; other runaways leave it empty. | built | `test_turn_control` |
+| R-TURN-7 | A C-like source file cut off part way through a block is recognised (`endsInsideBlock`): braces still open at its end, ignoring braces in strings, characters and comments and counting an unfinished last line; a closed file and empty text are not. | built | `test_turn_control` |
 
 ### Views and reads (R-VIEW)
 
@@ -153,7 +155,7 @@ Sub0Squad is a gap here.
 | `canvas_agent.cpp`, `llm_agent.cpp`: reads (`parseReadRequests`, `answerRead`) | R-VIEW-6 | yes |
 | `canvas_agent.cpp`, `blocks.cpp`, `fork.cpp`: `parseCanvasReply`, `applyEdits`, `replaceText`, `revertTo`, `textAt`, `logJson` | R-EDIT-1..6, R-CAN-1..8 | yes |
 | `canvas_agent.cpp` (`applyCanvasReply`, now `applyReply` here): a parsed reply applied all or nothing across files | R-EDIT-7, R-EDIT-8, R-CAN-1 | yes (moved here 2026-11-18; a Sub0Squad PR adopts it) |
-| `canvas_agent.cpp`, `llm_agent.cpp`: `joinContinuation`, `continuationText`, `continuationPrompt`, `detectRunaway`, `detectEditOverrun` (turn control, moved here) | R-TURN-1..5 | yes (moved here 2026-11-18; a Sub0Squad PR adopts it) |
+| `canvas_agent.cpp`, `llm_agent.cpp`: `joinContinuation`, `continuationText`, `continuationPrompt`, `detectRunaway`, `detectEditOverrun` (turn control, moved here) | R-TURN-1..7 | yes (moved here 2026-11-18; a Sub0Squad PR adopts it) |
 | `fork.cpp`, `contract.cpp`, `test_mends`: `expandSkeleton`, `sectionView`, `foldRegions(…, all)` | R-SKEL-1..3, R-VIEW-4, R-VIEW-5 | yes (moved here from Sub0Squad's `test_blocks`) |
 | `agent_card.cpp`, `fork.cpp`: `foldedView` | R-VIEW-1, R-VIEW-2 | yes |
 | 19 calls of `isPythonPath` to choose the language | R-VIEW-7 | yes (and replaced by R-BLK-8 at D0) |

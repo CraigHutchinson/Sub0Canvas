@@ -29,6 +29,7 @@ struct Runaway
     /// A loop ("repeat"): how much of the reply is worth keeping, in characters: everything before the loop began, its first copy included (0: nothing).
     /// The agent rolls the reply back to it and asks for the rest with the interception, instead of throwing the reply away.
     std::size_t keep = 0;
+    std::string detail = {};       ///< a loop: what repeated ("the same 11 lines 3 times over"), for a message of the caller's own (reasoning loops)
     [[nodiscard]] explicit operator bool() const { return !kind.empty(); }
 };
 
@@ -70,5 +71,9 @@ struct Runaway
 /// Whether a reply that ended at the token limit stopped inside an EDIT block (its last `=== EDIT:` has no `=== END EDIT ===`): such a reply is continued
 /// by appending, like a cut-off file (row 34).
 [[nodiscard]] bool cutOffInsideEdit(std::string_view reply);
+
+/// Whether a C-like source file ends inside a block: its braces (outside strings, characters and comments) are still open at its end, as in a
+/// file cut off part way through a function (T0 half-written). Python is never judged: indentation cannot show it.
+[[nodiscard]] bool endsInsideBlock(std::string_view text);
 
 }  // namespace sub0canvas
