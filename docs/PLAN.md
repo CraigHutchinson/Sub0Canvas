@@ -68,8 +68,8 @@ One sheet, so the answers can be given in one sitting. Each line has a recommend
 | O7 | **Confirmed**: read-only through `gh`, separate target, write-back on confirmation | |
 | O8 | **Confirmed**: C++23 | |
 | O9 | **Confirmed**: optional target, per-grammar approval, adopted by measurement | |
-| O10 | **Deferred** with O6 | the portal may change where the squad's store lives |
-| O11 | **Decided differently**: build Sub0Fabric now | replaces "kept open"; the `log` module (O3) starts there and Canvas consumes it; first consumers Sub0Squad, Sub0Log and the portal; scope to be set in the O6 review |
+| O10 | **Settled by the review** (D5): physical per writer (a segment per attempt, in the per-project format, behind an option off by default), logical per project by a read-time merge | no data moves; the portal's Work registry is the merge's source list |
+| O11 | **Decided differently**: build Sub0Fabric now | replaces "kept open"; the review (D1, D2) sets the scope: F0 lifts Squad's journal, then Canvas's events; modules `segment`, `record`, `order`, `cursor`, `store`, `transport`, `projection`; the Sub0Log read-only adapter in W2 (D3); `http` module in Fabric `transport` (D10) |
 | O12 | **Confirmed**: R-SCALE-5 to 9, A19-A21, U12, R-CHG | |
 | O13 | **Confirmed**: the topic policy marks spikes | |
 
@@ -77,7 +77,8 @@ One sheet, so the answers can be given in one sitting. Each line has a recommend
 in policies and formats a client may supply, not hard-coded), **extensible** (a seam with more than one implementation proved, as in O2), and
 **performance at the core** (scale is a design input, not a later optimisation; R-SCALE and SCALE.md budgets apply to every new module).
 
-**Next**: an architecture review across Canvas, Squad and the proposed Sub0Fabric settles O6, O10 and O11's scope.
+**The architecture review** ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md), 2026-11-23) settled O6, O10 and O11's
+scope and every owner question it raised; its section 6 is the ordered plan (W0-W7) and its section 8 tracks progress.
 
 **Not blocking**: phase 1 below needs none of O2-O13. It is groundwork every arm needs, so it starts now and the answers shape phase 2.
 

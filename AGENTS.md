@@ -87,6 +87,10 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
   codebases used as references are described by their shape and numbers only**: never their name, owner, internal tools, tracker keys, paths,
   titles or links, in files, commit messages or anything posted. Private proving grounds publish anonymised numbers only (R-CHG-9). The owner's
   clone carries a local-only guard for this (under `.git/`, never tracked); if a commit or edit is refused by it, rephrase, never bypass it.
+* **Judge every design on three axes together** (2026-11-23): **data-driven** (behaviour in policies and formats a client may supply, not
+  hard-coded), **extensible** (a seam with more than one implementation proved, even if the extra ones are proofs of concept run only as
+  build or release gates) and **performance at the core** (scale is a design input; the budgets in SCALE.md and the review's section 5 apply to
+  every new module).
 * **Report faithfully**: regressions named, skipped steps said, numbers with their noise. Never throw work away.
 * **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. **Never dispatch the
   full tier after a routine push**: verify locally (`ctest --preset quick`, or `full`) and check only the smoke run after pushing. Full runs are for

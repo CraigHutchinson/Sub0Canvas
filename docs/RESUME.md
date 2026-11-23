@@ -58,8 +58,13 @@ events ([AUTHORING.md](AUTHORING.md) section 3.1, V1a), interactivity budgets wi
 
 **Consolidated (2026-11-18, night).** [PLAN.md](PLAN.md) reconciles all of the above: a review that found and fixed ten disagreements between
 the day's documents (the review log's location, A2 against A16, section 11, spike ownership, one format revision for B0 and V1a, and others), four
-phases with their gates, and **one sheet of thirteen decisions for the owner** (O1-O13). None of the design is confirmed by the owner yet; phase 1
-needs none of it except the release (O1).
+phases with their gates, and **one sheet of thirteen decisions for the owner** (O1-O13).
+
+**Decided (2026-11-23).** The owner answered the sheet ([PLAN.md](PLAN.md) section 3.1): O1-O5, O7-O9, O12, O13 confirmed; O2 amended (the storage
+seam is proved by the directory store plus git notes and SQLite proofs of concept, gated at build and release); **Sub0Fabric is built now**; the
+server, Squad's store and the portal were settled by [the architecture review](reviews/2026-11-23-fabric-portal-store.md) (native HTTP default,
+HTTP/2 where tooling supports it; physical per writer, logical per project; the portal joined to the views in three steps). Plan: that review's
+waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 
 ## Known gaps and debts
 

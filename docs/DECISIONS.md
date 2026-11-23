@@ -21,9 +21,9 @@ Prior art here is from knowledge, not a fresh search; the facts about the Sub0 l
 | 4 | the GitHub adapter and the network | a separate, read-only target with captured fixtures in tests; write-back only through confirmation; Sub0Squad never links it | proposed (section 5) |
 | 5 | the C++ standard | stay on C++23, as the Sub0 family does | proposed (section 5) |
 | 8 | tree-sitter | approve as an optional target; grammars pinned, adopted per language by measurement | proposed (section 6) |
-| 11 | the authoring server's stack | a C++ `serve` process over stdio, built on Sub0Platform's C++ layer, with a small Node bridge for the browser | proposed (section 7) |
+| 11 | the authoring server's stack | **revised 2026-11-23** ([review](reviews/2026-11-23-fabric-portal-store.md) D7, owner): one transport-independent protocol; **native HTTP the local default** (HTTP/2 where tooling supports it, HTTP/1.1 the baseline) on Platform's `net`; stdio JSON lines as the second transport; the Node bridge optional | revised (section 7) |
 | - | the Sub0 glue libraries | adopt Sub0Platform in the tools (not the core), Sub0Log for diagnostics, Sub0Pipeline for check runs and parallel indexing, Sub0MemPage and Sub0TieredCache at scale, Sub0Math's performance tooling for benchmarks | proposed (section 8) |
-| - | Sub0Fabric | build the log and subscriptions in Sub0Canvas behind a module boundary that can be lifted out; extract when a second consumer needs them (Sub0Squad's journal is the likely one) | kept open (section 9) |
+| - | Sub0Fabric | **decided 2026-11-23 (owner): build it now** as its own repository; the trigger below was already met. Scope, modules and first consumers: [review](reviews/2026-11-23-fabric-portal-store.md) D1-D4 | **decided** (section 9) |
 
 ## 1. How the options were weighed
 
@@ -167,6 +167,12 @@ shared (`CPM_SOURCE_CACHE`).
 
 ## 7. The authoring server's stack (question 11)
 
+> **Revised 2026-11-23.** The recommendation below assumed Platform's `net` module had not landed; it has (`SocketListener`, `SocketStream`), and
+> Sub0Squad's portal already serves HTTP on it. The owner decided native HTTP is the local default, with HTTP/2 where tooling supports it and
+> HTTP/1.1 as the baseline, stdio as the second transport and the Node bridge optional. The reasoning, the TLS constraint on HTTP/2 and the shared
+> `http` module are in [reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D7 and D10. The text below is kept as
+> the original analysis.
+
 BACKBONE.md 14.5 compares a JavaScript store, a C++ HTTP server, and a C++ process over stdio with a bridge. The survey adds one fact: **Sub0Platform's
 C++ layer** (processes, files and atomic writes, locks, local IPC, sockets, per-user directories; today Sub0Squad's layer 0, to be moved to Sub0Platform)
 is exactly what the `serve` executable and the CLI need, so the tools do not reinvent it.
@@ -192,6 +198,11 @@ replaced by the process serving HTTP itself; the protocol (A10) does not change.
 | CraigHutchinson/.github CI tools | CI standard, local gates, private-name guard | already used | keep |
 
 ## 9. Sub0Fabric: a shared orchestration layer, kept open
+
+> **Decided 2026-11-23.** The owner chose to build Sub0Fabric now. The extraction trigger below was already met (Sub0Squad's `journal-1`, this
+> project's designed event log and Sub0Log's segment merge each exist or are specified), so the "kept open" recommendation is superseded. The
+> review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D1-D4) sets the scope: lift Squad's journal first,
+> Canvas's events second, Sub0Log through a read-only adapter. The table and options below stay as the analysis.
 
 The owner's concept (2026-11-18): extend Sub0Log's architecture into **Sub0Fabric**, a shared orchestration layer; Sub0MemPage may fit it too. The
 review did find this shape. Three projects solve parts of one problem:
