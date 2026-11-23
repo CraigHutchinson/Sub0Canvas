@@ -72,8 +72,9 @@ waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 
 * **The full tier is red on Linux clang** (parked 2026-11-23, [issue #4](https://github.com/CraigHutchinson/Sub0Canvas/issues/4)): five exact `layeredJson` byte metrics and the mock squad differ from gcc and MinGW, so some output depends on the standard library. Fix before the next release tag.
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
-* Measured faults of block discovery: a `{` in a block comment loses every block of the file; Rust/TypeScript generics, arrow functions and Go methods
-  are named wrongly or not at all; decorators fall outside their block; YAML, JSON, XML and Markdown have no blocks (BLOCK_DISCOVERY.md section 2; D0).
+* Block discovery (D0, 2026-11-23): the seam is built (`blocks.hpp`, providers `braces@3`, `indent@2`) and the faults of block comments, names (generics, arrow functions, Go receivers, operators)
+  and Python decorators are fixed. Still open: Rust lifetimes on a signature line, CRLF text in Allman style (a `\r` on every line), nested functions and classes as nodes, unnamed nodes still carry an
+  identity, `index.outliners` not in the snapshot (it regenerates the fixtures), and YAML, JSON, XML and Markdown have no blocks (D1-D2; [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md)).
 
 * **B0 steps 1-3 are done here** (MS1, 2026-11-23): the library writes item `id`, anchor `column` and range, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom` and texts by id (`SnapshotSpec`), and the viewer reads both shapes. Not done: a real Sub0Squad attempt through it (R-U1-4), the release and the Sub0Squad PR (`%2F` naming included).
 * `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or

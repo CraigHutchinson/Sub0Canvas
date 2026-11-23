@@ -1,6 +1,6 @@
 # Block discovery: finding the blocks of any language
 
-Status: **design, for the owner to read** (2026-11-18). Nothing here is built. It answers the owner's note that folding needs language-aware
+Status: **design, for the owner to read** (2026-11-18); **D0 built** 2026-11-23 (the seam, `braces@3` and `indent@2`, the block-comment, name and decorator fixes; section 2 is the "today" it measured, the session brief's Outcome says what no longer holds). Sections 4.3 to 4.6 (declarative and data providers, tree-sitter, the snapshot record) are not built. It answers the owner's note that folding needs language-aware
 processing (YAML, XML, JSON, Rust, Python, C++, JavaScript, TypeScript and more), that Notepad++ has an extensible mechanism, and that existing tools
 should be drawn on rather than reinvented. It extends [BACKBONE.md](BACKBONE.md) (section 14, amendment A8) and [SCALE.md](SCALE.md) (section 4, "block discovery") and
 states its requirements in [REQUIREMENTS.md](REQUIREMENTS.md) (R-BLK).

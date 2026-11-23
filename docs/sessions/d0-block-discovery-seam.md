@@ -1,6 +1,6 @@
 # Follow-up session: D0, the block discovery seam
 
-Status: open (written 2026-11-18). Backlog: "D0: the block discovery seam" under *Now*. Design: [BLOCK_DISCOVERY.md](../BLOCK_DISCOVERY.md) sections
+Status: **seam and the block-comment, name and decorator fixes done** (2026-11-23; Outcome at the end); written 2026-11-18. Backlog: "D0: the block discovery seam" under *Now*. Design: [BLOCK_DISCOVERY.md](../BLOCK_DISCOVERY.md) sections
 4.1, 4.2, 4.7 and 5; [BACKBONE.md](../BACKBONE.md) amendment A8; requirements R-BLK-1 to R-BLK-8, R-BLK-11, R-BLK-12 in
 [REQUIREMENTS.md](../REQUIREMENTS.md).
 
@@ -42,6 +42,30 @@ dependency (that is D3, after the owner's answer to BACKBONE.md question 8), and
 * The probe of section 2 rerun gives names for every function in every row, and blocks in the block-comment case.
 * Sub0Squad still builds against the branch with `CPM_Sub0Canvas_SOURCE` (no API it uses removed); a Sub0Squad PR is needed only when it adopts the
   new API.
+
+## Outcome (2026-11-23)
+
+Built: `lib/include/sub0canvas/blocks.hpp`, `lib/src/blocks.cpp` (`OutlineNode`, `Outline`, `OutlineProvider`, `Languages` with detection by file name, extension, then the `#!` interpreter; the providers `braces` and `indent`; `defaultLanguages()`), `lib/src/scan.hpp` (shared line helpers), `foldRegionsOf` and `foldRegionsFor(path, ...)` in `outline.hpp`, `lib/tests/test_outline.cpp`. `foldRegions(text, python, all)` is the compatibility wrapper (Sub0Squad's calls build unchanged); canvas SYMBOL, the block index and test localisation pass a path.
+
+**The seam was byte-identical.** A dump of `foldRegions` (both `all` values), `sectionView` and `foldedView` over every source, doc and fixture file of the repository (about 3 MB of output) was unchanged against the previous library; `test_golden_replay`, the mock fixtures, the viewer outputs and the benchmark metrics were untouched (no fixture was regenerated, no metric accepted).
+
+The faults, one commit each, every case written first and seen failing (`test_outline` before the fix):
+
+| fault | commit | provider | what changed |
+|---|---|---|---|
+| a brace or signature inside `/* */` (R-BLK-5) | e2633aa | `braces@2` | block comments blanked before the scan, across lines. Note: the section 2 probe (a `{` in a comment, then two functions) did **not** reproduce: depth is relative, so a stray `{` before a function is tolerated. The fault that does reproduce is a `{` or `}` inside a comment within a function: the function never closes, so it and every later function vanish; four such cases failed before the fix. No file of the repository had it, so no output changed |
+| names (R-BLK-4) | 09843eb | `braces@3` | generics (Rust, TypeScript), functions bound to a name (arrow functions, function expressions, typed bindings, assigned C++ lambdas), Go receivers (`Parser::Term`, so a method and a free function of one name stay two blocks) and Go type parameters, C++ `operator<` and friends. Over the repository the only output changes are blocks that had an empty name and now have one (28 lines of the dump, about 19 distinct blocks: arrow functions in `src/` and `tools/`, lambdas and operators in the C++; the commit message says 25, this count is the correct one); no block appears or disappears, no span moves; the benchmark metrics hold |
+| decorators (R-BLK-6) | 3a1c9b9 | `indent@2` | the `@name` lines directly above a `def` are inside the node (`first`); `FoldRegion::first` stays the signature line (views and SYMBOL unchanged) and `spanFirst` is the whole span, which the block index uses. No Python file of the repository carries a decorator, so no output changed |
+
+Verified: `ctest --preset quick` and `--preset full` (including `test_consumer_mock_squad`) and `npm test` green; `Sub0Canvas_Bench_metrics` passes with every exact value and limit unchanged.
+
+Not done, and why:
+
+* **`index.outliners` in the snapshot (step 5).** Adding the field changes `layeredJson`, hence every snapshot fixture and the exact byte metrics, and the session was told to keep outputs byte-identical. It is additive (R-FMT-2) and waits for the owner's go-ahead to regenerate `fixtures/demo`, `fixtures/mock` and `perf/metrics.json` together. `outlinersOf(paths)` already reports language and provider name; the provider names carry versions for it.
+* **Unnamed nodes still carry an identity** (R-BLK-4, second half): the block index indexes every node, as today. Skipping unnamed nodes is an identity-policy change; check it against the golden replay first.
+* **Faults found on the way, not fixed:** a Rust lifetime on a signature line (`fn f<'a>(x: &'a str) {`) opens a "character literal" that never closes, so that function is not found (the probe's `first` is right only by luck); CRLF text keeps a `\r` on every line, which defeats the Allman rule (a signature line followed by a lone `{`), so a CRLF file written in Allman style loses its functions (this checkout's own `lib/src/*.cpp` are CRLF on this machine); multi-line decorators and the doc comments and attributes of C-like text are not yet inside the span; nested functions and classes are still not nodes (flat outlines).
+* The R-BLK-4 check is asserted for the probe cases, not for arbitrary text.
+* No Sub0Squad build was run in this session: `outline.hpp` gained declarations and `FoldRegion` a trailing member; nothing Sub0Squad uses was removed.
 
 ## Environment and constraints
 

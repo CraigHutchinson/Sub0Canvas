@@ -20,9 +20,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
   `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).
 * **MS1 (B0 through the mock): done** (2026-11-23): `fixtures/mock` regenerated in the B0 format, G3, G5, G7 (8 turns by id, 2.5x one turn), B10, B11 added (15 scenarios), `test/mock.test.js`, a stale author through `applyReply` (`ApplyOptions::baseRevision`). **Next, MS2.**
 * **MS0: the mock squad: done** (2026-11-23, [MOCK_SQUAD.md](MOCK_SQUAD.md); outcome in [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md)): `consumer/mock_squad/` runs ten scenarios in today's format, frozen in `fixtures/mock`, as `test_consumer_mock_squad` (label `full`). **Next, MS1 = B0**: regenerate `fixtures/mock` with B0's fields and trace an item through G4 in the viewer; then MS2 (the producer API proposal, MOCK_SQUAD.md section 6 now holds what the baseline taught).
-* **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
-  faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1, G1 and V0's Markdown. Brief:
-  [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
+* **D0: the block discovery seam: done** (2026-11-23): outline result, providers `braces@3` and `indent@2`, detection, and the block-comment, name and decorator faults fixed, each test-first
+  ([sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md), Outcome). **Left**: `index.outliners` in the snapshot (regenerates the snapshot fixtures: needs the owner's go-ahead),
+  the policy that skips unnamed nodes, Rust lifetimes and CRLF Allman files, then D1 (the conformance corpus). S1, G1 and V0's Markdown can build on the seam now.
 * **S0: the scale harness. Generator and benchmarks at 10^5 lines done** (2026-11-23: `bench/corpus.hpp`, `Sub0Canvas_Bench` on the family's sub0perf tooling, `perf/metrics.json`, the first
   baseline; numbers in [SCALE.md](SCALE.md) section 6.0). **Left**: 10^7 and streamed 10^9 lines, profile B, the change sets, the index-against-truth comparison, S1's choices stated.
   Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).

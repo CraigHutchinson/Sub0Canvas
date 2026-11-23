@@ -66,7 +66,7 @@ Status: living (2026-11-18). The catalogue the tests check. Use cases are in [US
 | R-VIEW-4 | Addressing by name reaches every function, down to one line. | built | `test_views` |
 | R-VIEW-5 | A section view opens the owner's function and folds its neighbours, naming each fold. | built | `test_views` |
 | R-VIEW-6 | A read names lines or a symbol and gets numbered lines; a read of a path alone gets the outline, never the whole file; a read of what does not exist gets a short message. | built | `test_edits`, `test_views` |
-| R-VIEW-7 | The language of a file is chosen from its path. | built (`.py` only) | `test_views`. BLOCK_DISCOVERY.md replaces this with detection (R-BLK-8). |
+| R-VIEW-7 | The language of a file is chosen from its path. | built (`.py` only; `isPythonPath` stays for callers that choose themselves) | `test_views`. Detection from file name, extension and `#!` is R-BLK-8 (`Languages::detect`, `test_outline`). |
 
 ### Skeletons (R-SKEL)
 
@@ -183,20 +183,20 @@ its slice is built.
 
 ### Block discovery (R-BLK; BLOCK_DISCOVERY.md)
 
-| id | requirement | serves | slice |
-|---|---|---|---|
-| R-BLK-1 | Discovery is deterministic and total: any text, never a throw; syntax errors give a partial outline, marked so. | all | D0 |
-| R-BLK-2 | Linear in the size of the file. | U4 | D0, S0 |
-| R-BLK-3 | Nodes nest: a child within its parent, siblings disjoint, spans within the file. | all | D0 |
-| R-BLK-4 | A node that carries an identity has a non-empty name; one that cannot be named never carries an identity. | U1, U3 | D0 |
-| R-BLK-5 | A brace, keyword or marker inside a string or comment never opens or closes a block. | all | D0 |
-| R-BLK-6 | Decorators, attributes and doc comments are inside their block's span. | U1, U5 | D0 |
-| R-BLK-7 | Each supported language has a hand-checked conformance corpus, and a provider replaces another for a language only when it scores at least as well. | all | D1 |
-| R-BLK-8 | The language is detected from the path, filename and first line, not from one suffix. | all | D0 |
-| R-BLK-9 | Data formats and documents have blocks named by their standard paths (JSON Pointer, element paths, heading paths). | U3, U9 | D2 |
-| R-BLK-10 | A change of provider for a language keeps identities by the usual rules and reports, never silently retires, blocks the new provider does not see. | U3, U4 | D0, D3 |
-| R-BLK-11 | Structure is derived: the same text, language and provider give the same outline and the same identities, whatever view or caller asks. | all | D0 |
-| R-BLK-12 | Folding is the caller's: a view chooses what is open, to what depth, within what budget; no view request changes the document, its identities or its history. Identity granularity is a per-document policy, recorded in the snapshot, changed only as a reported migration. | U1, U5, U7 | D0 |
+| id | requirement | serves | slice | status | check |
+|---|---|---|---|---|---|
+| R-BLK-1 | Discovery is deterministic and total: any text, never a throw; syntax errors give a partial outline, marked so. | all | D0 | built (the heuristic providers) | `test_outline`: every prefix of every sample and 300 noise texts, never a throw, same outline twice; `partial` marked when a block never closes |
+| R-BLK-2 | Linear in the size of the file. | U4 | D0, S0 | by construction (one pass per provider) | `Sub0Canvas_Bench` foldRegions rows (S0); no per-provider linearity test yet |
+| R-BLK-3 | Nodes nest: a child within its parent, siblings disjoint, spans within the file. | all | D0 | built (flat outlines today) | `test_outline`: spans inside the file and the name line inside the span, over prefixes and noise; nesting of children waits for providers that emit them (D1) |
+| R-BLK-4 | A node that carries an identity has a non-empty name; one that cannot be named never carries an identity. | U1, U3 | D0 | partly: names for generics, arrow functions, Go receivers and operators; an anonymous function still carries an identity | `test_outline` (R-BLK-4 cases); the identity policy that skips unnamed nodes is not done |
+| R-BLK-5 | A brace, keyword or marker inside a string or comment never opens or closes a block. | all | D0 | built for block comments (`braces@2`); strings were already skipped | `test_outline` (R-BLK-5 cases) |
+| R-BLK-6 | Decorators, attributes and doc comments are inside their block's span. | U1, U5 | D0 | built for Python decorators (`indent@2`); attributes and doc comments of C-like text are not yet | `test_outline` (R-BLK-6 case: span, name line, fold views unchanged, block index) |
+| R-BLK-7 | Each supported language has a hand-checked conformance corpus, and a provider replaces another for a language only when it scores at least as well. | all | D1 | open | D1 |
+| R-BLK-8 | The language is detected from the path, filename and first line, not from one suffix. | all | D0 | built: file name, extension, then the `#!` interpreter (no modelines); `.py` is the only language with a provider of its own | `test_outline` (R-BLK-8 cases) |
+| R-BLK-9 | Data formats and documents have blocks named by their standard paths (JSON Pointer, element paths, heading paths). | U3, U9 | D2 | open | D2 |
+| R-BLK-10 | A change of provider for a language keeps identities by the usual rules and reports, never silently retires, blocks the new provider does not see. | U3, U4 | D0, D3 | open | the `index.outliners` field and the reconciliation report are not written; provider names carry versions (`braces@3`, `indent@2`) ready for them |
+| R-BLK-11 | Structure is derived: the same text, language and provider give the same outline and the same identities, whatever view or caller asks. | all | D0 | built | `test_outline`: foldRegions over the providers equals the regions of the outline for the path; a view never moves a block |
+| R-BLK-12 | Folding is the caller's: a view chooses what is open, to what depth, within what budget; no view request changes the document, its identities or its history. Identity granularity is a per-document policy, recorded in the snapshot, changed only as a reported migration. | U1, U5, U7 | D0 | partly: the fold policy is `foldRegionsOf`, a view of its own; identity granularity is not yet a recorded per-document policy | `test_outline`; `index.identity` is not done |
 
 ### The backbone (R-BB; BACKBONE.md section 3)
 
