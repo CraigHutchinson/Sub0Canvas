@@ -157,14 +157,14 @@ void BlockIndex::update(const std::string& path, const std::string& text)
         Block b;
         b.path = path;
         b.name = r.name;
-        b.first = r.first;
+        b.first = r.spanFirst > 0 ? r.spanFirst : r.first;   // decorators are inside the block (R-BLK-6)
         b.last = std::max(r.first, r.bodyTo);
         b.signature = collapse(lines[static_cast<std::size_t>(r.first) - 1]);
         std::string whole;
         for (int k = b.first; k <= b.last; ++k) {
             const std::string& l = lines[static_cast<std::size_t>(k) - 1];
             whole += l + "\n";
-            if (k > b.first || b.first == b.last) scan(l, b.tokens, b.literals);
+            if (k > r.first || b.first == b.last) scan(l, b.tokens, b.literals);
         }
         fresh.push_back(std::move(b));
         hashes.push_back(std::hash<std::string>{}(collapse(whole)));

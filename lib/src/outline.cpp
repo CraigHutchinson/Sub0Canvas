@@ -152,7 +152,7 @@ std::vector<FoldRegion> foldRegionsOf(const Outline& outline, bool all)
     // addressing a function by name needs. A node's body is empty when bodyFrom == bodyTo (a one-line function, or an indentation block with no more than one body line).
     std::vector<FoldRegion> out;
     for (const auto& n : outline.nodes)
-        if (all || n.bodyTo > n.bodyFrom) out.push_back({n.first, n.bodyFrom, n.bodyTo, n.qualifiedName});
+        if (all || n.bodyTo > n.bodyFrom) out.push_back({n.nameLine, n.bodyFrom, n.bodyTo, n.qualifiedName, n.first});
     return out;
 }
 

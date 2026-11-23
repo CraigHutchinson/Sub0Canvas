@@ -3,6 +3,7 @@
 // outline never depends on the view asked for; and the faults of BLOCK_DISCOVERY.md section 2 are pinned one by one (each case written first and seen failing).
 #include "sub0platform/testing/check.hpp"
 #include "sub0canvas/blocks.hpp"
+#include "sub0canvas/doc_layers.hpp"
 #include "sub0canvas/outline.hpp"
 
 #include <cstdint>
@@ -75,7 +76,7 @@ int main()
         CHECK_EQ(l.detect("tools/run", "#!/bin/sh"), std::string(""));
         CHECK_EQ(l.detect("src/a.cpp"), std::string(""));      // no provider of its own yet: the fallback serves it
         CHECK_EQ(l.detect(".py"), std::string(""));
-        CHECK(l.provider("python") != nullptr && l.provider("python")->name() == "indent@1");
+        CHECK(l.provider("python") != nullptr && l.provider("python")->name() == "indent@2");
         CHECK(l.provider("")->name() == "braces@3");
         // the registry is data: a language added by a client wins by priority, and a filename beats an extension
         Languages mine;
@@ -152,6 +153,24 @@ int main()
         CHECK_EQ(goQ.nodes.size(), static_cast<std::size_t>(2));   // the method and the free function of one name stay two addressable blocks
         if (goQ.nodes.size() == 2) CHECK(goQ.nodes[0].qualifiedName == "Parser::Term" && goQ.nodes[1].qualifiedName == "Term");
         CHECK_EQ(namesOf("a.cpp", "bool operator<(const A& a, const A& b) {\n    return true;\n}\ntemplate <class T>\nT id(T x) {\n    return x;\n}\n"), (std::vector<std::string>{"operator<", "id"}));   // named, not left empty
+    }
+    {   // R-BLK-6: decorators are inside the span of their block; the signature line stays the name line, so views and SYMBOL edits address it as before.
+        const std::string py = "class P:\n    @staticmethod\n    @other(1)\n    def term(x):\n        a = 1\n        return a\n\n    def plain(self):\n        a = 1\n        return a\n\n@top\nasync def last(y):\n    a = 1\n    return a\n";
+        const auto out = defaultLanguages().outline("a.py", py);
+        CHECK_EQ(out.nodes.size(), static_cast<std::size_t>(3));
+        if (out.nodes.size() == 3) {
+            CHECK(out.nodes[0].first == 2 && out.nodes[0].nameLine == 4 && out.nodes[0].last == 6 && out.nodes[0].name == "term");
+            CHECK(out.nodes[1].first == 8 && out.nodes[1].nameLine == 8 && out.nodes[1].name == "plain");   // no decorator: unchanged
+            CHECK(out.nodes[2].first == 12 && out.nodes[2].nameLine == 13 && out.nodes[2].name == "last");
+        }
+        const auto regions = foldRegionsFor("a.py", py, true);
+        CHECK_EQ(regions.size(), static_cast<std::size_t>(3));
+        if (regions.size() == 3) CHECK(regions[0].first == 4 && regions[0].spanFirst == 2 && regions[1].spanFirst == 8);   // the view's signature line is unchanged
+        BlockIndex index;
+        index.update("a.py", py);
+        const Block* onDecorator = index.at("a.py", 3);
+        CHECK(onDecorator != nullptr && onDecorator->name == "term");   // a line of the decorator belongs to the block
+        if (onDecorator) CHECK(onDecorator->first == 2 && onDecorator->signature == "def term(x):");
     }
     return finish();
 }

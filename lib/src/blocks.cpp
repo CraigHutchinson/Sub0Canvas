@@ -203,7 +203,7 @@ std::string signatureName(const std::string& line)
 }
 
 /// One function-like block as the heuristics find it, before it becomes a node.
-struct Found { int sig, bodyFrom, bodyTo; std::string qualified; };
+struct Found { int sig, bodyFrom, bodyTo; std::string qualified; int spanFirst = 0; };
 
 OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
 {
@@ -212,7 +212,7 @@ OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
     n.qualifiedName = f.qualified;
     const auto colon = f.qualified.rfind(':');
     n.name = colon == std::string::npos ? f.qualified : f.qualified.substr(colon + 1);
-    n.first = f.sig;
+    n.first = f.spanFirst > 0 ? f.spanFirst : f.sig;
     n.last = std::max(f.sig, f.bodyTo);
     n.nameLine = f.sig;
     n.bodyFrom = f.bodyFrom;
@@ -262,13 +262,14 @@ public:
 class IndentProvider final : public OutlineProvider
 {
 public:
-    [[nodiscard]] std::string name() const override { return "indent@1"; }
+    [[nodiscard]] std::string name() const override { return "indent@2"; }
     [[nodiscard]] Outline outline(std::string_view text) const override
     {
         const auto lines = splitLines(std::string(text));
         Outline out;
         out.provider = name();
         const auto indentOf = [](const std::string& l) { return l.find_first_not_of(" \t"); };
+        std::size_t floor = 0;   // the first line after the previous block: a decorator search never reaches into it
         for (std::size_t i = 0; i < lines.size(); ++i) {
             const auto ind = indentOf(lines[i]);
             if (ind == std::string::npos) continue;
@@ -281,9 +282,13 @@ public:
                 if (in2 <= ind) break;
                 lastBody = j;
             }
+            // decorators: the `@name` lines directly above, at the same indent, belong to the block (R-BLK-6)
+            std::size_t span = i;
+            while (span > floor && indentOf(lines[span - 1]) == ind && lines[span - 1][ind] == '@') --span;
             // a multi-line signature: the body starts after the line that ends the signature
-            out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(std::min(i + 1, lastBody)) + 1, static_cast<int>(lastBody) + 1, nameBefore(lines[i])}, lines));
+            out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(std::min(i + 1, lastBody)) + 1, static_cast<int>(lastBody) + 1, nameBefore(lines[i]), static_cast<int>(span) + 1}, lines));
             i = lastBody;
+            floor = lastBody + 1;
         }
         return out;
     }

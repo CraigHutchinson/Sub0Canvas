@@ -11,14 +11,15 @@
 
 namespace sub0canvas {
 
-/// A foldable region: a function-like block. Line numbers are 1-based and inclusive; `first` is the signature line, `bodyFrom..bodyTo` the body: for braces `bodyTo` is the closing line, which stays visible, so a fold hides bodyFrom..bodyTo-1; for Python it is the last body line, all of it hidden.
+/// A foldable region: a function-like block. Line numbers are 1-based and inclusive; `first` is the signature line (the name line), `bodyFrom..bodyTo` the body: for braces `bodyTo` is the closing line, which stays visible, so a fold hides bodyFrom..bodyTo-1; for Python it is the last body line, all of it hidden.
 struct FoldRegion
 {
     int first = 0, bodyFrom = 0, bodyTo = 0;
-    std::string name;   ///< the identifier before the first '(' of the signature line ("" when none)
+    std::string name;   ///< the function's name as its signature line writes it ("" when none): qualified (`Parser::term`) where the source qualifies it
+    int spanFirst = 0;  ///< the first line of the whole block, decorators included (BLOCK_DISCOVERY.md, R-BLK-6); equals `first` when there is none. A view and a SYMBOL edit start at `first`, the block index at `spanFirst`
 };
 
-/// The foldable regions of `text`, kept as a wrapper over the heuristic providers `braces@1` and `indent@1` (blocks.hpp) for callers that choose the language themselves (outermost function-like blocks only: namespaces, classes and structs stay open so their members show).
+/// The foldable regions of `text`, kept as a wrapper over the heuristic providers `braces` and `indent` (blocks.hpp) for callers that choose the language themselves (outermost function-like blocks only: namespaces, classes and structs stay open so their members show).
 /// `python` selects indentation instead of braces. By default only regions worth folding are returned (a body of two lines or more); with `all` every
 /// function-like block is, down to a one-line function, which is what addressing a function BY NAME needs (`replaceSymbol`, a section of a fork).
 [[nodiscard]] std::vector<FoldRegion> foldRegions(const std::string& text, bool python, bool all = false);
