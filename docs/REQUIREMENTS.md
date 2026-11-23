@@ -120,7 +120,10 @@ Status: living (2026-11-18). The catalogue the tests check. Use cases are in [US
 | id | requirement | status | check |
 |---|---|---|---|
 | R-FMT-1 | A snapshot is valid JSON with the schema name, the turn, each file's text and revision, the blocks, their history and every layer's items and anchors. | built | `test_doc_layers`, `test/golden.test.js` |
-| R-FMT-2 | The format grows only additively: an old reader ignores new fields; an old file means what it meant. | built (as a rule) | `test/model.test.js` (loose files, cumulative events) |
+| R-FMT-2 | The format grows only additively: an old reader ignores new fields; an old file means what it meant. | built (as a rule) | `test/model.test.js` (loose files, cumulative events), `test/mock.test.js` (the string-only shape) |
+| R-FMT-3 | A snapshot writes each item's `id`, each anchor's `column` and range where known, a `layerMeta` entry for the issues, each file's `revisionId` and `textId`, and the `policies` that made it. | built | `test_doc_layers`, `test/mock.test.js` |
+| R-FMT-4 | A snapshot's `events` are those since the previous one, `eventsFrom` says where they start in the log, and the cumulative log holds the same events in order. | built | `test_doc_layers`, `test/mock.test.js` |
+| R-FMT-5 | Texts can travel by content id: a text is carried once per document, a snapshot alone carries what it needs, and the viewer reads them as inline texts; 8 turns cost a few times one. | built | `test_doc_layers`, `test/mock.test.js` (g7: 2.5x) |
 
 ### The use case end to end (R-U1)
 
@@ -218,8 +221,8 @@ its slice is built.
 | R-SRC-2 | An anchor that cannot be resolved is shown outdated, never silently moved. | U3, U6 | B4 |
 | R-SRC-3 | A block's identity history follows it across a repository's commits, renames and moves, checked against hand-checked truth. | U3, U4 | G1 |
 | R-SRC-4 | Two pending changes (PRs) touching one block are reported as a conflict before either merges. | U3 | G1, G2 |
-| R-SRC-5 | Revision ids are opaque strings; a canvas's numbered revisions are one kind among others. | U1, U3 | B0 (A1) |
-| R-SRC-6 | Anchors may span a range (start and end line and column). | U3, U5, U8 | B0 (A3) |
+| R-SRC-5 | Revision ids are opaque strings; a canvas's numbered revisions are one kind among others. | U1, U3 | B0 (A1): written (`revisionId`), read |
+| R-SRC-6 | Anchors may span a range (start and end line and column). | U3, U5, U8 | B0 (A3): written from compilers' ranges, read |
 | R-SRC-7 | Nothing is written back to a source without the consumer's confirmation; a rejected proposal leaves no trace there. | U3, U6 | G5 |
 | R-SRC-8 | Tests read captured data; no test uses the network. | all | all |
 
@@ -279,5 +282,5 @@ its slice is built.
 | R-AUTH-11 | The viewer still opens a folder of snapshots read-only from `file://`. | U7, U1 | V0 |
 | R-AUTH-12 | An update from another actor reaches an open page as events that change only what they name; the reader's scroll, selection, open folds, expanded tree and unsent input are never reset by one, and a selection changed underneath is marked, not replaced. | U7, U6, U2 | V1a |
 | R-AUTH-13 | A click costs what is on screen, not what is loaded: lists render a window of rows, and no pane is rebuilt when nothing it shows changed. | U7, U4 | V1a |
-| R-AUTH-14 | A text is sent to the page once, by content id; a later turn or view sends only the texts the page has not seen. | U7, U4 | V1a |
+| R-AUTH-14 | A text is sent to the page once, by content id; a later turn or view sends only the texts the page has not seen. | U7, U4 | V1a; the format half is built at B0 (R-FMT-5) |
 | R-AUTH-15 | Every viewer interaction has a latency budget (AUTHORING.md section 3.2), measured at the reference scale by a scripted local benchmark and recorded with the machine; a change that breaks a budget says so. | U7, U4 | K0 |

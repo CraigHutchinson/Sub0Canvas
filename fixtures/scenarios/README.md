@@ -33,6 +33,11 @@ requirement and the T0 case each cites; a regenerated attempt in `../mock/` prov
 | `g1-symbol-fix` | one SYMBOL edit repairs the one failing function | tier 0 bugs-6 |
 | `g2-read-symbol-then-issue` | READ SYMBOL, READ ISSUE (the issue in full with its code), then the edit | the squad's two free read replies |
 | `g4-rename-resign-move` | a rename, a re-signing and a cross-file move over four replies while one compile error stays open: ids carry, the issue's key stays, its title changes | tier 0 undeclared-member, the demo story |
+| `g3-two-files-one-reply` | one reply with an EDIT for each of two files applies as one unit | multi-file items |
+| `g5-fix-away-from-diagnostic` | the compile error names a use site, the cure is a new function elsewhere; the block keeps its identity | tier 0 undeclared-member |
+| `g7-eight-turns-texts-by-id` | eight files fixed one reply at a time, texts by content id: 8 turns cost 2.5x one | SCALE.md 6.1 |
+| `b10-search-not-found-or-ambiguous` | a SEARCH not in the file, then one matching twice, each refused | error-search-not-found |
+| `b11-write-to-disallowed-path` | a FILE and an EDIT outside the allowed paths are refused, all or nothing | the scope rule |
 | `g6-worse-is-reverted` | a revision that fails more tests than the best is undone as a new revision | the squad's restoreBest |
 | `b1-cutoff-overlap` | cut off inside an EDIT, the continuation repeats the lines before the cut | interventions rows 34, 35 |
 | `b3-loop-rolled-back` | one line repeated inside a new file: stopped, kept, the worker moves on, the kept file is made whole | the 35B loop, 2026-11-18 |

@@ -9,4 +9,4 @@ mock_squad <fixtures/scenarios/squad> <fixtures/mock> --update      # the binary
 ```
 
 `test_consumer_contract` runs every scenario and requires these bytes to be exactly what it writes, in both directions (no missing and no stale file).
-Review the diff by hand in the commit that regenerates them: this is the "before" picture for B0 (MS1), which changes the format on purpose.
+Review the diff by hand in the commit that regenerates them. MS1 regenerated them in the B0 format (item `id`, `column` and ranges, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom`; `events.ndjson` is the cumulative log; `g7` sends texts by content id).

@@ -1,6 +1,6 @@
 # Follow-up session: B0, format catch-up
 
-Status: open (written 2026-11-18). Backlog: "B0: format catch-up" under *Now*. Design: [BACKBONE.md](../BACKBONE.md) sections 7 and 8.1, slice B0.
+Status: in progress (written 2026-11-18; steps 1-3 done 2026-11-23, see Outcome). Backlog: "B0: format catch-up" under *Now*. Design: [BACKBONE.md](../BACKBONE.md) sections 7 and 8.1, slice B0.
 
 ## Goal
 
@@ -45,6 +45,14 @@ existing reader keeps working.
 * An 8-turn snapshot of the 1,590-file subtree of SCALE.md 6.1 is a few times the size of one turn, not eight.
 * A real Sub0Squad attempt opens in the viewer with items traced by `id`.
 * README's "Optional fields" table says which fields the producer now writes.
+
+## Outcome (steps 1-3, 2026-11-23, driven through the mock squad; MS1)
+
+Done: `Anchor::column`, `endLine`, `endColumn` (read by `parseIssues` from `col`, `col-endcol` and a GCC `^~~~` underline; two sites on a line stay two anchors); `SnapshotSpec` and `layeredJson(spec, index)` (the old call delegates) writing item `id`, anchor column and range, `layerMeta`, per file `revisionId` (opaque; `r<n>` by default) and `textId` (git blob id, `contentId`), `policies`, per-turn `events` with `eventsFrom`, and optional texts by id (`texts`, carried once per document); `BlockIndex::eventLogNdjson` (`canvas-events-1`, provisional subset) as the cumulative log; `ApplyOptions::baseRevision`; `sub0canvas snapshot` writes the same (texts by id by default, `--texts inline`). The viewer reads both shapes (`src/model.js`), including `%2F` revision file names. Checks: `test_doc_layers`, `test_canvas_model`, `test/mock.test.js` over the regenerated `fixtures/mock` (15 scenarios), mutation-tested. Sizes: mock g7, 8 turns by id 112,668 B = 2.5x one turn (45,828 B); the same with texts inline 7.5x. `sub0canvas snapshot` of this repository (43 files, 8 commits): 4.89 MB inline, 1.53 MB by id, one turn inline 0.80 MB.
+
+Decisions: `events` now means per-turn (O5); a first-version `layeredJson` call writes all events with `eventsFrom` 0 and the viewer dedupes by position. Texts by id are opt-in in the library (old readers need `text`), default in the app bundle. The golden files of step 3 are the mock attempts, not `fixtures/golden/b0/`.
+
+Not done: step 4 (release, full CI), step 5 (a real Sub0Squad attempt traced by `id`, R-U1-4 re-capture, the Sub0Squad PR with `SnapshotSpec` and `%2F` naming).
 
 ## Environment and constraints
 

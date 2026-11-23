@@ -18,15 +18,16 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **Release v0.3.0** (O1: pushing the tag needs the owner's go-ahead), then **Sub0Squad adopts `applyReply`, turn control and the moved checks**: a
   Sub0Squad PR replaces its `applyCanvasReply` and `turn_control`, drops the copied tests and cases (block 4, the skeleton block,
   `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).
+* **MS1 (B0 through the mock): done** (2026-11-23): `fixtures/mock` regenerated in the B0 format, G3, G5, G7 (8 turns by id, 2.5x one turn), B10, B11 added (15 scenarios), `test/mock.test.js`, a stale author through `applyReply` (`ApplyOptions::baseRevision`). **Next, MS2.**
 * **MS0: the mock squad: done** (2026-11-23, [MOCK_SQUAD.md](MOCK_SQUAD.md); outcome in [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md)): `consumer/mock_squad/` runs ten scenarios in today's format, frozen in `fixtures/mock`, as `test_consumer_mock_squad` (label `full`). **Next, MS1 = B0**: regenerate `fixtures/mock` with B0's fields and trace an item through G4 in the viewer; then MS2 (the producer API proposal, MOCK_SQUAD.md section 6 now holds what the baseline taught).
 * **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
   faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1, G1 and V0's Markdown. Brief:
   [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
 * **S0: the scale harness.** A deterministic synthetic corpus (profile A's sizes, profile B's mix) and benchmarks of today's index, so S1's data
   structures are chosen by measurement. Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
-* **B0: one format revision.** Item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
-  `eventsFrom` (once O5 is confirmed), texts by content id; additive, checked on both sides; re-capture one attempt with compiler diagnostics
-  (R-U1-4). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
+* **B0: one format revision. Steps 1-3 done here** (MS1, 2026-11-23; the mock squad drives it): item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
+  `eventsFrom` (O5 confirmed), texts by content id, additive, read by the viewer in both shapes. **Left**: re-capture one real attempt with compiler diagnostics
+  (R-U1-4), the release (v0.4.0) and the Sub0Squad PR (`SnapshotSpec`, `%2F` naming). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
 * **K0: the viewer's interactivity benchmark** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): every interaction in the budget table on the
   synthetic mirror and a large local subtree, 20 repetitions, 95th percentile, recorded with the machine. Before V1a. Brief:
   [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).

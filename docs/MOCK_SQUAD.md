@@ -1,6 +1,6 @@
 # The mock squad: Sub0Canvas tested as a project the squad consumes
 
-Status: MS0 built (2026-11-23): the baseline runs and is frozen in today's format. Evidence home for the consumer contract; the later Sub0Squad session reads section 6, which now holds what the baseline taught.
+Status: MS0 built (2026-11-23): the baseline ran and was frozen in today's format. MS1 built (2026-11-23): `fixtures/mock` is regenerated in the B0 format, 15 scenarios (G3, G5, G7, B10, B11 added), `test/mock.test.js`; `ApplyOptions::baseRevision` replaced the loop's second apply path (section 6, question 5, answered). Evidence home for the consumer contract; the later Sub0Squad session reads section 6, which now holds what the baseline taught.
 
 The squad is the first and most demanding consumer ([INTEGRATION.md](INTEGRATION.md)), but real models cannot be re-run on demand, and most of
 the squad's canvas loop is policy, not library calls (`src/canvas_agent.cpp` is about 1,100 lines, about 20 of them library calls). The **mock
@@ -61,7 +61,7 @@ hand-written `expect` lines; regenerated files only prove the writer's bytes ([T
 | slice | what | how the mock drives it |
 |---|---|---|
 | **MS0** (built) | the consumer project, loop, gate, record writer; ten scenarios (G1, G2, G4, G6, B1, B3, B8, B9 twice, B12) frozen in today's format | the "before" picture for B0; brief [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md) |
-| **MS1 = B0** | regenerate `fixtures/mock` with `id`, `column`, ranges, `layerMeta`, `policies`, string revision ids, per-turn `events` with `eventsFrom`, `texts` by content id; `test/mock.test.js` opens every mock attempt in the viewer, traces an item by `id` through G4 (title changes, so title matching would fail), checks per-turn and cumulative events agree, measures an 8-turn attempt against one turn | B0 step 3 ([sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md)); R-U1-4 still needs one real capture |
+| **MS1 = B0** (built) | regenerate `fixtures/mock` with `id`, `column`, ranges, `layerMeta`, `policies`, string revision ids, per-turn `events` with `eventsFrom`, `texts` by content id; `test/mock.test.js` opens every mock attempt in the viewer, traces an item by `id` through G4 (title changes, so title matching would fail), checks per-turn and cumulative events agree, measures an 8-turn attempt against one turn | B0 step 3 ([sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md)); R-U1-4 still needs one real capture |
 | **MS2** | producer API proposal: diff the mock loop against the squad's loop; generic turn policy (partial and prefill, rollback and kept file, continuation budget, the attempt record) is a candidate for the library, for example a pure `attemptRecord(...)` so `%2F` naming and content ids live in one place, and a field-named `SnapshotSpec` for `layeredJson` | answers section 6 |
 | **MS3 = B1** | the loop optionally writes events through a `Store` over a memory log; replay equals the live snapshot; B15 and G4 give the hand-checked open, done, reopened truth | before any tier-0 attempt |
 | **MS4 = B2, B3** | two-actor scenarios (B8, B14) become inbox and claim tests: a refusal names the holder and expiry; a claim follows a merge | |

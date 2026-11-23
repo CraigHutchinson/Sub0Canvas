@@ -73,11 +73,10 @@ waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 * Measured faults of block discovery: a `{` in a block comment loses every block of the file; Rust/TypeScript generics, arrow functions and Go methods
   are named wrongly or not at all; decorators fall outside their block; YAML, JSON, XML and Markdown have no blocks (BLOCK_DISCOVERY.md section 2; D0).
 
-* The producer (Sub0Squad) does not yet write the optional fields the viewer understands (item `id`, anchor `column`, `fix`, `mergedFrom`, `layerMeta`):
-  slice B0.
+* **B0 steps 1-3 are done here** (MS1, 2026-11-23): the library writes item `id`, anchor `column` and range, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom` and texts by id (`SnapshotSpec`), and the viewer reads both shapes. Not done: a real Sub0Squad attempt through it (R-U1-4), the release and the Sub0Squad PR (`%2F` naming included).
 * `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or
   scale (SCALE.md, slices S0-S2).
-* Turn files' `events` are cumulative today, and every turn repeats every file's text; B0's one format revision fixes both (PLAN.md O5).
+* Sub0Squad still calls the first-version `layeredJson`, which writes every event from 0 (cumulative, with `eventsFrom` 0) and inline texts; it moves to `SnapshotSpec` in its PR.
 
 ## Where things are
 
