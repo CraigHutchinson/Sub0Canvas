@@ -44,6 +44,8 @@ hold up on codebases of billions of lines.
 * `consumer/mock_squad/`: the mock squad ([docs/MOCK_SQUAD.md](docs/MOCK_SQUAD.md)): a separate CMake project that fetches this checkout through CPM as Sub0Squad
   does and links only the public target; its scenario reader, gate, reference loop and record writer, and `test_consumer_contract`. The top-level build runs it as
   `test_consumer_mock_squad` (label `full`).
+* `bench/`: the scale harness (S0, [docs/sessions/s0-scale-harness.md](docs/sessions/s0-scale-harness.md)): `corpus.hpp`/`corpus.cpp`, the seeded synthetic corpus and edit stream
+  (library target `sub0canvas_bench_corpus`, option `SUB0CANVAS_BUILD_BENCHMARKS`; tested by `lib/tests/test_corpus.cpp`); the benchmarks join it later.
 * `fixtures/`: test data by kind, indexed with origin, checking test and refresh command in [fixtures/README.md](fixtures/README.md): `demo/`
   (generated), `golden/` (captured), `replies/` (hand-written), `scenarios/` (hand-written attempts), `mock/` (their persisted attempts, generated), `mirror/` (generated).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.

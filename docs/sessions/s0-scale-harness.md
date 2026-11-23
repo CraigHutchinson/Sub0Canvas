@@ -1,6 +1,6 @@
 # Follow-up session: S0, the scale harness
 
-Status: open (written 2026-11-18). Backlog: "S0: the scale harness" under *Now*. Design: [SCALE.md](../SCALE.md) and [BACKBONE.md](../BACKBONE.md) slice S0;
+Status: in progress (written 2026-11-18; step 1's generator, without change sets or branches, done 2026-11-23: see Outcome so far). Backlog: "S0: the scale harness" under *Now*. Design: [SCALE.md](../SCALE.md) and [BACKBONE.md](../BACKBONE.md) slice S0;
 [USE_CASES.md](../USE_CASES.md) U4; [TESTING.md](../TESTING.md) rung L3.
 
 ## Goal
@@ -47,3 +47,35 @@ SCALE.md section 6. Do not optimise the index in this session: S1 does that, fro
 Windows 11, MinGW-w64 UCRT GCC (WinLibs), Ninja, CMake 3.24 or later; the presets in `CMakePresets.json`. Measure on mains power, in a quiet
 machine state, and say so. The owner's standing rules ([AGENTS.md](../../AGENTS.md)): nothing leaves the machine, ask before downloads or installs,
 commit as you go, confirm before pushing.
+
+## Outcome so far (2026-11-23, part 1 of 4: the generator)
+
+Done: the corpus generator (`bench/corpus.hpp`, `bench/corpus.cpp`, library target `sub0canvas_bench_corpus`, built when `SUB0CANVAS_BUILD_TESTING` or the new
+`SUB0CANVAS_BUILD_BENCHMARKS` is ON; it links nothing, and the benchmark executable is not added yet) and `lib/tests/test_corpus.cpp` (label `smoke`, under a
+second). Not done: step 2's comparison of the index with the identity truth, step 3's benchmarks, step 4's numbers, and from step 1 the **change sets** with known
+lineage (spike, carve-outs, supersession, stack, port) and **wide branching**, which the brief allows to land later.
+
+* **API.** `generateCorpus(CorpusSpec{seed, targetLines, KindMix})` returns `std::expected<Corpus, std::string>`: `files` (path to text), `models` (path to
+  `CodeFile`, the block truth: one `Function` per block, its name, signature, body and a generator `uid`) and `stats`. It refuses more than
+  `kMaterialiseLimitLines` (10^6) lines. Beyond that, `CorpusStream` walks the entries holding one at a time, and `entry(spec, i)` is a pure function of
+  (seed, mix, i), so a 10^9-line project is sampled by index and never held; `meanLinesPerEntry` says how many entries a size takes. `profileA()` is all code;
+  `profileB()` is the measured mix (sidecars beside images and serialised assets, about a third of the files; images; code; serialised data; text; Markdown).
+  `EditStream(corpus, seed, EditMix)::next()` returns a `Commit` (changed files, text or deleted, and one `EditTruth` per edit) for nine edit kinds (edited,
+  resigned, renamed, added, removed, revived, moved, split, merged) plus a new file and a deleted file; one edit per file per commit, so each outcome is
+  unambiguous. Revival and moves use byte-identical function text. The truth is the ideal outcome: a move follows the id only when the file losing the function
+  is updated first (stated in the header).
+* **Determinism.** Integer-only generator (SplitMix64, modulo picks, bucketed distributions): no `std::` distributions, so the bytes do not depend on the
+  library. Checked: same seed gives identical files, models and counts, for both profiles; the stream visits the entries a materialised corpus holds.
+* **Shape** (seed 1, 10^5 lines, one run): profile A is 262 code files, 4,800 blocks, 2.4 MB, a mean of 395 lines per file and 21 lines per block (30% Python,
+  70% C++ with 30% of those headers); profile B is 546 files in 365 entries (181 sidecars, 92 images, 89 serialised, 34 text, 16 Markdown, 134 code files with
+  61% of the lines). Generation takes about 25 ms for 10^5 lines at -O2 (unrecorded power state: not a benchmark).
+* **What the test proves.** At 10^3, 10^4 and 10^5 lines (profile A), `foldRegions(all)` finds exactly the model's functions, in order, in every file
+  (so the blocks are real, brace and indent heuristic included, and the generator's bodies do not confuse it), and a `BlockIndex` fed the corpus holds one live
+  block per function. For 300 commits of the edit stream over a 10^4-line corpus, all nine kinds occur, two streams from one seed agree, the model's text equals
+  the commits applied, and a `BlockIndex` fed the commits ends with one live block per live function. **Not proved**: that the index assigns the truth's
+  identity to each edit; that is step 2.
+* **Generator faults found while building it**: a Python block whose body was only comments (invalid, and a hollow block); fixed by opening every block with a
+  real statement. Class bodies are not generated (Python methods and C++ `Klass::method` definitions are flat; nested classes would test `foldRegions` rather than
+  the index), and bodies are statement soup that compiles nowhere: they exist for token distributions and block structure only.
+
+Remaining for this session: steps 2-4 as written, then the change sets and branching on top of this generator.
