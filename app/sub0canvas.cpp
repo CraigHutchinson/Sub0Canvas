@@ -1,11 +1,14 @@
 // sub0canvas: the library's command line. It does the I/O the pure library may not (running git, reading files, writing stdout).
 //
-//   sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--] PATHSPEC...
+//   sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--texts by-id|inline] [--] PATHSPEC...
 //
 // Writes a viewer bundle to stdout: a JSON array of {path, text} holding layers/turn-N.json (layered-doc-1) and canvas.json. One turn per commit
 // that touched the pathspec, oldest first: the last N on REV's first-parent line. Block identities are the library's (BlockIndex), carried across
-// the commits, and a `commits` layer anchors each commit to the blocks it changed. Nothing is written to disk and nothing is copied out of the
+// the commits, and a `commits` layer anchors each commit to the blocks it changed. Each turn carries only the events since the one before (`eventsFrom`) and, by
+// default, each text once under its content id (`--texts inline` repeats every file's text in every turn, for a reader that predates `texts`); the whole event log
+// is the bundle's `events.ndjson`. Nothing is written to disk and nothing is copied out of the
 // repository beyond the bundle on stdout, whose size the limits bound (docs/AUTHORING.md section 2: a view is bounded by attention, not data).
+#include <sub0canvas/content_id.hpp>
 #include <sub0canvas/doc_layers.hpp>
 
 #include "json_util.hpp"
@@ -48,6 +51,7 @@ struct Options
     std::string repo, rev = "HEAD";
     int history = 8;
     std::size_t maxFiles = 150, maxFileBytes = 200000;
+    bool textsById = true;
     std::vector<std::string> pathspecs;
 };
 
@@ -162,6 +166,9 @@ int snapshot(const Options& o)
     BlockIndex index;
     std::map<std::string, std::string> files;
     std::map<std::string, int> revisions;
+    std::map<std::string, std::string> revisionIds, textIds;   // by path: the commit a file was last read at (opaque, A1) and its content id (computed once per change)
+    std::set<std::string> textsCarried;
+    std::size_t eventsCarried = 0;
     std::vector<LayerItem> commitItems;
     json::Writer bundle, log;
     bundle.beginArray();
@@ -186,10 +193,12 @@ int snapshot(const Options& o)
                 else ++skipped;
             }
         }
-        for (const auto& p : removed) { index.update(p, ""); files.erase(p); }
+        for (const auto& p : removed) { index.update(p, ""); files.erase(p); textIds.erase(p); revisionIds.erase(p); }
         for (auto& [p, text] : readBlobs(o, revs[t], fetch)) {
             index.update(p, text);
             ++revisions[p];
+            revisionIds[p] = commits[t].sha;
+            textIds[p] = contentId(text);
             log.beginObject().kv("path", p).kv("by", commits[t].sha.substr(0, 10) + " " + commits[t].subject).kv("revision", revisions[p])
                 .kv("base", revisions[p] - 1).kv("from", 1).kv("to", static_cast<int>(std::count(text.begin(), text.end(), '\n'))).kv("delta", 0).endObject();
             files[p] = std::move(text);
@@ -218,7 +227,20 @@ int snapshot(const Options& o)
         std::vector<LayerItem> shown(commitItems.rbegin(), commitItems.rend());
         for (std::size_t i = 0; i < shown.size(); ++i) shown[i].number = static_cast<int>(i) + 1;
 
-        const std::string turn = layeredJson(static_cast<int>(t), files, revisions, index, {{"commits", shown}});
+        SnapshotSpec spec;
+        spec.turn = static_cast<int>(t);
+        spec.files = files;
+        spec.revisions = revisions;
+        spec.revisionIds = revisionIds;
+        spec.textIds = textIds;
+        spec.layers = {{"commits", shown}};
+        spec.layerMeta = {{"commits", {"Commits", "The commits of the view, each anchored to the blocks it added or changed.", "sub0canvas snapshot"}}};
+        spec.policies = {{"snapshot", "sub0canvas-snapshot@1"}, {"reconcile", "reconcile@1"}};
+        spec.eventsFrom = eventsCarried;
+        spec.textsById = o.textsById;
+        spec.textsCarried = &textsCarried;
+        const std::string turn = layeredJson(spec, index);
+        eventsCarried = index.events().size();
         bundle.beginObject().kv("path", std::format("layers/turn-{}.json", t)).kv("text", turn).endObject();
     }
     log.endArray();
@@ -226,7 +248,8 @@ int snapshot(const Options& o)
     canvas.beginObject().key("files").beginObject();
     for (const auto& [p, r] : revisions) canvas.kv(p, r);
     canvas.endObject().kvRaw("log", log.view()).endObject();
-    bundle.beginObject().kv("path", "canvas.json").kv("text", canvas.take()).endObject().endArray();
+    bundle.beginObject().kv("path", "canvas.json").kv("text", canvas.take()).endObject();
+    bundle.beginObject().kv("path", "events.ndjson").kv("text", index.eventLogNdjson("snapshot")).endObject().endArray();
 
     const std::string out = bundle.take();
     std::fwrite(out.data(), 1, out.size(), stdout);
@@ -249,6 +272,7 @@ Options parse(int argc, char** argv)
         else if (a == "--history") o.history = std::stoi(next());
         else if (a == "--max-files") o.maxFiles = std::stoul(next());
         else if (a == "--max-file-bytes") o.maxFileBytes = std::stoul(next());
+        else if (a == "--texts") { const std::string v = next(); if (v != "by-id" && v != "inline") fail("--texts is by-id or inline"); o.textsById = v == "by-id"; }
         else fail("unknown option " + a);
     }
     if (o.repo.empty()) fail("snapshot needs --repo DIR");
@@ -265,7 +289,7 @@ Options parse(int argc, char** argv)
 int main(int argc, char** argv)
 {
     if (argc < 2 || std::string(argv[1]) != "snapshot") {
-        eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--] PATHSPEC...");
+        eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--texts by-id|inline] [--] PATHSPEC...");
         return 2;
     }
 #ifdef _WIN32

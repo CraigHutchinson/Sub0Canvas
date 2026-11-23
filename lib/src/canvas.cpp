@@ -358,7 +358,7 @@ std::string applyInPlace(Canvas& canvas, const CanvasReply& reply, const ApplyOp
 {
     const auto fail = [&](const std::string& why) { if (skipped) skipped->push_back(why); return !skipped; };   // true: stop with this refusal
     std::map<std::string, int> shown;   // the revision each file was at when the author saw it: every operation's line numbers are in that view
-    for (const auto& path : canvas.paths()) shown[path] = canvas.revision(path);
+    for (const auto& path : canvas.paths()) shown[path] = o.baseRevision > 0 ? o.baseRevision : canvas.revision(path);
     for (const auto& [path, text] : reply.wholeFiles) {
         if (!o.allowed.count(path)) { const std::string why = "'" + path + "' is not one of the files you may write"; if (fail(why)) return why; continue; }
         (void)canvas.replaceText(path, text, o.by);
@@ -371,7 +371,7 @@ std::string applyInPlace(Canvas& canvas, const CanvasReply& reply, const ApplyOp
         if (!why.empty()) { if (fail(why)) return why; continue; }
         tx.by = o.by;
         if (!skipped) {   // all or nothing: the file's operations as one transaction
-            tx.baseRevision = canvas.revision(tx.path);
+            tx.baseRevision = o.baseRevision > 0 ? o.baseRevision : canvas.revision(tx.path);
             if (const TxResult r = canvas.apply(tx); !r.ok) return tx.path + ": " + r.error;
             continue;
         }

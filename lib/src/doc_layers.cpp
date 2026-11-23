@@ -2,6 +2,7 @@
 #include "sub0canvas/doc_layers.hpp"
 
 #include "json_util.hpp"
+#include "sub0canvas/content_id.hpp"
 #include "sub0canvas/outline.hpp"
 
 #include <algorithm>
@@ -292,17 +293,49 @@ std::string BlockIndex::retiredJson() const
     return std::string{w.view()};
 }
 
-std::string BlockIndex::json() const
+namespace {
+
+void writeEvent(json::Writer& w, const BlockEvent& e)
+{
+    w.beginObject().kv("turn", e.turn).kv("carry", carryName(e.carry)).kv("id", e.id).kv("path", e.path).kv("name", e.name).kv("detail", e.detail).endObject();
+}
+
+}  // namespace
+
+std::string BlockIndex::json() const { return jsonFrom(0, false); }
+
+std::string BlockIndex::json(std::size_t eventsFrom) const { return jsonFrom(eventsFrom, true); }
+
+std::string BlockIndex::jsonFrom(std::size_t eventsFrom, bool say) const
 {
     json::Writer w;
     w.beginObject().key("blocks").beginArray();
     for (const Block* b : all())
         w.beginObject().kv("id", b->id).kv("path", b->path).kv("name", b->name).kv("signature", b->signature).kv("first", b->first).kv("last", b->last).endObject();
-    w.endArray().kvRaw("retired", retiredJson()).key("events").beginArray();
-    for (const auto& e : events_)
-        w.beginObject().kv("turn", e.turn).kv("carry", carryName(e.carry)).kv("id", e.id).kv("path", e.path).kv("name", e.name).kv("detail", e.detail).endObject();
+    w.endArray().kvRaw("retired", retiredJson());
+    if (say) w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
+    w.key("events").beginArray();
+    for (std::size_t i = std::min(eventsFrom, events_.size()); i < events_.size(); ++i) writeEvent(w, events_[i]);
     w.endArray().endObject();
     return std::string{w.view()};
+}
+
+std::string BlockIndex::eventLogNdjson(const std::string& document) const
+{
+    std::string out;
+    {
+        json::Writer w;
+        w.beginObject().kv("schema", "canvas-events-1").kv("document", document).endObject();
+        out += std::string{w.view()} + '\n';
+    }
+    for (std::size_t i = 0; i < events_.size(); ++i) {
+        json::Writer w;
+        w.beginObject().kv("seq", static_cast<std::int64_t>(i)).kv("kind", "block").kv("source", "canvas/index").kv("subject", events_[i].id).key("data");
+        writeEvent(w, events_[i]);
+        w.endObject();
+        out += std::string{w.view()} + '\n';
+    }
+    return out;
 }
 
 std::vector<BlockEvent> blockHistory(const BlockIndex& index, const std::string& id)
@@ -369,9 +402,27 @@ std::vector<Anchor> suspects(const std::string& testName, const std::string& exp
 
 }  // namespace
 
+namespace {
+
+/// GCC and clang underline a range under the source line: `      |     ~~~^~~` (a caret alone marks a point). When `raw` is such a line and its markers cover
+/// the anchor's column, the anchor becomes the range they span (end just past the last marker). Only the first occurrence of a diagnostic is widened.
+void widenByUnderline(Anchor& a, const std::string& raw)
+{
+    const auto bar = raw.find('|');
+    if (bar == std::string::npos || a.column <= 0 || a.endColumn > 0 || raw.find_first_not_of(' ') != bar) return;
+    const std::size_t text = bar + 2;   // the source text starts after "| "
+    const auto first = raw.find_first_of("^~", text);
+    const auto last = raw.find_last_of("^~");
+    if (first == std::string::npos || raw.find_first_not_of("^~ ", first) != std::string::npos || raw.find('^', text) == std::string::npos) return;
+    const int from = static_cast<int>(first - text) + 1, to = static_cast<int>(last - text) + 2;
+    if (to - from > 1 && a.column >= from && a.column < to) { a.endLine = a.line; a.endColumn = to; }
+}
+
+}  // namespace
+
 std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex& index, const std::map<std::string, std::string>& sources)
 {
-    static const std::regex diag(R"(([\w./+-]+\.[A-Za-z]+):(\d+):(?:(\d+):)? ?(?:(fatal error|error|warning|note): )?(.*))");
+    static const std::regex diag(R"(([\w./+-]+\.[A-Za-z]+):(\d+):(?:(\d+)(?:-(\d+))?:)? ?(?:(fatal error|error|warning|note): )?(.*))");
     static const std::regex quoted(R"re("((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')re");
     std::vector<LayerItem> items;
     std::map<std::size_t, std::string> testNames;   // item index -> the failing test's name
@@ -396,18 +447,22 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
         }
         std::smatch m;
         if (std::regex_search(line, m, diag) && line.find(" | ") == std::string::npos && line.rfind("location:", 0) != 0 && line.rfind("the test expected", 0) != 0) {
-            const std::string kindWord = m[4].str(), message = m[5].str();
+            const std::string kindWord = m[5].str(), message = m[6].str();
             if (kindWord == "note") { if (current) items[*current].detail += "\n" + line; continue; }
             const std::string path = m[1].str();
             const int at = std::atoi(m[2].str().c_str());
             const std::string kind = kindWord == "warning" && message.find("-Werror") == std::string::npos ? "warning" : "error";
             Anchor a{"", path, at, Anchor::Confidence::exact};
+            if (m[3].matched) {   // `path:line:col:`, or `path:line:col-endcol:` where the compiler names the range
+                a.column = std::atoi(m[3].str().c_str());
+                if (m[4].matched && std::atoi(m[4].str().c_str()) > a.column) { a.endLine = at; a.endColumn = std::atoi(m[4].str().c_str()) + 1; }
+            }
             if (const Block* blk = index.at(path, at)) a.blockId = blk->id;
             std::string key = kind + "|";
             for (const char c : message) if (!std::isdigit(static_cast<unsigned char>(c))) key += c;
             if (const auto seen = byKey.find(key); seen != byKey.end()) {
                 LayerItem& it = items[seen->second];
-                const bool same = std::any_of(it.anchors.begin(), it.anchors.end(), [&](const Anchor& x) { return x.path == path && x.line == at; });
+                const bool same = std::any_of(it.anchors.begin(), it.anchors.end(), [&](const Anchor& x) { return x.path == path && x.line == at && x.column == a.column; });
                 if (!same) it.anchors.push_back(a);
                 current.reset();   // the context of a repeat is not added: the first occurrence carries it
                 continue;
@@ -419,7 +474,10 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
             items.push_back({"issues", 0, kind, kind + " " + path + ":" + std::to_string(at) + ": " + message, line, {a}, "issues/" + kind + "/" + hash});
             continue;
         }
-        if (current && raw.size() > 1 && raw[0] == ' ') items[*current].detail += "\n" + raw;   // a context line (the source line, the caret, expected/actual)
+        if (current && raw.size() > 1 && raw[0] == ' ') {   // a context line (the source line, the caret, expected/actual)
+            items[*current].detail += "\n" + raw;
+            if (!items[*current].anchors.empty()) widenByUnderline(items[*current].anchors.front(), raw);
+        }
         else current.reset();
     }
     // Failing tests are localised once their context is in: the expression is the quoted text of the message, plus the quoted text of the test's own
@@ -582,28 +640,89 @@ std::vector<int> parseIssueReads(const std::string& reply)
     return out;
 }
 
-std::string layeredJson(int turn, const std::map<std::string, std::string>& files, const std::map<std::string, int>& revisions, const BlockIndex& index,
-                        const std::map<std::string, std::vector<LayerItem>>& layers)
+namespace {
+
+/// The library's own description of a layer it produces; none for a layer only the caller knows.
+const LayerMeta* defaultMeta(const std::string& layer)
+{
+    static const LayerMeta issues{"Issues", "Compiler errors and failing tests from a gate's verdict, each bound to the blocks it names.", "sub0canvas parseIssues"};
+    return layer == "issues" ? &issues : nullptr;
+}
+
+}  // namespace
+
+std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
 {
     json::Writer w;
-    w.beginObject().kv("schema", "layered-doc-1").kv("turn", turn).key("files").beginObject();
-    for (const auto& [path, text] : files) w.key(path).beginObject().kv("revision", revisions.count(path) ? revisions.at(path) : 0).kv("text", text).endObject();
+    w.beginObject().kv("schema", "layered-doc-1").kv("turn", spec.turn).key("files").beginObject();
+    std::map<std::string, std::string> ids;   // path -> content id
+    for (const auto& [path, text] : spec.files) {
+        const auto known = spec.textIds.find(path);
+        ids[path] = known != spec.textIds.end() ? known->second : contentId(text);
+        const int rev = spec.revisions.count(path) ? spec.revisions.at(path) : 0;
+        const auto opaque = spec.revisionIds.find(path);
+        w.key(path).beginObject().kv("revision", rev).kv("revisionId", opaque != spec.revisionIds.end() ? opaque->second : "r" + std::to_string(rev)).kv("textId", ids[path]);
+        if (!spec.textsById) w.kv("text", text);
+        w.endObject();
+    }
     w.endObject();
+    if (spec.textsById) {   // each text once: those an earlier snapshot of the document carried are not repeated
+        w.key("texts").beginObject();
+        std::set<std::string> here;
+        for (const auto& [path, text] : spec.files) {
+            const std::string& id = ids[path];
+            if ((spec.textsCarried && spec.textsCarried->count(id)) || !here.insert(id).second) continue;
+            w.kv(id, text);
+        }
+        w.endObject();
+        if (spec.textsCarried) spec.textsCarried->insert(here.begin(), here.end());
+    }
     // The index's own JSON holds blocks, retired and events: spliced in whole, so there is one writer of that shape.
-    const std::string idx = index.json();
+    const std::string idx = index.json(spec.eventsFrom);
     w.raw(std::string_view{idx}.substr(1, idx.size() - 2));
+    if (!spec.policies.empty()) {
+        w.key("policies").beginObject();
+        for (const auto& [role, id] : spec.policies) w.kv(role, id);
+        w.endObject();
+    }
+    std::map<std::string, LayerMeta> meta;
+    for (const auto& [name, items] : spec.layers) {
+        if (const auto given = spec.layerMeta.find(name); given != spec.layerMeta.end()) meta[name] = given->second;
+        else if (const LayerMeta* d = defaultMeta(name)) meta[name] = *d;
+    }
+    if (!meta.empty()) {
+        w.key("layerMeta").beginObject();
+        for (const auto& [name, m] : meta) w.key(name).beginObject().kv("label", m.label).kv("description", m.description).kv("producer", m.producer).endObject();
+        w.endObject();
+    }
     w.key("layers").beginObject();
-    for (const auto& [name, items] : layers) {
+    for (const auto& [name, items] : spec.layers) {
         w.key(name).beginArray();
         for (const auto& it : items) {
             w.beginObject().kv("id", it.key).kv("number", it.number).kv("kind", it.kind).kv("title", it.title).kv("detail", it.detail).key("anchors").beginArray();
-            for (const auto& a : it.anchors) w.beginObject().kv("blockId", a.blockId).kv("path", a.path).kv("line", a.line).kv("confidence", confidenceName(a.confidence)).endObject();
+            for (const auto& a : it.anchors) {
+                w.beginObject().kv("blockId", a.blockId).kv("path", a.path).kv("line", a.line);
+                if (a.column > 0) w.kv("column", a.column);
+                if (a.endColumn > 0) w.kv("endLine", a.endLine).kv("endColumn", a.endColumn);
+                w.kv("confidence", confidenceName(a.confidence)).endObject();
+            }
             w.endArray().endObject();
         }
         w.endArray();
     }
     w.endObject().endObject();
     return std::string{w.view()};
+}
+
+std::string layeredJson(int turn, const std::map<std::string, std::string>& files, const std::map<std::string, int>& revisions, const BlockIndex& index,
+                        const std::map<std::string, std::vector<LayerItem>>& layers)
+{
+    SnapshotSpec spec;
+    spec.turn = turn;
+    spec.files = files;
+    spec.revisions = revisions;
+    spec.layers = layers;
+    return layeredJson(spec, index);
 }
 
 }  // namespace sub0canvas

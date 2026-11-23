@@ -182,5 +182,32 @@ int main()
         CHECK_EQ(m.failures, 0);
         CHECK(m.steps > 3 * cases);
     }
+    {   // R-CAN-4 through applyReply (ApplyOptions::baseRevision): a reply written against an older revision is rebased where its lines do not overlap
+        // what changed since, and refused naming who changed them where they do, exactly as the canvas rules for one transaction; in either mode.
+        const std::string base = "a\nb\nc\nd\n";
+        for (const bool partial : {false, true}) {
+            Canvas canvas;
+            canvas.addFile("f.txt", base);
+            const CanvasReply first = parseCanvasReply("=== EDIT: f.txt LINES 1 ===\nA\n=== END EDIT ===\n");
+            CHECK(applyReply(canvas, first, {{"f.txt"}, "alice", partial, 0}).has_value());   // revision 2 changes line 1 only
+            // bob was shown revision 1 and edits line 4: no overlap, so it lands on revision 3, with line 4 still line 4.
+            const CanvasReply other = parseCanvasReply("=== EDIT: f.txt LINES 4 ===\nD\n=== END EDIT ===\n");
+            const auto rebased = applyReply(canvas, other, {{"f.txt"}, "bob", partial, 1});
+            CHECK(rebased.has_value() && (!rebased || rebased->skipped.empty()));
+            CHECK(canvas.text("f.txt") == "A\nb\nc\nD\n" && canvas.revision("f.txt") == 3);
+            // bob edits line 1 from the same stale view: refused, and the canvas stays as it was.
+            const CanvasReply clash = parseCanvasReply("=== EDIT: f.txt LINES 1 ===\nX\n=== END EDIT ===\n");
+            const auto refused = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 1});
+            const std::string why = !refused ? refused.error() : refused->skipped.empty() ? std::string{} : refused->skipped.front();
+            CHECK(why.find("changed by alice in revision 2") != std::string::npos);
+            CHECK(canvas.text("f.txt") == "A\nb\nc\nD\n" && canvas.revision("f.txt") == 3);
+            // Without a base the same reply is made against the current text and simply applies; a base that does not exist is refused.
+            const auto current = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 0});
+            CHECK(current.has_value() && canvas.text("f.txt") == "X\nb\nc\nD\n");
+            const auto missing = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 9});
+            const std::string gone = !missing ? missing.error() : missing->skipped.empty() ? std::string{} : missing->skipped.front();
+            CHECK(gone.find("base revision 9 does not exist") != std::string::npos);
+        }
+    }
     return finish();
 }

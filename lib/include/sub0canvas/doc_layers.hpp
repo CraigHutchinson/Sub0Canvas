@@ -71,12 +71,21 @@ public:
     [[nodiscard]] std::vector<const Block*> all() const;
     /// What happened to ids, in order.
     [[nodiscard]] const std::vector<BlockEvent>& events() const { return events_; }
-    /// The index as JSON (`{"blocks":[{id,path,name,first,last}],"retired":[{id,name,mergedInto}]}`), kept beside the canvas for a later reader.
+    /// The index as JSON (`{"blocks":[{id,path,name,first,last}],"retired":[{id,name,mergedInto}],"events":[...]}`), kept beside the canvas for a later reader.
+    /// `events` is the whole log.
     [[nodiscard]] std::string json() const;
+    /// The same, but `events` holds only the log from position `eventsFrom` on, and `eventsFrom` says where it starts: a snapshot carries what happened since the
+    /// previous one (docs/BACKBONE.md 3.3; the owner confirmed per-turn events, 2026-11-23). A position past the end gives an empty list.
+    [[nodiscard]] std::string json(std::size_t eventsFrom) const;
+    /// The whole log as the cumulative record, schema `canvas-events-1` (docs/BACKBONE.md section 7): a header line naming `document`, then one line per event,
+    /// `{"seq":n,"kind":"block","source":"canvas/index","subject":id,"data":{turn,carry,path,name,detail}}`, `seq` being the position in `events()` (the cursor
+    /// a snapshot's `eventsFrom` names). A provisional subset of the design's Event: the actor and time are not recorded here, and B1's store owns the final writer.
+    [[nodiscard]] std::string eventLogNdjson(const std::string& document) const;
 
 private:
     struct Retired { Block block; std::string mergedInto; };
     [[nodiscard]] std::string retiredJson() const;
+    [[nodiscard]] std::string jsonFrom(std::size_t eventsFrom, bool say) const;
     std::map<std::string, std::string> texts_;            ///< the text each path was last indexed at
     std::map<std::string, std::size_t> hashes_;           ///< by live id: a hash of its text, to tell an edited block from an untouched one
     std::map<std::string, std::vector<Block>> live_;      ///< by path, in file order
@@ -94,6 +103,8 @@ struct Anchor
     std::string path;
     int line = 0;
     Confidence confidence = Confidence::none;   ///< exact: the producer named a line in the block; suspect: inferred (a failing test's subject)
+    int column = 0;                             ///< 1-based column of the place on `line` (a compiler names it); 0: not known. Keeps several sites on one line apart
+    int endLine = 0, endColumn = 0;             ///< the end of a range (A3): the line it ends on and the column just PAST its last character (0: a point, not a range)
 };
 
 /// One item of one layer: an issue, a review note, a prose description. Layer-neutral: every layer renders through `layerSummary` and `layerDetail`.
@@ -120,8 +131,38 @@ struct LayerItem
 /// The events of one id and of every id merged into it, in order: the identity history of a section.
 [[nodiscard]] std::vector<BlockEvent> blockHistory(const BlockIndex& index, const std::string& id);
 
-/// The interchange form (schema `layered-doc-1`, docs/LAYERED_DOCUMENT.md): the files at their revisions, the index, its history and every layer, one
-/// JSON object a viewer reads without the program (sub0canvas). `revisions` gives each path's revision number.
+/// What a layer says about itself (`layerMeta`): a viewer shows the label and the description, and the producer names who wrote it.
+struct LayerMeta
+{
+    std::string label, description, producer;
+};
+
+/// Everything a snapshot is made of, by field name, so that a new field never breaks a caller (docs/MOCK_SQUAD.md section 6, question 3). The defaults write
+/// what the first version of the format held, plus the additive fields that need no input.
+struct SnapshotSpec
+{
+    int turn = 0;
+    std::map<std::string, std::string> files;                       ///< the text of every file now
+    std::map<std::string, int> revisions;                           ///< each path's revision number (the old field `revision`)
+    std::map<std::string, std::string> revisionIds;                 ///< each path's revision as an OPAQUE string (A1); a path without one gets "r<number>"
+    std::map<std::string, std::vector<LayerItem>> layers;
+    std::map<std::string, LayerMeta> layerMeta;                     ///< a layer without an entry gets the library's own for "issues", none for another
+    std::map<std::string, std::string> policies;                    ///< the policies that made this snapshot, by role: {"loop":"mock-loop@1"} (A13)
+    std::map<std::string, std::string> textIds;                     ///< a path's content id when the caller already has it (saves hashing a text that has not changed)
+    std::size_t eventsFrom = 0;                                     ///< the position in `index.events()` this snapshot's events start at: what earlier snapshots carried
+    bool textsById = false;                                         ///< false: every file's `text` is written (what old readers need). true: only `textId`, and the texts a
+                                                                    ///< reader has not been given are in `texts`
+    std::set<std::string>* textsCarried = nullptr;                  ///< textsById: the content ids earlier snapshots of this document carried, updated with this one's
+                                                                    ///< (null: this snapshot carries every text it refers to, so it stands alone)
+};
+
+/// The interchange form (schema `layered-doc-1`, docs/LAYERED_DOCUMENT.md, BACKBONE.md section 7): the files at their revisions, the index, its history and every
+/// layer, one JSON object a viewer reads without the program (sub0canvas). Beyond the first version it writes, all additive: per file `revisionId` and `textId`
+/// (and `text`, unless `textsById`); a top-level `texts` (`textsById`), `eventsFrom` with only the events from there on, `policies`, `layerMeta`; per item `id` (its
+/// key); per anchor `column`, `endLine` and `endColumn` where known.
+[[nodiscard]] std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index);
+
+/// The first version's call: every event from the start (`eventsFrom` 0), every text inline, revision ids "r<number>". `revisions` gives each path's revision number.
 [[nodiscard]] std::string layeredJson(int turn, const std::map<std::string, std::string>& files, const std::map<std::string, int>& revisions, const BlockIndex& index,
                                       const std::map<std::string, std::vector<LayerItem>>& layers);
 

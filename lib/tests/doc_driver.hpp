@@ -163,6 +163,18 @@ public:
         return sub0canvas::layeredJson(turn_, files_, revisions, index_, layers);
     }
 
+    /// The same, written from a spec of the new fields (revision ids, policies, `eventsFrom`, texts by id): the turn and the files are the document's.
+    [[nodiscard]] std::string snapshot(sub0canvas::SnapshotSpec spec) const
+    {
+        spec.turn = turn_;
+        spec.files = files_;
+        return sub0canvas::layeredJson(spec, index_);
+    }
+    /// How many events the identity history holds now: what the next snapshot's `eventsFrom` is once this one is written.
+    [[nodiscard]] std::size_t eventCount() const { return index_.events().size(); }
+    /// The whole history as the cumulative log (`canvas-events-1`).
+    [[nodiscard]] std::string eventLog(const std::string& document) const { return index_.eventLogNdjson(document); }
+
     [[nodiscard]] const std::map<std::string, std::string>& files() const { return files_; }
 
 private:

@@ -104,6 +104,9 @@ struct ApplyOptions
     std::set<std::string> allowed;   ///< the files the author may write; anything else is refused
     std::string by;                  ///< who made the reply: every revision it produces names them
     bool partial = false;            ///< false: all or nothing; true: every part that can apply does, and each part that cannot is reported
+    int baseRevision = 0;            ///< the revision of EVERY file it edits that the author was shown (a second actor holding a stale view): their line numbers are
+                                     ///< in that view, rebased over what changed since or refused naming who changed the lines. 0: the revision current when the call begins.
+                                     ///< It governs line operations only; a whole file and a SEARCH snippet do not depend on line numbers
 };
 
 /// What applying a reply did. In partial mode, the parts that could not apply, each named; empty in all-or-nothing mode.

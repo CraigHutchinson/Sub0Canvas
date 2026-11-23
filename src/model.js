@@ -6,6 +6,10 @@
 //   <attempt>/canvas/<flat>.r<N>   every revision's text ('/' in the path flattened to '_')
 // Layers are freeform: whatever keys `layers` holds. "code" is not a layer of the file; it is the files and blocks themselves.
 //
+// Both shapes of the format are read (docs/BACKBONE.md section 7, additive): a file's `revision` number and/or its opaque string `revisionId`; its inline `text`
+// and/or a `textId` naming a text in some turn's `texts` table (each text sent once per attempt); `events` cumulative or, with `eventsFrom`, only the events
+// from that position of the log on (a producer that writes `eventsFrom` and a cumulative list is read the same); `policies` and `layerMeta` beside the layers.
+//
 // Works as a classic browser script (window.S0Model) and as a CommonJS module (require('./model.js')).
 
 (function (root, factory) {
@@ -29,8 +33,14 @@
         need(t.schema === SCHEMA, `schema is ${JSON.stringify(t.schema)}, expected "${SCHEMA}"`);
         need(Number.isInteger(t.turn), 'turn is not an integer');
         need(t.files && typeof t.files === 'object', 'files is missing');
-        for (const [p, f] of Object.entries(t.files || {}))
-            need(f && typeof f.text === 'string' && Number.isInteger(f.revision), `files["${p}"] needs {revision, text}`);
+        for (const [p, f] of Object.entries(t.files || {})) {
+            need(f && (typeof f.text === 'string' || typeof f.textId === 'string'), `files["${p}"] needs a text or a textId`);
+            need(f && (Number.isInteger(f.revision) || typeof f.revisionId === 'string'), `files["${p}"] needs a revision number or a revisionId`);
+        }
+        need(t.texts === undefined || (t.texts && typeof t.texts === 'object' && !Array.isArray(t.texts)), 'texts is not an object');
+        need(t.eventsFrom === undefined || (Number.isInteger(t.eventsFrom) && t.eventsFrom >= 0), 'eventsFrom is not a non-negative integer');
+        need(t.policies === undefined || (t.policies && typeof t.policies === 'object' && !Array.isArray(t.policies)), 'policies is not an object');
+        need(t.layerMeta === undefined || (t.layerMeta && typeof t.layerMeta === 'object' && !Array.isArray(t.layerMeta)), 'layerMeta is not an object');
         need(Array.isArray(t.blocks), 'blocks is not an array');
         const ids = new Set();
         for (const b of t.blocks || []) {
@@ -85,7 +95,7 @@
                 group(trimSlash(m[1])).revisionFiles.push({ flat: m[2], revision: Number(m[3]), text });
             }
         }
-        const docs = [...groups.values()].filter((g) => g.turns.length).map(buildDoc);
+        const docs = [...groups.values()].filter((g) => g.turns.length).map((g) => buildDoc(g, problems));
         docs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
         return { docs, problems };
     }
@@ -104,14 +114,16 @@
     }
 
     /** A document: the turns of one attempt in order, with indexes built once so every query below is a lookup. */
-    function buildDoc(g) {
+    function buildDoc(g, problems = []) {
         const turns = g.turns.sort((a, b) => a.turn - b.turn);
-        stripCumulativeEvents(turns);
+        resolveTexts(turns, problems, g.key);
+        numberRevisions(turns);
+        perTurnEvents(turns);
         const paths = new Set(turns.flatMap((t) => Object.keys(t.files)));
         if (g.canvas?.files) for (const p of Object.keys(g.canvas.files)) paths.add(p);
         // Revision texts: map each flattened name back to a path we know ('/' -> '_' is lossy, so match against the known paths).
         const revisions = {};
-        const unflatten = new Map([...paths].map((p) => [p.replace(/\//g, '_'), p]));
+        const unflatten = new Map([...paths].flatMap((p) => [[p.replace(/\//g, '_'), p], [p.replace(/\//g, '%2F'), p]]));   // the old '_' and the new '%2F' names
         for (const r of g.revisionFiles) {
             const path = unflatten.get(r.flat) ?? r.flat;
             (revisions[path] ??= {})[r.revision] = r.text;
@@ -122,11 +134,69 @@
             turns,
             turnNumbers: turns.map((t) => t.turn),
             log: g.canvas?.log || [],
+            layerMeta: Object.assign({}, ...turns.map((t) => t.layerMeta || {})),
+            policies: turns.length ? turns[turns.length - 1].policies || {} : {},
+            events: turns.flatMap((t) => t.events),   // the whole log, whichever shape the turns carried it in
             revisions,
             paths: [...paths].sort(),
         };
         doc.index = buildIndex(doc);
         return doc;
+    }
+
+    /**
+     * Texts by content id: every file's text, from its inline `text` or the `texts` table of any turn of the attempt (a turn carries only the texts the earlier
+     * ones did not). A file whose id no turn carries is reported and shown empty, never fatal.
+     */
+    function resolveTexts(turns, problems, key) {
+        const table = new Map();
+        for (const t of turns) {
+            for (const [id, text] of Object.entries(t.texts || {})) table.set(id, text);
+            for (const f of Object.values(t.files)) if (typeof f.text === 'string' && typeof f.textId === 'string') table.set(f.textId, f.text);
+        }
+        for (const t of turns) {
+            const files = {};
+            for (const [p, f] of Object.entries(t.files)) {
+                let text = f.text;
+                if (typeof text !== 'string') {
+                    text = table.get(f.textId);
+                    if (text === undefined) { problems.push(`${key ? key + '/' : ''}turn ${t.turn}: no turn carries the text ${f.textId} of ${p}`); text = ''; }
+                }
+                files[p] = { ...f, text };
+            }
+            t.files = files;
+        }
+    }
+
+    /** A producer that gives only opaque revision ids has no numbers: each path's distinct ids, in turn order, are its revisions 1, 2, ... */
+    function numberRevisions(turns) {
+        const order = new Map();   // path -> ids in first-seen order
+        for (const t of turns)
+            for (const [p, f] of Object.entries(t.files)) {
+                if (typeof f.revisionId !== 'string') { f.revisionId = `r${f.revision}`; continue; }
+                if (Number.isInteger(f.revision)) continue;
+                const ids = order.get(p) || [];
+                if (!ids.includes(f.revisionId)) ids.push(f.revisionId);
+                order.set(p, ids);
+                f.revision = ids.indexOf(f.revisionId) + 1;
+            }
+    }
+
+    /**
+     * Each turn's events as what happened since the previous turn. With `eventsFrom` (a position in the producer's log) a repeated prefix is dropped by position
+     * (a cumulative list with eventsFrom 0 and a true slice read the same); without it, by comparing with the turn before.
+     */
+    function perTurnEvents(turns) {
+        if (turns.length && turns.every((t) => Number.isInteger(t.eventsFrom))) {
+            let carried = 0;
+            for (const t of turns) {
+                const end = t.eventsFrom + t.events.length;
+                t.events = t.events.slice(Math.max(0, carried - t.eventsFrom));
+                carried = Math.max(carried, end);
+            }
+            return;
+        }
+        stripCumulativeEvents(turns);
     }
 
     /** Events are meant to be what happened since the previous turn. If a producer writes them cumulatively, drop the prefix the last turn had. */

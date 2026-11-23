@@ -6,10 +6,12 @@
 #include "sub0platform/testing/check.hpp"
 #include "doc_driver.hpp"
 #include "sub0canvas/canvas.hpp"
+#include "sub0canvas/content_id.hpp"
 
 #include <simdjson.h>
 
 #include <algorithm>
+#include <set>
 #include <string>
 
 using namespace req;
@@ -327,6 +329,131 @@ int main()
         CHECK(j.find("\"schema\":\"layered-doc-1\"") != std::string::npos && j.find("\"turn\":4") != std::string::npos);
         CHECK(j.find("\"revision\":2") != std::string::npos && j.find("\"carry\":\"added\"") != std::string::npos);
         CHECK(j.find("\"confidence\":\"suspect\"") != std::string::npos && j.find("\"blockId\":\"" + d.id(path, "term") + "\"") != std::string::npos);
+    }
+    {   // R-SRC-6, R-FMT-3: a compiler's column and range are read; two sites on one line stay two anchors; Python's form has no column.
+        Doc d;
+        d.write(path, kCalc);
+        const std::string gcc =
+            "src/calc.cpp:12:20: error: 'unary' was not declared in this scope\n"
+            "   12 |         double v = unary();\n"
+            "      |                    ^~~~~\n"
+            "src/calc.cpp:12:30: error: 'unary' was not declared in this scope\n"
+            "src/calc.cpp:15:5-9: warning: unused variable -Werror=unused\n"
+            "src/calc.cpp:20: invalid syntax\n";
+        const auto items = d.issues(gcc);
+        CHECK(items.size() == 3);
+        if (items.size() == 3) {
+            CHECK(items[0].anchors.size() == 2);   // the same message at two columns of one line is one item with two anchors, never one
+            CHECK(items[0].anchors[0].line == 12 && items[0].anchors[0].column == 20);
+            CHECK(items[0].anchors[0].endLine == 12 && items[0].anchors[0].endColumn == 25);   // the underline `^~~~~`: five characters, the end just past them
+            CHECK(items[0].anchors[1].column == 30 && items[0].anchors[1].endColumn == 0);     // a repeat names no underline: a point
+            CHECK(items[1].anchors[0].column == 5 && items[1].anchors[0].endLine == 15 && items[1].anchors[0].endColumn == 10);   // `col-endcol` as a range, end just past
+            CHECK(items[2].anchors[0].line == 20 && items[2].anchors[0].column == 0 && items[2].anchors[0].endColumn == 0);
+        }
+        // A caret alone is a point; an underline that does not cover the named column is not that diagnostic's range.
+        const auto point = d.issues("src/calc.cpp:12:20: error: x\n   12 |         double v = unary();\n      |                    ^\n");
+        CHECK(point.size() == 1 && point[0].anchors[0].column == 20 && point[0].anchors[0].endColumn == 0);
+        const auto elsewhere = d.issues("src/calc.cpp:12:20: error: x\n   12 |         double v = unary();\n      |  ^~~~~\n");
+        CHECK(elsewhere.size() == 1 && elsewhere[0].anchors[0].endColumn == 0);
+    }
+    {   // R-FMT-3: the snapshot writes the item id, the anchor's column and range, and a layerMeta entry for the issues; every old field is still there.
+        Doc d;
+        d.write(path, kCalc);
+        const auto items = d.issues("src/calc.cpp:12:20: error: 'unary' was not declared in this scope\n   12 |         double v = unary();\n      |                    ^~~~~\n");
+        sub0canvas::SnapshotSpec spec;
+        spec.layers = {{"issues", items}};
+        spec.revisions = {{path, 3}};
+        simdjson::dom::parser parser;
+        simdjson::dom::element doc;
+        const std::string text = d.snapshot(spec);
+        CHECK(!parser.parse(text).get(doc));
+        const auto item = doc["layers"]["issues"].at(0);
+        CHECK(std::string_view{item["id"]}.rfind("issues/error/", 0) == 0);
+        CHECK(std::string_view{item["title"]}.find("unary") != std::string_view::npos && std::string_view{item["detail"]}.find("^~~~~") != std::string_view::npos);   // old fields
+        const auto anchor = item["anchors"].at(0);
+        CHECK(int64_t{anchor["line"]} == 12 && int64_t{anchor["column"]} == 20 && int64_t{anchor["endLine"]} == 12 && int64_t{anchor["endColumn"]} == 25);
+        CHECK(std::string_view{anchor["confidence"]} == "exact" && std::string_view{anchor["blockId"]} == d.id(path, "expr"));
+        CHECK(std::string_view{doc["layerMeta"]["issues"]["label"]} == "Issues" && std::string_view{doc["layerMeta"]["issues"]["producer"]}.size() > 0);
+        // A layer the caller alone knows has no meta unless given.
+        sub0canvas::SnapshotSpec other;
+        other.layers = {{"notes", {makeItem({"notes", "note", "a note", "", "notes/1", {}})}}};
+        CHECK(!parser.parse(d.snapshot(other)).get(doc));
+        CHECK(doc["layerMeta"].error() != simdjson::SUCCESS);
+        other.layerMeta = {{"notes", {"Notes", "what a reviewer said", "a person"}}};
+        CHECK(!parser.parse(d.snapshot(other)).get(doc) && std::string_view{doc["layerMeta"]["notes"]["label"]} == "Notes");
+    }
+    {   // R-SRC-5, R-FMT-3: every file carries its revision number AND an opaque revision id (the number as "r<n>" unless the caller names another), a content id
+        // that is git's blob id, and the policies that made the snapshot are recorded.
+        Doc d;
+        d.write(path, kCalc);
+        sub0canvas::SnapshotSpec spec;
+        spec.revisions = {{path, 3}};
+        spec.revisionIds = {{path, "9f2c-7"}};
+        spec.policies = {{"loop", "mock-loop@1"}, {"reconcile", "reconcile@1"}};
+        simdjson::dom::parser parser;
+        simdjson::dom::element doc;
+        CHECK(!parser.parse(d.snapshot(spec)).get(doc));
+        const auto f = doc["files"][path];
+        CHECK(int64_t{f["revision"]} == 3 && std::string_view{f["revisionId"]} == "9f2c-7");
+        CHECK(std::string_view{f["textId"]} == sub0canvas::contentId(kCalc) && std::string_view{f["text"]} == kCalc);
+        CHECK(std::string_view{doc["policies"]["loop"]} == "mock-loop@1" && std::string_view{doc["policies"]["reconcile"]} == "reconcile@1");
+        sub0canvas::SnapshotSpec plain;
+        plain.revisions = {{path, 3}};
+        CHECK(!parser.parse(d.snapshot(plain)).get(doc) && std::string_view{doc["files"][path]["revisionId"]} == "r3" && doc["policies"].error() != simdjson::SUCCESS);
+        // The content id is git's blob id (`git hash-object`): stable across runs and platforms, and the same for the same bytes.
+        CHECK(sub0canvas::contentId("") == "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391");
+        CHECK(sub0canvas::contentId("hello\n") == "ce013625030ba8dba906f756967f9e9ca394464a");
+        CHECK(sub0canvas::contentId("what is up, doc?") == "bd9dbf5aae1a3862dd1526723246b20206e5fc37");
+        CHECK(sub0canvas::contentId(std::string(70, 'x') + "\n" + std::string(200, 'y') + "\n") == "9ec8b96e22618344ab568bd6348cd3cb884e8fbf");   // more than one 64-byte block
+    }
+    {   // R-FMT-4: events are per snapshot with `eventsFrom`, and the cumulative log is the same events in order.
+        Doc d;
+        d.turn(0);
+        d.write(path, kCalc);
+        const std::size_t afterFirst = d.eventCount();
+        simdjson::dom::parser parser;
+        simdjson::dom::element doc;
+        CHECK(!parser.parse(d.snapshot({})).get(doc));
+        CHECK(int64_t{doc["eventsFrom"]} == 0 && doc["events"].get_array().size() == afterFirst && afterFirst >= 5);
+        d.turn(1);
+        std::string renamed = kCalc;
+        renamed.replace(renamed.find("factorial"), 9, "fact_of");
+        renamed.replace(renamed.find("factorial"), 9, "fact_of");
+        d.write(path, renamed);
+        sub0canvas::SnapshotSpec second;
+        second.eventsFrom = afterFirst;
+        CHECK(!parser.parse(d.snapshot(second)).get(doc));
+        CHECK(int64_t{doc["eventsFrom"]} == static_cast<int64_t>(afterFirst) && doc["events"].get_array().size() == d.eventCount() - afterFirst && d.eventCount() > afterFirst);
+        for (auto e : doc["events"].get_array()) CHECK(int64_t{e["turn"]} == 1);   // only what happened since the previous snapshot
+        // The cumulative log: a header, then one line per event with its position; the snapshot's events are a slice of it.
+        const std::string log = d.eventLog("calc");
+        std::size_t lines = 0;
+        for (const char c : log) lines += c == '\n';
+        CHECK(lines == d.eventCount() + 1 && log.rfind("{\"schema\":\"canvas-events-1\",\"document\":\"calc\"}\n", 0) == 0);
+        CHECK(log.find("{\"seq\":" + std::to_string(afterFirst) + ",\"kind\":\"block\"") != std::string::npos);
+    }
+    {   // R-AUTH-14, R-FMT-5: by id, a text is carried once: a later snapshot lists the texts that are new and refers to the others; alone, a snapshot carries all it needs.
+        Doc d;
+        d.write("a.cpp", "int a() { return 1; }\n");
+        d.write("b.cpp", "int b() { return 2; }\n");
+        std::set<std::string> carried;
+        sub0canvas::SnapshotSpec spec;
+        spec.textsById = true;
+        spec.textsCarried = &carried;
+        simdjson::dom::parser parser;
+        simdjson::dom::element doc;
+        CHECK(!parser.parse(d.snapshot(spec)).get(doc));
+        CHECK(doc["files"]["a.cpp"]["text"].error() != simdjson::SUCCESS);   // no inline text
+        CHECK(doc["texts"].get_object().size() == 2 && carried.size() == 2);
+        CHECK(std::string_view{doc["texts"][std::string{std::string_view{doc["files"]["a.cpp"]["textId"]}}]} == "int a() { return 1; }\n");
+        d.write("b.cpp", "int b() { return 3; }\n");
+        CHECK(!parser.parse(d.snapshot(spec)).get(doc));
+        CHECK(doc["texts"].get_object().size() == 1 && carried.size() == 3);   // only the changed file's new text
+        sub0canvas::SnapshotSpec alone;
+        alone.textsById = true;
+        CHECK(!parser.parse(d.snapshot(alone)).get(doc) && doc["texts"].get_object().size() == 2);
+        d.write("c.cpp", "int a() { return 1; }\n");   // the same bytes under another path are one text
+        CHECK(!parser.parse(d.snapshot(alone)).get(doc) && doc["texts"].get_object().size() == 2 && doc["files"].get_object().size() == 3);
     }
     return finish();
 }
