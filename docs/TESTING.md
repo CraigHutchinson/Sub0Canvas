@@ -114,9 +114,7 @@ cmake --build build/default --target Sub0Canvas_Bench_compare      # A/B against
 SUB0MATH_PERF_REASON="why" cmake --build build/default --target Sub0Canvas_Bench_metrics_accept   # a deliberate change of a metric (logged in perf/metrics.json)
 ```
 
-The baseline file is named by `SUB0MATH_PERF_HOST` (an environment variable or `-D`): this repository is public, so the committed baseline uses the alias `dev-host-1`, and a
-machine that measures sets that variable to the alias (or adds its own alias file). The pre-push gate measures only after `cmake -DSUB0MATH_PERF_GIT_HOOKS=ON` (once per clone) has
-recorded its configuration; the build leaves it off. A change to a deterministic fact (a metric) is made deliberately with the `_metrics_accept` target and a reason.
+The baseline file is named by the lower-case host name (`perf/baselines/croglegion.json`; `SUB0MATH_PERF_HOST`, an environment variable or `-D`, names another). Where this machine has a committed baseline the configure turns the pre-push gate on and records its configuration (`.git/sub0perf/config.json`), once per clone; with no baseline it stays off. A change to a deterministic fact (a metric) is made deliberately with the `_metrics_accept` target and a reason.
 
 ## Which rungs a change needs
 

@@ -1,6 +1,6 @@
 {
   "format": 2,
-  "host": "dev-host-1",
+  "host": "croglegion",
   "machine": "AMD64",
   "system": "Windows 11",
   "note": "Medians per op after calibration scaling, with robust CV across interleaved rounds. Regenerate deliberately; say why in the commit. Regressions are accepted with `accept`.",

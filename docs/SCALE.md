@@ -116,7 +116,7 @@ Timing is measured locally only (the family rule) and judged against a per-host 
 
 ### 6.0 Measured on the synthetic corpus (2026-11-23, S0 step 3 in part)
 
-`Sub0Canvas_Bench` on the seeded profile A corpus ([bench/corpus.hpp](../bench/corpus.hpp), seed 1), library only, one machine (baseline alias `dev-host-1`: Windows 11,
+`Sub0Canvas_Bench` on the seeded profile A corpus ([bench/corpus.hpp](../bench/corpus.hpp), seed 1), library only, one machine (baseline `croglegion`: Windows 11,
 MinGW-w64 GCC 16.2, Release, mains power, load 5-6%, 5 interleaved rounds, noise 0.2% to 4%). Not yet measured: 10^7 and 10^9 lines (the stream exists; the benchmark does not use it),
 profile B, a real repository. Medians:
 

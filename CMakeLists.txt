@@ -67,19 +67,27 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     enable_testing()   # before the first add_test below (the testing block calls it again, harmlessly)
   endif()
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
-  # TODO pin after owner pushes Sub0Math: the commit below is Sub0Math's local head (not on any remote yet), so a build that does not set
-  # CPM_Sub0Math_SOURCE (the Sub0 dev machine sets it for every checkout) cannot fetch it until then.
   CPMAddPackage(NAME Sub0Math
     GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Math.git
     GIT_TAG 27ff54d925dfda14c66a7fb11bfa0d544f89b4ea
     DOWNLOAD_ONLY YES)
-  # Off by default here, as in Sub0Squad: no git hooks written by the build and no benchmark run after every build; run the targets deliberately.
+  # No benchmark run after every build (run the targets deliberately). The pre-push gate is on wherever this machine has a committed baseline
+  # (perf/baselines/<host>.json, the lower-case host name, or SUB0MATH_PERF_HOST / -DSUB0MATH_PERF_HOST for another name): the gate judges against that
+  # baseline, so with none there is nothing to gate and the build writes no configuration (docs/TESTING.md, "Performance").
   set(SUB0MATH_PERF_ON_BUILD "OFF" CACHE STRING "")
-  set(SUB0MATH_PERF_GIT_HOOKS OFF CACHE BOOL "")
-  # Baselines are named per host (perf/baselines/<host>.json). This repository is public and carries no real host names: a developer sets the environment
-  # variable SUB0MATH_PERF_HOST (or -DSUB0MATH_PERF_HOST=...) to the alias their baseline file uses (docs/TESTING.md, "Performance").
   if(NOT DEFINED SUB0MATH_PERF_HOST AND DEFINED ENV{SUB0MATH_PERF_HOST})
     set(SUB0MATH_PERF_HOST "$ENV{SUB0MATH_PERF_HOST}" CACHE STRING "Baseline name in perf/baselines/")
+  endif()
+  if(DEFINED SUB0MATH_PERF_HOST)
+    set(_canvas_perf_host "${SUB0MATH_PERF_HOST}")
+  else()
+    cmake_host_system_information(RESULT _canvas_perf_host QUERY HOSTNAME)
+    string(TOLOWER "${_canvas_perf_host}" _canvas_perf_host)
+  endif()
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perf/baselines/${_canvas_perf_host}.json")
+    set(SUB0MATH_PERF_GIT_HOOKS ON)
+  else()
+    set(SUB0MATH_PERF_GIT_HOOKS OFF)
   endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
