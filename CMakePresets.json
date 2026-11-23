@@ -20,14 +20,21 @@
     },
     {
       "name": "quick",
-      "displayName": "Smoke tier: everything except tests labelled full",
+      "displayName": "Smoke tier: everything except tests labelled full or timing",
       "inherits": "default",
-      "filter": { "exclude": { "label": "full" } }
+      "filter": { "exclude": { "label": "full|timing" } }
     },
     {
       "name": "full",
-      "displayName": "Full tier: every test, smoke and full",
-      "inherits": "default"
+      "displayName": "Full tier: every test, smoke and full, never the timing run",
+      "inherits": "default",
+      "filter": { "exclude": { "label": "timing" } }
+    },
+    {
+      "name": "timing",
+      "displayName": "Timing: the local benchmark run (Sub0Canvas_Bench_check); never in CI, mains power, quiet machine",
+      "inherits": "default",
+      "filter": { "include": { "label": "timing" } }
     }
   ]
 }

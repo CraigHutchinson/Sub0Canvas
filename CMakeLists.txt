@@ -8,7 +8,7 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(SUB0CANVAS_TOP_LEVEL ON)
 endif()
 option(SUB0CANVAS_BUILD_TESTING "Build Sub0Canvas's tests" ${SUB0CANVAS_TOP_LEVEL})
-option(SUB0CANVAS_BUILD_BENCHMARKS "Build the scale harness (bench/): the synthetic corpus generator, later the benchmarks" ${SUB0CANVAS_TOP_LEVEL})
+option(SUB0CANVAS_BUILD_BENCHMARKS "Build the scale harness (bench/): the synthetic corpus generator and the benchmarks (Sub0Canvas_Bench)" ${SUB0CANVAS_TOP_LEVEL})
 
 if(SUB0CANVAS_TOP_LEVEL)
   set(CMAKE_CXX_STANDARD 23)
@@ -52,12 +52,47 @@ if(SUB0CANVAS_BUILD_APP)
 endif()
 
 # The scale harness (bench/, docs/sessions/s0-scale-harness.md): the corpus generator is pure and links nothing; the tests use it as the truth for block identity.
-# The benchmark executable comes later and will be labelled timing (never CI).
 if(SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_BENCHMARKS)
   add_library(sub0canvas_bench_corpus STATIC bench/corpus.cpp)
   target_compile_features(sub0canvas_bench_corpus PUBLIC cxx_std_23)
   target_include_directories(sub0canvas_bench_corpus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})   # #include "bench/corpus.hpp"
   target_compile_options(sub0canvas_bench_corpus PRIVATE ${SUB0CANVAS_STRICT})
+endif()
+
+# The benchmarks (bench/bench_canvas.cpp) run through Sub0Math's sub0perf tooling (docs/TESTING.md, "Performance"): Sub0Canvas_Bench, plus the _json, _runs, _check,
+# _baseline, _compare and _metrics targets. Timing is measured locally only (never in CI); the deterministic metrics (perf/metrics.json) and the smoke run are
+# ctest tests labelled smoke, so they run in every tier. Sub0Math is used for its tooling only (DOWNLOAD_ONLY).
+if(SUB0CANVAS_BUILD_BENCHMARKS)
+  if(SUB0CANVAS_BUILD_TESTING)
+    enable_testing()   # before the first add_test below (the testing block calls it again, harmlessly)
+  endif()
+  include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
+  # TODO pin after owner pushes Sub0Math: the commit below is Sub0Math's local head (not on any remote yet), so a build that does not set
+  # CPM_Sub0Math_SOURCE (the Sub0 dev machine sets it for every checkout) cannot fetch it until then.
+  CPMAddPackage(NAME Sub0Math
+    GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Math.git
+    GIT_TAG 27ff54d925dfda14c66a7fb11bfa0d544f89b4ea
+    DOWNLOAD_ONLY YES)
+  # Off by default here, as in Sub0Squad: no git hooks written by the build and no benchmark run after every build; run the targets deliberately.
+  set(SUB0MATH_PERF_ON_BUILD "OFF" CACHE STRING "")
+  set(SUB0MATH_PERF_GIT_HOOKS OFF CACHE BOOL "")
+  include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
+
+  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp METRICS perf/metrics.json SMOKE_TEST)
+  target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
+  target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)
+  if(MINGW)
+    # The bench replaces operator new to count allocations and live bytes; MinGW's libstdc++ DLL would allocate strings with its own operator new and the
+    # executable free them with ours (heap corruption, 0xC0000374). Linking the runtime statically keeps one allocator.
+    target_link_options(Sub0Canvas_Bench PRIVATE -static-libstdc++ -static-libgcc)
+  endif()
+  # The timing run as a test, for `ctest --preset timing` (local only: label timing, which the quick and full presets exclude): interleaved rounds, then the
+  # judgement against perf/baselines/<host>.json. `_smoke` and `_metrics` (label smoke) are registered by sub0math_add_benchmark.
+  if(SUB0CANVAS_BUILD_TESTING AND TARGET Sub0Canvas_Bench_check)
+    add_test(NAME Sub0Canvas_Bench_timing COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target Sub0Canvas_Bench_check)
+    set_tests_properties(Sub0Canvas_Bench_timing PROPERTIES LABELS timing TIMEOUT 3600 RUN_SERIAL TRUE)
+  endif()
 endif()
 
 if(SUB0CANVAS_BUILD_TESTING)
@@ -101,9 +136,10 @@ if(SUB0CANVAS_BUILD_TESTING)
   else()
     message(STATUS "Sub0Canvas: node not found; the viewer's tests (test_viewer) are not registered")
   endif()
-  # Test tiers (CraigHutchinson/.github docs/ci-strategy.md): every test is fast, so all are smoke; `ctest --preset quick` excludes only the label
-  # full, which no test carries yet. A long suite added later is labelled full.
+  # Test tiers (CraigHutchinson/.github docs/ci-strategy.md): every test is fast, so all are smoke; `ctest --preset quick` excludes the labels
+  # full and timing (the timing test is local only). A long suite added later is labelled full.
   get_property(sub0canvasTests DIRECTORY PROPERTY TESTS)
+  list(REMOVE_ITEM sub0canvasTests Sub0Canvas_Bench_timing)   # its own label, timing, set above
   set_tests_properties(${sub0canvasTests} PROPERTIES LABELS smoke)
 
   # The consumer rung (docs/MOCK_SQUAD.md, docs/TESTING.md): consumer/mock_squad is a separate CMake project that fetches this checkout through CPM, exactly as
