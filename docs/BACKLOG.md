@@ -18,6 +18,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **Release v0.3.0** (O1: pushing the tag needs the owner's go-ahead), then **Sub0Squad adopts `applyReply`, turn control and the moved checks**: a
   Sub0Squad PR replaces its `applyCanvasReply` and `turn_control`, drops the copied tests and cases (block 4, the skeleton block,
   `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).
+* **MS0: the mock squad** ([MOCK_SQUAD.md](MOCK_SQUAD.md)): an ideal deterministic consumer in `consumer/mock_squad/` that emulates good and bad squad behaviour, so the library is tested as a project the squad consumes; its baseline is frozen before B0, and B0 is then regenerated and traced through it (MS1). Brief: [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md).
 * **D0: the block discovery seam.** One outline result and a provider per language, today's heuristics behind it (byte-identical), then the measured
   faults fixed (block comments, generic names, arrow functions, Go receivers, decorators). Before S1, G1 and V0's Markdown. Brief:
   [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
