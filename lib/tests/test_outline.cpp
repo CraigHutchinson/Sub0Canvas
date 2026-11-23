@@ -76,7 +76,7 @@ int main()
         CHECK_EQ(l.detect("src/a.cpp"), std::string(""));      // no provider of its own yet: the fallback serves it
         CHECK_EQ(l.detect(".py"), std::string(""));
         CHECK(l.provider("python") != nullptr && l.provider("python")->name() == "indent@1");
-        CHECK(l.provider("")->name() == "braces@2");
+        CHECK(l.provider("")->name() == "braces@3");
         // the registry is data: a language added by a client wins by priority, and a filename beats an extension
         Languages mine;
         mine.detects("cmake", {".cmake"}, {"CMakeLists.txt"});
@@ -136,6 +136,22 @@ int main()
         CHECK_EQ(namesOf("a.cpp", "int f() {\n    /* { */\n    return 1;\n}\nint g() {\n    return 2;\n}\n"), (std::vector<std::string>{"f", "g"}));
         CHECK_EQ(namesOf("a.cpp", "int f() {\n    /*\n     * unbalanced {\n     */\n    return 1;\n}\nint g() {\n    return 2;\n}\n"), (std::vector<std::string>{"f", "g"}));
         CHECK_EQ(namesOf("a.cpp", "/* int fake() { */\nint f() {\n    return 1;\n}\n"), std::vector<std::string>{"f"});   // a signature inside a comment is not one
+    }
+    {   // R-BLK-4: a node that carries an identity has a name. The faults of BLOCK_DISCOVERY.md section 2 gave empty names; each of these now names every function.
+        CHECK_EQ(namesOf("a.rs", "fn parse<T>(s: &str) -> T {\n    s.parse().unwrap()\n}\n"), std::vector<std::string>{"parse"});
+        CHECK_EQ(namesOf("a.ts", "function id<T>(x: T): T {\n  return x;\n}\n"), std::vector<std::string>{"id"});
+        CHECK_EQ(namesOf("a.js", "const add = (a, b) => {\n  return a + b;\n};\n"), std::vector<std::string>{"add"});
+        CHECK_EQ(namesOf("a.go", "func (p *Parser) Term() float64 {\n\treturn 1\n}\n"), std::vector<std::string>{"Term"});
+        // more shapes of the same faults: modifiers and wrappers, function expressions, typed bindings, Go generics; C++ operators unchanged
+        CHECK_EQ(namesOf("a.rs", "pub async fn load<T: Into<String>>(s: T) -> Vec<T> {\n    todo!()\n}\n"), std::vector<std::string>{"load"});
+        CHECK_EQ(namesOf("a.ts", "export const handler: Handler = async (req, res) => {\n  return 1;\n};\n"), std::vector<std::string>{"handler"});
+        CHECK_EQ(namesOf("a.js", "let f = function (a) {\n  return a;\n};\n"), std::vector<std::string>{"f"});
+        CHECK_EQ(namesOf("a.go", "func Map[T any](xs []T) []T {\n\treturn xs\n}\n"), std::vector<std::string>{"Map"});
+        CHECK_EQ(namesOf("a.go", "func (s Stack[T]) Push(x T) {\n\ts.items = append(s.items, x)\n}\n"), std::vector<std::string>{"Push"});
+        const auto goQ = defaultLanguages().outline("a.go", "func (p *Parser) Term() float64 {\n\treturn 1\n}\nfunc Term() int {\n\treturn 2\n}\n");
+        CHECK_EQ(goQ.nodes.size(), static_cast<std::size_t>(2));   // the method and the free function of one name stay two addressable blocks
+        if (goQ.nodes.size() == 2) CHECK(goQ.nodes[0].qualifiedName == "Parser::Term" && goQ.nodes[1].qualifiedName == "Term");
+        CHECK_EQ(namesOf("a.cpp", "bool operator<(const A& a, const A& b) {\n    return true;\n}\ntemplate <class T>\nT id(T x) {\n    return x;\n}\n"), (std::vector<std::string>{"operator<", "id"}));   // named, not left empty
     }
     return finish();
 }

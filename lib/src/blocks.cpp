@@ -78,6 +78,130 @@ std::string collapse(const std::string& s)
     return out;
 }
 
+bool identChar(char c) { return std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '$'; }
+bool nameChar(char c) { return identChar(c) || c == ':' || c == '~'; }   // what `nameBefore` reads: identifiers and their `Class::` qualifiers
+
+/// The text of `s[0, end)` read backwards as a name (`nameChar`), skipping spaces before `end` first.
+std::string nameEndingAt(const std::string& s, std::size_t end)
+{
+    while (end > 0 && std::isspace(static_cast<unsigned char>(s[end - 1]))) --end;
+    std::size_t b = end;
+    while (b > 0 && nameChar(s[b - 1])) --b;
+    return s.substr(b, end - b);
+}
+
+/// The trailing identifier of `s` (`export const handler` -> `handler`).
+std::string lastIdent(const std::string& s)
+{
+    std::size_t e = s.size();
+    while (e > 0 && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
+    std::size_t b = e;
+    while (b > 0 && identChar(s[b - 1])) --b;
+    return s.substr(b, e - b);
+}
+
+/// Go: `func (p *Parser) Term(` and `func Map[T any](` (a receiver, a type-parameter list). Gives `Parser::Term` and `Map`; "" when `line` is neither.
+std::string goName(const std::string& line)
+{
+    const auto first = line.find_first_not_of(" \t");
+    if (first == std::string::npos || line.compare(first, 5, "func ") != 0) return {};
+    std::size_t i = first + 5;
+    while (i < line.size() && line[i] == ' ') ++i;
+    std::string receiver;
+    if (i < line.size() && line[i] == '(') {
+        const auto close = line.find(')', i);
+        if (close == std::string::npos) return {};
+        std::string r = line.substr(i + 1, close - i - 1);
+        if (const auto br = r.find('['); br != std::string::npos) r.erase(br);   // `Stack[T]` -> `Stack`
+        receiver = lastIdent(r);
+        i = close + 1;
+        while (i < line.size() && line[i] == ' ') ++i;
+    }
+    const std::size_t b = i;
+    while (i < line.size() && identChar(line[i])) ++i;
+    if (i == b) return {};
+    const std::string name = line.substr(b, i - b);
+    if (i < line.size() && line[i] == '[') {   // type parameters: `[T any, U comparable]`
+        int depth = 0;
+        for (; i < line.size(); ++i) { if (line[i] == '[') ++depth; else if (line[i] == ']' && --depth == 0) { ++i; break; } }
+    }
+    if (i >= line.size() || line[i] != '(') return {};
+    return receiver.empty() ? name : receiver + "::" + name;
+}
+
+/// The position of the '(' that opens the parameter list: the first one outside `<...>` type arguments (`fn parse<T>(`, `std::function<void(int)> make(`), or the
+/// first '(' when angle brackets do not balance. `operator<` and a comparison are not type arguments.
+std::size_t parameterParen(const std::string& line)
+{
+    int angle = 0;
+    for (std::size_t i = 0; i < line.size(); ++i) {
+        const char c = line[i];
+        if (c == '(' && angle == 0) return i;
+        std::size_t p = i;
+        while (p > 0 && std::isspace(static_cast<unsigned char>(line[p - 1]))) --p;
+        const std::string prev = p > 0 ? nameEndingAt(line, p) : std::string{};
+        const bool afterOperator = prev.size() >= 8 && prev.compare(prev.size() - 8, 8, "operator") == 0;
+        if (c == '<' && p > 0 && (identChar(line[p - 1]) || line[p - 1] == '>') && !afterOperator) ++angle;
+        else if (c == '>' && angle > 0 && (i == 0 || line[i - 1] != '-')) --angle;
+    }
+    return line.find('(');
+}
+
+/// The name of a function bound to a variable, property or field: `const add = (a, b) => {`, `let f = function (a) {`, `run: function (a) {`,
+/// `handler: Handler = async (req) => {` give `add`, `f`, `run`, `handler`. `head` is the text before the parameter list.
+std::string assignedName(const std::string& head)
+{
+    std::size_t eq = std::string::npos;
+    for (std::size_t i = 0; i < head.size(); ++i)
+        if (head[i] == '=' && (i + 1 >= head.size() || (head[i + 1] != '=' && head[i + 1] != '>')) && (i == 0 || std::string("!<>=").find(head[i - 1]) == std::string::npos)) { eq = i; break; }
+    std::string lhs = head.substr(0, eq);   // npos: the whole head, an object property or a label
+    if (eq == std::string::npos && lhs.find(':') == std::string::npos) return {};
+    for (std::size_t i = 0; i < lhs.size(); ++i)   // a type annotation: `handler: Handler`
+        if (lhs[i] == ':' && !(i + 1 < lhs.size() && lhs[i + 1] == ':') && !(i > 0 && lhs[i - 1] == ':')) { lhs.erase(i); break; }
+    return lastIdent(lhs);
+}
+
+/// The name of the function a signature line declares, as the source qualifies it. Reads what `nameBefore` reads and, where that gives nothing usable, the
+/// declaration forms it could not: Go receivers and type parameters, generic parameter lists, operators, and functions bound to a name.
+std::string signatureName(const std::string& line)
+{
+    if (const std::string go = goName(line); !go.empty()) return go;
+    const std::size_t paren = parameterParen(line);
+    if (paren == std::string::npos) return {};
+    std::size_t nameEnd = paren;   // before a type-argument list: `parse<T>(` reads `parse`
+    while (nameEnd > 0 && std::isspace(static_cast<unsigned char>(line[nameEnd - 1]))) --nameEnd;
+    if (nameEnd > 0 && line[nameEnd - 1] == '>') {
+        int angle = 0;
+        std::size_t k = nameEnd;
+        while (k > 0) {
+            --k;
+            if (line[k] == '>' && !(k > 0 && line[k - 1] == '-')) ++angle;
+            else if (line[k] == '<' && --angle == 0) break;
+        }
+        if (angle == 0 && k > 0 && identChar(line[k - 1])) nameEnd = k;
+    }
+    std::string id = nameEndingAt(line, nameEnd);
+    if (id.empty()) {   // `bool operator<(`: the symbol before the '(' belongs to an `operator` keyword
+        std::size_t e = paren;
+        while (e > 0 && std::isspace(static_cast<unsigned char>(line[e - 1]))) --e;
+        std::size_t b = e;
+        while (b > 0 && std::string("+-*/%^&|~!=<>,[]").find(line[b - 1]) != std::string::npos) --b;
+        if (b < e) {
+            const std::string before = nameEndingAt(line, b);
+            if (before.size() >= 8 && before.compare(before.size() - 8, 8, "operator") == 0) {
+                std::string symbol = line.substr(b, e - b);
+                symbol.erase(std::remove_if(symbol.begin(), symbol.end(), [](char c) { return std::isspace(static_cast<unsigned char>(c)); }), symbol.end());
+                return before + symbol;
+            }
+        }
+    }
+    if (id.empty() || id == "function" || id == "async") {
+        std::string head = line.substr(0, paren);
+        if (const std::string named = assignedName(head); !named.empty()) return named;
+    }
+    return id;
+}
+
 /// One function-like block as the heuristics find it, before it becomes a node.
 struct Found { int sig, bodyFrom, bodyTo; std::string qualified; };
 
@@ -100,7 +224,7 @@ OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
 class BracesProvider final : public OutlineProvider
 {
 public:
-    [[nodiscard]] std::string name() const override { return "braces@2"; }
+    [[nodiscard]] std::string name() const override { return "braces@3"; }
     [[nodiscard]] Outline outline(std::string_view text) const override
     {
         const auto raw = splitLines(std::string(text));
@@ -121,14 +245,14 @@ public:
                 int dd = depth + d;
                 std::size_t j = i;
                 while (dd > start && j + 1 < lines.size()) { ++j; bool o2 = false; dd += braceDelta(lines[j], o2); }
-                if (dd <= start) out.nodes.push_back(toNode({static_cast<int>(sig) + 1, static_cast<int>(i) + 2, static_cast<int>(j) + 1, nameBefore(lines[sig])}, raw));   // the closing line stays visible
+                if (dd <= start) out.nodes.push_back(toNode({static_cast<int>(sig) + 1, static_cast<int>(i) + 2, static_cast<int>(j) + 1, signatureName(lines[sig])}, raw));   // the closing line stays visible
                 else out.partial = true;
                 depth = dd;
                 i = j;
                 continue;
             }
             if (opens && d == 0 && functionLike(lines[i]) && lines[i].find('}') != std::string::npos && lines[i].find(';') != std::string::npos && lines[i].find('{') < lines[i].rfind('}'))
-                out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, nameBefore(lines[i])}, raw));   // a function written on one line
+                out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, signatureName(lines[i])}, raw));   // a function written on one line
             depth += d;
         }
         return out;
