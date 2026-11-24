@@ -83,7 +83,7 @@ public:
             if (p_.scratch) return std::unexpected("# views: needs scratch=no: a pinned actor's edits land through its session on the canvas itself");
             if (claimsEnabled()) return std::unexpected("# views: and claims do not combine yet");
             for (const auto& [actor, kind] : s_.views)
-                if (std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return std::unexpected("# views: names '" + actor + "', which is not one of the actors");
+                if (std::ranges::find(s_.actors, actor) == s_.actors.end()) return std::unexpected("# views: names '" + actor + "', which is not one of the actors");
         }
         if (claimsEnabled()) {
             for (const auto& actor : s_.actors)
@@ -587,7 +587,7 @@ private:
         if (!claimsEnabled()) return "the control step '" + r.op + "' needs # policy: claims=on (or enforce)";
         const std::string actor = controlName(r);
         const bool byActor = r.op == "claim" || r.op == "release";
-        if (byActor && std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return "'" + r.op + "': '" + actor + "' is not one of the actors";
+        if (byActor && std::ranges::find(s_.actors, actor) == s_.actors.end()) return "'" + r.op + "': '" + actor + "' is not one of the actors";
         const WriterId self{"mock", actor};
         if (r.op == "claim" || r.op == "release") {
             if (!r.offline) pull(actor);
@@ -871,7 +871,7 @@ private:
     std::string step(const ScriptedReply& reply)
     {
         const std::string actor = reply.actor.empty() ? s_.actors.front() : reply.actor;
-        if (std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return "reply " + std::to_string(turns_) + ": '" + actor + "' is not one of the actors";
+        if (std::ranges::find(s_.actors, actor) == s_.actors.end()) return "reply " + std::to_string(turns_) + ": '" + actor + "' is not one of the actors";
         if (claimsEnabled() && !reply.offline) pull(actor);   // what the actor knows of the others' claims when it works (an `offline` reply works from what it already had)
         const auto filesBefore = canvas_.files();
         std::map<std::string, int> revisionsBefore;

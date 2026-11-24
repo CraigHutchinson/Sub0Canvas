@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdlib>
+#include <ranges>
 #include <sstream>
 
 namespace mock_squad {
@@ -124,9 +125,9 @@ GateVerdict runTests(const std::vector<GateRule>& rules, const std::map<std::str
     const std::string head = "GATE FAIL: " + std::to_string(v.failing) + " of " + std::to_string(v.total) + " tests failed\n";
     v.text = head;
     v.failures = head;
-    for (std::size_t i = 0; i < failures.size(); ++i) {
-        if (i < 6) v.text += failures[i];   // the gate's own excerpt keeps six failures
-        v.failures += failures[i];
+    for (const auto& [i, failure] : std::views::enumerate(failures)) {
+        if (i < 6) v.text += failure;   // the gate's own excerpt keeps six failures
+        v.failures += failure;
     }
     return v;
 }

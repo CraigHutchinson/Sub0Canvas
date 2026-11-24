@@ -155,7 +155,7 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
     if (sc.cites.empty()) return std::unexpected("the scenario cites no T0 case or intervention");
     if (sc.actors.empty()) sc.actors = {"a"};
     if (sc.base.empty()) return std::unexpected("the scenario has no base file");
-    if (std::none_of(sc.replies.begin(), sc.replies.end(), [](const ScriptedReply& r) { return r.op.empty(); })) return std::unexpected("the scenario has no reply");
+    if (std::ranges::none_of(sc.replies, [](const ScriptedReply& r) { return r.op.empty(); })) return std::unexpected("the scenario has no reply");
     if (sc.expect.empty()) return std::unexpected("the scenario states no outcome sequence ('expect')");
     if (sc.want.empty()) return std::unexpected("the scenario states no final file ('want')");
     if (sc.gateRules.empty()) return std::unexpected("the scenario has no gate rule");

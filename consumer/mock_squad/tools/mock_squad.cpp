@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     std::vector<fs::path> files;
     for (const auto& e : fs::directory_iterator(argv[1]))
         if (e.path().extension() == ".squad") files.push_back(e.path());
-    std::sort(files.begin(), files.end());
+    std::ranges::sort(files);
     int bad = 0;
     for (const auto& f : files) {
         if (!only.empty() && !only.count(f.stem().string())) continue;

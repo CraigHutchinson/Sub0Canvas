@@ -105,7 +105,7 @@ std::string checkIds(const Scenario& sc, const Attempt& a)
         const LayerTurn* t = turn(w[1]);
         if (!t) return "no layer file for " + w[1] + " in: " + line;
         if (w[0] == "id" && w.size() == 6 && w[4] == "=") {
-            const auto b = std::find_if(t->blocks.begin(), t->blocks.end(), [&](const IdAt& x) { return x.path == w[2] && x.leaf == w[3]; });
+            const auto b = std::ranges::find_if(t->blocks, [&](const IdAt& x) { return x.path == w[2] && x.leaf == w[3]; });
             if (b == t->blocks.end()) return "no block '" + w[3] + "' in " + w[2] + " at " + w[1];
             if (!bind(idOf, w[5], b->id)) return "'" + w[3] + "' at " + w[1] + " should keep the identity labelled " + w[5] + " but has another";
         } else if (w[0] == "gone" && w.size() == 4) {
@@ -204,7 +204,7 @@ std::string checkClaims(const Scenario& sc, const Attempt& a)
             step = std::atoi(w.back().c_str() + 1);
             w.pop_back();
         }
-        const auto at = std::find_if(a.claimStates.begin(), a.claimStates.end(), [&](const ClaimStep& c) { return c.step == step; });
+        const auto at = std::ranges::find_if(a.claimStates, [&](const ClaimStep& c) { return c.step == step; });
         if (at == a.claimStates.end()) return "no claim state after step " + std::to_string(step) + " in: " + line;
         const auto rowOf = [&](const std::string& holderK) -> const ClaimRow* {
             const auto colon = holderK.rfind(':');
@@ -223,14 +223,14 @@ std::string checkClaims(const Scenario& sc, const Attempt& a)
             if (r == nullptr) return "no claim " + w[1] + " after step " + std::to_string(step);
             if (r->status != w[2]) return "claim " + w[1] + " after step " + std::to_string(step) + ": expected " + w[2] + ", got " + r->status;
         } else if (w.size() == 5 && w[0] == "holder" && w[3] == "until") {
-            const bool found = std::any_of(at->claims.begin(), at->claims.end(), [&](const ClaimRow& r) {
+            const bool found = std::ranges::any_of(at->claims, [&](const ClaimRow& r) {
                 return r.liveAt && r.label == w[1] && r.holder == w[2] && r.expires == std::atoll(w[4].c_str());
             });
             if (!found) return "after step " + std::to_string(step) + ": " + w[2] + " does not hold " + w[1] + " until " + w[4];
         } else if (w.size() == 3 && w[0] == "covers") {
             const ClaimRow* r = rowOf(w[1]);
             if (r == nullptr) return "no claim " + w[1] + " after step " + std::to_string(step);
-            if (std::find(r->covers.begin(), r->covers.end(), w[2]) == r->covers.end()) return "claim " + w[1] + " after step " + std::to_string(step) + " does not cover " + w[2];
+            if (std::ranges::find(r->covers, w[2]) == r->covers.end()) return "claim " + w[1] + " after step " + std::to_string(step) + " does not cover " + w[2];
         } else {
             return "not a claims expectation: " + line;
         }
@@ -245,7 +245,7 @@ bool usesViews(const Scenario& sc) { return !sc.views.empty(); }
 /// hold, whatever their form; the brief each carries is at most 520 bytes; and a refresh straight after an acknowledged one says `"files":0`.
 std::string checkViews(const Scenario& sc, const Attempt& a)
 {
-    const bool refreshes = std::any_of(sc.replies.begin(), sc.replies.end(), [](const ScriptedReply& r) { return r.op == "refresh"; });
+    const bool refreshes = std::ranges::any_of(sc.replies, [](const ScriptedReply& r) { return r.op == "refresh"; });
     if (refreshes != !a.refreshes.empty()) return "the refresh steps of the scenario and the refreshes the loop recorded disagree";
     if (!usesViews(sc) && !a.refreshes.empty()) return "a scenario without # views: made a refresh";
     std::map<std::string, const RefreshRow*> first, previous;   // per actor: the first answer at the current position, and the last answer
@@ -267,9 +267,9 @@ std::string checkViews(const Scenario& sc, const Attempt& a)
 /// order `sync` merges them in) persists byte-identical claim files. Every step of such a scenario names its actor, so only the merge order changes.
 std::string checkSyncOrder(const Scenario& sc, const Attempt& a)
 {
-    if (std::none_of(sc.replies.begin(), sc.replies.end(), [](const ScriptedReply& r) { return r.op == "sync"; })) return {};
+    if (std::ranges::none_of(sc.replies, [](const ScriptedReply& r) { return r.op == "sync"; })) return {};
     Scenario other = sc;
-    std::reverse(other.actors.begin(), other.actors.end());
+    std::ranges::reverse(other.actors);
     const auto b = runScenario(other);
     if (!b) return b.error();
     for (const auto& [rel, bytes] : a.record) {
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
     std::vector<fs::path> files;
     for (const auto& e : fs::directory_iterator(argv[1]))
         if (e.path().extension() == ".squad") files.push_back(e.path());
-    std::sort(files.begin(), files.end());
+    std::ranges::sort(files);
     CHECK_GE(files.size(), static_cast<std::size_t>(22));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12, B15 (MS3), B14 x3 and B8 claims (MS4), B8 pinned and B14 tip workers (MS5)
 
     std::set<std::string> libraryCalls;
@@ -470,11 +470,11 @@ int main(int argc, char** argv)
         const auto cells = mappedRows(slurp(argv[3]));
         CHECK_GE(cells.size(), static_cast<std::size_t>(10));
         for (const auto& cell : cells) {
-            const auto row = std::find_if(kRows.begin(), kRows.end(), [&](const Row& r) { return cell.contains(r.key); });
+            const auto row = std::ranges::find_if(kRows, [&](const Row& r) { return cell.contains(r.key); });
             if (row == kRows.end()) { std::println(stderr, "REQUIREMENTS.md row not covered or deferred in the consumer contract: {}", cell); CHECK(false); }
         }
         for (const auto& row : kRows) {
-            const bool inDocument = std::any_of(cells.begin(), cells.end(), [&](const std::string& c) { return c.contains(row.key); });
+            const bool inDocument = std::ranges::any_of(cells, [&](const std::string& c) { return c.contains(row.key); });
             if (!inDocument) { std::println(stderr, "the consumer contract lists a row REQUIREMENTS.md no longer has: {}", row.key); CHECK(false); }
             if (row.called.empty() && row.deferred.empty()) { std::println(stderr, "row '{}' is neither exercised nor deferred with a reason", row.key); CHECK(false); }
             for (const auto& fn : row.called)
