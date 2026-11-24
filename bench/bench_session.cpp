@@ -130,20 +130,21 @@ void runSessionBenchmarks(sub0bench::BenchRunner& runner, const std::size_t&, co
     // Views per session: the default quota, and the structured refusal after it. Then the replay of 1e4 events that include sessions and views.
     {
         static Once once;
+        static std::unique_ptr<Rig> rig;
         runner.run("session replay of 1e4 events (sessions, views and item events)", [&] {
             once([&] {
-                Rig rig(10);
+                rig = std::make_unique<Rig>(10);
                 std::size_t opened = 0;
                 {
                     Identity who1 = who("solo");
-                    Session* s = *rig.ws->attach(*rig.ws->open(who1, 0), who1, 0);
+                    Session* s = *rig->ws->attach(*rig->ws->open(who1, 0), who1, 0);
                     while (s->openView({}).has_value()) ++opened;
                     metric("session views per session under the default quota", opened, "n");
                     metric("session views refused at the limit (named limit: views)", s->openView({}).error().limit == "views" ? 1 : 0, "n");
                 }
                 for (int i = 0; i < 100; ++i) {
                     Identity id = who(std::format("u{}", i));
-                    Session* s = *rig.ws->attach(*rig.ws->open(id, 0), id, 0);
+                    Session* s = *rig->ws->attach(*rig->ws->open(id, 0), id, 0);
                     for (int v = 0; v < 8; ++v) (void)s->openView({});
                 }
                 std::vector<LayerItem> items;
@@ -154,18 +155,19 @@ void runSessionBenchmarks(sub0bench::BenchRunner& runner, const std::size_t&, co
                     it.title = "t";
                     items.push_back(std::move(it));
                 }
-                (void)rig.store->putLayer("issues", "bench", items);
-                while (rig.store->eventCount() < 10000) (void)rig.store->tag(std::format("k{}", rig.store->eventCount() % 4000), std::format("t{}", rig.store->eventCount()), "bench");
+                (void)rig->store->putLayer("issues", "bench", items);
+                while (rig->store->eventCount() < 10000) (void)rig->store->tag(std::format("k{}", rig->store->eventCount() % 4000), std::format("t{}", rig->store->eventCount()), "bench");
+                // The replay's result against the live state, once (the timed part below is the replay alone).
                 StoreOptions o;
                 o.writer = {"bench", "replica"};
                 registerViewReducers(o.registry);
                 Store replica(std::move(o));
-                replica.replay(rig.log);
+                replica.replay(rig->log);
                 LogViewStore rv(replica);
-                bool same = rv.sessions().size() == rig.views->sessions().size();
+                bool same = rv.sessions().size() == rig->views->sessions().size();
                 std::size_t views = 0;
-                for (const SessionRecord* s : rig.views->sessions())
-                    for (const ViewRecord* v : rig.views->viewsOf(s->id)) {
+                for (const SessionRecord* s : rig->views->sessions())
+                    for (const ViewRecord* v : rig->views->viewsOf(s->id)) {
                         ++views;
                         same = same && rv.view(v->id) != nullptr && viewJson(*rv.view(v->id)) == viewJson(*v);
                     }
@@ -174,6 +176,12 @@ void runSessionBenchmarks(sub0bench::BenchRunner& runner, const std::size_t&, co
                 metric("session replay: views", views, "n");
                 metric("session replay: views equal to live (1 = all)", same ? 1 : 0, "n");
             });
+            StoreOptions o;
+            o.writer = {"bench", "replica"};
+            registerViewReducers(o.registry);
+            Store replica(std::move(o));
+            replica.replay(rig->log);
+            ankerl::nanobench::doNotOptimizeAway(replica.eventCount());
         });
     }
 }
