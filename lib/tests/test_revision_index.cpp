@@ -21,6 +21,7 @@
 #include <string_view>
 #include <format>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace sub0canvas;
@@ -183,7 +184,7 @@ void checkScenario(const Scenario& sc, const fs::path& dir, const Manifest& m, s
 
 std::string changeText(const PathChange& c)
 {
-    return std::format("{}|{}|{}|{}", static_cast<int>(c.kind), c.path, c.from, c.similarity);
+    return std::format("{}|{}|{}|{}", std::to_underlying(c.kind), c.path, c.from, c.similarity);
 }
 
 }  // namespace

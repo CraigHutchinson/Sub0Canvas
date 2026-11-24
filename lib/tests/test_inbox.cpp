@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <map>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -244,7 +245,7 @@ int main()
             for (const StoredItem* it : s.items(q)) viaStore.push_back(it->item.key);
             for (const char* key : {"p1", "p2", "p3", "r1"})
                 if (itemMatches(*s.item(key), q)) viaFilter.push_back(key);
-            std::sort(viaStore.begin(), viaStore.end());
+            std::ranges::sort(viaStore);
             CHECK_EQ(viaStore, viaFilter);
         }
     }
@@ -362,10 +363,10 @@ int main()
                 CHECK_EQ(layerSummary(in->items, blocks), layerSummary(viaStore, blocks));
                 CHECK_EQ(layerInline(in->items, blocks, files), layerInline(viaStore, blocks, files));
                 CHECK_EQ(in->items.size(), viaStore.size());
-                for (std::size_t i = 0; i < viaStore.size(); ++i) {
-                    CHECK_EQ(in->items[i].key, viaStore[i].key);
-                    CHECK_EQ(in->items[i].number, viaStore[i].number);
-                    CHECK_EQ(in->items[i].title, viaStore[i].title);
+                for (const auto& [got, want] : std::views::zip(in->items, viaStore)) {
+                    CHECK_EQ(got.key, want.key);
+                    CHECK_EQ(got.number, want.number);
+                    CHECK_EQ(got.title, want.title);
                 }
             }
         }

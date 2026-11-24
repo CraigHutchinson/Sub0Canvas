@@ -83,7 +83,7 @@ int main()
         CHECK(log->error().empty());
         const std::string text = slurp(file);
         CHECK(text.starts_with(headerLine + "\n" + line1 + "\n"));   // appended and flushed: a second reader sees it at once
-        CHECK_EQ(std::count(text.begin(), text.end(), '\n'), 3);
+        CHECK_EQ(std::ranges::count(text, '\n'), 3);
     }
     {
         // Reopened: the file's own header wins over the one passed, positions are dense, `since` resumes without a rescan.

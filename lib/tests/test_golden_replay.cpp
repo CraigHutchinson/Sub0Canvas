@@ -79,7 +79,7 @@ int replayAttempt(const fs::path& dir)
     std::vector<std::pair<int, fs::path>> turns;
     for (const auto& e : fs::directory_iterator(dir / "layers"))
         if (e.path().extension() == ".json") turns.push_back({std::stoi(e.path().stem().string().substr(5)), e.path()});
-    std::sort(turns.begin(), turns.end());
+    std::ranges::sort(turns);
     CHECK(!turns.empty());
 
     Doc d;

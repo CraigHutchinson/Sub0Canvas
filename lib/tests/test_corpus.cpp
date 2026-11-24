@@ -7,6 +7,7 @@
 #include "sub0canvas/outline.hpp"
 
 #include <algorithm>
+#include <ranges>
 #include <set>
 #include <string>
 
@@ -26,8 +27,8 @@ bool blocksMatchModel(const std::string& path, const std::string& text, const Co
 {
     const auto regions = foldRegions(text, isPythonPath(path), true);
     if (regions.size() != model.functions.size()) return false;
-    for (std::size_t i = 0; i < regions.size(); ++i)
-        if (lastName(regions[i].name) != lastName(model.functions[i].name)) return false;
+    for (const auto& [region, function] : std::views::zip(regions, model.functions))
+        if (lastName(region.name) != lastName(function.name)) return false;
     return true;
 }
 

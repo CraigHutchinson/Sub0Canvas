@@ -7,6 +7,7 @@
 #include "sub0canvas/outline.hpp"
 
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -95,8 +96,8 @@ int main()
             for (const bool all : {false, true}) {
                 const auto a = foldRegions(text, py, all), b = foldRegionsFor(path, text, all);
                 CHECK_EQ(a.size(), b.size());
-                for (std::size_t i = 0; i < a.size() && i < b.size(); ++i)
-                    CHECK(a[i].first == b[i].first && a[i].bodyFrom == b[i].bodyFrom && a[i].bodyTo == b[i].bodyTo && a[i].name == b[i].name);
+                for (const auto& [x, y] : std::views::zip(a, b))
+                    CHECK(x.first == y.first && x.bodyFrom == y.bodyFrom && x.bodyTo == y.bodyTo && x.name == y.name);
             }
             const Outline once = defaultLanguages().outline(path, text), twice = defaultLanguages().outline(path, text);
             CHECK(once.nodes.size() == twice.nodes.size() && once.provider == twice.provider);

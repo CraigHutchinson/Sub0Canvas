@@ -6,7 +6,9 @@
 #include "sub0canvas/doc_layers.hpp"
 
 #include <map>
+#include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace sub0canvas;
@@ -31,7 +33,7 @@ struct History final : TextSource
 std::string describe(const EventLog& log)
 {
     std::string s;
-    for (const BlockEvent& e : log) s += std::to_string(e.turn) + ' ' + std::to_string(static_cast<int>(e.carry)) + ' ' + e.id + ' ' + e.path + ' ' + e.name + ' ' + e.detail + '\n';
+    for (const BlockEvent& e : log) s += std::to_string(e.turn) + ' ' + std::to_string(std::to_underlying(e.carry)) + ' ' + e.id + ' ' + e.path + ' ' + e.name + ' ' + e.detail + '\n';
     return s;
 }
 
@@ -64,9 +66,9 @@ int main()
     for (int i = 0; i < 150; ++i) commits.push_back(stream.next());
     for (const Commit& c : commits) for (const FileChange& ch : c.changes) if (ch.text) history.add(*ch.text);
     history.add(std::string());
-    for (std::size_t i = 0; i < commits.size(); ++i) {
+    for (const auto& [i, commit] : std::views::enumerate(commits)) {
         for (BlockIndex* x : {&retaining, &again, &lazy}) x->setTurn(static_cast<int>(i) + 1);
-        for (const FileChange& ch : commits[i].changes)
+        for (const FileChange& ch : commit.changes)
             for (BlockIndex* x : {&retaining, &again, &lazy}) x->update(ch.path, ch.text ? *ch.text : std::string());
     }
     CHECK(retaining.events().size() > 1000);

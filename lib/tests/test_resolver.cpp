@@ -729,7 +729,7 @@ void testStream()
             const long before = it == doc.files.end() ? 0 : static_cast<long>(it->second.size());
             return (f->text ? static_cast<long>(f->text->size()) : 0L) - before;
         };
-        std::stable_sort(order.begin(), order.end(), [&](const auto* x, const auto* y) { return growth(x) < growth(y); });
+        std::ranges::stable_sort(order, [&](const auto* x, const auto* y) { return growth(x) < growth(y); });
         for (const corpus::FileChange* f : order) {
             if (f->text) doc.put(f->path, *f->text);
             else doc.drop(f->path);

@@ -395,7 +395,7 @@ int main(int argc, char** argv)
             CHECK_EQ(allPages(server, R"({"op":"layer","layer":"issues","query":{"text":"flaky"},"limit":3)", "id").size(), std::size_t{7});   // items 0, 5, ..., 35 say flaky; 35 is private
             // A private item is never in an answer unless the request names its tag exactly (R-BB-10).
             const Strings flaky = allPages(server, R"({"op":"layer","layer":"issues","query":{"text":"flaky"})", "id");
-            CHECK(std::find(flaky.begin(), flaky.end(), "issues/035") == flaky.end());
+            CHECK(std::ranges::find(flaky, "issues/035") == flaky.end());
             CHECK_EQ(allPages(server, R"({"op":"layer","layer":"issues","query":{"tags":["private/me"]})", "id"),(Strings{"issues/035"}));
             auto counted = ask(server, R"({"op":"layer","layer":"issues","count":true,"limit":1})");
             CHECK_EQ(counted->num("matched"), 39);   // 40 items, one private
@@ -622,7 +622,7 @@ int main(int argc, char** argv)
                     const std::string stem = f.path().stem().string();   // turn-3
                     turns.emplace_back(std::stoi(stem.substr(5)), f.path());
                 }
-                std::sort(turns.begin(), turns.end());
+                std::ranges::sort(turns);
                 BlockIndex index;
                 QueryDocument doc(&index, nullptr);
                 std::map<std::string, std::string> carried;   // content id -> text, across the turns of this attempt (texts by id carry only what is new)

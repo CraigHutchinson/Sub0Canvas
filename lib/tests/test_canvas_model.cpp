@@ -52,7 +52,7 @@ bool modelApply(std::vector<std::string>& lines, const std::vector<ModelOp>& ops
             spans.push_back({op.from - 1, op.to, op.text});
         }
     }
-    std::stable_sort(spans.begin(), spans.end(), [](const Span& a, const Span& b) { return a.lo < b.lo || (a.lo == b.lo && a.hi < b.hi); });
+    std::ranges::stable_sort(spans, [](const Span& a, const Span& b) { return a.lo < b.lo || (a.lo == b.lo && a.hi < b.hi); });
     for (std::size_t i = 1; i < spans.size(); ++i) {
         const bool prevInsert = spans[i - 1].lo == spans[i - 1].hi;
         const int prevEnd = prevInsert ? spans[i - 1].lo : spans[i - 1].hi;   // 1-based last line touched (an insertion "touches" up to lo)
@@ -144,7 +144,7 @@ ModelCheck check(int cases, unsigned seed)
                     const auto spanOf = [](const ModelOp& o) {
                         return o.kind == CanvasOp::Kind::insertAfter ? std::pair{o.from, o.from} : std::pair{o.from - 1, o.to};
                     };
-                    std::stable_sort(sorted.begin(), sorted.end(), [&](const ModelOp& a, const ModelOp& b) { return spanOf(a) < spanOf(b); });
+                    std::ranges::stable_sort(sorted, [&](const ModelOp& a, const ModelOp& b) { return spanOf(a) < spanOf(b); });
                     for (const auto& op : sorted) wrote.insert(wrote.end(), op.text.begin(), op.text.end());
                     std::size_t at = 0;
                     for (const auto& l : now) if (at < wrote.size() && l == wrote[at]) ++at;

@@ -161,7 +161,7 @@ int main(int argc, char** argv)
         std::vector<fs::path> files;
         for (const auto& e : fs::directory_iterator(argv[1]))
             if (e.path().extension() == ".case") files.push_back(e.path());
-        std::sort(files.begin(), files.end());
+        std::ranges::sort(files);
         CHECK_GE(files.size(), static_cast<std::size_t>(30));   // every reply form and every refusal has a case
         for (const auto& f : files) {
             ReplyCase c;

@@ -169,7 +169,7 @@ int main()
         CHECK(d.logged("merged", factorial));
         CHECK_EQ(d.resolvesTo(factorial), call);
         const auto history = d.history(call);
-        CHECK(std::any_of(history.begin(), history.end(), [&](const Doc::HistoryEntry& e) { return e.id == factorial && e.carry == "merged"; }));
+        CHECK(std::ranges::any_of(history, [&](const Doc::HistoryEntry& e) { return e.id == factorial && e.carry == "merged"; }));
     }
     {   // R-ID-7: a deleted block's items are orphans, and the renderings say so. R-ID-8: written again, its identity comes back.
         // R-ID-9: moved to another file, its identity comes back there.
