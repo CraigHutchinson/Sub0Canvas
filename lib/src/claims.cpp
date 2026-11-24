@@ -140,18 +140,18 @@ Stamp stampOf(const Event& e) { return {e.writer, e.lamport, e.time}; }
 bool isLive(const Claim& c, Instant at) { return c.status == ClaimStatus::live && at < c.expires; }
 
 /// What a block id is now, following merges and splits (`successors`); empty when retired. Depth-limited so a malformed log cannot loop.
-void resolveInto(const ClaimState& cs, const std::string& id, Ids& out, int depth = 0)
+void resolveInto(const ClaimState& cs, std::string_view id, Ids& out, int depth = 0)
 {
     const auto it = cs.successors.find(id);
     if (it == cs.successors.end()) {
-        if (std::find(out.begin(), out.end(), id) == out.end()) out.push_back(id);
+        if (std::find(out.begin(), out.end(), id) == out.end()) out.emplace_back(id);
         return;
     }
     if (depth > 64) return;
     for (const std::string& next : it->second) resolveInto(cs, next, out, depth + 1);
 }
 
-Ids coverKeys(const ClaimState& cs, TargetKind kind, const std::string& target)
+Ids coverKeys(const ClaimState& cs, TargetKind kind, std::string_view target)
 {
     if (kind != TargetKind::block) return {keyOf(kind, target)};
     Ids ids, keys;
@@ -196,10 +196,10 @@ const Claim* findBlocker(const ClaimState& cs, const ClaimPolicy& policy, std::s
             if (found == nullptr || std::tie(o.at.lamport, o.at.writer) < std::tie(found->at.lamport, found->at.writer)) found = &o;
         }
     };
-    auto bucket = [](const StringMap<Ids>& m, const std::string& key) { const auto it = m.find(key); return it == m.end() ? nullptr : &it->second; };
+    auto bucket = [](const StringMap<Ids>& m, std::string_view key) { const auto it = m.find(key); return it == m.end() ? nullptr : &it->second; };
     for (const std::string& key : covers) scan(bucket(cs.byKey, key));
     if (policy.fileCoversBlocks) {
-        if (kind == TargetKind::file) scan(bucket(cs.byPath, std::string{target}));
+        if (kind == TargetKind::file) scan(bucket(cs.byPath, target));
         else if (kind == TargetKind::block && !path.empty()) scan(bucket(cs.byKey, keyOf(TargetKind::file, path)));
     }
     return found;
@@ -560,7 +560,7 @@ std::vector<Claim> claimsOn(const Store& store, TargetKind kind, std::string_vie
 {
     const ClaimState& cs = stateOf(store);
     std::vector<Claim> out;
-    for (const std::string& key : coverKeys(cs, kind, std::string{target})) {
+    for (const std::string& key : coverKeys(cs, kind, target)) {
         const auto b = cs.byKey.find(key);
         if (b == cs.byKey.end()) continue;
         for (const std::string& id : b->second) {
@@ -578,7 +578,7 @@ std::optional<Claim> holderOf(const Store& store, const ClaimPolicy& policy, Tar
     const ClaimState& cs = stateOf(store);
     const ModePolicy* m = policy.mode(mode);
     if (m == nullptr || !m->exclusive) return std::nullopt;
-    const Ids covers = coverKeys(cs, kind, std::string{target});
+    const Ids covers = coverKeys(cs, kind, target);
     if (const Claim* c = findBlocker(cs, policy, mode, kind, target, {}, covers, nullptr, now)) return *c;
     return std::nullopt;
 }
@@ -586,7 +586,7 @@ std::optional<Claim> holderOf(const Store& store, const ClaimPolicy& policy, Tar
 std::vector<std::string> resolveBlock(const Store& store, std::string_view id)
 {
     Ids out;
-    resolveInto(stateOf(store), std::string{id}, out);
+    resolveInto(stateOf(store), id, out);
     return out;
 }
 
@@ -596,7 +596,7 @@ std::vector<Note> notesOn(const Store& store, TargetKind kind, std::string_view 
 {
     const ClaimState& cs = stateOf(store);
     std::set<std::size_t> indices;
-    for (const std::string& key : coverKeys(cs, kind, std::string{target}))
+    for (const std::string& key : coverKeys(cs, kind, target))
         if (const auto b = cs.notesByKey.find(key); b != cs.notesByKey.end()) indices.insert(b->second.begin(), b->second.end());
     std::vector<Note> out;
     for (const std::size_t i : indices) out.push_back(cs.notes[i]);   // note indices are in merge order
