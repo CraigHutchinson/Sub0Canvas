@@ -16,6 +16,10 @@ pinned and tip workers in the mock squad, and the views limits. Keep every exten
 - **Done since the first version of this brief (2026-11-24, second session):** issue #4 closed (the hosted full tier is green on Linux gcc, Linux clang and Windows MinGW at
   `45b0fe2`); MS4 (two-actor claims, R-CONS-6/7) and MS5 (pinned and tip workers on sessions, R-CONS-8/9) built; see [ms4-ms5-mock-squad-claims-and-views.md](ms4-ms5-mock-squad-claims-and-views.md)
   Outcomes for the deviations and what each left. Sub0Fabric `main` is at `dc1cc05`, CI green.
+- **Released and adopted (2026-11-24, third session):** v0.4.0 is tagged (full tier green). Since the tag: C++23 adoption A0-D2 is done and green ([cxx23-adoption.md](cxx23-adoption.md) has the Outcomes
+  and the short list of what is left: a `ranges` pass over the gated hot files, only with an A/B per file on a quiet machine, and the MSVC, macOS and sanitizer legs of the full tier, never yet run). A0 changed the
+  `issues/<kind>/<hex>` item keys, `[[nodiscard]]` is on the claims/inbox/query/store/session/view results, and `applyEdits` now returns `std::expected`: the next tag (v0.5.0) is a breaking one for Sub0Squad
+  ([INTEGRATION.md](../INTEGRATION.md)).
 - **Lessons that changed the code (read before writing tests or generators):**
   1. gcc 14 `-Werror` on range-for over simdjson temporaries: tests use by-value `objectOf`/`arrayOf`. `CHECK_EQ` binds references (`auto&& _a = (a)`), so `f()[0]`,
      `names().front()` and `string_view{temp}` dangle: name the value first. CI is the check (no local gcc 14).
