@@ -8,6 +8,7 @@
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/outline.hpp"
+#include "sub0canvas/session.hpp"
 #include "sub0canvas/store.hpp"
 #include "sub0canvas/view.hpp"
 
@@ -78,6 +79,12 @@ public:
     std::expected<Attempt, std::string> run()
     {
         if (p_.claims == ClaimsMode::enforce && !p_.scratch) return std::unexpected("claims=enforce needs scratch=yes: the refusal is judged on the copy, before anything is committed");
+        if (viewsEnabled()) {
+            if (p_.scratch) return std::unexpected("# views: needs scratch=no: a pinned actor's edits land through its session on the canvas itself");
+            if (claimsEnabled()) return std::unexpected("# views: and claims do not combine yet");
+            for (const auto& [actor, kind] : s_.views)
+                if (std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return std::unexpected("# views: names '" + actor + "', which is not one of the actors");
+        }
         if (claimsEnabled()) {
             for (const auto& actor : s_.actors)
                 if (actor == "loop") return std::unexpected("'loop' is the loop's own claim replica: it cannot be an actor");
@@ -90,6 +97,10 @@ public:
         }
         persist();
         if (claimsEnabled()) syncIndex();   // the blocks a claim names exist from the start
+        if (viewsEnabled()) {
+            feedIndex();   // the views read blocks from the index: it holds the base files before any view is pinned
+            if (auto bad = openSessions(); !bad.empty()) return std::unexpected(bad);
+        }
         startingVerdict();
         // The steps in order. A reply stops once the gate has passed or the turns are spent; a control step (docs/MOCK_SQUAD.md section 4) spends no turn and still runs,
         // so a scenario can expire or settle claims after the last reply.
@@ -99,6 +110,7 @@ public:
                 ++out_.unusedReplies;
                 continue;
             }
+            stepIndex_ = static_cast<int>(next);
             if (auto err = r.op.empty() ? step(r) : control(r); !err.empty()) return std::unexpected(err);
             if (claimsEnabled()) claimsAfter(next, r.at);
         }
@@ -107,6 +119,7 @@ public:
         persist();
         if (p_.useStore) persistStore();
         if (claimsEnabled()) persistClaims();
+        if (viewsEnabled()) persistSessions();
         if (p_.issueMode != 0) {
             lib("BlockIndex::eventLogNdjson");
             out_.record["events.ndjson"] = index_.eventLogNdjson(s_.name);   // the cumulative log: every snapshot's events are a slice of it (`eventsFrom` is a position in it)
@@ -148,6 +161,15 @@ private:
     std::vector<std::string> claimIds_;                        // every claim any replica took, in order: the rows `expect-claims` reads
     std::map<std::string, std::string> claimLabel_;            // claim id to what it was taken on (`path:leaf`, or the file's path)
     std::size_t carried_ = 0;                                  // the block events already carried into the claim store
+    // MS5: the session side, built only when the scenario names `# views:`. Its own store (writer {"mock","ws"}) so `store_` and its bytes are untouched.
+    MemoryLog sessLog_;
+    Store sessStore_{sessOptions()};
+    std::unique_ptr<LogViewStore> viewStore_;
+    DataSessionPolicy sessPolicy_;
+    BlockCompactor compactor_;
+    std::unique_ptr<Workspace> workspace_;
+    std::map<std::string, std::string> viewKind_, sessionId_, viewId_;   // per actor: pinned or tip, its session id, its view id
+    int stepIndex_ = 0;                                                  // the position of the step being run (names the view files)
 
     StoreOptions storeOptions()
     {
@@ -256,6 +278,238 @@ private:
 
     void lib(const char* name) { calls_.insert(name); }
 
+    // ---- MS5: the session side (docs/VIEWS.md, docs/MOCK_SQUAD.md section 4) ----------------------------------------------------------------------------------
+
+    bool viewsEnabled() const { return !s_.views.empty(); }
+
+    StoreOptions sessOptions()
+    {
+        StoreOptions o;
+        o.writer = {"mock", "ws"};
+        o.sink = &sessLog_;
+        o.clock = [this] { return "turn-" + std::to_string(turns_); };   // injected, as the loop's store: the core reads no clock (R-BB-7)
+        (void)registerViewReducers(o.registry);
+        return o;
+    }
+
+    /// The index follows the canvas for the views (the block of a region), without claims: what the verdict does too, so a second update changes nothing.
+    void feedIndex()
+    {
+        index_.setTurn(turns_);
+        for (const auto& [path, textNow] : canvas_.files()) index_.update(path, textNow);
+        lib("BlockIndex::update");
+    }
+
+    /// One session per actor named in `# views:`, each with one view, opened while the canvas holds the base files: a pinned view is at revision 1, a tip view follows.
+    /// Empty string on success, else what is wrong.
+    std::string openSessions()
+    {
+        viewStore_ = std::make_unique<LogViewStore>(sessStore_);
+        workspace_ = std::make_unique<Workspace>(canvas_, sessStore_, *viewStore_, sessPolicy_, compactor_, &index_);
+        for (const auto& [actor, kind] : s_.views) {
+            const Identity who{{"mock", actor}, {}};
+            lib("Workspace::open");
+            const auto sid = workspace_->open(who, 0);
+            if (!sid) return "views: opening the session of '" + actor + "': " + sid.error().message;
+            sessionId_[actor] = *sid;
+            Session* session = sessionOf(actor, 0);
+            if (session == nullptr) return "views: attaching the session of '" + actor + "' failed";
+            OpenSpec spec;
+            spec.label = actor;
+            spec.state = kind == "tip" ? PinState::unpinned : PinState::pinned;
+            lib("Session::openView");
+            const auto view = session->openView(spec);
+            if (!view) return "views: opening the view of '" + actor + "': " + view.error().message;
+            viewId_[actor] = *view;
+            viewKind_[actor] = kind;
+        }
+        return {};
+    }
+
+    Session* sessionOf(const std::string& actor, std::int64_t at)
+    {
+        const auto id = sessionId_.find(actor);
+        if (id == sessionId_.end()) return nullptr;
+        lib("Workspace::attach");
+        auto session = workspace_->attach(id->second, Identity{{"mock", actor}, {}}, at);
+        return session ? *session : nullptr;
+    }
+
+    bool isPinnedActor(const std::string& actor) const
+    {
+        const auto k = viewKind_.find(actor);
+        return k != viewKind_.end() && k->second == "pinned";
+    }
+
+    /// A pinned actor's reply: staged on its view, then landed on the canvas rebased from its pin or refused naming the other actor and revision (R-PIN-2). Returns the
+    /// refusal ("" when something landed, or when the edit changed nothing, which the caller reports); `skipped` gets the parts that did not land beside those that did.
+    std::string landThroughSession(const std::string& actor, const std::string& text, std::int64_t at, std::vector<std::string>& skipped)
+    {
+        Session* session = sessionOf(actor, at);
+        if (session == nullptr) return "the session of '" + actor + "' is gone";
+        const std::string& view = viewId_.at(actor);
+        StageOptions so;
+        so.allowed.insert(allowed_.begin(), allowed_.end());
+        so.partial = p_.partial;
+        lib("Session::stage");
+        auto staged = session->stage(view, text, so);
+        if (!staged) return staged.error().message;
+        skipped = std::move(staged->skipped);
+        lib("Session::land");
+        auto landed = session->land(view);
+        if (!landed) return landed.error().message;
+        std::string why;
+        for (const Refusal& r : landed->refused) why += (why.empty() ? "" : "; ") + r.message;
+        if (landed->applied == 0) return why;
+        for (const Refusal& r : landed->refused) skipped.push_back(r.message);
+        return {};
+    }
+
+    static std::size_t briefBytesOf(const std::string& json)
+    {
+        const auto at = json.find("\"brief\":");
+        return at == std::string::npos ? json.size() : json.size() - 1 - (at + 8);
+    }
+
+    /// R-PIN-6 at the consumer: the delta behind a refresh, applied to the view's old state in each of the ways a form carries it, gives the canvas's text.
+    void checkDelta(const Delta& delta, const ViewRecord& view)
+    {
+        for (const FileDelta& f : delta.files) {
+            lib("textAtPin");
+            const auto atPin = textAtPin(canvas_, view.pin, f.path);
+            if (f.oldText != atPin.value_or("")) out_.violations.push_back("refresh of " + f.path + ": the delta's old text is not the text at the view's pin");
+            std::vector<LineHunk> net;
+            for (const Region& r : f.regions) net.push_back(r.hunk);
+            lib("applyHunks");
+            if (applyHunks(f.oldText, net) != f.newText) out_.violations.push_back("refresh of " + f.path + ": the net regions applied to the old text do not give the new text");
+            std::string replayed = f.oldText;
+            for (const EditStep& e : f.steps) replayed = applyHunks(replayed, e.hunks);
+            if (replayed != f.newText) out_.violations.push_back("refresh of " + f.path + ": the steps replayed in order do not give the new text");
+            if (f.newText != canvas_.text(f.path)) out_.violations.push_back("refresh of " + f.path + ": the delta's new text is not the canvas's");
+        }
+    }
+
+    /// `since`, `advance` and `refresh` on the actor's view. Returns an error only when the scenario itself is wrong.
+    std::string viewControl(const ScriptedReply& r)
+    {
+        if (!viewsEnabled()) return "the control step '" + r.op + "' needs # views: (an actor working through a session's view)";
+        const std::string actor = controlName(r);
+        Session* session = sessionOf(actor, r.at);
+        if (session == nullptr) return "'" + r.op + "': '" + actor + "' has no view (# views:)";
+        const std::string& view = viewId_.at(actor);
+        const bool pinned = isPinnedActor(actor);
+        if (r.op == "refresh" ? pinned : !pinned) return "'" + r.op + "': the view of '" + actor + "' is " + (pinned ? "pinned (use since and advance)" : "a tip view (use refresh)");
+        const auto filesBefore = canvas_.files();
+        const std::size_t eventsBefore = sessStore_.events().size();
+        if (r.op == "since") {
+            const auto pendingBefore = session->pending(view);
+            lib("Session::since");
+            const auto brief = session->since(view);
+            if (!brief) return "since: " + brief.error().message;
+            const auto pendingAfter = session->pending(view);   // `since` changes nothing: not the canvas, not the pending work, not the log (R-PIN-3)
+            if (canvas_.files() != filesBefore || sessStore_.events().size() != eventsBefore || !pendingBefore || !pendingAfter || pendingBefore->hunks != pendingAfter->hunks ||
+                pendingBefore->bytes != pendingAfter->bytes)
+                out_.violations.push_back("since changed the canvas, the session's log or its pending work");
+            record(actor, "since", brief->json, brief->json);
+            return {};
+        }
+        if (r.op == "advance") {
+            AdvanceOptions ao;
+            ao.atomic = r.attrs.count("atomic") != 0;
+            lib("Session::advance");
+            const auto done = session->advance(view, ao);
+            if (!done) return "advance: " + done.error().message;
+            if (canvas_.files() != filesBefore) return "advance landed edits on the canvas: the loop gates a landing only after a reply (stage and land those first)";
+            lib("pinAtTip");
+            if (done->moved && !(done->pin == pinAtTip(canvas_, {}))) out_.violations.push_back("advance did not leave the view at the tip");
+            feedIndex();
+            std::string refused;
+            for (const Refusal& x : done->land.refused) refused += "\n- " + x.message;
+            lib("Session::kept");
+            const auto kept = session->kept(view);   // what was refused stays with the view, with the text it wrote, so its author can redo it
+            if (!kept || kept->size() != done->land.refused.size()) out_.violations.push_back("advance: the refused hunks are not all kept with the view");
+            else
+                for (const Refusal& x : *kept) refused += "\n- kept for a redo: " + x.replacement;
+            int base = 0;
+            for (const auto& [path, rev] : done->pin.overrides) base = std::max(base, rev);
+            const std::string text = std::format("applied {}, refused {}, anchors {}, pin r{}", done->land.applied, done->land.refused.size(), done->anchors.size(), base);
+            record(actor, "advanced", text, text + refused);
+            return {};
+        }
+        // refresh: the delta is built from the view's own record first, so the answer can be checked against it
+        const auto rec = session->view(view);
+        if (!rec) return "refresh: " + rec.error().message;
+        const ViewRecord before = **rec;
+        RefreshOptions ro;
+        const auto form = r.attrs.find("form");
+        if (form != r.attrs.end()) {
+            ro.form = parseDeltaForm(form->second);
+            if (!ro.form) return "refresh: form=" + form->second + " is not brief, elided, compacted or full";
+        }
+        ro.acknowledge = r.attrs.count("ack") != 0;
+        DeltaSources sources;
+        sources.canvas = &canvas_;
+        sources.store = &sessStore_;
+        sources.index = &index_;
+        lib("makeDelta");
+        const Delta delta = makeDelta(sources, before.pin, before.position, before.scope.paths, true);
+        lib("Session::refresh");
+        const auto answer = session->refresh(view, ro);
+        if (!answer) return "refresh: " + answer.error().message;
+        checkDelta(delta, before);
+        if (answer->files != delta.files.size()) out_.violations.push_back("refresh: the answer counts " + std::to_string(answer->files) + " file(s), the delta holds " + std::to_string(delta.files.size()));
+        RefreshRow row;
+        row.step = stepIndex_;
+        row.actor = actor;
+        row.form = std::string{toString(answer->form)};
+        row.ack = ro.acknowledge;
+        row.degraded = answer->degraded;
+        row.files = answer->files;
+        row.events = answer->events;
+        row.briefBytes = briefBytesOf(answer->json);
+        row.to = positionJson(answer->to);
+        row.json = answer->json;
+        out_.record["views/" + actor + "-refresh-" + std::to_string(stepIndex_) + "-" + row.form + ".json"] = answer->json + "\n";
+        const std::string text = std::format("form={} files={} events={}{}{}", row.form, row.files, row.events, row.degraded ? " degraded" : "", row.ack ? " ack" : "");
+        out_.refreshes.push_back(std::move(row));
+        record(actor, "refreshed", text, answer->json);
+        return {};
+    }
+
+    /// The session log as the persisted segment, each view as the log keeps it, and the proof a consumer relies on: the lines read back and replayed give the same
+    /// records (R-PIN-9).
+    void persistSessions()
+    {
+        lib("eventJson");
+        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        for (const Event& e : sessLog_.events()) lines += eventJson(e) + "\n";
+        out_.record["sessions/events.ndjson"] = lines;
+        std::vector<Event> back;
+        std::istringstream in(lines);
+        std::string line;
+        std::getline(in, line);   // the header
+        while (std::getline(in, line)) {
+            lib("parseEvent");
+            auto e = parseEvent(line);
+            if (!e) { out_.violations.push_back("the persisted session event '" + line.substr(0, 60) + "' does not parse: " + e.error()); continue; }
+            back.push_back(std::move(*e));
+        }
+        StoreOptions o;
+        o.writer = {"mock", "replay"};
+        (void)registerViewReducers(o.registry);
+        Store replayed(std::move(o));
+        lib("Store::merge");
+        replayed.merge(back);
+        LogViewStore replayedViews(replayed);
+        for (const auto& [actor, id] : viewId_) {
+            const ViewRecord* live = viewStore_->view(id);
+            const ViewRecord* again = replayedViews.view(id);
+            if (live == nullptr) continue;
+            out_.record["views/" + actor + "-final.json"] = viewJson(*live) + "\n";
+            if (again == nullptr || viewJson(*again) != viewJson(*live)) out_.violations.push_back("replaying the persisted session events does not give the view of '" + actor + "'");
+        }
+    }
+
     // ---- MS4: claims (docs/MOCK_SQUAD.md section 4, BACKBONE.md section 3.5) ----------------------------------------------------------------------------------
 
     bool claimsEnabled() const { return p_.claims != ClaimsMode::off; }
@@ -329,7 +583,7 @@ private:
     /// One control step. It spends no turn and writes no reply file; it records an outcome of its own kind. Returns an error only when the scenario itself is wrong.
     std::string control(const ScriptedReply& r)
     {
-        if (r.op == "since" || r.op == "advance" || r.op == "refresh") return "the control step '" + r.op + "' belongs to MS5 and is not built yet";
+        if (r.op == "since" || r.op == "advance" || r.op == "refresh") return viewControl(r);
         if (!claimsEnabled()) return "the control step '" + r.op + "' needs # policy: claims=on (or enforce)";
         const std::string actor = controlName(r);
         const bool byActor = r.op == "claim" || r.op == "release";
@@ -747,13 +1001,17 @@ private:
         }
 
         // ---- the transaction: applied to a copy (the squad's scratch) or to the canvas itself, all or nothing, or partially ----
+        const bool viaSession = viewsEnabled() && isPinnedActor(actor);   // MS5: a pinned actor writes through its view (stage, land), whatever the loop's own apply would do
+        if (viaSession && reply.baseRevision != 0) return "a pinned actor's base is its pin: base=r" + std::to_string(reply.baseRevision) + " is not allowed";
         Canvas scratch = canvas_;
         Canvas& target = p_.scratch ? scratch : canvas_;
         std::vector<std::string> skipped;
         std::string refusal;
         for (const auto& [path, body] : parsed.wholeFiles)
             if (refusal = scopeRefusalFor(path); !refusal.empty()) break;
-        if (refusal.empty()) {
+        if (refusal.empty() && viaSession) {
+            refusal = landThroughSession(actor, text, reply.at, skipped);
+        } else if (refusal.empty()) {
             lib("applyReply");   // a stale author is the same call with `baseRevision`: it was a second path here (applyStale) until ApplyOptions grew the field
             if (auto applied = applyReply(target, parsed, {allowed_, actor, p_.partial, reply.baseRevision})) skipped = std::move(applied->skipped);
             else refusal = applied.error();
@@ -781,6 +1039,7 @@ private:
         }
         if (p_.scratch) canvas_ = std::move(scratch);
         if (claimsEnabled()) syncIndex();
+        else if (viewsEnabled()) feedIndex();
         std::string focus;
         const std::string bad = compileCheck(gate_, canvas_.files());
         persist();

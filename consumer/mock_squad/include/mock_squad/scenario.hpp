@@ -9,12 +9,13 @@
 /// # actors: a b                       (who may send replies; the first is the default)
 /// # allowed: src/calc.cpp             (files the actors may write; default: those of base and want)
 /// # policy: partial=no scratch=no     (LoopPolicy overrides, `applyPolicy`)
+/// # views: a=pinned b=tip             (MS5: each named actor works through a session and a view; needs scratch=no, `loop.hpp`)
 /// # expect: failed | refused:the file has | passed      (the outcome of each reply, in order; `kind` or `kind:text it contains`)
 /// --- base <path>                     (a file before; several allowed)
 /// --- gate                            (rules: `test <name> passes when <path> contains|lacks <text>`, `compile <message> when <path> contains <text>`)
 /// --- reply [as=NAME] [base=rN] [finish=length|stop] [pieces=N] [at=T] [offline]
 /// --- claim|release|expire|sync [as=NAME] [at=T] [block=<path>:<leaf>[@turn]] [file=<path>] [ttl=S] [offline]   (a control step, MS4: no body, spends no turn)
-/// --- since|advance|refresh [as=NAME] [form=F] [ack] [atomic]                                                    (control steps of MS5: parsed here, run by a later slice)
+/// --- since|advance|refresh [as=NAME] [at=T] [form=F] [ack] [atomic]                                             (control steps of MS5, run on the actor's view: need `# views:`)
 /// --- want <path>                     (a file after)
 /// --- expect-ids                      (see `checkIds` in the contract test)
 /// --- expect-store                    (under `# policy: useStore=yes`: `events N`, `items N`, `state <key part> : <state after each verdict>`; see `checkStore`)
@@ -60,6 +61,7 @@ struct Scenario
     std::string name, cites;
     std::vector<std::string> actors, allowed, gateRules, expectIds, expectStore, expectClaims;
     std::vector<std::pair<std::string, std::string>> policy;   ///< `key=value` overrides of the loop's policy, in the order written
+    std::vector<std::pair<std::string, std::string>> views;    ///< `# views: actor=pinned|tip` in the order written (MS5): the actors that work through a session's view
     std::vector<ExpectedOutcome> expect;
     std::map<std::string, std::string> base, want;
     std::vector<ScriptedReply> replies;

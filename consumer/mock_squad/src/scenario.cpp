@@ -129,6 +129,13 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
                     if (eq == std::string::npos) return std::unexpected("a policy entry '" + w + "' is not key=value");
                     sc.policy.emplace_back(w.substr(0, eq), w.substr(eq + 1));
                 }
+            } else if (key == "views") {
+                for (const auto& w : words(value)) {
+                    const auto eq = w.find('=');
+                    const std::string kindOf = eq == std::string::npos ? std::string{} : w.substr(eq + 1);
+                    if (eq == std::string::npos || eq == 0 || (kindOf != "pinned" && kindOf != "tip")) return std::unexpected("a views entry '" + w + "' is not actor=pinned or actor=tip");
+                    sc.views.emplace_back(w.substr(0, eq), kindOf);
+                }
             } else if (key == "expect") {
                 std::istringstream parts(value);
                 for (std::string e; std::getline(parts, e, '|');) {

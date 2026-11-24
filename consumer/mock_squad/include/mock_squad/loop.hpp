@@ -45,6 +45,7 @@ struct LoopPolicy
     bool narrowScope = true;       ///< a FILE over a file that exists and is not a stub is refused (edits first, `scopeRefusalFor`)
     ClaimsMode claims = ClaimsMode::off;   ///< MS4: one `Store` replica per actor plus the loop's, claims folded through `registerClaimReducers(ClaimPolicy::standard())`; off: no claim call is made and
                                            ///< no claim file written, so every earlier attempt is unchanged. `enforce` requires `scratch=yes` (the refusal is judged on the copy)
+    // MS5 has no policy field: `# views:` in the scenario switches the session side on (it needs scratch=no and claims=off), `loop.cpp` `openSessions`.
     int issueMode = 1;             ///< 0 off, 1 always the layer, 2 adaptive (SUB0SQUAD_ISSUE_LAYER; the squad defaults to 2, the mock to 1 so every verdict uses the library)
     int inlineIssues = 3;          ///< issues shown in full (SUB0SQUAD_ISSUE_INLINE)
     std::size_t adaptiveIssues = 6;   ///< adaptive mode: the layer is shown above this many failures
@@ -55,7 +56,7 @@ struct LoopPolicy
 /// Set one policy field from a scenario's `# policy: key=value`; the message when the key or the value is not understood.
 [[nodiscard]] std::expected<void, std::string> applyPolicy(LoopPolicy& policy, const std::string& key, const std::string& value);
 
-/// What one reply came to. A control step has its own kinds: claimed, claim-refused, released, expired (the claims it wrote down), settled (a sync). `kind` of a reply: read, read-refused, cancelled, continued, empty (no transaction), refused, staged (kept, does not compile), committed
+/// What one reply came to. A view's control steps (MS5) are `since`, `advanced` (applied, refused, anchors, the new pin) and `refreshed`. A control step has its own kinds: claimed, claim-refused, released, expired (the claims it wrote down), settled (a sync). `kind` of a reply: read, read-refused, cancelled, continued, empty (no transaction), refused, staged (kept, does not compile), committed
 /// (files still missing), failed (gate fails), reverted (worse than the best, undone), passed. `text` is the detail a scenario may name: the refusal, the
 /// runaway kind and what repeated, the parts skipped, the failing count. `verdict` is what the next message tells the model; `focus` the text a folded view reads.
 struct Outcome
@@ -102,6 +103,19 @@ struct ClaimStep
     std::vector<ClaimRow> claims;
 };
 
+/// One refresh a tip worker asked for (MS5): what the contract compares across the four forms at one position (R-PIN-6, R-PIN-7).
+struct RefreshRow
+{
+    int step = 0;                ///< the position in the scenario's steps
+    std::string actor, form;     ///< the view's owner and the form delivered (`brief`, `elided`, `compacted`, `full`)
+    bool ack = false;            ///< the refresh acknowledged its answer: the view moved to its position
+    bool degraded = false;       ///< the budget forced a step towards `brief`
+    std::size_t files = 0, events = 0;   ///< what the delta held, whichever form was delivered
+    std::size_t briefBytes = 0;  ///< the size of the `brief` the answer carries
+    std::string to;              ///< the position the answer stands for (`positionJson`)
+    std::string json;            ///< the `view-delta-1` answer
+};
+
 /// One attempt, run to its end.
 struct Attempt
 {
@@ -115,6 +129,7 @@ struct Attempt
     std::vector<std::string> violations;               ///< invariants that failed during the run (a refusal that changed the canvas, an anchor that does not resolve)
     std::vector<std::map<std::string, std::string>> storeStates;   ///< `useStore`: after each verdict, every issue the store holds (key to state), the hand-checked truth of `expect-store`
     std::vector<ClaimStep> claimStates;                ///< `claims` on: after each step run, the claims the merged replica holds (the hand-checked truth of `expect-claims`)
+    std::vector<RefreshRow> refreshes;                 ///< `views`: every refresh a tip worker made, in order (the hand-checked truth lives in the contract's `checkViews`)
     std::size_t storeEvents = 0;                       ///< `useStore`: the events the store made
     bool verified = false;                             ///< the gate passed
     int commits = 0, refused = 0, reads = 0, aborted = 0, continued = 0, reverted = 0, staged = 0;   ///< the squad's per-attempt counts (`agent.json`)
