@@ -108,7 +108,7 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
 * **CI**: smoke on every push and pull request; the full tier on `v*` tags, `ci:full`, dispatch and a change-gated weekly run. **Never dispatch the
   full tier after a routine push**: verify locally (`ctest --preset quick`, or `full`) and check only the smoke run after pushing. Full runs are for
   releases and version bumps; the one exception is a change that only another platform can prove (a Windows runner's behaviour): batch such
-  changes and dispatch once. **Timing is measured locally only; deterministic metrics gate in every tier; the improve loop is Sub0Math docs/PERF_LOOP.md** (one verdict
+  changes and dispatch once. **Timing is measured locally only; deterministic metrics gate in every tier; the improve loop is Sub0Perf docs/PERF_LOOP.md** (one verdict
   line per step; the family's performance tooling, fetched for its tooling only).
 * **Follow-up work** that belongs in its own session is written as a brief in [docs/sessions/](docs/sessions/README.md) (its workflow: write, pick
   up, close with an `## Outcome`, move to *Done*), listed there and pointed at from the backlog. Not left in a chat or a session card, which other

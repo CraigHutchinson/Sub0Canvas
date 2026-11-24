@@ -101,7 +101,7 @@ generator is also the truth for identity at scale. Nothing at 10^9 lines is writ
 ## Performance
 
 The benchmarks are `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench`, built with `SUB0CANVAS_BUILD_BENCHMARKS` (on at the top level) through the family's performance
-tooling (sub0perf, in the Sub0Math repository, fetched by CPM for its tooling only: a placeholder pin until it is pushed, `CPM_Sub0Math_SOURCE` on the dev machine). Library only,
+tooling (sub0perf, in the Sub0Perf repository, fetched by CPM for its tooling only at a pinned commit, `CPM_Sub0Perf_SOURCE` on the dev machine). Library only,
 on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two kinds of result, kept apart (the family rule):
 
 | kind | what | where it runs |
@@ -118,7 +118,7 @@ MSVC's differ by up to 2x here), so their ceilings are the larger of the two plu
 The `max` metric `index cold 1e5: live heap bytes per block` is an **xfail** against SCALE.md's 200 bytes until S1; when it starts to pass the check says so and the xfail goes.
 
 ```bash
-export SUB0PERF_OUTPUT=brief                           # one verdict line per command (the improve loop is Sub0Math docs/PERF_LOOP.md)
+export SUB0PERF_OUTPUT=brief                           # one verdict line per command (the improve loop is Sub0Perf docs/PERF_LOOP.md)
 ctest --preset quick                                    # includes the metrics and the smoke run
 cmake --build build/default --target Sub0Canvas_Bench_check        # timing: interleaved rounds, judged against this host's baseline (mains power only)
 cmake --build build/default --target Sub0Canvas_Bench_compare      # A/B against the previous build, after a change
