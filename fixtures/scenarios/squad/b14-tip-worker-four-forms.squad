@@ -1,0 +1,48 @@
+# name: b14-tip-worker-four-forms
+# cites: tier 0 forked sessions, a tip reviewer following a worker (R-CONS-9, R-PIN-6, R-PIN-7, MOCK_SQUAD.md section 4): a, pinned at r1, lands two disjoint edits (divide, then square, both in r1 numbering); b follows the tip and refreshes in brief, elided and compacted without acknowledging (one position, so one answer to three sizes), then in full with an acknowledgement; a last refresh holds nothing
+# actors: a b
+# policy: scratch=no
+# views: a=pinned b=tip
+# expect: failed | passed | refreshed:form=brief files=1 | refreshed:form=elided files=1 | refreshed:form=compacted files=1 | refreshed:form=full files=1 | refreshed:form=compacted files=0
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x + x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- reply as=a
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- reply as=a
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- refresh as=b form=brief
+--- refresh as=b form=elided
+--- refresh as=b form=compacted
+--- refresh as=b form=full ack
+--- refresh as=b form=compacted
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

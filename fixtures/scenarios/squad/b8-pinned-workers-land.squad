@@ -1,0 +1,58 @@
+# name: b8-pinned-workers-land
+# cites: tier 0 forked sessions (fork executor), two workers each pinned at the revision they were shown, working through a session (R-CONS-8, R-PIN-2, R-PIN-3, MOCK_SQUAD.md section 4): a lands on divide; b's disjoint edit to square lands rebased over it; b's overlapping edit to divide is refused naming a and the revision, its hunk kept; since changes nothing; advance refuses the kept hunk again and moves b's pin; b redoes the edit from the new text
+# actors: a b
+# policy: scratch=no
+# views: a=pinned b=pinned
+# expect: failed | failed | refused:changed by mock/a in revision 2 | since:view-delta-1 | advanced:applied 0, refused 1, anchors 0, pin r3 | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x + x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+test checked passes when src/calc.cpp contains // checked
+--- reply as=a
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+    // a quotient of anything over a nonzero divisor
+=== END EDIT ===
+--- reply as=b
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- reply as=b
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) return -1;
+=== END EDIT ===
+--- since as=b
+--- advance as=b
+--- reply as=b
+=== EDIT: src/calc.cpp LINES 7 ===
+    // checked: d is not zero here
+    return a / d;
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    // a quotient of anything over a nonzero divisor
+    // checked: d is not zero here
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

@@ -1,0 +1,1 @@
+{"files":{"src/calc.cpp":4},"log":[{"path":"src/calc.cpp","by":"mock/a","revision":2,"base":1,"from":5,"to":5,"delta":1},{"path":"src/calc.cpp","by":"mock/b","revision":3,"base":1,"from":12,"to":12,"delta":0},{"path":"src/calc.cpp","by":"mock/b","revision":4,"base":3,"from":7,"to":6,"delta":1}]}

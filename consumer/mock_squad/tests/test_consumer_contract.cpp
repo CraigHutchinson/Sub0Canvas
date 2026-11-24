@@ -237,6 +237,31 @@ std::string checkClaims(const Scenario& sc, const Attempt& a)
     return {};
 }
 
+bool usesViews(const Scenario& sc) { return !sc.views.empty(); }
+
+/// "" when the views' truth holds (MS5; R-PIN-6, R-PIN-7). The loop proves per refresh that the delta applied to the view's old state gives the canvas's text; here, from
+/// the refreshes it recorded: those made at one position (the same actor, no acknowledgement between them) agree on the position they stand for, the files and the events they
+/// hold, whatever their form; the brief each carries is at most 520 bytes; and a refresh straight after an acknowledged one says `"files":0`.
+std::string checkViews(const Scenario& sc, const Attempt& a)
+{
+    const bool refreshes = std::any_of(sc.replies.begin(), sc.replies.end(), [](const ScriptedReply& r) { return r.op == "refresh"; });
+    if (refreshes != !a.refreshes.empty()) return "the refresh steps of the scenario and the refreshes the loop recorded disagree";
+    if (!usesViews(sc) && !a.refreshes.empty()) return "a scenario without # views: made a refresh";
+    std::map<std::string, const RefreshRow*> first, previous;   // per actor: the first answer at the current position, and the last answer
+    for (const RefreshRow& r : a.refreshes) {
+        if (r.briefBytes > 520) return "the brief of refresh " + std::to_string(r.step) + " is " + std::to_string(r.briefBytes) + " bytes, over 520";
+        const RefreshRow* before = previous.count(r.actor) ? previous[r.actor] : nullptr;
+        if (before != nullptr && before->ack && r.step == before->step + 1 && r.json.find("\"files\":0") == std::string::npos)
+            return "refresh " + std::to_string(r.step) + " follows an acknowledged one and should hold no file: " + r.json.substr(0, 200);
+        if (before == nullptr || before->ack) first[r.actor] = &r;
+        const RefreshRow& f = *first[r.actor];
+        if (f.to != r.to || f.files != r.files || f.events != r.events)
+            return "refresh " + std::to_string(r.step) + " (" + r.form + ") differs from refresh " + std::to_string(f.step) + " (" + f.form + ") at one position: to, files or events";
+        previous[r.actor] = &r;
+    }
+    return {};
+}
+
 /// "" when the claims do not depend on the order the replicas merge in (R-CONS-7): a scenario with a `sync` step run again with the actors in the other order (which is the
 /// order `sync` merges them in) persists byte-identical claim files. Every step of such a scenario names its actor, so only the merge order changes.
 std::string checkSyncOrder(const Scenario& sc, const Attempt& a)
@@ -369,7 +394,7 @@ int main(int argc, char** argv)
     for (const auto& e : fs::directory_iterator(argv[1]))
         if (e.path().extension() == ".squad") files.push_back(e.path());
     std::sort(files.begin(), files.end());
-    CHECK_GE(files.size(), static_cast<std::size_t>(20));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12, B15 (MS3), B14 x3 and B8 claims (MS4)
+    CHECK_GE(files.size(), static_cast<std::size_t>(22));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12, B15 (MS3), B14 x3 and B8 claims (MS4), B8 pinned and B14 tip workers (MS5)
 
     std::set<std::string> libraryCalls;
     std::map<std::string, Attempt> attempts;
@@ -389,6 +414,7 @@ int main(int argc, char** argv)
         report("identities", checkIds(*sc, *attempt));
         report("store", checkStore(*sc, *attempt));                                     // MS3: hand-checked open, done, reopened
         report("claims", checkClaims(*sc, *attempt));                                   // MS4: hand-checked holders, expiry, merge order, a claim that follows a merge
+        report("views", checkViews(*sc, *attempt));                                     // MS5: the four forms agree at one position; an acknowledged refresh is empty
         report("claims merge order", checkSyncOrder(*sc, *attempt));                    // the same claim files whichever replica merges first
         report("store transparency", checkStoreTransparent(*sc, *attempt));            // the verdict through the store equals the direct one
         report("stored attempt", checkRecord(*attempt, fs::path(argv[2]) / sc->name));   // (d)
@@ -420,6 +446,23 @@ int main(int argc, char** argv)
             CHECK(attempts.count("b14-claim-contention") && attempts["b14-claim-contention"].refused == 1);
             CHECK(attempts.count("b14-claim-expiry") && attempts["b14-claim-expiry"].refused == 1);
             CHECK(attempts.count("b14-claim-merge-order") && attempts["b14-claim-merge-order"].refused == 1);
+        }
+        for (const char* fn : {"Workspace::open", "Workspace::attach", "Session::openView", "Session::stage", "Session::land", "Session::since", "Session::advance", "Session::kept", "Session::refresh",
+                               "makeDelta", "textAtPin", "applyHunks", "pinAtTip"})
+            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS5)\n", fn); CHECK(false); }
+        {   // The two view scenarios show what they were written for (R-CONS-8, R-CONS-9, R-PIN-2, R-PIN-3, R-PIN-6).
+            CHECK(attempts.count("b8-pinned-workers-land") && attempts["b8-pinned-workers-land"].verified && attempts["b8-pinned-workers-land"].refused == 1);
+            CHECK(attempts.count("b14-tip-worker-four-forms") && attempts["b14-tip-worker-four-forms"].verified);
+            if (attempts.count("b14-tip-worker-four-forms")) {
+                const std::vector<RefreshRow>& rows = attempts["b14-tip-worker-four-forms"].refreshes;
+                CHECK_EQ(rows.size(), std::size_t{5});
+                if (rows.size() == 5) {
+                    const std::string forms[] = {"brief", "elided", "compacted", "full", "compacted"};
+                    for (std::size_t i = 0; i < 5; ++i) { const std::string got = rows[i].form; CHECK_EQ(got, forms[i]); }
+                    CHECK_EQ(rows[0].files, std::size_t{1});   // the two edits of a, in one file
+                    CHECK_EQ(rows[4].files, std::size_t{0});   // acknowledged: nothing left
+                }
+            }
         }
     }
     {   // (b) every row of REQUIREMENTS.md "Sub0Squad's use, mapped" is exercised by a scenario or deferred with its reason.
@@ -477,6 +520,32 @@ int main(int argc, char** argv)
             CHECK(!checkClaims(wrong, a).empty());
             wrong.expectClaims.clear();
             CHECK(!checkClaims(wrong, a).empty());   // claims run, but the scenario states nothing about them
+        }
+    }
+    {   // The views checker can fail too: a form that disagrees about the position, the files or the events, an oversized brief, or an acknowledged refresh that is not empty.
+        const auto sc = parseScenario(slurp(fs::path(argv[1]) / "b14-tip-worker-four-forms.squad"));
+        CHECK(sc.has_value());
+        if (sc && attempts.count(sc->name) && attempts[sc->name].refreshes.size() == 5) {
+            const Attempt& a = attempts[sc->name];
+            CHECK(checkViews(*sc, a).empty());
+            Attempt wrong = a;
+            wrong.refreshes[2].files = 2;
+            CHECK(!checkViews(*sc, wrong).empty());
+            wrong = a;
+            wrong.refreshes[1].to = "{}";
+            CHECK(!checkViews(*sc, wrong).empty());
+            wrong = a;
+            wrong.refreshes[1].events = 7;
+            CHECK(!checkViews(*sc, wrong).empty());
+            wrong = a;
+            wrong.refreshes[0].briefBytes = 521;
+            CHECK(!checkViews(*sc, wrong).empty());
+            wrong = a;
+            wrong.refreshes[4].json = "{\"brief\":{\"files\":1}}";
+            CHECK(!checkViews(*sc, wrong).empty());
+            wrong = a;
+            wrong.refreshes.clear();
+            CHECK(!checkViews(*sc, wrong).empty());
         }
     }
     {   // (f) the library says the release it is: the same as package.json, and not older than the newest tag of this checkout (v0.3.0 shipped saying 0.2.1).

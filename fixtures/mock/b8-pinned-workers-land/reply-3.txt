@@ -1,0 +1,4 @@
+=== EDIT: src/calc.cpp LINES 7 ===
+    // checked: d is not zero here
+    return a / d;
+=== END EDIT ===
