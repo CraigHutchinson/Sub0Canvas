@@ -98,7 +98,7 @@ public:
 
     /// Records `text` as revision `revision` of `path` (`revisionId`: its opaque id; empty gives "r<number>"). False, and nothing recorded, for a path that is
     /// empty or has an empty segment (`a//b`, a leading or trailing `/`), or a revision that is not above the file's last. Identical texts are held once.
-    bool addRevision(const std::string& path, int revision, std::string revisionId, const std::string& text);
+    [[nodiscard]] bool addRevision(const std::string& path, int revision, std::string revisionId, const std::string& text);
     /// Names a layer for the `layers` operation (label, description, producer): the bundle's `layerMeta`.
     void setLayerMeta(const std::string& layer, LayerMeta meta) { meta_[layer] = std::move(meta); }
 

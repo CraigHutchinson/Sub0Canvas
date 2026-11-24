@@ -121,19 +121,19 @@ struct ClaimRequest
 [[nodiscard]] std::expected<void, std::string> releaseClaim(Store& store, const WriterId& self, const std::string& claimId, Instant now, const std::string& reason = {});
 /// Writes a `claim.expire@1` for every live claim whose time has passed at `now`; returns how many. Any writer may call it (the consumer's daemon decides
 /// when to look); a claim that is merely past its time already blocks nobody.
-std::size_t expireDue(Store& store, Instant now);
+[[nodiscard]] std::size_t expireDue(Store& store, Instant now);
 
 /// What happened to blocks, from the `BlockIndex`'s events at position `from` on (`BlockIndex::events()`): a `merged` block is carried to its survivor
 /// (`detail`), a `retired` one ends its claims, a `revived` one is live again. Other carries keep the id, so claims need nothing. Returns the events written.
-std::size_t emitBlockCarries(Store& store, const std::vector<BlockEvent>& events, std::size_t from = 0);
+[[nodiscard]] std::size_t emitBlockCarries(Store& store, const std::vector<BlockEvent>& events, std::size_t from = 0);
 /// The same, straight from the index's event log (`BlockIndex::events()`), which holds its events compactly: only the events from `from` on are materialised.
-std::size_t emitBlockCarries(Store& store, const EventLog& events, std::size_t from = 0);
+[[nodiscard]] std::size_t emitBlockCarries(Store& store, const EventLog& events, std::size_t from = 0);
 /// The same for a fact stated outside the index, such as a split: the block `id` is now the blocks `into` (several: a split, one: a merge or a move, none:
 /// retired). A claim on `id` then covers all of them.
-const Event& emitBlockCarry(Store& store, const std::string& id, const std::vector<std::string>& into);
+[[nodiscard]] const Event& emitBlockCarry(Store& store, const std::string& id, const std::vector<std::string>& into);
 
 /// A free-text note on an item or a block; the author is the event's writer. A block's notes follow it through merges and splits like its claims.
-const Event& addNote(Store& store, TargetKind kind, const std::string& target, const std::string& text);
+[[nodiscard]] const Event& addNote(Store& store, TargetKind kind, const std::string& target, const std::string& text);
 
 // ---- reading --------------------------------------------------------------------------------------------------------------------------------------------
 

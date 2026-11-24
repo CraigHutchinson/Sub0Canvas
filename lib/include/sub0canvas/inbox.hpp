@@ -62,7 +62,7 @@ inline constexpr std::string_view kAckKind = "sub.ack@1";
 
 /// Adds the reducers of the three subscription kinds to `registry`. Call it where the store is made, once per registry. False when one of the kinds already had
 /// a reducer (nothing registered for it then).
-bool registerSubscriptionReducers(ReducerRegistry& registry);
+[[nodiscard]] bool registerSubscriptionReducers(ReducerRegistry& registry);
 
 /// Makes `id` a subscription of `owner` for `query` (an event). Subscribing again under the same id replaces owner and query and keeps the cursor. A new
 /// subscription starts at `cursor`: 0 sees everything the log holds, `store.head()` only what comes next. Errors: an empty id or owner; a store whose registry

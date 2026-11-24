@@ -28,7 +28,7 @@ std::unique_ptr<Store> makeStore()
 {
     StoreOptions o;
     o.writer = {"bench", "w-1"};
-    registerSubscriptionReducers(o.registry);
+    (void)registerSubscriptionReducers(o.registry);
     auto s = std::make_unique<Store>(std::move(o));
     for (int l = 0; l < kLayers; ++l) {
         std::vector<ItemInput> items;

@@ -22,7 +22,7 @@ StoreOptions options(MemoryLog* sink = nullptr, const char* writer = "w-1")
     StoreOptions o;
     o.writer = {"proj", writer};
     o.sink = sink;
-    registerSubscriptionReducers(o.registry);
+    (void)registerSubscriptionReducers(o.registry);
     return o;
 }
 
