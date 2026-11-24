@@ -143,9 +143,8 @@ std::string runReplyCase(const ReplyCase& c)
         }
     }
     if (c.classic) {
-        std::string err;
-        const auto classic = applyEdits(text, c.base, allowed, err);
-        if (!classic) return "the classic applier refused it: " + err;
+        const auto classic = applyEdits(text, c.base, allowed);
+        if (!classic) return "the classic applier refused it: " + classic.error();
         for (const auto& [p, want] : c.want)
             if (classic->count(p) == 0 || classic->at(p) != want) return "the classic applier gives a different '" + p + "'";
     }

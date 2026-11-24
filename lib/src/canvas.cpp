@@ -382,10 +382,9 @@ std::string applyInPlace(Canvas& canvas, const CanvasReply& reply, const ApplyOp
         }
     }
     const auto applySnippets = [&](const std::string& edits) {
-        std::string err;
         const auto before = canvas.files();
-        const auto merged = applyEdits(edits, before, o.allowed, err);
-        if (!merged) return err;
+        const auto merged = applyEdits(edits, before, o.allowed);
+        if (!merged) return merged.error();
         for (const auto& [path, text] : *merged)
             if (!before.count(path) || before.at(path) != text) (void)canvas.replaceText(path, text, o.by);
         return std::string{};

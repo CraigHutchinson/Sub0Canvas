@@ -11,15 +11,19 @@
 
 using namespace sub0canvas;
 
+namespace {
+// The reason an edit set was refused; empty when it applied (so `.contains(..)` is false for a success).
+std::string reasonOf(const std::expected<std::map<std::string, std::string>, std::string>& r) { return r ? std::string{} : r.error(); }
+}  // namespace
+
 int main()
 {
     { // R-EDIT-2: edit replies: applied to the earlier files, exactly once each; every failure names the edit; the other files are untouched.
         const std::map<std::string, std::string> files{{"src/a.js", "function add(a, b) {\n  return a - b;\n}\nexport { add };\n"}, {"src/b.js", "export const x = 1;\n"}};
         const std::set<std::string> allowed{"src/a.js", "src/b.js"};
-        std::string err;
-        auto ok = applyEdits("Here is the fix.\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n", files, allowed, err);
+        auto ok = applyEdits("Here is the fix.\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n", files, allowed);
         CHECK(ok && ok->at("src/a.js") == "function add(a, b) {\n  return a + b;\n}\nexport { add };\n" && ok->at("src/b.js") == "export const x = 1;\n");
-        auto two = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfunction add(a, b)\n=======\nfunction add(a, b = 0)\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n=== EDIT: src/b.js ===\n<<<<<<< SEARCH\nconst x = 1;\n=======\nconst x = 2;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err);
+        auto two = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfunction add(a, b)\n=======\nfunction add(a, b = 0)\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n=== EDIT: src/b.js ===\n<<<<<<< SEARCH\nconst x = 1;\n=======\nconst x = 2;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed);
         CHECK(two && two->at("src/a.js").contains("b = 0") && two->at("src/a.js").contains("a + b") && two->at("src/b.js") == "export const x = 2;\n");
         {   // R-VIEW-1, R-VIEW-2, R-VIEW-6: folded views: structure stays, function bodies fold, focus regions open, READ requests are answered.
             std::string cpp = "#include <string>\nnamespace n {\nclass A {\npublic:\n  int get() const { return v; }\n  int v = 0;\n};\ndouble f(double x)\n{\n  double y = x;\n  if (y > 1) {\n    y = 2;\n  }\n  y += 1;\n  return y;\n}\nint g(int a) { return a; }\n}\n";
@@ -94,47 +98,46 @@ int main()
         {   // R-EDIT-3, R-EDIT-4: line edits: the worker names lines of the numbered draft it was shown; several edits apply together against that numbering.
             std::map<std::string, std::string> f2 = {{"src/a.js", "one\ntwo\nthree\nfour\nfive\n"}};
             std::set<std::string> al = {"src/a.js"};
-            auto one = applyEdits("=== EDIT: src/a.js LINES 2 ===\nTWO\n=== END EDIT ===", f2, al, err);
+            auto one = applyEdits("=== EDIT: src/a.js LINES 2 ===\nTWO\n=== END EDIT ===", f2, al);
             CHECK(one && one->at("src/a.js") == "one\nTWO\nthree\nfour\nfive\n");
-            auto range = applyEdits("=== EDIT: src/a.js LINES 2-3 ===\nX\nY\nZ\n=== END EDIT ===", f2, al, err);
+            auto range = applyEdits("=== EDIT: src/a.js LINES 2-3 ===\nX\nY\nZ\n=== END EDIT ===", f2, al);
             CHECK(range && range->at("src/a.js") == "one\nX\nY\nZ\nfour\nfive\n");
-            auto del = applyEdits("=== EDIT: src/a.js LINES 4-5 ===\n=== END EDIT ===", f2, al, err);
+            auto del = applyEdits("=== EDIT: src/a.js LINES 4-5 ===\n=== END EDIT ===", f2, al);
             CHECK(del && del->at("src/a.js") == "one\ntwo\nthree\n");
-            auto ins = applyEdits("=== EDIT: src/a.js AFTER 1 ===\nnew\n=== END EDIT ===", f2, al, err);
+            auto ins = applyEdits("=== EDIT: src/a.js AFTER 1 ===\nnew\n=== END EDIT ===", f2, al);
             CHECK(ins && ins->at("src/a.js") == "one\nnew\ntwo\nthree\nfour\nfive\n");
-            auto both = applyEdits("=== EDIT: src/a.js LINES 1 ===\nONE\n=== END EDIT ===\n=== EDIT: src/a.js LINES 5 ===\nFIVE\n=== END EDIT ===", f2, al, err);   // numbering of the draft, not of the result
+            auto both = applyEdits("=== EDIT: src/a.js LINES 1 ===\nONE\n=== END EDIT ===\n=== EDIT: src/a.js LINES 5 ===\nFIVE\n=== END EDIT ===", f2, al);   // numbering of the draft, not of the result
             CHECK(both && both->at("src/a.js") == "ONE\ntwo\nthree\nfour\nFIVE\n");
-            CHECK(!applyEdits("=== EDIT: src/a.js LINES 9 ===\nx\n=== END EDIT ===", f2, al, err) && err.contains("5 lines"));
-            CHECK(!applyEdits("=== EDIT: src/a.js LINES 2 ===\nx\n=== END EDIT ===\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\none\n=======\n1\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err) && err.contains("one kind per file"));
+            CHECK(reasonOf(applyEdits("=== EDIT: src/a.js LINES 9 ===\nx\n=== END EDIT ===", f2, al)).contains("5 lines"));
+            CHECK(reasonOf(applyEdits("=== EDIT: src/a.js LINES 2 ===\nx\n=== END EDIT ===\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\none\n=======\n1\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al)).contains("one kind per file"));
             // A SEARCH copied with the numbered view's "N| " column still matches.
-            auto numbered = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n   2| two\n=======\n2\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err);
+            auto numbered = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n   2| two\n=======\n2\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al);
             CHECK(numbered && numbered->at("src/a.js") == "one\n2\nthree\nfour\nfive\n");
             // A LINES edit wrapped in search/replace markers (seen from the 35B): the new text is taken, the markers never reach the file.
-            auto marked = applyEdits("=== EDIT: src/a.js LINES 2-3 ===\ntwo\nthree\n=======\nTWO\nTHREE\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err);
+            auto marked = applyEdits("=== EDIT: src/a.js LINES 2-3 ===\ntwo\nthree\n=======\nTWO\nTHREE\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al);
             CHECK(marked && marked->at("src/a.js") == "one\nTWO\nTHREE\nfour\nfive\n");
             // Markers written with indentation still close a block.
-            auto indented = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\ntwo\n =======\n2\n  >>>>>>> REPLACE\n=== END EDIT ===", f2, al, err);
+            auto indented = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\ntwo\n =======\n2\n  >>>>>>> REPLACE\n=== END EDIT ===", f2, al);
             CHECK(indented && indented->at("src/a.js") == "one\n2\nthree\nfour\nfive\n");
             // Resolving a merge conflict: the SEARCH holds the file's own ======= line; the separator is the one after it (tier 0 merge-conflict).
             const std::map<std::string, std::string> conflicted = {{"src/a.js", "a\n<<<<<<< HEAD\nb1\n=======\nb2\n>>>>>>> topic\nc\n"}};
-            auto merged = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n<<<<<<< HEAD\nb1\n=======\nb2\n>>>>>>> topic\n=======\nb1\n>>>>>>> REPLACE\n=== END EDIT ===", conflicted, al, err);
+            auto merged = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n<<<<<<< HEAD\nb1\n=======\nb2\n>>>>>>> topic\n=======\nb1\n>>>>>>> REPLACE\n=== END EDIT ===", conflicted, al);
             CHECK(merged && merged->at("src/a.js") == "a\nb1\nc\n");
             // A multi-line SEARCH whose first line lost its start (`else `, tier 0 fix-missing-check): one place fits, the start goes back on.
             const std::map<std::string, std::string> chain = {{"src/a.js", "    if (a) x();\n    else if (b) y();\n    else z();\n"}};
-            auto tail = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (b) y();\n    else z();\n=======\n    if (b) { y(); w(); }\n    else z();\n>>>>>>> REPLACE\n=== END EDIT ===", chain, al, err);
+            auto tail = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (b) y();\n    else z();\n=======\n    if (b) { y(); w(); }\n    else z();\n>>>>>>> REPLACE\n=== END EDIT ===", chain, al);
             CHECK(tail && tail->at("src/a.js") == "    if (a) x();\n    else if (b) { y(); w(); }\n    else z();\n");
-            auto kept = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (b) y();\n    else z();\n=======\n    else if (b) q();\n    else z();\n>>>>>>> REPLACE\n=== END EDIT ===", chain, al, err);
+            auto kept = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (b) y();\n    else z();\n=======\n    else if (b) q();\n    else z();\n>>>>>>> REPLACE\n=== END EDIT ===", chain, al);
             CHECK(kept && kept->at("src/a.js") == "    if (a) x();\n    else if (b) q();\n    else z();\n");   // a replacement that kept the start is left alone
             // A SEARCH that matched only with its indentation ignored: the REPLACE moves to the file's indentation (both ways), not written verbatim.
             const std::map<std::string, std::string> nested = {{"src/a.js", "f() {\n        a();\n        b();\n}\n"}};
-            auto deeper = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    a();\n    b();\n=======\n    a();\n    if (x) {\n        b();\n    }\n>>>>>>> REPLACE\n=== END EDIT ===", nested, al, err);
+            auto deeper = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    a();\n    b();\n=======\n    a();\n    if (x) {\n        b();\n    }\n>>>>>>> REPLACE\n=== END EDIT ===", nested, al);
             CHECK(deeper && deeper->at("src/a.js") == "f() {\n        a();\n        if (x) {\n            b();\n        }\n}\n");
             const std::map<std::string, std::string> flat = {{"src/a.js", "f() {\n  a();\n}\n"}};
-            auto shallower = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n      a();\n=======\n      a();\n      if (x)\n          b();\n>>>>>>> REPLACE\n=== END EDIT ===", flat, al, err);
+            auto shallower = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n      a();\n=======\n      a();\n      if (x)\n          b();\n>>>>>>> REPLACE\n=== END EDIT ===", flat, al);
             CHECK(shallower && shallower->at("src/a.js") == "f() {\n  a();\n  if (x)\n      b();\n}\n");
             // A first line copied short names the whole line the file has.
-            CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (x) y();\n    w();\n=======\nz();\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "a\n    else if (x) y();\nb\n"}}, al, err) &&
-                  err.contains("line 2 of the file is `else if (x) y();`"));
+            CHECK(reasonOf(applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (x) y();\n    w();\n=======\nz();\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "a\n    else if (x) y();\nb\n"}}, al)).contains("line 2 of the file is `else if (x) y();`"));
         }
         {   // R-EDIT-4: the canvas reads a marked LINES edit the same way (tier 0 write-file: the markers were written into main.cpp and poisoned every later turn).
             const CanvasReply r = parseCanvasReply("=== EDIT: src/main.cpp LINES 67-68 ===\n    a();\n    b();\n=======\n    c();\n>>>>>>> REPLACE\n=== END EDIT ===\n");
@@ -158,11 +161,19 @@ int main()
         CHECK(replacementOfMarkedBlock("a\n>>>>>>> REPLACE in example\n") == "a\n>>>>>>> REPLACE in example\n");
         CHECK(replacementOfMarkedBlock("<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE\n") == "new\n");
         CHECK(replacementOfMarkedBlock("old\n=======\n>>>>>>> REPLACE\n").empty());   // an empty replacement deletes
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a * b;\n=======\n  return 0;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.contains("does not appear"));
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  \n=======\n  x\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "  a\n  b\n"}}, allowed, err) && err.contains("more than once"));
-        CHECK(!applyEdits("=== EDIT: ../evil.js ===\n<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.contains("not one of the files"));
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfoo\n=======\nbar\n=== END EDIT ===", files, allowed, err) && err.contains("not closed"));
-        CHECK(!applyEdits("no edits here", files, allowed, err) && err.contains("no edit blocks"));
+        CHECK(reasonOf(applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a * b;\n=======\n  return 0;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed)).contains("does not appear"));
+        CHECK(reasonOf(applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  \n=======\n  x\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "  a\n  b\n"}}, allowed)).contains("more than once"));
+        CHECK(reasonOf(applyEdits("=== EDIT: ../evil.js ===\n<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed)).contains("not one of the files"));
+        CHECK(reasonOf(applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfoo\n=======\nbar\n=== END EDIT ===", files, allowed)).contains("not closed"));
+        CHECK(reasonOf(applyEdits("no edits here", files, allowed)).contains("no edit blocks"));
+        {   // the reason is the error value itself, exact where the message is fixed
+            const auto none = applyEdits("no edits here", files, allowed);
+            CHECK(!none.has_value());
+            CHECK_EQ(none.error(), std::string{"the reply holds no edit blocks"});
+            CHECK(reasonOf(applyEdits("=== EDIT: src/a.js", files, allowed)).contains("no closing"));
+            CHECK(reasonOf(applyEdits("=== EDIT: src/c.js ===\n<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, {"src/c.js"})).contains("no earlier version"));
+            CHECK(reasonOf(applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed)).contains("empty SEARCH"));
+        }
     }
     return finish();
 }

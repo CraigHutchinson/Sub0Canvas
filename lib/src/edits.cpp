@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <expected>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -176,9 +177,9 @@ std::string replacementOfMarkedBlock(const std::string& body)
 }
 
 // Edits instead of whole files: `=== EDIT: path ===` holding one or more `<<<<<<< SEARCH` / `=======` / `>>>>>>> REPLACE` blocks, applied to the files of the
-// previous turn. Each SEARCH must match the current text exactly once. On success the result is the complete updated set of files; on failure `error`
+// previous turn. Each SEARCH must match the current text exactly once. On success the result is the complete updated set of files; on failure the error
 // says which edit did not apply, so the next turn can fix that or fall back to whole files.
-std::optional<std::map<std::string, std::string>> applyEdits(const std::string& reply, std::map<std::string, std::string> files, const std::set<std::string>& allowed, std::string& error)
+std::expected<std::map<std::string, std::string>, std::string> applyEdits(const std::string& reply, std::map<std::string, std::string> files, const std::set<std::string>& allowed)
 {
     std::size_t pos = 0;
     int applied = 0;
@@ -188,7 +189,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
         const auto start = reply.find("=== EDIT:", pos);
         if (start == std::string::npos) break;
         const auto nameEnd = reply.find("===", start + 9);
-        if (nameEnd == std::string::npos) { error = "an EDIT header has no closing ==="; return std::nullopt; }
+        if (nameEnd == std::string::npos) { return std::unexpected(std::string{"an EDIT header has no closing ==="}); }
         std::string path = reply.substr(start + 9, nameEnd - start - 9);
         path.erase(0, path.find_first_not_of(" \t"));
         path.erase(path.find_last_not_of(" \t\r\n") + 1);
@@ -199,12 +200,12 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
         pos = end;
         LineEdit le;
         const bool byLines = parseLineSpec(path, le);
-        if (!allowed.count(path)) { error = "'" + path + "' is not one of the files you may write"; return std::nullopt; }
+        if (!allowed.count(path)) { return std::unexpected(std::string{"'" + path + "' is not one of the files you may write"}); }
         auto it = files.find(path);
-        if (it == files.end()) { error = "there is no earlier version of '" + path + "' to edit: write the complete file"; return std::nullopt; }
+        if (it == files.end()) { return std::unexpected(std::string{"there is no earlier version of '" + path + "' to edit: write the complete file"}); }
         std::string& text = it->second;
-        if (byLines && searched.count(path)) { error = "'" + path + "' has both LINES and SEARCH edits: use one kind per file"; return std::nullopt; }
-        if (!byLines) { if (pending.count(path)) { error = "'" + path + "' has both LINES and SEARCH edits: use one kind per file"; return std::nullopt; } searched.insert(path); }
+        if (byLines && searched.count(path)) { return std::unexpected(std::string{"'" + path + "' has both LINES and SEARCH edits: use one kind per file"}); }
+        if (!byLines) { if (pending.count(path)) { return std::unexpected(std::string{"'" + path + "' has both LINES and SEARCH edits: use one kind per file"}); } searched.insert(path); }
         if (byLines) {   // collected now, applied together below against the numbering of the draft that was shown
             std::string repl = replacementOfMarkedBlock(body);
             if (!repl.empty() && repl.front() == '\n') repl.erase(0, 1);
@@ -221,7 +222,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
             const auto repAt = markerLine(body, ">>>>>>> REPLACE", s0);
             std::vector<std::size_t> seps;
             for (auto at = markerLine(body, "=======", s0); at != std::string::npos && at < repAt; at = markerLine(body, "=======", at + 1)) seps.push_back(at);
-            if (seps.empty() || repAt == std::string::npos) { error = "an edit block of '" + path + "' is not closed with ======= and >>>>>>> REPLACE"; return std::nullopt; }
+            if (seps.empty() || repAt == std::string::npos) { return std::unexpected(std::string{"an edit block of '" + path + "' is not closed with ======= and >>>>>>> REPLACE"}); }
             const auto searchFrom = body.find('\n', s0) + 1;
             // The file's own lines may include `=======` (a merge conflict being resolved, tier 0 merge-conflict): of the separators, the last whose
             // SEARCH text is in the file is the real one.
@@ -234,7 +235,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
             const std::size_t replFrom = body.find('\n', sepAt + 1) == std::string::npos ? repAt : body.find('\n', sepAt + 1) + 1;
             std::string repl = replFrom <= repAt ? body.substr(replFrom, repAt - replFrom) : std::string{};
             b = repAt + 1;
-            if (search.empty()) { error = "an edit of '" + path + "' has an empty SEARCH"; return std::nullopt; }
+            if (search.empty()) { return std::unexpected(std::string{"an edit of '" + path + "' has an empty SEARCH"}); }
             const std::string searchPlain = stripNumbers(search);
             auto at = text.contains(search) ? text.find(search) : text.find(searchPlain);
             if (searchPlain != search && !text.contains(search) && at != std::string::npos) search = searchPlain;
@@ -253,10 +254,10 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
                     ++applied;
                     continue;
                 }
-                if (loose.count > 1) { error = "the SEARCH text in '" + path + "' appears more than once (ignoring indentation): include more lines so it matches one place"; return std::nullopt; }
-                error = "the SEARCH text in '" + path + "' does not appear in the file (first line: " + search.substr(0, search.find('\n')).substr(0, 80) + ")" + loose.hint; return std::nullopt;
+                if (loose.count > 1) { return std::unexpected(std::string{"the SEARCH text in '" + path + "' appears more than once (ignoring indentation): include more lines so it matches one place"}); }
+                return std::unexpected(std::string{"the SEARCH text in '" + path + "' does not appear in the file (first line: " + search.substr(0, search.find('\n')).substr(0, 80) + ")" + loose.hint});
             }
-            if (text.find(search, at + 1) != std::string::npos) { error = "the SEARCH text in '" + path + "' appears more than once: include more lines so it matches one place"; return std::nullopt; }
+            if (text.find(search, at + 1) != std::string::npos) { return std::unexpected(std::string{"the SEARCH text in '" + path + "' appears more than once: include more lines so it matches one place"}); }
             text.replace(at, search.size(), repl);
             ++applied;
         }
@@ -271,9 +272,9 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
         std::size_t lastFrom = lines.size() + 2;
         for (const auto& e : edits) {
             const std::size_t lo = e.insertAfter ? e.from : e.from - (e.from ? 1 : 0), hi = e.insertAfter ? e.from : e.to;   // 0-based [lo, hi)
-            if (e.from == 0 && !e.insertAfter) { error = "a LINES edit of '" + path + "' names line 0: lines start at 1"; return std::nullopt; }
-            if (hi > lines.size() || hi < lo) { error = "a LINES edit of '" + path + "' names lines " + std::to_string(e.from) + "-" + std::to_string(e.to) + " but the draft has " + std::to_string(lines.size()) + " lines"; return std::nullopt; }
-            if (hi > lastFrom - 1 + (e.insertAfter ? 1 : 0) && !e.insertAfter) { error = "two LINES edits of '" + path + "' overlap"; return std::nullopt; }
+            if (e.from == 0 && !e.insertAfter) { return std::unexpected(std::string{"a LINES edit of '" + path + "' names line 0: lines start at 1"}); }
+            if (hi > lines.size() || hi < lo) { return std::unexpected(std::string{"a LINES edit of '" + path + "' names lines " + std::to_string(e.from) + "-" + std::to_string(e.to) + " but the draft has " + std::to_string(lines.size()) + " lines"}); }
+            if (hi > lastFrom - 1 + (e.insertAfter ? 1 : 0) && !e.insertAfter) { return std::unexpected(std::string{"two LINES edits of '" + path + "' overlap"}); }
             std::vector<std::string> repl;
             if (!e.text.empty()) { std::istringstream in(e.text); for (std::string l; std::getline(in, l);) repl.push_back(l); }
             lines.erase(lines.begin() + static_cast<long>(lo), lines.begin() + static_cast<long>(hi));
@@ -284,7 +285,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
         for (const auto& l : lines) joined += l + "\n";
         files[path] = joined;
     }
-    if (!applied) { error = "the reply holds no edit blocks"; return std::nullopt; }
+    if (!applied) { return std::unexpected(std::string{"the reply holds no edit blocks"}); }
     return files;
 }
 
