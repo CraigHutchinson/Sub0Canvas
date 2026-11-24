@@ -1,0 +1,245 @@
+{
+  "schema": "g1-truth-1",
+  "repository": "fixtures/git/tinycalc",
+  "how": "Written by hand from the plan in tools/git-fixture.mjs (STEPS, SIDE) and the BlockIndex rules of lib/include/sub0canvas/doc_layers.hpp (a signature match keeps an id, a unique name resigns it, a similar body renames it, a retired id comes back by signature, a retired block whose body lives in another block is merged into it), then checked against git itself: `git log -L :<function>:<file>` lists exactly the revisions that edited each function (clamp: c057 and c083 in its last two files; lerp: c066 and c130; average: c018, c042, c151 and c001; parseNumber: c070, c140 and c177; normalize: c001, c048, c110, c160 and c185, plus c100 where git's line range swallows the lines after the function, which the diff shows are only wrapAngle's), and `git log --first-parent -M -C --name-status` for the moves (c057 is a copy of 62% plus a smaller util.cpp, c092 and c121 are R100 renames, c110 a two-parent commit). Never generated from the code under test.",
+  "labels": "A commit is named by the label in its subject (c001 ... c200). An event is [label, carry, path, name, detail?]: `detail` is what BlockEvent.detail holds (the old name of a renamed block, the old signature of a re-signed one, the file a revived block was retired from, `edited` for a kept block whose text changed); a merged block names its survivor in `mergedInto` (its name at the head of the replay).",
+  "scenarios": [
+    {
+      "name": "src-head",
+      "note": "the five functions across all 200 first-parent commits, the scope the whole of src/",
+      "scope": ["src/"],
+      "revision": "c200",
+      "functions": [
+        {
+          "name": "clamp",
+          "events": [
+            ["c001", "added", "src/util.cpp", "clamp"],
+            ["c014", "kept", "src/util.cpp", "clamp", "edited"],
+            ["c031", "resigned", "src/util.cpp", "clamp", "double clamp(double value, double floorv, double ceilv)"],
+            ["c057", "retired", "src/util.cpp", "clamp"],
+            ["c057", "revived", "src/mathx.cpp", "clamp", "src/util.cpp"],
+            ["c083", "kept", "src/mathx.cpp", "clamp", "edited"],
+            ["c121", "retired", "src/mathx.cpp", "clamp"],
+            ["c121", "revived", "src/numeric.cpp", "clamp", "src/mathx.cpp"]
+          ]
+        },
+        {
+          "name": "lerp",
+          "events": [
+            ["c001", "added", "src/util.cpp", "lerp"],
+            ["c035", "retired", "src/util.cpp", "lerp"],
+            ["c066", "revived", "src/mathx.cpp", "lerp", "src/util.cpp"],
+            ["c121", "retired", "src/mathx.cpp", "lerp"],
+            ["c121", "revived", "src/numeric.cpp", "lerp", "src/mathx.cpp"],
+            ["c130", "kept", "src/numeric.cpp", "lerp", "edited"]
+          ]
+        },
+        {
+          "name": "average",
+          "events": [
+            ["c001", "added", "src/stats.cpp", "mean"],
+            ["c018", "renamed", "src/stats.cpp", "average", "mean"],
+            ["c042", "kept", "src/stats.cpp", "average", "edited"],
+            ["c092", "retired", "src/stats.cpp", "average"],
+            ["c092", "revived", "src/statistics.cpp", "average", "src/stats.cpp"],
+            ["c151", "resigned", "src/statistics.cpp", "average", "double average(const std::vector<double>& xs)"]
+          ]
+        },
+        {
+          "name": "parseNumber",
+          "events": [
+            ["c001", "added", "src/parse.cpp", "parseNumber"],
+            ["c022", "retired", "src/parse.cpp", "parseNumber"],
+            ["c070", "revived", "src/parse.cpp", "parseNumber", "src/parse.cpp"],
+            ["c140", "kept", "src/parse.cpp", "parseNumber", "edited"],
+            ["c177", "resigned", "src/parse.cpp", "parseNumber", "double parseNumber(const std::string& text)"]
+          ]
+        },
+        {
+          "name": "normalize",
+          "events": [
+            ["c001", "added", "src/geometry.cpp", "normalize"],
+            ["c048", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c100", "added", "src/geometry.cpp", "wrapAngle"],
+            ["c110", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c160", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "merged", "src/geometry.cpp", "wrapAngle", null, "normalize"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "src-at-c100",
+      "note": "the same scope asked at an earlier revision: only what had happened by then (a state replayed from a checkpoint, not the head's)",
+      "scope": ["src/"],
+      "revision": "c100",
+      "functions": [
+        {
+          "name": "clamp",
+          "events": [
+            ["c001", "added", "src/util.cpp", "clamp"],
+            ["c014", "kept", "src/util.cpp", "clamp", "edited"],
+            ["c031", "resigned", "src/util.cpp", "clamp", "double clamp(double value, double floorv, double ceilv)"],
+            ["c057", "retired", "src/util.cpp", "clamp"],
+            ["c057", "revived", "src/mathx.cpp", "clamp", "src/util.cpp"],
+            ["c083", "kept", "src/mathx.cpp", "clamp", "edited"]
+          ]
+        },
+        {
+          "name": "average",
+          "events": [
+            ["c001", "added", "src/stats.cpp", "mean"],
+            ["c018", "renamed", "src/stats.cpp", "average", "mean"],
+            ["c042", "kept", "src/stats.cpp", "average", "edited"],
+            ["c092", "retired", "src/stats.cpp", "average"],
+            ["c092", "revived", "src/statistics.cpp", "average", "src/stats.cpp"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "numeric-only",
+      "note": "one path as the scope: the replay follows the rename of c121 back to src/mathx.cpp (git log --follow), but the move out of util.cpp at c057 is a copy git does not follow, so each function begins where it entered the scope",
+      "scope": ["src/numeric.cpp"],
+      "revision": "c200",
+      "functions": [
+        {
+          "name": "clamp",
+          "events": [
+            ["c057", "added", "src/mathx.cpp", "clamp"],
+            ["c083", "kept", "src/mathx.cpp", "clamp", "edited"],
+            ["c121", "retired", "src/mathx.cpp", "clamp"],
+            ["c121", "revived", "src/numeric.cpp", "clamp", "src/mathx.cpp"]
+          ]
+        },
+        {
+          "name": "lerp",
+          "events": [
+            ["c066", "added", "src/mathx.cpp", "lerp"],
+            ["c121", "retired", "src/mathx.cpp", "lerp"],
+            ["c121", "revived", "src/numeric.cpp", "lerp", "src/mathx.cpp"],
+            ["c130", "kept", "src/numeric.cpp", "lerp", "edited"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "statistics-only",
+      "note": "one path as the scope, renamed at c092: the history is the same as the directory's, because the rename is followed back to src/stats.cpp",
+      "scope": ["src/statistics.cpp"],
+      "revision": "c200",
+      "functions": [
+        {
+          "name": "average",
+          "events": [
+            ["c001", "added", "src/stats.cpp", "mean"],
+            ["c018", "renamed", "src/stats.cpp", "average", "mean"],
+            ["c042", "kept", "src/stats.cpp", "average", "edited"],
+            ["c092", "retired", "src/stats.cpp", "average"],
+            ["c092", "revived", "src/statistics.cpp", "average", "src/stats.cpp"],
+            ["c151", "resigned", "src/statistics.cpp", "average", "double average(const std::vector<double>& xs)"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "geometry-only",
+      "note": "a path that holds a merge: c110 is one revision (the side branch's two commits are not on the first-parent line), and wrapAngle is folded into normalize at c185",
+      "scope": ["src/geometry.cpp"],
+      "revision": "c200",
+      "functions": [
+        {
+          "name": "normalize",
+          "events": [
+            ["c001", "added", "src/geometry.cpp", "normalize"],
+            ["c048", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c100", "added", "src/geometry.cpp", "wrapAngle"],
+            ["c110", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c160", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "merged", "src/geometry.cpp", "wrapAngle", null, "normalize"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "src-window-40",
+      "note": "only the last 40 revisions of src/ are replayed: everything that exists at the base (c097, the parent of the window) is `added` at the base, then the window's own events",
+      "scope": ["src/"],
+      "revision": "c200",
+      "maxRevisions": 40,
+      "functions": [
+        {
+          "name": "clamp",
+          "events": [
+            ["c097", "added", "src/mathx.cpp", "clamp"],
+            ["c121", "retired", "src/mathx.cpp", "clamp"],
+            ["c121", "revived", "src/numeric.cpp", "clamp", "src/mathx.cpp"]
+          ]
+        },
+        {
+          "name": "lerp",
+          "events": [
+            ["c097", "added", "src/mathx.cpp", "lerp"],
+            ["c121", "retired", "src/mathx.cpp", "lerp"],
+            ["c121", "revived", "src/numeric.cpp", "lerp", "src/mathx.cpp"],
+            ["c130", "kept", "src/numeric.cpp", "lerp", "edited"]
+          ]
+        },
+        {
+          "name": "average",
+          "events": [
+            ["c097", "added", "src/statistics.cpp", "average"],
+            ["c151", "resigned", "src/statistics.cpp", "average", "double average(const std::vector<double>& xs)"]
+          ]
+        },
+        {
+          "name": "parseNumber",
+          "events": [
+            ["c097", "added", "src/parse.cpp", "parseNumber"],
+            ["c140", "kept", "src/parse.cpp", "parseNumber", "edited"],
+            ["c177", "resigned", "src/parse.cpp", "parseNumber", "double parseNumber(const std::string& text)"]
+          ]
+        },
+        {
+          "name": "normalize",
+          "events": [
+            ["c097", "added", "src/geometry.cpp", "normalize"],
+            ["c100", "added", "src/geometry.cpp", "wrapAngle"],
+            ["c110", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c160", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "merged", "src/geometry.cpp", "wrapAngle", null, "normalize"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "src-shallow-25",
+      "note": "a shallow clone of depth 25 (git's own cut history, captured from a local clone): c176 is its oldest commit and looks like a root, every block is `added` there, and the replay says its history is cut",
+      "source": "shallow",
+      "scope": ["src/"],
+      "revision": "c200",
+      "historyCut": true,
+      "functions": [
+        {
+          "name": "parseNumber",
+          "events": [
+            ["c176", "added", "src/parse.cpp", "parseNumber"],
+            ["c177", "resigned", "src/parse.cpp", "parseNumber", "double parseNumber(const std::string& text)"]
+          ]
+        },
+        {
+          "name": "normalize",
+          "events": [
+            ["c176", "added", "src/geometry.cpp", "normalize"],
+            ["c176", "added", "src/geometry.cpp", "wrapAngle"],
+            ["c185", "kept", "src/geometry.cpp", "normalize", "edited"],
+            ["c185", "merged", "src/geometry.cpp", "wrapAngle", null, "normalize"]
+          ]
+        }
+      ]
+    }
+  ]
+}

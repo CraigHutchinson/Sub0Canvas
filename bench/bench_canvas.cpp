@@ -351,6 +351,8 @@ void metricsOf(sub0bench::BenchRunner& runner, const std::string& prefix, std::s
 
 }  // namespace
 
+void historyBenchmarks(sub0bench::BenchRunner& runner);   // bench_history.cpp
+
 int main(int argc, char** argv)
 {
     sub0bench::BenchRunner runner(argc, argv, "sub0canvas");
@@ -607,6 +609,8 @@ int main(int argc, char** argv)
         });
     }
     light();
+
+    historyBenchmarks(runner);   // bench_history.cpp (G1): the revision index
 
     return runner.finish();
 }

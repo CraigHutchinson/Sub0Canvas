@@ -34,7 +34,8 @@ endif()
 
 # The library: folded views and READ requests (outline), search/replace and line edits (edits), the revisioned canvas and its transactions (canvas),
 # stable block ids and layers (doc_layers).
-add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/blocks.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp)
+add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/blocks.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp
+            lib/src/git_plumbing.cpp lib/src/revision_index.cpp)
 add_library(sub0canvas::sub0canvas ALIAS sub0canvas)
 target_compile_features(sub0canvas PUBLIC cxx_std_23)
 target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/src)
@@ -44,7 +45,7 @@ target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 # The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
 option(SUB0CANVAS_BUILD_APP "Build the sub0canvas command line" ${SUB0CANVAS_TOP_LEVEL})
 if(SUB0CANVAS_BUILD_APP)
-  add_executable(sub0canvas_app app/sub0canvas.cpp)
+  add_executable(sub0canvas_app app/sub0canvas.cpp app/git_source.cpp app/history.cpp)
   set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
   target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
   target_include_directories(sub0canvas_app PRIVATE lib/src)     # json_util.hpp: one JSON writer for the library and its tools
@@ -91,7 +92,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
-  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp METRICS perf/metrics.json SMOKE_TEST)
+  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)
@@ -120,7 +121,7 @@ if(SUB0CANVAS_BUILD_TESTING)
       SOURCE_SUBDIR cpp)
   endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
-  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control)
+  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control test_revision_index)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
@@ -130,6 +131,8 @@ if(SUB0CANVAS_BUILD_TESTING)
       set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)    # real producer output
     elseif(name STREQUAL "test_replies")
       set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/replies)   # recorded reply shapes
+    elseif(name STREQUAL "test_revision_index")
+      set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)           # captured git plumbing (fixtures/git) and its hand-checked truth (fixtures/scenarios/g1-tinycalc)
     endif()
     add_test(NAME ${name} COMMAND ${name} ${args})
   endforeach()

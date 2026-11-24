@@ -11,6 +11,7 @@
 #include <sub0canvas/content_id.hpp>
 #include <sub0canvas/doc_layers.hpp>
 
+#include "git_source.hpp"
 #include "json_util.hpp"
 
 #include <algorithm>
@@ -288,12 +289,15 @@ Options parse(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2 || std::string(argv[1]) != "snapshot") {
+    const std::string command = argc < 2 ? std::string{} : argv[1];
+    if (command != "snapshot" && command != "history") {
         eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--texts by-id|inline] [--] PATHSPEC...");
+        eprintln("       sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks] [--] PATH...");
         return 2;
     }
 #ifdef _WIN32
-    _setmode(_fileno(stdout), _O_BINARY);   // the bundle is bytes: no CRLF translation
+    _setmode(_fileno(stdout), _O_BINARY);   // the output is bytes: no CRLF translation
 #endif
+    if (command == "history") return sub0canvas::app::historyCommand(argc, argv);
     return snapshot(parse(argc, argv));
 }

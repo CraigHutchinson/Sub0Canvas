@@ -53,7 +53,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Then: phase 3, history and scale
 
-* **G1: the git document adapter and per-path history** (after D0; A20, A21). Brief: [sessions/g1-git-history.md](sessions/g1-git-history.md).
+* **G1: the git document adapter and per-path history: done** (2026-11-24; A20, A21; outcome in [sessions/g1-git-history.md](sessions/g1-git-history.md)): `DocumentSource`, `RevisionIndex`, `GitSource`, `sub0canvas history`,
+  checked on an invented 200-commit repository against hand-checked truth. **Left**: the truth on real histories (S3: the brief's five functions of a sibling project, the Linux kernel; the owner approves
+  each download), persisted checkpoints (B1: `BlockIndex` has no reader), a stopping revision on `history` so extending a line does not re-read it, branch-to-main `carry` (P0, with `mergeBase`).
 * **S1: the compact, lazy index** (after S0's numbers): blocks keyed by id and by blob (`BlockIndex::resolve` scans every live block today, which
   made a per-event lookup quadratic at 200,000 blocks, SCALE.md section 6.1), birth ids (A16), no texts held.
 * **D1: the conformance corpus** per language, hand-checked outlines.

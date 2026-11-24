@@ -177,6 +177,24 @@ In the browser, served from git by `tools/serve.mjs` (1 turn):
 
 The design that follows is [AUTHORING.md](AUTHORING.md) section 3.1; the slice is V1a (section 7 there).
 
+### 6.2 Measured: the revision index (G1, 2026-11-24)
+
+`RevisionIndex` (per-scope first-parent replay, checkpoints every 50 revisions) on the synthetic stream of S0's corpus: 200 commits over 2e4 lines (58 files, 507 changed paths), no git, one machine (baseline `croglegion`, Windows 11,
+MinGW-w64 GCC 16.2, Release, interleaved rounds, noise 0.4% to 1.3%; the timing rows are new and not yet in the baseline file). Deterministic facts gate in every tier (`perf/metrics.json`, `history ...` keys).
+
+| what | result | against the budget |
+|---|---|---|
+| a 200-commit replay including the baseline (a cold build of the 58 files) | 551 ms: 2.75 ms per commit | the brief's 30 s: met by 50 times |
+| the same, cost per commit | **one `BlockIndex::update` per path changed**: 507 updates for 507 changed paths (493 texts read, the rest deletions) | R-SCALE-1: exact metric |
+| a scope of five files over the same 200 commits | 66 commits replayed (those that touched it), 70 updates and 70 texts read, 12 ms: 0.18 ms per commit | R-SCALE-9: no revision outside the scope is replayed or read |
+| a question about revision 125, with a checkpoint at 100 | 26 commits replayed (not 126), 69 ms, most of it copying the checkpoint's index | checkpoints bound a replay |
+
+On real local repositories through git (`sub0canvas history`, Windows, one run each, so read to about 20%; the repositories are described by shape only): a small project (71 first-parent commits, a directory scope that 11 of
+them touched) took 0.73 s over 9 git processes; a larger C++ project (291 first-parent commits, its source directory as the scope, 142 revisions changed it, 775 updates, 745 texts read in 3 batches) took 4.9 s over 47 git
+processes, of which 40 were whole-diff queries asked because a file was added in the scope (the rename chase). About 30 revisions a second end to end: on Windows the process count, not the replay, is the cost
+(about 0.1 s per git process), and the next gain is fewer processes (a long-lived `cat-file --batch`, a stopping revision, batching the added-file diffs), not a faster index. Not measured: memory (the index holds every
+text and a copy per checkpoint until S1), a partial clone's cost, a repository of 10^5 commits (S3).
+
 ## 7. Proving at scale
 
 | rung | data | what it proves |
