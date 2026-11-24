@@ -110,12 +110,31 @@ std::string plainStatement(BodyCtx& c, const std::string& ind)
     static constexpr std::array<const char*, 4> kTypes = {"int", "double", "auto", "std::size_t"};
     const std::string x = c.var(), y = c.var(), z = c.var();
     const std::size_t pick = c.r.below(100);
-    if (pick < 30) return std::format("{}{}{} = {} {} {}{}", ind, c.py ? "" : std::string(kTypes[c.r.below(4)]) + " ", x, y, kOps[c.r.below(5)], c.num(), c.py ? "" : ";");
-    if (pick < 50) return std::format("{}{} = {}({}, {}){}", ind, x, c.call(), y, z, c.py ? "" : ";");
-    if (pick < 62) return std::format("{}{} += {} * {}{}", ind, x, y, c.num(), c.py ? "" : ";");
-    if (pick < 72) return std::format("{}{}{} = \"{} {}\"{}", ind, c.py ? "" : "auto ", x, c.lits[c.r.below(c.lits.size())], c.lits[c.r.below(c.lits.size())], c.py ? "" : ";");
-    if (pick < 84) return std::format("{}{}({}, {}){}", ind, c.call(), x, c.num(), c.py ? "" : ";");
-    if (pick < 92) return std::format("{}{} {} {} {}", ind, c.py ? "#" : "//", c.lits[c.r.below(c.lits.size())], x, c.lits[c.r.below(c.lits.size())]);
+    // Every draw from the generator is its own statement, in the order the output has always had (the last argument first): the order in which a call's arguments are
+    // evaluated is unspecified, and gcc and clang differ, which made the corpus (so every byte metric built on it) depend on the compiler.
+    if (pick < 30) {
+        const std::string number = c.num();
+        const char* op = kOps[c.r.below(5)];
+        const std::string type = c.py ? "" : std::string(kTypes[c.r.below(4)]) + " ";
+        return std::format("{}{}{} = {} {} {}{}", ind, type, x, y, op, number, c.py ? "" : ";");
+    }
+    if (pick < 50) return std::format("{}{} = {}({}, {}){}", ind, x, c.call(), y, z, c.py ? "" : ";");   // one draw
+    if (pick < 62) return std::format("{}{} += {} * {}{}", ind, x, y, c.num(), c.py ? "" : ";");   // one draw
+    if (pick < 72) {
+        const std::string& second = c.lits[c.r.below(c.lits.size())];
+        const std::string& first = c.lits[c.r.below(c.lits.size())];
+        return std::format("{}{}{} = \"{} {}\"{}", ind, c.py ? "" : "auto ", x, first, second, c.py ? "" : ";");
+    }
+    if (pick < 84) {
+        const std::string number = c.num();
+        const std::string& callee = c.call();
+        return std::format("{}{}({}, {}){}", ind, callee, x, number, c.py ? "" : ";");
+    }
+    if (pick < 92) {
+        const std::string& last = c.lits[c.r.below(c.lits.size())];
+        const std::string& first = c.lits[c.r.below(c.lits.size())];
+        return std::format("{}{} {} {} {}", ind, c.py ? "#" : "//", first, x, last);
+    }
     return c.py ? std::format("{}{}.append({})", ind, x, y) : std::format("{}{}.push_back({});", ind, x, y);
 }
 
@@ -237,8 +256,19 @@ CodeFile makeCodeFile(Rng& r, Language lang, bool header, std::uint64_t uidSalt)
     const FilePool pool = makePool(r, py);
     if (py)
     {
-        for (std::size_t i = 0, n = r.range(1, 4); i < n; ++i) file.preamble.push_back(i % 2 ? std::format("from {} import {}", word(r.skewed(kVocabulary)), word(r.skewed(kVocabulary))) : "import " + word(r.skewed(kVocabulary)));
-        for (std::size_t i = 0, n = r.below(3); i < n; ++i) file.preamble.push_back(std::format("{}_LIMIT = {}", capital(word(r.skewed(kVocabulary))), r.below(1000)));
+        for (std::size_t i = 0, n = r.range(1, 4); i < n; ++i) {
+            if (i % 2) {
+                const std::string imported = word(r.skewed(kVocabulary));
+                const std::string module = word(r.skewed(kVocabulary));
+                file.preamble.push_back(std::format("from {} import {}", module, imported));
+            } else {
+                file.preamble.push_back("import " + word(r.skewed(kVocabulary)));
+            }
+        }
+        for (std::size_t i = 0, n = r.below(3); i < n; ++i) {
+            const std::size_t limit = r.below(1000);
+            file.preamble.push_back(std::format("{}_LIMIT = {}", capital(word(r.skewed(kVocabulary))), limit));
+        }
     }
     else
     {
@@ -250,7 +280,10 @@ CodeFile makeCodeFile(Rng& r, Language lang, bool header, std::uint64_t uidSalt)
         for (const std::size_t i : chosen) file.preamble.push_back(std::string("#include ") + kIncludes[i]);
         file.preamble.push_back("");
         file.preamble.push_back(std::format("namespace {} {{", ns));
-        for (std::size_t i = 0, n = r.below(3); i < n; ++i) file.preamble.push_back(std::format("constexpr int k{} = {};", capital(word(r.skewed(kVocabulary))), r.below(1000)));
+        for (std::size_t i = 0, n = r.below(3); i < n; ++i) {
+            const std::size_t value = r.below(1000);
+            file.preamble.push_back(std::format("constexpr int k{} = {};", capital(word(r.skewed(kVocabulary))), value));
+        }
         file.epilogue = {"", std::format("}}  // namespace {}", ns)};
     }
     const std::size_t count = functionCount(r);
@@ -271,7 +304,10 @@ CodeFile makeCodeFile(Rng& r, Language lang, bool header, std::uint64_t uidSalt)
 std::string makeSidecar(Rng& r, const char* importer)
 {
     std::string t = std::format("fileFormatVersion: 2\nguid: {}\n{}Importer:\n  externalObjects: {{}}\n  serializedVersion: {}\n", hex(r, 32), importer, r.range(5, 12));
-    for (std::size_t i = 0, n = r.range(3, 8); i < n; ++i) t += std::format("  {}: {}\n", word(r.skewed(kVocabulary)), r.below(8));
+    for (std::size_t i = 0, n = r.range(3, 8); i < n; ++i) {
+        const std::size_t value = r.below(8);
+        t += std::format("  {}: {}\n", word(r.skewed(kVocabulary)), value);
+    }
     t += "  userData: \n  assetBundleName: \n  assetBundleVariant: \n";
     return t;
 }
@@ -293,7 +329,13 @@ std::string makeSerialised(Rng& r)
     std::string t = "%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n";
     for (std::size_t i = 0, n = r.range(5, 80); i < n; ++i)
     {
-        t += std::format("--- !u!{} &{}\nGameObject:\n  m_ObjectHideFlags: 0\n  m_Name: {}\n  m_IsActive: {}\n  m_Components:\n", r.range(1, 200), r.range(100, 99999), word(r.skewed(kVocabulary)), r.below(2));
+        {
+            const std::size_t active = r.below(2);
+            const std::string name = word(r.skewed(kVocabulary));
+            const std::size_t fileId = r.range(100, 99999);
+            const std::size_t classId = r.range(1, 200);
+            t += std::format("--- !u!{} &{}\nGameObject:\n  m_ObjectHideFlags: 0\n  m_Name: {}\n  m_IsActive: {}\n  m_Components:\n", classId, fileId, name, active);
+        }
         for (std::size_t k = 0, m = r.range(1, 3); k < m; ++k) t += std::format("  - component: {{fileID: {}}}\n", r.range(100, 99999));
     }
     return t;
@@ -317,7 +359,11 @@ std::string makeMarkdown(Rng& r)
     {
         const std::size_t p = r.below(100);
         if (p < 15) t += "## " + capital(word(r.skewed(kVocabulary))) + "\n\n";
-        else if (p < 45) { for (std::size_t k = 0, m = r.range(2, 5); k < m; ++k) t += "* " + word(r.skewed(kVocabulary)) + " " + word(r.skewed(kVocabulary)) + "\n"; t += '\n'; }
+        else if (p < 45) { for (std::size_t k = 0, m = r.range(2, 5); k < m; ++k) {
+                const std::string second = word(r.skewed(kVocabulary));
+                const std::string first = word(r.skewed(kVocabulary));
+                t += "* " + first + " " + second + "\n";
+            } t += '\n'; }
         else { for (std::size_t w = 0, m = r.range(12, 40); w < m; ++w) t += (w ? " " : "") + word(r.skewed(kVocabulary)); t += "\n\n"; }
     }
     return t;
@@ -548,7 +594,9 @@ struct EditStream::Impl
     {
         std::vector<std::string> ids = identifiersOf(f);
         if (ids.size() < 2) ids = {word(r.skewed(kVocabulary)), word(r.skewed(kVocabulary))};
-        return std::format("{} = {} + {}{}", ids[r.below(ids.size())], ids[r.below(ids.size())], 1000 + ++counter, py ? "" : ";");
+        const std::string& right = ids[r.below(ids.size())];
+        const std::string& left = ids[r.below(ids.size())];
+        return std::format("{} = {} + {}{}", left, right, 1000 + ++counter, py ? "" : ";");
     }
     /// Change the body without changing its structure: one standalone statement replaced, or one inserted at the top when there is none.
     void touchBody(Function& f, bool py)
