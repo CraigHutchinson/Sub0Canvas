@@ -278,6 +278,21 @@ std::string checkStoreTransparent(const Scenario& sc, const Attempt& a)
     return {};
 }
 
+/// Where two texts first differ: the byte offset and a window of each side, so a platform-dependent difference can be read from a CI log.
+std::string firstDifference(const std::string& stored, const std::string& actual)
+{
+    std::size_t i = 0;
+    while (i < stored.size() && i < actual.size() && stored[i] == actual[i]) ++i;
+    const std::size_t from = i > 60 ? i - 60 : 0;
+    auto window = [&](const std::string& t) {
+        std::string w = t.substr(from, 140);
+        for (char& ch : w) if (ch == '\n') ch = '|';
+        return w;
+    };
+    return "first difference at byte " + std::to_string(i) + " (stored " + std::to_string(stored.size()) + " B, actual " + std::to_string(actual.size()) +
+           " B)\n    stored: " + window(stored) + "\n    actual: " + window(actual);
+}
+
 /// "" when the persisted attempt equals the files under `dir`, both ways.
 std::string checkRecord(const Attempt& a, const fs::path& dir)
 {
@@ -286,7 +301,7 @@ std::string checkRecord(const Attempt& a, const fs::path& dir)
     for (const auto& [rel, bytes] : a.record) {
         const auto it = stored.find(rel);
         if (it == stored.end()) return "'" + rel + "' is not in the stored attempt";
-        if (it->second != bytes) return "'" + rel + "' differs from the stored attempt";
+        if (it->second != bytes) return "'" + rel + "' differs from the stored attempt: " + firstDifference(it->second, bytes);
     }
     for (const auto& [rel, bytes] : stored)
         if (!a.record.count(rel)) return "'" + rel + "' is stored but the loop no longer writes it";
