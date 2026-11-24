@@ -84,18 +84,18 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
   CPMAddPackage(NAME Sub0Perf
     GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Perf.git
-    GIT_TAG 10466f81d87d878fdaf6b6523760d3ae3f97ba09
+    GIT_TAG 3518ede774aacd0b42e8669bbddb222e2b9d319b
     DOWNLOAD_ONLY YES)
-  # No benchmark run after every build (run the targets deliberately). The pre-push gate follows Sub0Perf's default (SUB0MATH_PERF_GIT_HOOKS=AUTO): installed
-  # only from the main checkout, where this machine has a committed baseline (perf/baselines/<host>.json; SUB0MATH_PERF_HOST names another host), never on CI.
-  set(SUB0MATH_PERF_ON_BUILD "OFF" CACHE STRING "")
+  # No benchmark run after every build (run the targets deliberately). The pre-push gate follows Sub0Perf's default (SUB0PERF_GIT_HOOKS=AUTO): installed
+  # only from the main checkout, where this machine has a committed baseline (perf/baselines/<host>.json; SUB0PERF_HOST names another host), never on CI.
+  set(SUB0PERF_ON_BUILD "OFF" CACHE STRING "")
   option(SUB0CANVAS_PERF_GATE "Install the pre-push performance gate where this machine has a committed baseline" ON)
   if(NOT SUB0CANVAS_PERF_GATE)
-    set(SUB0MATH_PERF_GIT_HOOKS OFF)
+    set(SUB0PERF_GIT_HOOKS OFF)
   endif()
   include("${Sub0Perf_SOURCE_DIR}/cmake/Sub0Perf.cmake")
 
-  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp bench/bench_resolver.cpp bench/bench_query.cpp bench/bench_session.cpp METRICS perf/metrics.json SMOKE_TEST)
+  sub0perf_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp bench/bench_resolver.cpp bench/bench_query.cpp bench/bench_session.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)
@@ -105,7 +105,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     target_link_options(Sub0Canvas_Bench PRIVATE -static-libstdc++ -static-libgcc)
   endif()
   # The timing run as a test, for `ctest --preset timing` (local only: label timing, which the quick and full presets exclude): interleaved rounds, then the
-  # judgement against perf/baselines/<host>.json. `_smoke` and `_metrics` (label smoke) are registered by sub0math_add_benchmark.
+  # judgement against perf/baselines/<host>.json. `_smoke` and `_metrics` (label smoke) are registered by sub0perf_add_benchmark.
   if(SUB0CANVAS_BUILD_TESTING AND TARGET Sub0Canvas_Bench_check)
     add_test(NAME Sub0Canvas_Bench_timing COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target Sub0Canvas_Bench_check)
     set_tests_properties(Sub0Canvas_Bench_timing PROPERTIES LABELS timing TIMEOUT 3600 RUN_SERIAL TRUE)
