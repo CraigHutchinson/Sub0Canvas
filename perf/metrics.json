@@ -110,7 +110,18 @@
     "store lean replay 1e5: live heap bytes": {"kind": "max", "limit": 15008940, "unit": "B"},
     "store lean replay 1e5: live heap bytes per item": {"kind": "max", "limit": 1500.894, "unit": "B/item"},
     "store checkpoint 1e5: restored equals the live snapshot": {"kind": "exact", "expected": 1, "unit": "bool"},
-    "store checkpoint 1e5: bytes per item": {"kind": "max", "limit": 779.9471, "unit": "B/item"}
+    "store checkpoint 1e5: bytes per item": {"kind": "max", "limit": 779.9471, "unit": "B/item"},
+    "resolver 2e3 anchors at 1e5 lines: anchors": {"kind": "exact", "expected": 2000, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: resolved": {"kind": "exact", "expected": 1965, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: moved": {"kind": "exact", "expected": 13, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: orphaned": {"kind": "exact", "expected": 22, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: resolved at a place that does not hold the quote": {"kind": "exact", "expected": 0, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: editable": {"kind": "exact", "expected": 1965, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: candidates examined, most in one resolution": {"kind": "max", "limit": 150, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: candidates examined in all": {"kind": "max", "limit": 2500, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: fuzzy windows scored in all": {"kind": "max", "limit": 500, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: files prepared": {"kind": "max", "limit": 230, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: allocations per resolve": {"kind": "max", "limit": 6, "unit": "n"}
   },
   "accepted": [
     {

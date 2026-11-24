@@ -66,7 +66,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
   coverage. Checked also on the owner's private reference topic, numbers only.
 * **B3 claims and notes: built** (2026-11-24, `claims.hpp`; BACKBONE 3.5 as built). Left for MS4: the two-actor mock scenarios (B8, B14) as claim tests, and Sub0Squad's fork executor taking write claims per section.
 * **B2 inboxes: library half done** (2026-11-24, `inbox.hpp`; BACKBONE.md 3.4 "As built"). **Left**: Sub0Squad's verdict through the store (the A/B over recorded replies, 0 changed bytes, R-BB-5's squad half), per-writer cursors when writers merge (V1), a stable item order across layer moves.
-* **B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
+* **B4 source anchors and the resolver: built** (2026-11-24, `anchor.hpp`, `resolver.hpp`; BACKBONE.md 5.1 "As built (B4)"). **Left**: name anchors (a block not yet written), the production edit protocol that binds an `editable` result to its base revision, SARIF and GitHub range conversion (G2), real Sub0Squad diagnostics as the anchor corpus (the receiving slice of [sessions/canvas-source-addressing.md](sessions/canvas-source-addressing.md)), a block-level content hash beside the context pair.
 
 ## Any time
 

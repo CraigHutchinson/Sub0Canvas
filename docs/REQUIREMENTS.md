@@ -218,8 +218,8 @@ its slice is built.
 
 | id | requirement | serves | slice |
 |---|---|---|---|
-| R-SRC-1 | Adapters never compute identities; they give source anchors (revision, path, range, quote), and one resolver maps every source's anchors by the same rules. | U3 | B4 |
-| R-SRC-2 | An anchor that cannot be resolved is shown outdated, never silently moved. | U3, U6 | B4 |
+| R-SRC-1 | Adapters never compute identities; they give source anchors (revision, path, range, quote), and one resolver maps every source's anchors by the same rules. | U3 | B4, built: `test_resolver` (31 mock-attempt anchors and 24 edit-stream anchors, through a canvas document and, outcome for outcome the same, through the `RevisionIndex` over a `DocumentSource`) |
+| R-SRC-2 | An anchor that cannot be resolved is shown outdated, never silently moved. | U3, U6 | B4, built: `test_resolver` (`resolved` only for the exact quote, once, in its unchanged block with its context intact; equal quotes, whitespace edits, similar text, a block left alone, a moved file are `moved` with a confidence and a reason, never `resolved`; a deleted block is `orphaned`; two mutations of the checks fail it), `Sub0Canvas_Bench_metrics` (2,000 anchors at 1e5 lines: 0 resolved at a place that does not hold the quote) |
 | R-SRC-3 | A block's identity history follows it across a repository's commits, renames and moves, checked against hand-checked truth. | U3, U4 | G1: built (`test_revision_index`, `test/history.test.js`; truth in `fixtures/scenarios/g1-tinycalc`, an invented repository; real histories wait for S3) |
 | R-SRC-4 | Two pending changes (PRs) touching one block are reported as a conflict before either merges. | U3 | G1, G2 |
 | R-SRC-5 | Revision ids are opaque strings; a canvas's numbered revisions are one kind among others. | U1, U3 | B0 (A1): written (`revisionId`), read; G1: a `Canvas` as a second `DocumentSource` (test adapter), the same index over both |
@@ -272,7 +272,7 @@ its slice is built.
 |---|---|---|---|
 | R-AUTH-1 | Every view is bounded by attention, not data: it takes a scope and a budget and returns a summary with counts, the first few in full, and cursors for the rest; nothing loads a whole log or history. | U7, U4, U2 | V0-V2 |
 | R-AUTH-2 | Opening the tool shows what needs the reader (their inbox, changes since they last looked); history is a drill-down. | U7 | V2 |
-| R-AUTH-3 | A comment is anchored to a block and to the selected text; after edits it stays on the right text or is shown outdated, never moved silently. | U7, U6 | V1, V3 |
+| R-AUTH-3 | A comment is anchored to a block and to the selected text; after edits it stays on the right text or is shown outdated, never moved silently. | U7, U6 | V1, V3; the resolver half is B4, built (`test_resolver`: whitespace, similar text and a rewritten block are flagged, the context pair tells equal quotes apart) |
 | R-AUTH-4 | A thread is items linked to the comment; addressing (`done`) and accepting (`verified`) are state changes that name their actor and reason. | U7, U6 | V1 |
 | R-AUTH-5 | An agent reads its inbox and replies through the same commands a person's page uses; no agent-specific mechanism. | U7, U2 | V2 |
 | R-AUTH-6 | Saving from the page is a transaction against the revision shown: a concurrent edit is rebased or refused, never overwritten. | U7, U6 | V3 |

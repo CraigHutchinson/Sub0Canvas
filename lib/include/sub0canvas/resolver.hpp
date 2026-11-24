@@ -105,7 +105,7 @@ struct ResolvePolicy
     double duplicateConfidence = 0.5;        ///< equal quotes, none told apart: the nearest to the old line is reported
     double fileQuoteConfidence = 0.7;        ///< found by quote alone in the file (the quote left its block, or no identity); also the cap of a fuzzy match then
     double fuzzyMin = 0.6;                   ///< the least similarity (0-1) reported; below it the text counts as gone
-    double fuzzyCap = 0.85;                  ///< the most confidence a similar text earns inside its block
+    double fuzzyCap = 0.75;                  ///< the most confidence a similar text earns inside its block
     double fuzzyMargin = 0.05;               ///< a second, separate place within this of the best makes the match ambiguous (confidence halved)
     std::size_t fuzzyMinChars = 8;           ///< quotes with fewer non-blank characters are never matched fuzzily (too little evidence)
     std::size_t fuzzyWindowBudget = 4000;    ///< the most windows scored per resolution
