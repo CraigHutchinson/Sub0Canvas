@@ -82,6 +82,18 @@ scope and every owner question it raised; its section 6 is the ordered plan (W0-
 
 **Not blocking**: phase 1 below needs none of O2-O13. It is groundwork every arm needs, so it starts now and the answers shape phase 2.
 
+### 3.2 Judgment calls on the remaining open items (2026-11-24, made at the owner's instruction: decide, keep the seams open)
+
+| item | call | seam that keeps it revisable |
+|---|---|---|
+| HTTP stack for `serve` and the portal | native HTTP/1.1 plus server-sent events on Sub0Platform's `net` (the review's D10: lift the squad's portal server and the engine client into Fabric's transport); no TLS or HTTP/2 in the first version | the transport only calls `QueryServer::handle`; Boost.Beast stays a possible second implementation behind the same front and client interfaces, chosen by measurement later |
+| Canvas core and Sub0Fabric | the Canvas core never links Fabric; Fabric defines record framing over opaque payloads and proves the Canvas event envelope as a second record shape in its own tests (a test-only dependency on Canvas); `app/` wires a Fabric store to the core's `Log` interface | `Log` / `EventSource` in `event.hpp` |
+| Fixture regeneration (S1's ids, `index.outliners`) | approved as one deliberate batch per slice: hand-reviewed diff of every changed line, the changed deterministic metrics accepted through the metrics tooling with a reason, nothing regenerated silently | the golden replay and the mock attempts are the check |
+| `sub0perf` in its own repository | not yet: it stays in Sub0Math with `tools/perf` self-contained, so a split is mechanical when a non-math consumer finds the coupling costly | one directory, one CMake include |
+| Views: the six open questions | decided in [VIEWS.md](VIEWS.md) section 6; sessions and server-side containment of many users are the foundation (section 7), presence and peer patches planned for later | `ViewStore`, `ScratchLayer`, `SessionPolicy`, `PresenceProvider`, `ConflictView`, `Compactor` |
+| Release | v0.4.0 (the B0 format, store, inbox, claims, history, resolver and query layer) after the Linux clang failure (issue 4) is fixed; the full tier must be green on the tag | issue 4 |
+| Sub0Fabric | repository created (public); the first push after the owner reviews the scaffold | |
+
 ## 4. The phases
 
 ```

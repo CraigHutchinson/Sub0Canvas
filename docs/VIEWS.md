@@ -119,11 +119,40 @@ edit size); `compacted` tokens relative to `full` on the S0 edit stream; events 
 read at an old position under 10 ms with checkpoints (SCALE.md budgets); advance with rebase plus re-anchoring of 2,000 anchors inside the resolver's
 existing 10 ms budget; channel event to painted patch inside K0's 50 ms row.
 
-## 6. Open questions for the owner
+## 6. Decisions on the open questions (2026-11-24, by judgment; the owner may revise any)
 
-1. Is the canvas pin a single revision for every file (today's `baseRevision`) or a per-path revision set, which a fork's manifest needs anyway?
-2. Should a pinned view see its own pending edits in reads (scratch overlay), or only its base until advance? The brief implies the overlay.
-3. Does `compacted` merge by block identity only, or also fold item events across layers into one delta?
-4. Is `since` allowed to be pushed as a single "you are stale" flag (no content), or strictly pull, as written here?
-5. Do views persist across process restarts (events in the log, like subscriptions) or live in per-reader state (A17's user state directory)?
-6. Does advance stop on the first refusal or land what it can (as `applyReply`'s partial mode does) and report the rest?
+Each decision names its extension point, so a later change is a policy or an implementation behind a seam, not a rewrite.
+
+1. **The pin is a revision set, defaulting to one revision.** `Pin{base, overrides}`: `base` is the revision every path is read at; `overrides` maps a path to another revision
+   (empty today). Today's `baseRevision` is the `base`; a fork's manifest uses `overrides` without a format change. *Extension:* `overrides` is optional in the schema.
+2. **A pinned view reads its own pending edits (a scratch overlay), labelled.** Reads return base plus the session's uncommitted edits, each overlaid region marked; `overlay=off` returns the
+   pure base. *Extension:* the overlay is a `ScratchLayer` interface; the first implementation is the session's own edit list.
+3. **`compacted` merges by block identity only.** Cross-layer folding of item events is a policy field (`compact.by = block | block+item`), default `block`. *Extension:* a data policy.
+4. **`since` is pull by default.** A view option `notify = none | flag` may deliver a content-free "you are stale" flag on the session channel; the default is `none`, and a pinned view never
+   receives content unasked. *Extension:* the option exists in the schema from the start, the `flag` delivery can arrive with sessions.
+5. **Views persist as part of a session** (section 7). A session's views are events in the per-writer log (durable, replayable, like subscriptions) in server mode; a single-user local run may
+   keep them in the user state directory. *Extension:* a `ViewStore` interface with the log-backed store first; the user-directory store is a second implementation proving the seam.
+6. **Advance lands what it can and reports the rest** (as `applyReply`'s partial mode does), per operation; `atomic` stops at the first refusal and applies nothing. *Extension:* the mode is a
+   request option; the report shape (applied, refused with holder and revision, moved anchors) is the same either way.
+
+## 7. Sessions and server-side containment of many users
+
+A client does not hold views directly: it holds a **session**, and the server contains many sessions. This is the foundation; the multi-user features that sit on it can arrive later
+without changing it.
+
+* **Session**: `{id, actor (a WriterId), views[], pending edits, presence, created, last seen, limits}`. Everything a client does (open a view, pin, advance, edit, subscribe) is a request
+  inside a session; a session is resumable by id after a disconnect and expires by policy.
+* **Containment**: the server (the `serve` process, behind the query protocol's transport) owns a **workspace** of sessions. A session sees other sessions' *published* state (committed
+  events, claims, notes) and never their pending edits or pinned overlays; per-session and per-actor quotas (views, pending bytes, subscription count) are a data policy. The transport supplies the
+  identity (the actor) and a capability list; the library never authenticates.
+* **Persistence**: durable session state is events in the actor's own log segment (section 6, decision 5); ephemeral state (presence) is never logged durably.
+* **Presence and peer patches (planned, not in the first version)**: when several sessions view the same region, each view may ask to see **peers**: other active edit cursors and their
+  in-flight patches, shown as overlays and coalesced like the live channel (section 4). Presence is an ephemeral event kind (`presence@1`: view, range, optional pending patch,
+  time-to-live) carried on the unpinned channel only; two overlapping pending patches are shown as a conflict view before either commits, and a soft claim (presence) can be promoted to a hard
+  claim (B3) by a policy. Pinned views see peers only when they opt in, because peers change what the view means.
+* **First version**: sessions with their views, isolation and quotas, durable view state, per-session cursors, and `since`; no presence, no peer patches.
+* **Extension points** (each an interface with one implementation first): `ViewStore` (where views persist), `ScratchLayer` (the overlay), `SessionPolicy` (quotas, expiry, capabilities; data),
+  `PresenceProvider` (peers; none at first), `ConflictView` (how overlapping patches render; none at first), `Compactor` (how `compacted` merges; by block at first).
+
+Requirements this adds (to be numbered with R-PIN-1..9 when promoted into REQUIREMENTS.md): a session is the only holder of views; one session cannot read another's pending edits; a resumed
+session has the same views and positions it had; quotas refuse with a structured error naming the limit; presence never reaches the durable log.
