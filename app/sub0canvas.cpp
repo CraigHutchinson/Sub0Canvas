@@ -24,6 +24,7 @@
 #include <optional>
 #include <format>
 #include <random>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -147,7 +148,7 @@ int snapshot(const Options& o)
 {
     auto revs = lines(git(o, std::format("rev-list --first-parent --max-count={} {}{}", o.history, o.rev, pathspecArgs(o))));
     if (revs.empty()) fail("no commit on " + o.rev + " touches the pathspec");
-    std::reverse(revs.begin(), revs.end());
+    std::ranges::reverse(revs);
 
     std::vector<Commit> commits;
     {
@@ -200,7 +201,7 @@ int snapshot(const Options& o)
             revisionIds[p] = commits[t].sha;
             textIds[p] = contentId(text);
             log.beginObject().kv("path", p).kv("by", commits[t].sha.substr(0, 10) + " " + commits[t].subject).kv("revision", revisions[p])
-                .kv("base", revisions[p] - 1).kv("from", 1).kv("to", static_cast<int>(std::count(text.begin(), text.end(), '\n'))).kv("delta", 0).endObject();
+                .kv("base", revisions[p] - 1).kv("from", 1).kv("to", static_cast<int>(std::ranges::count(text, '\n'))).kv("delta", 0).endObject();
             files[p] = std::move(text);
         }
 
@@ -225,7 +226,7 @@ int snapshot(const Options& o)
                                   t == 0 ? std::string("(the base: every block)") : std::to_string(item.anchors.size()));
         commitItems.push_back(item);
         std::vector<LayerItem> shown(commitItems.rbegin(), commitItems.rend());
-        for (std::size_t i = 0; i < shown.size(); ++i) shown[i].number = static_cast<int>(i) + 1;
+        for (auto [i, item] : std::views::enumerate(shown)) item.number = static_cast<int>(i) + 1;
 
         SnapshotSpec spec;
         spec.turn = static_cast<int>(t);
