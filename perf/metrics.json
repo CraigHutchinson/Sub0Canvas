@@ -47,7 +47,22 @@
     "revive scan 1e5: retired blocks": {"kind": "exact", "expected": 4800, "unit": "blocks"},
     "revive scan 1e5: novel blocks indexed": {"kind": "exact", "expected": 22, "unit": "blocks"},
     "revive scan 1e5: events from the update": {"kind": "exact", "expected": 22, "unit": "n"},
-    "revive scan 1e5: allocations": {"kind": "max", "limit": 4753, "unit": "n"}
+    "revive scan 1e5: allocations": {"kind": "max", "limit": 4753, "unit": "n"},
+    "store replay 1e5: events": {"kind": "exact", "expected": 100000, "unit": "n"},
+    "store replay 1e5: items": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "store replay 1e5: replays agree": {"kind": "exact", "expected": 1, "unit": "bool"},
+    "store replay 1e5: allocations": {"kind": "max", "limit": 587559, "unit": "n"},
+    "store replay 1e5: live heap bytes": {"kind": "max", "limit": 52656000, "unit": "B"},
+    "store replay 1e5: live heap bytes per item": {"kind": "max", "limit": 5266, "unit": "B/item"},
+    "store putLayer 1e4 items, none changed: events": {"kind": "exact", "expected": 0, "unit": "n"},
+    "store putLayer 1e4 items, none changed: items changed": {"kind": "exact", "expected": 0, "unit": "n"},
+    "store putLayer 1e4 items, none changed: allocations": {"kind": "max", "limit": 0, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: events": {"kind": "exact", "expected": 10, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: items changed": {"kind": "exact", "expected": 10, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: allocations": {"kind": "max", "limit": 213, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: events": {"kind": "exact", "expected": 1000, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: items changed": {"kind": "exact", "expected": 1000, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"}
   },
   "accepted": []
 }

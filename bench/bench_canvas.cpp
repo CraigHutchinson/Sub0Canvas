@@ -64,6 +64,9 @@ void operator delete[](void* p) noexcept { countedFree(p); }
 void operator delete(void* p, std::size_t) noexcept { countedFree(p); }
 void operator delete[](void* p, std::size_t) noexcept { countedFree(p); }
 
+/// The store's benchmarks (bench/bench_store.cpp), which share this file's counting operator new through the references.
+void runStoreBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
+
 namespace {
 
 /// Runs `body` once per process however often the workload repeats (a metric is a fact, not a rate; timed iterations do not recompute it).
@@ -607,6 +610,8 @@ int main(int argc, char** argv)
         });
     }
     light();
+
+    runStoreBenchmarks(runner, gAllocations, gLiveBytes);
 
     return runner.finish();
 }

@@ -33,8 +33,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 # The library: folded views and READ requests (outline), search/replace and line edits (edits), the revisioned canvas and its transactions (canvas),
-# stable block ids and layers (doc_layers).
-add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp)
+# stable block ids and layers (doc_layers), the event envelope and log seam (event) and the store core folded from events (store).
+add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp lib/src/event.cpp lib/src/store.cpp)
 add_library(sub0canvas::sub0canvas ALIAS sub0canvas)
 target_compile_features(sub0canvas PUBLIC cxx_std_23)
 target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/src)
@@ -83,7 +83,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
-  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp METRICS perf/metrics.json SMOKE_TEST)
+  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_store.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)
@@ -112,7 +112,7 @@ if(SUB0CANVAS_BUILD_TESTING)
       SOURCE_SUBDIR cpp)
   endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
-  foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay test_replies test_turn_control)
+  foreach(name test_edits test_doc_layers test_views test_canvas_model test_golden_replay test_replies test_turn_control test_store)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
