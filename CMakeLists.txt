@@ -174,6 +174,9 @@ if(SUB0CANVAS_BUILD_TESTING)
   if(SUB0CANVAS_NODE)
     file(GLOB viewerTests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.test.js)
     add_test(NAME test_viewer COMMAND ${SUB0CANVAS_NODE} --test ${viewerTests} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    # The tests build temporary git repositories. A git hook (the pre-push gate) runs with GIT_DIR and friends set, which in a linked worktree point at the
+    # worktree's own git directory and break every `git -C <temp>` below; the tests must not inherit them.
+    set_tests_properties(test_viewer PROPERTIES ENVIRONMENT_MODIFICATION "GIT_DIR=unset:;GIT_WORK_TREE=unset:;GIT_INDEX_FILE=unset:;GIT_PREFIX=unset:;GIT_COMMON_DIR=unset:")
     if(SUB0CANVAS_BUILD_APP)
       set_tests_properties(test_viewer PROPERTIES ENVIRONMENT "SUB0CANVAS_EXE=$<TARGET_FILE:sub0canvas_app>")   # test/snapshot.test.js runs it
     endif()
