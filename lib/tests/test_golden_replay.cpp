@@ -20,6 +20,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -35,13 +36,13 @@ std::string slurp(const fs::path& p)
     return s.str();
 }
 
-std::string str(simdjson::dom::element e, const char* key)
+std::string str(simdjson::dom::element e, std::string_view key)
 {
     std::string_view v;
     if (e[key].get_string().get(v)) return {};
     return std::string{v};
 }
-int num(simdjson::dom::element e, const char* key)
+int num(simdjson::dom::element e, std::string_view key)
 {
     int64_t v = 0;
     if (e[key].get_int64().get(v)) return 0;

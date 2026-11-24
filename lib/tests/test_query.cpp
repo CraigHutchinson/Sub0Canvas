@@ -21,6 +21,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // Our own CHECK_EQ: it compares copies, because the DOM accessors return references into temporaries that the helper's reference binding would warn about.
@@ -48,13 +49,13 @@ struct Resp
     Resp(const Resp&) = delete;
     Resp& operator=(const Resp&) = delete;
     [[nodiscard]] bool ok() const { return root["ok"].get_bool().value(); }
-    [[nodiscard]] std::string str(const char* k) const { return std::string{std::string_view{root[k]}}; }
-    [[nodiscard]] std::int64_t num(const char* k) const { return root[k].get_int64().value(); }
-    [[nodiscard]] bool has(const char* k) const { return !root[k].error(); }
-    [[nodiscard]] bool isNull(const char* k) const { return root[k].is_null(); }
+    [[nodiscard]] std::string str(std::string_view k) const { return std::string{std::string_view{root[k]}}; }
+    [[nodiscard]] std::int64_t num(std::string_view k) const { return root[k].get_int64().value(); }
+    [[nodiscard]] bool has(std::string_view k) const { return !root[k].error(); }
+    [[nodiscard]] bool isNull(std::string_view k) const { return root[k].is_null(); }
     [[nodiscard]] std::string errorCode() const { return std::string{std::string_view{root["error"]["code"]}}; }
     [[nodiscard]] simdjson::dom::array entries() const { return arrayOf(root["entries"]); }
-    [[nodiscard]] Strings names(const char* member = "name") const
+    [[nodiscard]] Strings names(std::string_view member = "name") const
     {
         Strings out;
         for (simdjson::dom::element e : entries()) out.emplace_back(std::string_view{e[member]});
@@ -68,7 +69,7 @@ std::unique_ptr<Resp> ask(const QueryServer& s, const std::string& request, Quer
 }
 
 /// Every entry of a paged answer, following `next` from `request` (a JSON object without its closing brace and `cursor`): the names of `member`.
-Strings allPages(const QueryServer& s, const std::string& head, const char* member, std::size_t* pages = nullptr)
+Strings allPages(const QueryServer& s, const std::string& head, std::string_view member, std::size_t* pages = nullptr)
 {
     Strings out;
     std::string cursor;
