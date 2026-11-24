@@ -36,7 +36,7 @@ hold up on codebases of billions of lines.
   threads, no clock reads, no environment.
 * `lib/tests/`: C++ tests, one executable per area. The test helper is Sub0Platform's `sub0platform/testing/check.hpp` (fetched for the tests
   only, CMakeLists.txt). `doc_driver.hpp`, the driver requirement tests go through so they survive architectural change, TESTING.md.
-* `app/`: C++ executables that link the library and do its I/O. `sub0canvas snapshot` reads a local git repository into a viewer bundle (`serve` and
+* `app/`: C++ executables that link the library and do its I/O (`file_log.*`, the file `Log`, is the static library `sub0canvas_io`). `sub0canvas snapshot` reads a local git repository into a viewer bundle (`serve` and
   `inbox` follow, AUTHORING.md section 3); `sub0canvas history` prints the identity history of named blocks across a scope's commits (`git_source.cpp` is the git
   `DocumentSource`, the process runner; G1). Never under `src/`, which is the viewer's.
 * `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.

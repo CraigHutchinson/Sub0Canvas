@@ -174,6 +174,7 @@ links only its public target.
 | R-CONS-1 | The library builds as a CPM dependency with public headers alone, under the consumer's own `-Werror`, and says the release it is: the same version in `CMakeLists.txt` and `package.json`, never older than the newest tag. | built | `test_consumer_mock_squad` (`ctest --build-and-test`), check (a) and (f) of `test_consumer_contract` |
 | R-CONS-2 | Whole attempts as the squad lives them (a one-shot fix, reads, a rename, a re-signing and a move over turns, a cut-off continuation, a loop rolled back, two actors, a FILE beside a bad EDIT, malformed blocks, a worse revision undone) end as the scenario's hand-written outcome sequence, final files, refusal texts and identity expectations say. | built | `test_consumer_contract` over `fixtures/scenarios/squad` |
 | R-CONS-3 | A refused reply leaves every file and revision as it was, checked on the canvas itself; every block anchor of a turn file resolves to a live block; a scenario run twice gives the same bytes, equal to the stored attempt in `fixtures/mock`. | built | `test_consumer_contract`, checks (d) and (e) |
+| R-CONS-5 | With `useStore` the loop's verdicts go through a store and equal the direct ones byte for byte (every scenario is re-run with the policy flipped); the persisted store events replay, and a checkpoint plus the tail restores, to the live snapshot; B15 (a flapping test: open, done, reopened, one key) and G4 (one item through a rename, a re-signing and a move) give hand-written event counts and states per verdict. | built (MS3) | `test_consumer_contract`, `expect-store` |
 | R-CONS-4 | Every row of "Sub0Squad's use, mapped" is exercised by a scenario or deferred in writing with its reason; a new row fails the test until it is mapped. | built | `test_consumer_contract`, check (b) |
 
 ## U2-U11: requirements the groundwork must meet (design)
@@ -202,7 +203,7 @@ its slice is built.
 
 | id | requirement | serves | slice |
 |---|---|---|---|
-| R-BB-1 | Every change is an event; replaying the log gives the same store, byte for byte in its snapshot. | U2-U6 | B1, built: `test_store` (replay, JSON-line messages and any arrival order give the live snapshot bytes), `Sub0Canvas_Bench_metrics` (1e5 events) |
+| R-BB-1 | Every change is an event; replaying the log gives the same store, byte for byte in its snapshot. | U2-U6 | B1, built: `test_store` (replay, JSON-line messages and any arrival order give the live snapshot bytes), `Sub0Canvas_Bench_metrics` (1e5 events). B1b: also from a file (`test_file_log`), without held events, and from a checkpoint plus the log's tail at every split point (`test_store`) |
 | R-BB-2 | A re-derived layer reconciles by key: a new key is open, a vanished key is done by its source, and nothing is deleted. | U2, U3 | B1, built: `test_store` (a 5-turn layer, hand-written states and event counts; reopen, never duplicate) |
 | R-BB-3 | An item's lifecycle is open, held, done, verified, dropped; orphaned is derived, never stored; a transition names its actor. | U2, U6 | B1, built: `test_store` (lifecycle, actor required, `orphaned` only through `isOrphaned`) |
 | R-BB-4 | An inbox delivers what matched since the reader's cursor, summary first; the cursor moves only on acknowledgement. | U2, U3, U6 | B2 |
