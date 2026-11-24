@@ -287,3 +287,24 @@ its slice is built.
 | R-AUTH-15 | Every viewer interaction has a latency budget (AUTHORING.md section 3.2), measured at the reference scale by a scripted local benchmark and recorded with the machine; a change that breaks a budget says so. | U7, U4 | K0 |
 | R-AUTH-16 | The query protocol is versioned (`query-1`), pure (JSON in, JSON out, no transport), and bounded: page sizes, response bytes, scan length and request size are policy data; every answer names the position it was computed at; every failure is a structured error; unknown members are ignored, echoed or rejected by policy. | U7 | V1a-q: `test_query`, docs/QUERY.md |
 | R-AUTH-17 | The bundle is every query answered at once: the snapshot and the query answers are written through one projection definition (review D11), proved by reading every mock turn's files, texts, blocks, layer items and events back through the queries alone. | U7 | V1a-q: `test_query` (32 mock turns) |
+
+
+### Pinned and unpinned views, sessions (R-PIN; VIEWS.md)
+
+Checked by `test_views_sessions` (hand-written truth) unless the status says otherwise; metrics are the `session` keys of `perf/metrics.json`.
+
+| id | requirement | status | check |
+|---|---|---|---|
+| R-PIN-1 | Every read through a pinned view returns the same bytes until the view is re-pinned, whatever is written meanwhile. | built (first version) | `test_views_sessions`: file, a file born later, store events above the pin |
+| R-PIN-2 | An edit through a pinned view is rebased over non-overlapping changes since its base, or refused naming the other actor and revision. | built | B8/B14 scenario: two land, the overlapping one is refused naming `t/alice` r2, its work kept; the canvas's own refusal agrees |
+| R-PIN-3 | `since` on a pinned view returns a brief within its scope and changes nothing; a pinned view never receives pushed events. | built | exact brief bytes with the overlap; record unchanged; `openChannel` refuses naming the pin |
+| R-PIN-4 | Advance returns a rebase report, and re-anchors held anchors with authority following the resolution. | built | partial and `atomic` over one conflict and one clean hunk; a moved anchor loses authority until `reread` |
+| R-PIN-5 | A fork records parent, position and fingerprint; addresses issued to one branch are refused in the other; a mismatched checkpoint is reported. | built | `fork`, `resolve`, `checkFingerprint` |
+| R-PIN-6 | A refresh in any form, applied to the view's old state, gives the view's new state (compacted and full agree on the end state). | built (compacted and full proved by replay; brief and elided carry no state by design) | revert dropped from the net form; hand-built delta, exact bytes of all four forms |
+| R-PIN-7 | A refresh's cost is proportional to the changes in scope; `brief` is bounded independently of edit size. | built | events visited 100 of 1e4; brief 355 B at 20 edits and at 1,020 edits (metrics) |
+| R-PIN-8 | A channel resumes from its position without loss or duplicate, coalesces under back-pressure and says so, and answers `gone` past what is held. | open: the channel is not built; a pinned view's refusal is | `openChannel` |
+| R-PIN-9 | Views and their positions replay from the log to the same state. | built | replay into a second store equals the live records; resume over the replayed log; 1e4-event replay metric |
+| R-PIN-10 | A session is the only holder of views; one session cannot read another's pending edits or overlays, only published state. | built | two-session isolation test |
+| R-PIN-11 | A resumed session has the same views and positions it had (pending edits are not durable). | built | resume over a replayed log |
+| R-PIN-12 | Quotas (views, pending bytes, subscriptions) refuse with a structured error naming the limit; expiry follows an injected number; identity and capabilities come from the caller. | built | quota, capability and expiry tests |
+| R-PIN-13 | Presence never reaches the durable log. | open: presence is not built (`PresenceProvider` is declared and empty) | |

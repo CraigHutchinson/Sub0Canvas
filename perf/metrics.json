@@ -153,7 +153,22 @@
     "query events page of 200 from 2,000: response bytes": {"kind": "exact", "expected": 22078, "unit": "B"},
     "query file the largest text 1e5: response bytes": {"kind": "exact", "expected": 40973, "unit": "B"},
     "query file the largest text 1e5: text bytes": {"kind": "exact", "expected": 38866, "unit": "B"},
-    "query layer page of 50: allocations": {"kind": "max", "limit": 12, "unit": "n"}
+    "query layer page of 50: allocations": {"kind": "max", "limit": 12, "unit": "n"},
+    "session refresh brief: bytes (20 edits, 100 events)": {"kind": "exact", "expected": 355, "unit": "B"},
+    "session refresh: store events visited (100 in scope of 1e4)": {"kind": "exact", "expected": 100, "unit": "n"},
+    "session refresh: files in the delta": {"kind": "exact", "expected": 1, "unit": "n"},
+    "session refresh elided: bytes (20 edits, 100 events)": {"kind": "exact", "expected": 1462, "unit": "B"},
+    "session refresh compacted: bytes (20 edits, 100 events)": {"kind": "exact", "expected": 10259, "unit": "B"},
+    "session refresh full: bytes (20 edits, 100 events)": {"kind": "exact", "expected": 22307, "unit": "B"},
+    "session refresh acknowledged: events written": {"kind": "exact", "expected": 2, "unit": "n"},
+    "session brief: bytes after 20 edits by 4 actors": {"kind": "max", "limit": 363, "unit": "B"},
+    "session brief: bytes after 1,020 edits by 12 actors": {"kind": "max", "limit": 370, "unit": "B"},
+    "session views per session under the default quota": {"kind": "exact", "expected": 16, "unit": "n"},
+    "session views refused at the limit (named limit: views)": {"kind": "exact", "expected": 1, "unit": "n"},
+    "session replay: events replayed": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "session replay: sessions": {"kind": "exact", "expected": 101, "unit": "n"},
+    "session replay: views": {"kind": "exact", "expected": 816, "unit": "n"},
+    "session replay: views equal to live (1 = all)": {"kind": "exact", "expected": 1, "unit": "n"}
   },
   "accepted": [
     {
@@ -190,6 +205,88 @@
           "from": null,
           "to": 779.9471,
           "kind": "max"
+        }
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "commit": "955998e7ac58d5e38aa07ff93e018395bfcf9e90",
+      "reason": "add the session and view metrics (views and sessions foundation)",
+      "metrics": {
+        "session refresh brief: bytes (20 edits, 100 events)": {
+          "from": null,
+          "to": 355,
+          "kind": "exact"
+        },
+        "session refresh: store events visited (100 in scope of 1e4)": {
+          "from": null,
+          "to": 100,
+          "kind": "exact"
+        },
+        "session refresh: files in the delta": {
+          "from": null,
+          "to": 1,
+          "kind": "exact"
+        },
+        "session refresh elided: bytes (20 edits, 100 events)": {
+          "from": null,
+          "to": 1462,
+          "kind": "exact"
+        },
+        "session refresh compacted: bytes (20 edits, 100 events)": {
+          "from": null,
+          "to": 10259,
+          "kind": "exact"
+        },
+        "session refresh full: bytes (20 edits, 100 events)": {
+          "from": null,
+          "to": 22307,
+          "kind": "exact"
+        },
+        "session refresh acknowledged: events written": {
+          "from": null,
+          "to": 2,
+          "kind": "exact"
+        },
+        "session brief: bytes after 20 edits by 4 actors": {
+          "from": null,
+          "to": 363,
+          "kind": "max"
+        },
+        "session brief: bytes after 1,020 edits by 12 actors": {
+          "from": null,
+          "to": 370,
+          "kind": "max"
+        },
+        "session views per session under the default quota": {
+          "from": null,
+          "to": 16,
+          "kind": "exact"
+        },
+        "session views refused at the limit (named limit: views)": {
+          "from": null,
+          "to": 1,
+          "kind": "exact"
+        },
+        "session replay: events replayed": {
+          "from": null,
+          "to": 10000,
+          "kind": "exact"
+        },
+        "session replay: sessions": {
+          "from": null,
+          "to": 101,
+          "kind": "exact"
+        },
+        "session replay: views": {
+          "from": null,
+          "to": 816,
+          "kind": "exact"
+        },
+        "session replay: views equal to live (1 = all)": {
+          "from": null,
+          "to": 1,
+          "kind": "exact"
         }
       }
     }
