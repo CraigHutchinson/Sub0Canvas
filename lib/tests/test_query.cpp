@@ -747,8 +747,10 @@ int main(int argc, char** argv)
                                 CHECK(at < want.size());
                                 if (at >= want.size()) break;
                                 std::set<std::string> have;
-                                for (auto kv : e.get_object().value()) have.insert(std::string{kv.key});
-                                for (auto kv : want[at].get_object().value()) {
+                                const simdjson::dom::object eObj = e.get_object().value();
+                                for (auto kv : eObj) have.insert(std::string{kv.key});
+                                const simdjson::dom::object wantObj = want[at].get_object().value();
+                                for (auto kv : wantObj) {
                                     if (simdjson::minify(e[kv.key]) != simdjson::minify(kv.value)) { std::fprintf(stderr, "%s: %s item %zu member %s differs\n", where.c_str(), name.c_str(), at, std::string{kv.key}.c_str()); CHECK(false); }
                                     have.erase(std::string{kv.key});
                                 }
