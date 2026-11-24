@@ -68,17 +68,17 @@ if(SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_BENCHMARKS)
   target_compile_options(sub0canvas_bench_corpus PRIVATE ${SUB0CANVAS_STRICT})
 endif()
 
-# The benchmarks (bench/bench_canvas.cpp) run through Sub0Math's sub0perf tooling (docs/TESTING.md, "Performance"): Sub0Canvas_Bench, plus the _json, _runs, _check,
+# The benchmarks (bench/bench_canvas.cpp) run through Sub0Perf's tooling (docs/TESTING.md, "Performance"): Sub0Canvas_Bench, plus the _json, _runs, _check,
 # _baseline, _compare and _metrics targets. Timing is measured locally only (never in CI); the deterministic metrics (perf/metrics.json) and the smoke run are
-# ctest tests labelled smoke, so they run in every tier. Sub0Math is used for its tooling only (DOWNLOAD_ONLY).
+# ctest tests labelled smoke, so they run in every tier. Sub0Perf is the family's performance tooling, moved out of Sub0Math (ADR 0004); DOWNLOAD_ONLY.
 if(SUB0CANVAS_BUILD_BENCHMARKS)
   if(SUB0CANVAS_BUILD_TESTING)
     enable_testing()   # before the first add_test below (the testing block calls it again, harmlessly)
   endif()
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
-  CPMAddPackage(NAME Sub0Math
-    GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Math.git
-    GIT_TAG 27ff54d925dfda14c66a7fb11bfa0d544f89b4ea
+  CPMAddPackage(NAME Sub0Perf
+    GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Perf.git
+    GIT_TAG 3c74bce22e848d3e4e13dfcb5eb9c480703b7db8
     DOWNLOAD_ONLY YES)
   # No benchmark run after every build (run the targets deliberately). The pre-push gate is on wherever this machine has a committed baseline
   # (perf/baselines/<host>.json, the lower-case host name, or SUB0MATH_PERF_HOST / -DSUB0MATH_PERF_HOST for another name): the gate judges against that
@@ -94,7 +94,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     string(TOLOWER "${_canvas_perf_host}" _canvas_perf_host)
   endif()
   # The gate is installed only from the main checkout (a linked git worktree has a .git file, not a directory, and shares the main checkout's hooks and
-  # sub0perf configuration: Sub0Math issue 5) and never when SUB0CANVAS_PERF_GATE is OFF.
+  # sub0perf configuration: Sub0Perf issue, transferred from Sub0Math issue 5) and never when SUB0CANVAS_PERF_GATE is OFF.
   option(SUB0CANVAS_PERF_GATE "Install the pre-push performance gate where this machine has a committed baseline" ON)
   if(SUB0CANVAS_PERF_GATE AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git"
      AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perf/baselines/${_canvas_perf_host}.json")
@@ -102,7 +102,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   else()
     set(SUB0MATH_PERF_GIT_HOOKS OFF)
   endif()
-  include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
+  include("${Sub0Perf_SOURCE_DIR}/cmake/Sub0Perf.cmake")
 
   sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp bench/bench_resolver.cpp bench/bench_query.cpp bench/bench_session.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
