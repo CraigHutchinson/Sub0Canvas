@@ -177,6 +177,16 @@ struct PutResult
     std::size_t rejected = 0;   ///< items offered with an empty key or a `data` that is not a JSON object: not applied
 };
 
+/// A store's state at one point of its merge order, as text a reader can restore and then catch up from the log's tail instead of replaying the whole
+/// log (`Store::checkpoint`, `Store::restore`; BACKBONE.md A22 and the B1b notes). Covers the core's state only: a later slice's reducer that keeps its
+/// own `ext<T>()` state must add its own part before its events are checkpointed.
+struct Checkpoint
+{
+    std::uint64_t head = 0;     ///< the lamport value of the last event folded (0: none): "a checkpoint at lamport N"
+    std::uint64_t events = 0;   ///< the events folded: the position in a source holding exactly these events in this order, so `replay(source, events)` is the tail
+    std::string json;           ///< `store-checkpoint-1`: the whole state, deterministic (the same events give the same bytes)
+};
+
 /// The store's construction: who writes, where new events go, and the display clock.
 struct StoreOptions
 {
@@ -184,6 +194,11 @@ struct StoreOptions
     ReducerRegistry registry = ReducerRegistry::core();
     Log* sink = nullptr;                                ///< non-owning; receives the events the store makes (not those it merges); nullptr: kept in memory only
     std::function<std::string()> clock;                 ///< display time for events the store makes; empty: "". The core reads no clock itself (R-BB-7)
+    /// Keep every event in memory (`events()`, the default) or only the state and a compact record of which events were seen: the heap per item of a replayed
+    /// store falls by the events' share (SCALE.md). Without them a late event (one that sorts before the head) cannot be folded in place and the fold cannot be
+    /// rebuilt from memory: `append` and `merge` drop it and count it (`droppedLate`), and `replay(source)` rebuilds by re-reading the source, which must then hold
+    /// every event the store holds (the sink is the usual one). The snapshot is byte-identical either way.
+    bool retainEvents = true;
 };
 
 /// The backbone's store. Events are held sorted by `(lamport, writer)`; the state is their fold. An event that sorts after every held event (the usual
@@ -200,8 +215,8 @@ public:
     void merge(std::vector<Event> events);
     /// Appends one event as given (its writer and lamport are the caller's) and forwards it to the sink. Returns false when an event with that writer and
     /// lamport is already held.
-    bool append(Event e);
-    /// Makes an event of this store's writer with the next lamport value, appends it and returns it.
+    bool append(const Event& e);
+    /// Makes an event of this store's writer with the next lamport value, appends it and returns it (valid until the next call that adds an event).
     const Event& emit(std::string kind, std::string subject, std::string payload);
 
     // Conveniences that build events (every one is an `emit`).
@@ -227,10 +242,19 @@ public:
     [[nodiscard]] std::vector<Backlink> linksTo(std::string_view key) const;
     /// The 1-based place of an item in its layer (what `READ ISSUE n` names); 0 when unknown.
     [[nodiscard]] int numberOf(std::string_view key) const;
-    /// The held events in merge order, verbatim (unknown kinds and fields included, A7).
+    /// The held events in merge order, verbatim (unknown kinds and fields included, A7). Empty without `retainEvents`; after `restore`, only those folded since.
     [[nodiscard]] const std::vector<Event>& events() const { return events_; }
+    /// The events folded, whether or not they are held: the number `events()` would have after a full replay.
+    [[nodiscard]] std::uint64_t eventCount() const { return eventCount_; }
+    /// Late events dropped because `retainEvents` is off or they precede a restored checkpoint (see `StoreOptions::retainEvents`).
+    [[nodiscard]] std::size_t droppedLate() const { return droppedLate_; }
     /// The lamport value of the last event in merge order (0 when empty).
-    [[nodiscard]] std::uint64_t head() const { return events_.empty() ? 0 : events_.back().lamport; }
+    [[nodiscard]] std::uint64_t head() const { return eventCount_ == 0 ? 0 : headLamport_; }
+    /// The state so far as a checkpoint, so a later reader can `restore` it and replay only the tail of the log.
+    [[nodiscard]] Checkpoint checkpoint() const;
+    /// Replaces everything (state, events held, what was seen) with a checkpoint's. Restore, then `replay(source, checkpoint.events)` equals a full replay byte
+    /// for byte in the snapshot (the test). The error names the first problem and leaves the store as it was.
+    [[nodiscard]] std::expected<void, std::string> restore(const Checkpoint& checkpoint);
     [[nodiscard]] const StoreState& state() const { return state_; }
 
     /// The store as JSON (`store-snapshot-1`), scoped by `q` (A11): layers by name, items in layer order with their state, tags, links, data, anchors,
@@ -238,14 +262,37 @@ public:
     [[nodiscard]] std::string snapshotJson(const Query& q = {}) const;
 
 private:
+    /// Which lamport values each writer has already contributed, as runs: duplicates are found without holding the events. A writer's values are mostly
+    /// consecutive, so a run costs a few words however long.
+    class SeenSet
+    {
+    public:
+        [[nodiscard]] bool contains(const WriterId& w, std::uint64_t lamport) const;
+        void insert(const WriterId& w, std::uint64_t lamport);
+        void clear() { runs_.clear(); }
+        std::map<WriterId, std::map<std::uint64_t, std::uint64_t>> runs_;   ///< writer to run start to run end (inclusive)
+    };
+
     void fold(const Event& e);
-    void rebuild();
+    void rebuild();                                  ///< resets to the restored checkpoint (or empty) and folds the held events
+    void accept(const Event& e);                     ///< folds an event that sorts after everything folded, and notes it (copied if events are held)
+    void accept(Event&& e);                          ///< the same, moving it into the held events
+    void note(const Event& e);                       ///< the bookkeeping of one more event: count, head, seen
+    [[nodiscard]] bool afterHead(const Event& e) const;
+    [[nodiscard]] bool beforeBase(const Event& e) const;   ///< sorts at or before the restored checkpoint's head: that part of the log is not held
+    void resetToBase();
     bool matches(const StoredItem& it, const Query& q) const;
     [[nodiscard]] std::string now() const { return options_.clock ? options_.clock() : std::string{}; }
 
     StoreOptions options_;
-    std::vector<Event> events_;   ///< sorted by eventOrder
+    std::vector<Event> events_;   ///< sorted by eventOrder; only those since the restored checkpoint, and none without `retainEvents`
+    Event lastEmitted_;           ///< what `emit` returns when events are not retained
     StoreState state_;
+    SeenSet seen_, baseSeen_;   ///< baseSeen_: what the restored checkpoint had seen (a rebuild starts from it)
+    std::optional<Checkpoint> base_;   ///< the restored checkpoint: what a rebuild starts from
+    WriterId headWriter_, baseWriter_;
+    std::uint64_t headLamport_ = 0, baseLamport_ = 0, eventCount_ = 0;
+    std::size_t droppedLate_ = 0;
     std::uint64_t epoch_ = 0;     ///< putLayer calls so far: the mark for `touchedBy`
 };
 

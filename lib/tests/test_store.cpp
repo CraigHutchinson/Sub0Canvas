@@ -2,6 +2,7 @@
 // The expected values are written by hand from the requirements, not read back from the code: the 5-turn layer's states and event counts, the
 // merge order of two writers, the bytes of an envelope and of a one-item snapshot.
 #include "sub0platform/testing/check.hpp"
+#include "sub0canvas/doc_layers.hpp"
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/store.hpp"
 
@@ -454,6 +455,182 @@ int main()
         CHECK_EQ(sink.size(), std::uint64_t{0});   // merged events are not written back
         (void)withSink.emit("item.tag@1", "k", R"({"tag":"t"})");
         CHECK_EQ(sink.size(), std::uint64_t{1});
+    }
+    {
+        // B1b: checkpoints, the lean store, and the rule for late events. Two writers (p/w1, q/w2), merge order by hand:
+        //   1 p put a(L) | 1 q put b(L) | 2 p put c(M) | 2 q tag a t1 | 3 p a held | 3 q link a causes b | 4 p put a(M: moves) | 4 q x.y@1 (unknown kind)
+        //   5 p state a "nonsense" (skipped) | 5 q unlink a causes b | 6 p link c repliesTo a | 6 q b done | 7 q put b(M: moves, L is left empty)
+        auto mkEv = [](const char* ns, const char* w, std::uint64_t l, const char* kind, const char* subject, const std::string& payload) {
+            Event e;
+            e.kind = kind;
+            e.writer = {ns, w};
+            e.lamport = l;
+            e.subject = subject;
+            e.time = "t" + std::to_string(l);
+            e.payload = payload;
+            return e;
+        };
+        auto put = [](const char* layer, const char* title) { return std::string(R"({"layer":")") + layer + R"(","source":"s","kind":"k","title":")" + title + R"(","detail":""})"; };
+        const std::vector<Event> all = {
+            mkEv("p", "w1", 1, "item.put@1", "a", put("L", "A")),
+            mkEv("q", "w2", 1, "item.put@1", "b", put("L", "B")),
+            mkEv("p", "w1", 2, "item.put@1", "c", put("M", "C")),
+            mkEv("q", "w2", 2, "item.tag@1", "a", R"({"tag":"t1"})"),
+            mkEv("p", "w1", 3, "item.state@1", "a", R"({"to":"held","actor":"me"})"),
+            mkEv("q", "w2", 3, "item.link@1", "a", R"({"kind":"causes","key":"b"})"),
+            mkEv("p", "w1", 4, "item.put@1", "a", put("M", "A2")),
+            mkEv("q", "w2", 4, "x.y@1", "a", R"({"q":1})"),
+            mkEv("p", "w1", 5, "item.state@1", "a", R"({"to":"nonsense","actor":"me"})"),
+            mkEv("q", "w2", 5, "item.unlink@1", "a", R"({"kind":"causes","key":"b"})"),
+            mkEv("p", "w1", 6, "item.link@1", "c", R"({"kind":"repliesTo","key":"a"})"),
+            mkEv("q", "w2", 6, "item.state@1", "b", R"({"to":"done","actor":"me"})"),
+            mkEv("q", "w2", 7, "item.put@1", "b", put("M", "B2")),
+        };
+        auto keys = [&](const Store& st, const char* layer) {
+            Query q;
+            q.layers = {layer};
+            return keysOf(st, q);
+        };
+        Store full;
+        full.merge(all);
+        // Hand-checked truth of the fold: M holds c, then a (moved in at 4), then b (moved in at 7); L is left empty; one skipped event, one unknown kind.
+        CHECK(keys(full, "M") == (std::vector<std::string>{"c", "a", "b"}));
+        CHECK(keys(full, "L").empty());
+        CHECK_EQ(full.item("a")->item.title, std::string("A2"));
+        CHECK(full.item("a")->state == ItemState::held);
+        CHECK(full.item("b")->state == ItemState::done);
+        CHECK(full.linksTo("b").empty());   // linked at 3, unlinked at 5
+        CHECK_EQ(full.linksTo("a").size(), std::size_t{1});
+        CHECK_EQ(full.state().skipped, std::size_t{1});
+        CHECK_EQ(full.state().unknownKinds.at("x.y@1"), std::size_t{1});
+        CHECK_EQ(full.eventCount(), std::uint64_t{13});
+        const Checkpoint fullCp = full.checkpoint();
+        CHECK_EQ(fullCp.head, std::uint64_t{7});
+        CHECK_EQ(fullCp.events, std::uint64_t{13});
+        // What was seen is kept as runs: each writer's lamports are consecutive, so one run each.
+        CHECK(fullCp.json.find(R"({"namespace":"p","writer":"w1","runs":[[1,6]]},{"namespace":"q","writer":"w2","runs":[[1,7]]})") != std::string::npos);
+        CHECK(fullCp.json.find(R"("L":[])") != std::string::npos);   // an emptied layer is still named
+        CHECK_EQ(full.checkpoint().json, fullCp.json);              // deterministic
+
+        // A checkpoint taken after any prefix, restored and caught up with the rest, equals the full replay: snapshot, checkpoint, reverse index, numbers.
+        MemoryLog log;
+        for (const Event& e : all) log.append(e);
+        for (std::size_t k = 0; k <= all.size(); ++k) {
+            Store prefix;
+            prefix.merge({all.begin(), all.begin() + static_cast<std::ptrdiff_t>(k)});
+            Store restored;
+            const auto ok = restored.restore(prefix.checkpoint());
+            CHECK(ok.has_value());
+            restored.replay(log, k);   // the tail only
+            CHECK_EQ(restored.snapshotJson(), full.snapshotJson());
+            CHECK_EQ(restored.checkpoint().json, fullCp.json);
+            CHECK_EQ(restored.eventCount(), full.eventCount());
+            CHECK_EQ(restored.events().size(), all.size() - k);   // the prefix is not held
+            CHECK_EQ(restored.numberOf("a"), full.numberOf("a"));
+            CHECK_EQ(restored.linksTo("a").size(), full.linksTo("a").size());
+            CHECK_EQ(restored.state().skipped, full.state().skipped);
+            // Reading the whole log again after a restore adds nothing: the prefix was seen.
+            restored.replay(log, 0);
+            CHECK_EQ(restored.snapshotJson(), full.snapshotJson());
+            CHECK_EQ(restored.droppedLate(), std::size_t{0});
+        }
+        {
+            Store bad;
+            CHECK(!bad.restore(Checkpoint{0, 0, "{\"schema\":\"other\"}"}).has_value());
+            CHECK(!bad.restore(Checkpoint{0, 0, "not json"}).has_value());
+            CHECK_EQ(bad.eventCount(), std::uint64_t{0});   // a refused restore leaves the store as it was
+        }
+
+        // A restored store continues the clock: its next event follows the checkpoint's head.
+        Store continued;
+        CHECK(continued.restore(fullCp).has_value());
+        CHECK_EQ(continued.emit("item.tag@1", "a", R"({"tag":"t2"})").lamport, std::uint64_t{8});
+
+        // A late event after a restore: one that sorts after the checkpoint but before the tail already held is placed in order (rebuilt from the checkpoint and the
+        // held tail); one that sorts before the checkpoint cannot be placed, and is dropped and counted.
+        {
+            Store prefix;
+            prefix.merge({all.begin(), all.begin() + 6});   // through lamport 3
+            Store r;
+            CHECK(r.restore(prefix.checkpoint()).has_value());
+            std::vector<Event> tail(all.begin() + 6, all.end());
+            const Event held = tail[2];                     // lamport 5 p, withheld: its place is by order, not arrival
+            tail.erase(tail.begin() + 2);
+            r.merge(tail);
+            CHECK(r.append(held));                          // after the base, before the head: folded in order
+            CHECK_EQ(r.snapshotJson(), full.snapshotJson());
+            CHECK_EQ(r.state().skipped, std::size_t{1});
+            CHECK(!r.append(mkEv("z", "w9", 2, "item.tag@1", "a", R"({"tag":"late"})")));   // before the base
+            CHECK_EQ(r.droppedLate(), std::size_t{1});
+            CHECK_EQ(r.snapshotJson(), full.snapshotJson());
+        }
+
+        // The lean store (retainEvents off): the same snapshot, no events held, duplicates still ignored, the sink still fed.
+        StoreOptions lean;
+        lean.retainEvents = false;
+        MemoryLog sink;
+        lean.sink = &sink;
+        Store thin(lean);
+        for (const Event& e : all) CHECK(thin.append(e));
+        CHECK(thin.events().empty());
+        CHECK_EQ(thin.snapshotJson(), full.snapshotJson());
+        CHECK_EQ(thin.checkpoint().json, fullCp.json);
+        CHECK_EQ(sink.size(), std::uint64_t{13});
+        CHECK(!thin.append(all[4]));                        // a second delivery: seen
+        CHECK_EQ(thin.droppedLate(), std::size_t{0});
+        // Its own writes: emit returns the event, and the lamport follows.
+        StoreOptions mine;
+        mine.retainEvents = false;
+        mine.writer = {"p", "w1"};
+        Store own(mine);
+        CHECK_EQ(own.emit("item.tag@1", "nothing", R"({"tag":"x"})").lamport, std::uint64_t{1});
+        CHECK_EQ(own.emit("item.tag@1", "nothing", R"({"tag":"x"})").lamport, std::uint64_t{2});
+        // A late event cannot be folded in place without the held events: dropped and counted by append and merge; `replay` of a source holding it re-reads and
+        // rebuilds, and equals the full replay.
+        StoreOptions noSink;
+        noSink.retainEvents = false;
+        Store lateStore(noSink);
+        lateStore.merge({all.begin() + 2, all.end()});   // missing the two lamport-1 events
+        CHECK(!lateStore.append(all[0]));
+        lateStore.merge({all[1]});
+        CHECK_EQ(lateStore.droppedLate(), std::size_t{2});
+        lateStore.replay(log);
+        CHECK_EQ(lateStore.snapshotJson(), full.snapshotJson());
+        CHECK_EQ(lateStore.eventCount(), std::uint64_t{13});
+        // The same for a restored lean store: the rebuild starts from the checkpoint and reads the source's tail.
+        Store prefixOnly;
+        prefixOnly.merge({all.begin(), all.begin() + 6});
+        Store leanRestored(noSink);
+        CHECK(leanRestored.restore(prefixOnly.checkpoint()).has_value());
+        leanRestored.merge({all.begin() + 7, all.end()});   // skips lamport 4 p: the first event after the base is then late
+        leanRestored.replay(log, 6);
+        CHECK_EQ(leanRestored.snapshotJson(), full.snapshotJson());
+    }
+    {
+        // B1b (d): the store's snapshot rides in a layered document only when asked for. Without it the bytes are exactly the document's alone (the fixtures pin
+        // that too); with it the document is the same text with one more top-level member, `store`, holding `snapshotJson` for the query.
+        Store s;
+        (void)s.putLayer("issues", "squad/gate", {mk("k1", "first"), mk("k2", "second")});
+        (void)s.tag("k1", "private/me", "me");
+        (void)s.setState("k2", ItemState::held, "me", "waiting");
+        BlockIndex index;
+        SnapshotSpec spec;
+        spec.turn = 3;
+        spec.layers["issues"] = {};
+        const std::string plain = layeredJson(spec, index);
+        CHECK(plain.find("\"store\"") == std::string::npos);
+        spec.store = &s;
+        const std::string withStore = layeredJson(spec, index);
+        CHECK_EQ(withStore, plain.substr(0, plain.size() - 1) + ",\"store\":" + s.snapshotJson() + "}");
+        CHECK(withStore.find("\"k1\"") == std::string::npos);   // the default query hides the private item (A11)
+        CHECK(withStore.find("\"state\":\"held\"") != std::string::npos);
+        Query all;
+        all.tags = {"private/me"};
+        spec.storeQuery = &all;
+        CHECK_EQ(layeredJson(spec, index), plain.substr(0, plain.size() - 1) + ",\"store\":" + s.snapshotJson(all) + "}");
+        CHECK(layeredJson(spec, index).find("\"k1\"") != std::string::npos);
+        spec.store = nullptr;
+        CHECK_EQ(layeredJson(spec, index), plain);   // a query without a store changes nothing
     }
     return finish();
 }

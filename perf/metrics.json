@@ -80,7 +80,51 @@
     "store putLayer 1e4 items, 10 changed: allocations": {"kind": "max", "limit": 213, "unit": "n"},
     "store putLayer 1e4 items, 1000 changed: events": {"kind": "exact", "expected": 1000, "unit": "n"},
     "store putLayer 1e4 items, 1000 changed: items changed": {"kind": "exact", "expected": 1000, "unit": "n"},
-    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"}
+    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"},
+    "store lean replay 1e5: snapshot equals the full store's": {"kind": "exact", "expected": 1, "unit": "bool"},
+    "store lean replay 1e5: allocations": {"kind": "max", "limit": 470055, "unit": "n"},
+    "store lean replay 1e5: live heap bytes": {"kind": "max", "limit": 15008940, "unit": "B"},
+    "store lean replay 1e5: live heap bytes per item": {"kind": "max", "limit": 1500.894, "unit": "B/item"},
+    "store checkpoint 1e5: restored equals the live snapshot": {"kind": "exact", "expected": 1, "unit": "bool"},
+    "store checkpoint 1e5: bytes per item": {"kind": "max", "limit": 779.9471, "unit": "B/item"}
   },
-  "accepted": []
+  "accepted": [
+    {
+      "date": "2026-11-24",
+      "commit": "24892fe5c7eef7300a9fc1e00353b62bb07ef878",
+      "reason": "B1b: add the lean-store (retainEvents=false) heap and the checkpoint metrics; no existing limit moves",
+      "metrics": {
+        "store lean replay 1e5: snapshot equals the full store's": {
+          "from": null,
+          "to": 1,
+          "kind": "exact"
+        },
+        "store lean replay 1e5: allocations": {
+          "from": null,
+          "to": 470055,
+          "kind": "max"
+        },
+        "store lean replay 1e5: live heap bytes": {
+          "from": null,
+          "to": 15008940,
+          "kind": "max"
+        },
+        "store lean replay 1e5: live heap bytes per item": {
+          "from": null,
+          "to": 1500.894,
+          "kind": "max"
+        },
+        "store checkpoint 1e5: restored equals the live snapshot": {
+          "from": null,
+          "to": 1,
+          "kind": "exact"
+        },
+        "store checkpoint 1e5: bytes per item": {
+          "from": null,
+          "to": 779.9471,
+          "kind": "max"
+        }
+      }
+    }
+  ]
 }

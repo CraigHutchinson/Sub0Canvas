@@ -106,6 +106,23 @@ void runStoreBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& alloc
                 runner.metric("store replay 1e5: allocations", static_cast<double>(allocs), "n", MetricKind::max);
                 runner.metric("store replay 1e5: live heap bytes", static_cast<double>(live), "B", MetricKind::max);
                 runner.metric("store replay 1e5: live heap bytes per item", static_cast<double>(live) / static_cast<double>(replayed->items().size()), "B/item", MetricKind::max);
+                // The same log read by a store that keeps no events (B1b, `StoreOptions::retainEvents`): the heap that remains is the state. The two must agree.
+                const std::size_t leanAllocs0 = allocations, leanLive0 = liveBytes;
+                StoreOptions leanOptions;
+                leanOptions.retainEvents = false;
+                auto lean = std::make_unique<Store>(leanOptions);
+                lean->replay(log);
+                const std::size_t leanAllocs = allocations - leanAllocs0, leanLive = liveBytes - leanLive0;
+                runner.metric("store lean replay 1e5: snapshot equals the full store's", lean->snapshotJson() == replayed->snapshotJson() ? 1.0 : 0.0, "bool");
+                runner.metric("store lean replay 1e5: allocations", static_cast<double>(leanAllocs), "n", MetricKind::max);
+                runner.metric("store lean replay 1e5: live heap bytes", static_cast<double>(leanLive), "B", MetricKind::max);
+                runner.metric("store lean replay 1e5: live heap bytes per item", static_cast<double>(leanLive) / static_cast<double>(lean->items().size()), "B/item", MetricKind::max);
+                // A checkpoint of that store, and a store restored from it: the reader that skips the log's prefix.
+                const Checkpoint cp = lean->checkpoint();
+                Store restored;
+                const bool restoredOk = restored.restore(cp).has_value();
+                runner.metric("store checkpoint 1e5: restored equals the live snapshot", restoredOk && restored.snapshotJson() == lean->snapshotJson() ? 1.0 : 0.0, "bool");
+                runner.metric("store checkpoint 1e5: bytes per item", static_cast<double>(cp.json.size()) / static_cast<double>(lean->items().size()), "B/item", MetricKind::max);
             });
             Store s;
             s.replay(log);

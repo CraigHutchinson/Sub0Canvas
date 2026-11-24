@@ -277,9 +277,283 @@ ReducerRegistry ReducerRegistry::core()
     return r;
 }
 
+// ---- the checkpoint ----------------------------------------------------------------------------------------------------------------------------------
+
+namespace {
+
+constexpr std::string_view kCheckpointSchema = "store-checkpoint-1";
+
+/// What a checkpoint says besides the state: where in the merge order it was taken, and which events it covers.
+struct CheckpointMeta
+{
+    std::uint64_t head = 0, events = 0;
+    WriterId headWriter;
+    std::map<WriterId, std::map<std::uint64_t, std::uint64_t>> seen;
+};
+
+void writeStampFull(json::Writer& w, std::string_view name, const Stamp& s)
+{
+    w.key(name).beginObject();
+    w.key("writer").beginObject().kv("namespace", s.writer.ns).kv("writer", s.writer.writer).endObject();
+    w.kv("lamport", static_cast<std::int64_t>(s.lamport)).kv("time", s.time).endObject();
+}
+
+void readWriter(simdjson::ondemand::value v, WriterId& out)
+{
+    for (auto f : v.get_object()) {
+        const std::string_view k = json::keyOf(f);
+        auto fv = f.value();
+        if (k == "namespace") out.ns = json::toString(fv);
+        else if (k == "writer") out.writer = json::toString(fv);
+    }
+}
+
+void readStamp(simdjson::ondemand::value v, Stamp& out)
+{
+    for (auto f : v.get_object()) {
+        const std::string_view k = json::keyOf(f);
+        auto fv = f.value();
+        if (k == "lamport") out.lamport = fv.get_uint64();
+        else if (k == "time") out.time = json::toString(fv);
+        else if (k == "writer") readWriter(fv.value(), out.writer);
+    }
+}
+
+void readItem(simdjson::ondemand::value v, StoreState& s, const std::string& layer)
+{
+    StoredItem item;
+    std::string key;
+    for (auto f : v.get_object()) {
+        const std::string_view k = json::keyOf(f);
+        auto fv = f.value();
+        if (k == "key") key = json::toString(fv);
+        else if (k == "source") item.source = json::toString(fv);
+        else if (k == "kind") item.item.kind = json::toString(fv);
+        else if (k == "title") item.item.title = json::toString(fv);
+        else if (k == "detail") item.item.detail = json::toString(fv);
+        else if (k == "detailFormat") item.detailFormat = json::toString(fv);
+        else if (k == "state") item.state = parseState(json::toString(fv)).value_or(ItemState::open);
+        else if (k == "data") item.data = rawValue(fv.raw_json());
+        else if (k == "anchors") readAnchors(fv.value(), item.item.anchors);
+        else if (k == "created") readStamp(fv.value(), item.created);
+        else if (k == "updated") readStamp(fv.value(), item.updated);
+        else if (k == "tags") { for (auto t : fv.get_array()) item.tags.insert(json::toString(t.value())); }
+        else if (k == "links") {
+            for (auto l : fv.get_array()) {
+                Link link;
+                for (auto lf : l.get_object()) {
+                    const std::string_view lk = json::keyOf(lf);
+                    auto lv = lf.value();
+                    if (lk == "kind") link.kind = json::toString(lv);
+                    else if (lk == "key") link.key = json::toString(lv);
+                }
+                item.links.push_back(std::move(link));
+            }
+        }
+        else if (k == "transition") {
+            Transition t;
+            for (auto tf : fv.get_object()) {
+                const std::string_view tk = json::keyOf(tf);
+                auto tv = tf.value();
+                if (tk == "from") t.from = parseState(json::toString(tv)).value_or(ItemState::open);
+                else if (tk == "to") t.to = parseState(json::toString(tv)).value_or(ItemState::open);
+                else if (tk == "actor") t.actor = json::toString(tv);
+                else if (tk == "reason") t.reason = json::toString(tv);
+                else if (tk == "at") readStamp(tv.value(), t.at);
+            }
+            item.lastTransition = std::move(t);
+        }
+    }
+    StoredItem& made = s.create(key, layer);
+    item.item.key = made.item.key;
+    item.item.layer = layer;
+    made = std::move(item);
+}
+
+/// Reads a checkpoint into `state` (which must be empty). With `meta`, also where it was taken and what it saw. The error names the first problem.
+std::expected<void, std::string> readCheckpoint(const std::string& text, StoreState& state, CheckpointMeta* meta)
+{
+    bool schemaOk = false;
+    try {
+        json::withObject(text, [&](simdjson::ondemand::object& obj) {
+            for (auto f : obj) {
+                const std::string_view k = json::keyOf(f);
+                auto v = f.value();
+                if (k == "schema") schemaOk = json::toString(v) == kCheckpointSchema;
+                else if (k == "head") { const std::uint64_t n = v.get_uint64(); if (meta != nullptr) meta->head = n; }
+                else if (k == "events") { const std::uint64_t n = v.get_uint64(); if (meta != nullptr) meta->events = n; }
+                else if (k == "headWriter") { WriterId w; readWriter(v.value(), w); if (meta != nullptr) meta->headWriter = std::move(w); }
+                else if (k == "skipped") state.skipped = static_cast<std::size_t>(v.get_uint64());
+                else if (k == "unknownKinds") {
+                    for (auto u : v.get_object()) {
+                        const std::string kind{json::keyOf(u)};
+                        state.unknownKinds[kind] = static_cast<std::size_t>(u.value().get_uint64());
+                    }
+                }
+                else if (k == "seen") {
+                    for (auto entry : v.get_array()) {
+                        WriterId w;
+                        std::vector<std::pair<std::uint64_t, std::uint64_t>> runs;
+                        for (auto ef : entry.get_object()) {
+                            const std::string_view ek = json::keyOf(ef);
+                            auto ev = ef.value();
+                            if (ek == "namespace") w.ns = json::toString(ev);
+                            else if (ek == "writer") w.writer = json::toString(ev);
+                            else if (ek == "runs") {
+                                for (auto run : ev.get_array()) {
+                                    std::uint64_t pair[2] = {0, 0};
+                                    int n = 0;
+                                    for (auto num : run.get_array()) { if (n < 2) pair[n] = num.get_uint64(); ++n; }
+                                    runs.emplace_back(pair[0], pair[1]);
+                                }
+                            }
+                        }
+                        if (meta != nullptr) for (const auto& [a, b] : runs) meta->seen[w].emplace(a, b);
+                    }
+                }
+                else if (k == "layers") {
+                    for (auto layerField : v.get_object()) {
+                        const std::string layer{json::keyOf(layerField)};
+                        state.layers[layer];   // an emptied layer is still listed by the snapshot
+                        for (auto itemValue : layerField.value().get_array()) readItem(itemValue.value(), state, layer);
+                    }
+                }
+                else if (k == "backlinks") {
+                    for (auto target : v.get_object()) {
+                        auto& list = state.backlinks[std::string{json::keyOf(target)}];
+                        for (auto entry : target.value().get_array()) {
+                            Backlink b;
+                            int n = 0;
+                            for (auto part : entry.get_array()) { (n == 0 ? b.fromKey : b.kind) = json::toString(part.value()); ++n; }
+                            list.push_back(std::move(b));
+                        }
+                    }
+                }
+            }
+        });
+    } catch (const simdjson::simdjson_error& err) {
+        return std::unexpected(std::format("checkpoint is not valid JSON of the expected shape: {}", err.what()));
+    }
+    if (!schemaOk) return std::unexpected(std::format("checkpoint is not schema {}", kCheckpointSchema));
+    return {};
+}
+
+}  // namespace
+
+Checkpoint Store::checkpoint() const
+{
+    json::Writer w;
+    w.beginObject().kv("schema", kCheckpointSchema).kv("head", static_cast<std::int64_t>(head())).kv("events", static_cast<std::int64_t>(eventCount_));
+    w.key("headWriter").beginObject().kv("namespace", headWriter_.ns).kv("writer", headWriter_.writer).endObject();
+    w.kv("skipped", static_cast<std::int64_t>(state_.skipped));
+    w.key("unknownKinds").beginObject();
+    for (const auto& [kind, n] : state_.unknownKinds) w.kv(kind, static_cast<std::int64_t>(n));
+    w.endObject();
+    w.key("seen").beginArray();
+    for (const auto& [writer, runs] : seen_.runs_) {
+        w.beginObject().kv("namespace", writer.ns).kv("writer", writer.writer).key("runs").beginArray();
+        for (const auto& [from, to] : runs) w.beginArray().num(static_cast<std::int64_t>(from)).num(static_cast<std::int64_t>(to)).endArray();
+        w.endArray().endObject();
+    }
+    w.endArray();
+    w.key("layers").beginObject();
+    for (const auto& [name, list] : state_.layers) {
+        w.key(name).beginArray();
+        for (const StoredItem* it : list) {
+            w.beginObject().kv("key", it->item.key).kv("source", it->source).kv("kind", it->item.kind).kv("title", it->item.title).kv("detail", it->item.detail);
+            if (!it->detailFormat.empty()) w.kv("detailFormat", it->detailFormat);
+            w.kv("state", stateName(it->state));
+            w.key("tags").beginArray();
+            for (const std::string& t : it->tags) w.str(t);
+            w.endArray();
+            w.key("links").beginArray();
+            for (const Link& l : it->links) w.beginObject().kv("kind", l.kind).kv("key", l.key).endObject();
+            w.endArray();
+            w.key("anchors");
+            writeAnchors(w, it->item.anchors);
+            if (!it->data.empty()) w.kvRaw("data", it->data);
+            writeStampFull(w, "created", it->created);
+            writeStampFull(w, "updated", it->updated);
+            if (it->lastTransition) {
+                const Transition& t = *it->lastTransition;
+                w.key("transition").beginObject().kv("from", stateName(t.from)).kv("to", stateName(t.to)).kv("actor", t.actor).kv("reason", t.reason);
+                writeStampFull(w, "at", t.at);
+                w.endObject();
+            }
+            w.endObject();
+        }
+        w.endArray();
+    }
+    w.endObject();
+    // The reverse index in its own order (the order links were stated), keys sorted because the map's own order is not defined.
+    std::vector<const std::string*> targets;
+    targets.reserve(state_.backlinks.size());
+    for (const auto& entry : state_.backlinks) targets.push_back(&entry.first);
+    std::sort(targets.begin(), targets.end(), [](const std::string* a, const std::string* b) { return *a < *b; });
+    w.key("backlinks").beginObject();
+    for (const std::string* target : targets) {
+        w.key(*target).beginArray();
+        for (const Backlink& b : state_.backlinks.find(*target)->second) w.beginArray().str(b.fromKey).str(b.kind).endArray();
+        w.endArray();
+    }
+    w.endObject().endObject();
+    return {head(), eventCount_, w.take()};
+}
+
+std::expected<void, std::string> Store::restore(const Checkpoint& cp)
+{
+    StoreState state;
+    CheckpointMeta meta;
+    if (auto read = readCheckpoint(cp.json, state, &meta); !read) return std::unexpected(read.error());
+    state_ = std::move(state);
+    events_.clear();
+    seen_.runs_ = std::move(meta.seen);
+    baseSeen_ = seen_;
+    base_ = cp;
+    base_->head = meta.head;
+    base_->events = meta.events;
+    headLamport_ = baseLamport_ = meta.head;
+    headWriter_ = baseWriter_ = meta.headWriter;
+    eventCount_ = meta.events;
+    droppedLate_ = 0;
+    return {};
+}
+
 // ---- the store ---------------------------------------------------------------------------------------------------------------------------------------
 
 Store::Store(StoreOptions options) : options_(std::move(options)) {}
+
+// ---- what has been seen ------------------------------------------------------------------------------------------------------------------------------
+
+bool Store::SeenSet::contains(const WriterId& w, std::uint64_t lamport) const
+{
+    const auto it = runs_.find(w);
+    if (it == runs_.end()) return false;
+    auto run = it->second.upper_bound(lamport);   // the first run starting after `lamport`; the one before it may hold it
+    if (run == it->second.begin()) return false;
+    --run;
+    return lamport <= run->second;
+}
+
+void Store::SeenSet::insert(const WriterId& w, std::uint64_t lamport)
+{
+    auto& runs = runs_[w];
+    auto next = runs.upper_bound(lamport);
+    auto prev = next;
+    bool joinPrev = false;
+    if (next != runs.begin()) {
+        --prev;
+        if (lamport <= prev->second) return;                       // already inside a run
+        joinPrev = prev->second + 1 == lamport;
+    }
+    const bool joinNext = next != runs.end() && next->first == lamport + 1;
+    if (joinPrev && joinNext) { prev->second = next->second; runs.erase(next); }
+    else if (joinPrev) prev->second = lamport;
+    else if (joinNext) { const std::uint64_t end = next->second; runs.erase(next); runs.emplace(lamport, end); }
+    else runs.emplace(lamport, lamport);
+}
+
+// ---- folding and merging -----------------------------------------------------------------------------------------------------------------------------
 
 void Store::fold(const Event& e)
 {
@@ -287,22 +561,64 @@ void Store::fold(const Event& e)
     else ++state_.unknownKinds[e.kind];
 }
 
-void Store::rebuild()
+bool Store::afterHead(const Event& e) const
 {
-    state_ = StoreState{};
+    if (eventCount_ == 0) return true;
+    if (const auto c = e.lamport <=> headLamport_; c != 0) return c > 0;
+    return e.writer > headWriter_;
 }
 
-bool Store::append(Event e)
+bool Store::beforeBase(const Event& e) const
 {
-    if (events_.empty() || eventOrder(e, events_.back()) > 0) {
-        events_.push_back(e);
-        fold(events_.back());
+    if (!base_) return false;
+    if (const auto c = e.lamport <=> baseLamport_; c != 0) return c < 0;
+    return e.writer <= baseWriter_;
+}
+
+void Store::note(const Event& e)
+{
+    if (afterHead(e)) { headLamport_ = e.lamport; headWriter_ = e.writer; }
+    seen_.insert(e.writer, e.lamport);
+    ++eventCount_;
+}
+
+void Store::accept(const Event& e)
+{
+    fold(e);
+    note(e);
+    if (options_.retainEvents) events_.push_back(e);
+}
+
+void Store::accept(Event&& e)
+{
+    fold(e);
+    note(e);
+    if (options_.retainEvents) events_.push_back(std::move(e));
+}
+
+void Store::resetToBase()
+{
+    state_ = StoreState{};
+    if (base_) (void)readCheckpoint(base_->json, state_, nullptr);   // it was read once already, in `restore`
+}
+
+void Store::rebuild()
+{
+    resetToBase();
+    for (const Event& held : events_) fold(held);
+}
+
+bool Store::append(const Event& e)
+{
+    if (seen_.contains(e.writer, e.lamport)) return false;
+    if (afterHead(e)) {
+        accept(e);
     } else {
+        if (!options_.retainEvents || beforeBase(e)) { ++droppedLate_; return false; }   // no held events to fold it in among
         const auto it = std::lower_bound(events_.begin(), events_.end(), e, [](const Event& a, const Event& b) { return eventOrder(a, b) < 0; });
-        if (it != events_.end() && eventOrder(*it, e) == 0) return false;
         events_.insert(it, e);
+        note(e);
         rebuild();
-        for (const Event& held : events_) fold(held);
     }
     if (options_.sink != nullptr) options_.sink->append(e);
     return true;
@@ -310,25 +626,48 @@ bool Store::append(Event e)
 
 void Store::merge(std::vector<Event> batch)
 {
-    std::stable_sort(batch.begin(), batch.end(), [](const Event& a, const Event& b) { return eventOrder(a, b) < 0; });
+    const auto before = [](const Event& a, const Event& b) { return eventOrder(a, b) < 0; };
+    std::stable_sort(batch.begin(), batch.end(), before);
     batch.erase(std::unique(batch.begin(), batch.end(), [](const Event& a, const Event& b) { return eventOrder(a, b) == 0; }), batch.end());
+    batch.erase(std::remove_if(batch.begin(), batch.end(), [&](const Event& e) { return seen_.contains(e.writer, e.lamport); }), batch.end());
     if (batch.empty()) return;
-    if (events_.empty() || eventOrder(batch.front(), events_.back()) > 0) {
-        events_.reserve(events_.size() + batch.size());
-        for (Event& e : batch) { events_.push_back(std::move(e)); fold(events_.back()); }
+    const auto firstAfter = std::partition_point(batch.begin(), batch.end(), [&](const Event& e) { return !afterHead(e); });   // sorted: the late ones come first
+    if (firstAfter == batch.begin() || !options_.retainEvents) {
+        droppedLate_ += static_cast<std::size_t>(firstAfter - batch.begin());   // without held events there is nothing to fold a late one in among
+        if (options_.retainEvents) events_.reserve(events_.size() + batch.size());
+        for (auto it = firstAfter; it != batch.end(); ++it) accept(std::move(*it));
         return;
     }
+    if (base_) {   // what sorts before the restored checkpoint is inside it already, and cannot be placed
+        const auto keep = std::partition_point(batch.begin(), batch.end(), [&](const Event& e) { return beforeBase(e); });
+        droppedLate_ += static_cast<std::size_t>(keep - batch.begin());
+        batch.erase(batch.begin(), keep);
+    }
+    for (const Event& e : batch) { seen_.insert(e.writer, e.lamport); ++eventCount_; }
     std::vector<Event> merged;
     merged.reserve(events_.size() + batch.size());
     std::merge(std::make_move_iterator(events_.begin()), std::make_move_iterator(events_.end()), std::make_move_iterator(batch.begin()),
-               std::make_move_iterator(batch.end()), std::back_inserter(merged), [](const Event& a, const Event& b) { return eventOrder(a, b) < 0; });
-    merged.erase(std::unique(merged.begin(), merged.end(), [](const Event& a, const Event& b) { return eventOrder(a, b) == 0; }), merged.end());
+               std::make_move_iterator(batch.end()), std::back_inserter(merged), before);
     events_ = std::move(merged);
+    if (!events_.empty() && afterHead(events_.back())) { headLamport_ = events_.back().lamport; headWriter_ = events_.back().writer; }
     rebuild();
-    for (const Event& held : events_) fold(held);
 }
 
-void Store::replay(const EventSource& source, std::uint64_t from) { merge(source.since(from)); }
+void Store::replay(const EventSource& source, std::uint64_t from)
+{
+    std::vector<Event> batch = source.since(from);
+    if (options_.retainEvents) { merge(std::move(batch)); return; }
+    // Without held events a late event is not foldable in place: if the batch holds one, the fold is rebuilt by reading the source again from the restored
+    // checkpoint (or the start), the one place the events still are.
+    const bool late = std::any_of(batch.begin(), batch.end(), [&](const Event& e) { return !seen_.contains(e.writer, e.lamport) && !afterHead(e); });
+    if (!late) { merge(std::move(batch)); return; }
+    resetToBase();
+    seen_ = baseSeen_;
+    eventCount_ = base_ ? base_->events : 0;
+    headLamport_ = base_ ? baseLamport_ : 0;
+    headWriter_ = base_ ? baseWriter_ : WriterId{};
+    merge(source.since(eventCount_));
+}
 
 const Event& Store::emit(std::string kind, std::string subject, std::string payload)
 {
@@ -339,8 +678,14 @@ const Event& Store::emit(std::string kind, std::string subject, std::string payl
     e.subject = std::move(subject);
     e.time = now();
     e.payload = std::move(payload);
-    (void)append(std::move(e));
-    return events_.back();   // the new lamport sorts after every held event, so it is last
+    // The new lamport sorts after every event folded, so it is accepted in place and, when events are kept, is last.
+    if (options_.retainEvents) {
+        (void)append(e);
+        return events_.back();
+    }
+    lastEmitted_ = std::move(e);
+    (void)append(lastEmitted_);
+    return lastEmitted_;
 }
 
 namespace {
@@ -547,7 +892,7 @@ void writeStamp(json::Writer& w, std::string_view name, const Stamp& s)
 std::string Store::snapshotJson(const Query& q) const
 {
     json::Writer w;
-    w.beginObject().kv("schema", "store-snapshot-1").kv("head", static_cast<std::int64_t>(head())).kv("events", static_cast<std::int64_t>(events_.size()));
+    w.beginObject().kv("schema", "store-snapshot-1").kv("head", static_cast<std::int64_t>(head())).kv("events", static_cast<std::int64_t>(eventCount_));
     w.key("layers").beginObject();
     for (const auto& [name, list] : state_.layers) {
         if (!q.layers.empty() && !q.layers.contains(name)) continue;
