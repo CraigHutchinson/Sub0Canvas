@@ -1,6 +1,7 @@
 #include "mock_squad/gate.hpp"
 
 #include <cctype>
+#include <cstdlib>
 #include <sstream>
 
 namespace mock_squad {
@@ -21,6 +22,20 @@ std::expected<std::vector<GateRule>, std::string> parseGate(const std::vector<st
     for (const auto& line : lines) {
         GateRule r;
         const auto mid = [&](const std::string& s, const std::string& sep) { return s.find(sep); };
+        if (line.rfind("flap=", 0) == 0) {
+            const auto space = line.find(' ');
+            if (space == std::string::npos) return std::unexpected("not a gate rule (flap=<seed> <name>): " + line);
+            char* end = nullptr;
+            const std::string seed = line.substr(5, space - 5);
+            const long n = std::strtol(seed.c_str(), &end, 10);
+            if (seed.empty() || *end != '\0' || n < 0) return std::unexpected("a flap rule's seed is a number: " + line);
+            r.kind = GateRule::Kind::flap;
+            r.seed = static_cast<int>(n);
+            r.name = line.substr(space + 1);
+            if (r.name.empty()) return std::unexpected("an incomplete gate rule: " + line);
+            rules.push_back(std::move(r));
+            continue;
+        }
         if (line.rfind("test ", 0) == 0) {
             const auto passes = mid(line, " passes when ");
             if (passes == std::string::npos) return std::unexpected("not a gate rule (test <name> passes when <path> contains|lacks <text>): " + line);
@@ -84,11 +99,17 @@ std::string compileCheck(const std::vector<GateRule>& rules, const std::map<std:
     return out;
 }
 
-GateVerdict runTests(const std::vector<GateRule>& rules, const std::map<std::string, std::string>& files)
+GateVerdict runTests(const std::vector<GateRule>& rules, const std::map<std::string, std::string>& files, int run)
 {
     GateVerdict v;
     std::vector<std::string> failures;
     for (const auto& r : rules) {
+        if (r.kind == GateRule::Kind::flap) {
+            ++v.total;
+            if ((run + r.seed) % 2 != 0) continue;
+            failures.push_back("FAIL " + std::to_string(v.total) + " - " + r.name + ": CHECK failed: the result depended on timing\n");
+            continue;
+        }
         if (r.kind != GateRule::Kind::test) continue;
         ++v.total;
         if (holds(files, r) == r.contains) continue;

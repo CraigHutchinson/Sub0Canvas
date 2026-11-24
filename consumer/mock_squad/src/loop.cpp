@@ -5,7 +5,9 @@
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/doc_layers.hpp"
 #include "sub0canvas/edits.hpp"
+#include "sub0canvas/event.hpp"
 #include "sub0canvas/outline.hpp"
+#include "sub0canvas/store.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -33,6 +35,7 @@ std::expected<void, std::string> applyPolicy(LoopPolicy& p, const std::string& k
     if (key == "scratch") return flag(p.scratch);
     if (key == "narrowScope") return flag(p.narrowScope);
     if (key == "textsById") return flag(p.textsById);
+    if (key == "useStore") return flag(p.useStore);
     if (key == "repairTurns") return number(p.repairTurns);
     if (key == "freeRejects") return number(p.freeRejects);
     if (key == "freeAborts") return number(p.freeAborts);
@@ -79,6 +82,7 @@ public:
         out_.files = canvas_.files();
         for (const auto& path : canvas_.paths()) out_.revisions[path] = canvas_.revision(path);
         persist();
+        if (p_.useStore) persistStore();
         if (p_.issueMode != 0) {
             lib("BlockIndex::eventLogNdjson");
             out_.record["events.ndjson"] = index_.eventLogNdjson(s_.name);   // the cumulative log: every snapshot's events are a slice of it (`eventsFrom` is a position in it)
@@ -110,6 +114,116 @@ private:
     std::map<std::string, int> bestRevision_;
     std::size_t eventsCarried_ = 0;          // the events earlier snapshots of this attempt carried: the next one starts there (`eventsFrom`)
     std::set<std::string> textsCarried_;     // the content ids earlier snapshots carried (`texts`, when the policy sends texts by id)
+    int gateRun_ = 0;                        // test runs so far: a flapping test reads it
+    MemoryLog storeLog_;                     // `useStore`: where the store's events go, as a squad's per-attempt segment would
+    Store store_{storeOptions()};
+    Checkpoint midCheckpoint_;               // the store after its first verdict, to prove a reader can start there
+    bool haveCheckpoint_ = false;
+
+    StoreOptions storeOptions()
+    {
+        StoreOptions o;
+        o.writer = {"mock", "loop"};
+        o.sink = &storeLog_;
+        o.clock = [this] { return "turn-" + std::to_string(turns_); };   // injected: the core reads no clock (R-BB-7); the turn is what a person would call the time
+        return o;
+    }
+
+    /// `useStore`: the verdict's issues as the store holds them. `putLayer` reconciles the layer by key (a new key is open, a vanished one is done by its source,
+    /// a returning one is reopened); the items handed on are read back from the store, in the order the verdict listed them, so the verdict the model sees is built
+    /// from the store and must equal the direct one byte for byte (anything else is recorded as a violation and the stored text is the one used, so a faulty store
+    /// shows in the persisted bytes as well).
+    std::vector<LayerItem> throughStore(const std::vector<LayerItem>& direct)
+    {
+        lib("Store::putLayer");
+        (void)store_.putLayer("issues", "mock/gate", direct);
+        std::vector<LayerItem> stored;
+        int number = 0;
+        for (const LayerItem& d : direct) {
+            lib("Store::item");
+            const StoredItem* s = store_.item(d.key);
+            if (s == nullptr) {
+                out_.violations.push_back("turn " + std::to_string(turns_) + ": the store does not hold the issue '" + d.key + "' it was just given");
+                stored.push_back(d);
+                continue;
+            }
+            LayerItem item = s->item;
+            item.number = ++number;
+            stored.push_back(std::move(item));
+        }
+        for (std::size_t i = 0; i < direct.size(); ++i) {
+            const LayerItem& a = direct[i];
+            const LayerItem& b = stored[i];
+            bool same = a.layer == b.layer && a.number == b.number && a.kind == b.kind && a.title == b.title && a.detail == b.detail && a.key == b.key && a.anchors.size() == b.anchors.size();
+            for (std::size_t k = 0; same && k < a.anchors.size(); ++k) {
+                const Anchor& x = a.anchors[k];
+                const Anchor& y = b.anchors[k];
+                same = x.blockId == y.blockId && x.path == y.path && x.line == y.line && x.column == y.column && x.endLine == y.endLine && x.endColumn == y.endColumn &&
+                       x.confidence == y.confidence;
+            }
+            if (!same) out_.violations.push_back("turn " + std::to_string(turns_) + ": the issue '" + a.key + "' read back from the store differs from the one given");
+        }
+        noteStoreState();
+        return stored;
+    }
+
+    /// The passing run: the layer is re-derived as empty, so every open issue is done by its source.
+    void storeAllClear()
+    {
+        if (!p_.useStore) return;
+        lib("Store::putLayer");
+        (void)store_.putLayer("issues", "mock/gate", std::vector<LayerItem>{});
+        noteStoreState();
+    }
+
+    void noteStoreState()
+    {
+        lib("Store::items");
+        std::map<std::string, std::string> states;
+        for (const StoredItem* it : store_.items()) states[it->item.key] = std::string{stateName(it->state)};
+        out_.storeStates.push_back(std::move(states));
+        if (!haveCheckpoint_) {
+            lib("Store::checkpoint");
+            midCheckpoint_ = store_.checkpoint();
+            haveCheckpoint_ = true;
+        }
+    }
+
+    /// The store's events as the persisted segment (`canvas-events-1`: the header line, then one event per line) and its snapshot; then the proofs a consumer
+    /// relies on: the persisted lines, read back and replayed, give the live snapshot byte for byte (R-BB-1), and so does a store restored from the checkpoint
+    /// taken after the first verdict and caught up from the log's tail.
+    void persistStore()
+    {
+        lib("eventJson");
+        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        for (const Event& e : storeLog_.events()) lines += eventJson(e) + "\n";
+        out_.record["store/events.ndjson"] = lines;
+        const std::string live = store_.snapshotJson();
+        out_.record["store/snapshot.json"] = live + "\n";
+        out_.storeEvents = store_.events().size();
+        std::vector<Event> back;
+        std::istringstream in(lines);
+        std::string line;
+        std::getline(in, line);   // the header
+        while (std::getline(in, line)) {
+            lib("parseEvent");
+            auto e = parseEvent(line);
+            if (!e) { out_.violations.push_back("the persisted store event '" + line.substr(0, 60) + "' does not parse: " + e.error()); continue; }
+            back.push_back(std::move(*e));
+        }
+        Store replayed;
+        lib("Store::merge");
+        replayed.merge(back);
+        if (replayed.snapshotJson() != live) out_.violations.push_back("replaying the persisted store events does not give the live snapshot");
+        if (haveCheckpoint_) {
+            Store restored;
+            lib("Store::restore");
+            if (!restored.restore(midCheckpoint_)) out_.violations.push_back("the store checkpoint taken after the first verdict does not restore");
+            lib("Store::replay");
+            restored.replay(storeLog_, midCheckpoint_.events);
+            if (restored.snapshotJson() != live) out_.violations.push_back("a store restored from its first checkpoint and caught up from the log's tail differs from the live snapshot");
+        }
+    }
 
     void lib(const char* name) { calls_.insert(name); }
 
@@ -156,6 +270,7 @@ private:
         const std::string& all = tests && !lastGate_.failures.empty() ? lastGate_.failures : text;
         lib("parseIssues");
         issues_ = parseIssues(all, index_, {});
+        if (p_.useStore) issues_ = throughStore(issues_);
         SnapshotSpec spec;
         spec.turn = turns_;
         spec.files = canvas_.files();
@@ -203,7 +318,7 @@ private:
             out_.startVerdict = "They do not compile as they stand:\n" + layeredVerdict(bad, false, 1500, focus);
             return;
         }
-        lastGate_ = runTests(gate_, canvas_.files());
+        lastGate_ = runTests(gate_, canvas_.files(), gateRun_++);
         if (lastGate_.pass) {
             out_.verified = true;
             return;
@@ -436,9 +551,10 @@ private:
             record(actor, "committed", "missing " + missing, skippedNote + "Committed. Still to write (whole, with === FILE: <path> ===): " + missing);
             return {};
         }
-        lastGate_ = runTests(gate_, canvas_.files());
+        lastGate_ = runTests(gate_, canvas_.files(), gateRun_++);
         if (lastGate_.pass) {
             out_.verified = true;
+            storeAllClear();
             record(actor, "passed", skippedText, skippedNote + "The item's tests pass.");
             return {};
         }
@@ -448,7 +564,7 @@ private:
             const std::string broke = layeredVerdict(lastGate_.text, true, 1200, focus);   // what the worse revision broke, before it is undone
             const std::string undone = restoreBest();
             ++out_.reverted;
-            lastGate_ = runTests(gate_, canvas_.files());   // gate.txt describes what the canvas holds now
+            lastGate_ = runTests(gate_, canvas_.files(), gateRun_ - 1);   // gate.txt describes what the canvas holds now (the same run: a revert is not another test run)
             record(actor, "reverted", countText + ", best " + std::to_string(bestFailing_),
                    skippedNote + "Your transaction made it worse (" + std::to_string(failing) + " tests failing, " + std::to_string(bestFailing_) +
                        " before), so the files below are back at the better revision (yours stays in the history as " + undone + "). What your change broke:\n" + broke,

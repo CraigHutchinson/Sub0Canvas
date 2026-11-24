@@ -1,6 +1,7 @@
 # name: g4-rename-resign-move
 # cites: tier 0 undeclared-member and the viewer's demo story (docs/LAYERED_DOCUMENT.md): over four replies a function is renamed, another re-signed and a third moved to a new file while one compile error stays open; its key and the block it names keep their identity as its title changes (R-ID-4, R-ID-5, R-ID-6, R-ISS-5, R-VWR-5)
 # allowed: src/calc.cpp src/geometry.cpp
+# policy: useStore=yes
 # expect: staged:legacy | staged:legacy | staged:legacy | passed
 --- base src/calc.cpp
 #include <stdexcept>
@@ -91,3 +92,11 @@ issue @3 1 = k
 retitled k
 anchor @0 1 src/calc.cpp area
 anchor @3 1 src/calc.cpp area
+--- expect-store
+# Hand-written (its key is a hash of the message, so it is found by its kind). One compile issue ('legacy' was not declared) stands through the rename, the re-signing and the move, and the key never changes, so the store holds
+# ONE item however many verdicts name it. Its events: the first put (the starting files); then a put each time the text of the diagnostic changes, which is on replies 1
+# (the rename adds a comment line above it, so its line number moves), 2 (the re-signed area changes the quoted source line) and 3 (the move takes square's lines away);
+# then one event when reply 4 passes and the layer is empty (done by its source). Five events, never a second item.
+events 5
+items 1
+state issues/error : open open open open done

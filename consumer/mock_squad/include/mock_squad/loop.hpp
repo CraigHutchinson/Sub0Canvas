@@ -35,6 +35,8 @@ struct LoopPolicy
     bool partial = true;           ///< `applyReply` partial (the squad's choice: one bad edit never costs the good ones beside it)
     bool scratch = true;           ///< apply to a copy and keep it only on success, as the squad does; false applies to the canvas itself (what an atomic library must survive)
     bool textsById = false;        ///< turn files carry each text once, by content id (`SnapshotSpec::textsById`); false: every file's text inline, as the squad writes today
+    bool useStore = false;         ///< MS3: every verdict also goes through a `Store` over a `MemoryLog` (`putLayer` reconciles the issues layer by key), the verdict is built from what the
+                                   ///< store holds, and the persisted attempt gains `store/events.ndjson` and `store/snapshot.json`. Off by default, so existing attempts are unchanged
     bool narrowScope = true;       ///< a FILE over a file that exists and is not a stub is refused (edits first, `scopeRefusalFor`)
     int issueMode = 1;             ///< 0 off, 1 always the layer, 2 adaptive (SUB0SQUAD_ISSUE_LAYER; the squad defaults to 2, the mock to 1 so every verdict uses the library)
     int inlineIssues = 3;          ///< issues shown in full (SUB0SQUAD_ISSUE_INLINE)
@@ -85,6 +87,8 @@ struct Attempt
     std::map<std::string, std::string> record;         ///< the persisted attempt: path under the attempt directory to bytes, in the squad's format plus `mock-trace.json`
     std::set<std::string> libraryCalls;                ///< the public functions the loop called, by name: what the consumer contract's coverage reads
     std::vector<std::string> violations;               ///< invariants that failed during the run (a refusal that changed the canvas, an anchor that does not resolve)
+    std::vector<std::map<std::string, std::string>> storeStates;   ///< `useStore`: after each verdict, every issue the store holds (key to state), the hand-checked truth of `expect-store`
+    std::size_t storeEvents = 0;                       ///< `useStore`: the events the store made
     bool verified = false;                             ///< the gate passed
     int commits = 0, refused = 0, reads = 0, aborted = 0, continued = 0, reverted = 0, staged = 0;   ///< the squad's per-attempt counts (`agent.json`)
     std::size_t unusedReplies = 0;                     ///< scripted replies never sent (the attempt ended first)

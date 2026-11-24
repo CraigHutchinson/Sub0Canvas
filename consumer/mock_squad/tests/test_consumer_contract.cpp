@@ -136,6 +136,69 @@ std::string checkIds(const Scenario& sc, const Attempt& a)
     return {};
 }
 
+bool usesStore(const Scenario& sc)
+{
+    bool on = false;
+    for (const auto& [k, v] : sc.policy) if (k == "useStore") on = v == "yes";
+    return on;
+}
+
+/// "" when the store's truth holds (MS3). Lines, written by hand in the scenario from the gate's rules:
+///   `events N`                         the store made N events in all
+///   `items N`                          N different items were ever held: a duplicate would be one more
+///   `state <key part> : s1 s2 ...`     the state of the item whose key holds that text after each verdict ('-' before it exists)
+/// A scenario runs the store exactly when it says what the store must hold.
+std::string checkStore(const Scenario& sc, const Attempt& a)
+{
+    if (usesStore(sc) != !sc.expectStore.empty()) return "a scenario with useStore=yes needs an expect-store section, and one without it must not have one";
+    std::set<std::string> keys;
+    for (const auto& s : a.storeStates) for (const auto& [k, v] : s) keys.insert(k);
+    for (const auto& line : sc.expectStore) {
+        const auto w = wordsOf(line);
+        if (w.size() == 2 && w[0] == "events") {
+            if (a.storeEvents != static_cast<std::size_t>(std::atoi(w[1].c_str()))) return "expected " + w[1] + " store events, got " + std::to_string(a.storeEvents);
+        } else if (w.size() == 2 && w[0] == "items") {
+            if (keys.size() != static_cast<std::size_t>(std::atoi(w[1].c_str()))) return "expected " + w[1] + " items, the store held " + std::to_string(keys.size());
+        } else if (w.size() >= 4 && w[0] == "state" && w[2] == ":") {
+            std::string key;
+            for (const auto& k : keys)
+                if (k.find(w[1]) != std::string::npos) { if (!key.empty()) return "'" + w[1] + "' names more than one item"; key = k; }
+            if (key.empty()) return "no item whose key holds '" + w[1] + "'";
+            if (a.storeStates.size() != w.size() - 3) return "expected states after " + std::to_string(w.size() - 3) + " verdicts, the loop made " + std::to_string(a.storeStates.size());
+            for (std::size_t i = 3; i < w.size(); ++i) {
+                const auto it = a.storeStates[i - 3].find(key);
+                const std::string got = it == a.storeStates[i - 3].end() ? "-" : it->second;
+                if (got != w[i]) return "'" + w[1] + "' after verdict " + std::to_string(i - 3) + ": expected " + w[i] + ", got " + got;
+            }
+        } else {
+            return "not a store expectation: " + line;
+        }
+    }
+    return {};
+}
+
+/// "" when the loop's observable output does not depend on the store: the same scenario with the policy flipped gives the same outcomes (kind, text, verdict, focus)
+/// and the same persisted bytes, apart from what the store adds under store/ and the list of library calls in the trace.
+std::string checkStoreTransparent(const Scenario& sc, const Attempt& a)
+{
+    Scenario other = sc;
+    other.policy.emplace_back("useStore", usesStore(sc) ? "no" : "yes");
+    const auto b = runScenario(other);
+    if (!b) return b.error();
+    if (!b->violations.empty()) return "with the store flipped: " + b->violations[0];
+    if (a.outcomes.size() != b->outcomes.size()) return "the outcome count changes with the store";
+    for (std::size_t i = 0; i < a.outcomes.size(); ++i) {
+        const Outcome &x = a.outcomes[i], &y = b->outcomes[i];
+        if (x.kind != y.kind || x.text != y.text || x.verdict != y.verdict || x.focus != y.focus) return "reply " + std::to_string(i) + ": the verdict differs with the store";
+    }
+    const auto strip = [](std::map<std::string, std::string> r) {
+        for (auto it = r.begin(); it != r.end();) it = it->first.rfind("store/", 0) == 0 || it->first == "mock-trace.json" ? r.erase(it) : std::next(it);
+        return r;
+    };
+    if (strip(a.record) != strip(b->record)) return "the persisted attempt differs with the store";
+    return {};
+}
+
 /// "" when the persisted attempt equals the files under `dir`, both ways.
 std::string checkRecord(const Attempt& a, const fs::path& dir)
 {
@@ -230,6 +293,8 @@ int main(int argc, char** argv)
         report("outcomes", checkOutcomes(*sc, *attempt));   // (c)
         report("files", checkFiles(*sc, *attempt));
         report("identities", checkIds(*sc, *attempt));
+        report("store", checkStore(*sc, *attempt));                                     // MS3: hand-checked open, done, reopened
+        report("store transparency", checkStoreTransparent(*sc, *attempt));            // the verdict through the store equals the direct one
         report("stored attempt", checkRecord(*attempt, fs::path(argv[2]) / sc->name));   // (d)
         for (const auto& v : attempt->violations) report("invariant", v);               // (e) a refusal that changed the canvas, an anchor that does not resolve
         const auto again = runScenario(*sc);                                            // (e) the same scenario twice gives the same bytes
@@ -248,6 +313,9 @@ int main(int argc, char** argv)
         CHECK(attempts.count("b3-loop-rolled-back") && attempts["b3-loop-rolled-back"].aborted == 1);
         CHECK(attempts.count("g6-worse-is-reverted") && attempts["g6-worse-is-reverted"].reverted == 1);
         CHECK(attempts.count("g4-rename-resign-move") && attempts["g4-rename-resign-move"].staged == 3);
+        CHECK(attempts.count("b15-flapping-test") && attempts["b15-flapping-test"].reverted == 1);
+        for (const char* fn : {"Store::putLayer", "Store::item", "Store::checkpoint", "Store::restore", "Store::replay", "Store::merge", "eventJson", "parseEvent"})
+            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS3)\n", fn); CHECK(false); }
     }
     {   // (b) every row of REQUIREMENTS.md "Sub0Squad's use, mapped" is exercised by a scenario or deferred with its reason.
         const auto cells = mappedRows(slurp(argv[3]));

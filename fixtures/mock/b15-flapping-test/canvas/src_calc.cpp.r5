@@ -1,0 +1,18 @@
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+// Squares a number.
+double square(double x)
+{
+    return x * x;
+}
+
+double area(double r)
+{
+    return 3 * square(r);
+}

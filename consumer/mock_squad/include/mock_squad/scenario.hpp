@@ -15,6 +15,7 @@
 /// --- reply [as=NAME] [base=rN] [finish=length|stop] [pieces=N]
 /// --- want <path>                     (a file after)
 /// --- expect-ids                      (see `checkIds` in the contract test)
+/// --- expect-store                    (under `# policy: useStore=yes`: `events N`, `items N`, `state <key part> : <state after each verdict>`; see `checkStore`)
 /// ```
 /// A section's text runs to the next `--- ` line. A reply loses its final newline (a cut-off reply ends mid-line).
 
@@ -45,7 +46,7 @@ struct ExpectedOutcome
 struct Scenario
 {
     std::string name, cites;
-    std::vector<std::string> actors, allowed, gateRules, expectIds;
+    std::vector<std::string> actors, allowed, gateRules, expectIds, expectStore;
     std::vector<std::pair<std::string, std::string>> policy;   ///< `key=value` overrides of the loop's policy, in the order written
     std::vector<ExpectedOutcome> expect;
     std::map<std::string, std::string> base, want;
