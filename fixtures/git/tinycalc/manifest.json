@@ -1,0 +1,57 @@
+{
+  "schema": "g1-git-fixture-1",
+  "project": "tinycalc",
+  "commits": 200,
+  "head": "a0acc07803de74b88d1f7e2371ce2f9d81c3a0c8",
+  "shallowDepth": 25,
+  "windows": [
+    {
+      "name": "src-last-40",
+      "scope": [
+        "src/"
+      ],
+      "n": 40,
+      "base": "13a45e63d7132087667f9db5a3cb004666ef376c",
+      "listing": "tree-src-last-40.z"
+    }
+  ],
+  "renameCommit": "4be4488c921d3fc6ca5740b36c53ee663f3cd24a",
+  "pathLogs": [
+    {
+      "name": "src",
+      "scope": [
+        "src/"
+      ]
+    },
+    {
+      "name": "util",
+      "scope": [
+        "src/util.cpp"
+      ]
+    },
+    {
+      "name": "geometry",
+      "scope": [
+        "src/geometry.cpp"
+      ]
+    },
+    {
+      "name": "statistics",
+      "scope": [
+        "src/statistics.cpp"
+      ]
+    },
+    {
+      "name": "numeric",
+      "scope": [
+        "src/numeric.cpp"
+      ]
+    },
+    {
+      "name": "docs",
+      "scope": [
+        "docs/"
+      ]
+    }
+  ]
+}
