@@ -74,11 +74,16 @@ public:
         }
         persist();
         startingVerdict();
-        std::size_t next = 0;
-        while (!out_.verified && spent_ <= p_.repairTurns && next < s_.replies.size()) {
-            if (auto err = step(s_.replies[next++]); !err.empty()) return std::unexpected(err);
+        // The steps in order. A reply stops once the gate has passed or the turns are spent; a control step (docs/MOCK_SQUAD.md section 4) spends no turn and still runs,
+        // so a scenario can expire or settle claims after the last reply.
+        for (std::size_t next = 0; next < s_.replies.size(); ++next) {
+            const ScriptedReply& r = s_.replies[next];
+            if (r.op.empty() && (out_.verified || spent_ > p_.repairTurns)) {
+                ++out_.unusedReplies;
+                continue;
+            }
+            if (auto err = r.op.empty() ? step(r) : control(r); !err.empty()) return std::unexpected(err);
         }
-        out_.unusedReplies = s_.replies.size() - next;
         out_.files = canvas_.files();
         for (const auto& path : canvas_.paths()) out_.revisions[path] = canvas_.revision(path);
         persist();
@@ -363,6 +368,13 @@ private:
     void record(const std::string& actor, std::string kind, std::string text, std::string verdict, std::string focus = {})
     {
         out_.outcomes.push_back({turns_ - 1, actor, std::move(kind), std::move(text), std::move(verdict), std::move(focus)});
+    }
+
+    /// One control step (`claim`, `release`, `expire`, `sync`, `since`, `advance`, `refresh`): it spends no turn, writes no reply file and adds no layer turn; it records
+    /// an outcome of its own kind. Returns an error only when the scenario itself is wrong.
+    std::string control(const ScriptedReply& r)
+    {
+        return "the control step '" + r.op + "' is not available: this loop runs replies only";
     }
 
     /// One reply, from its stream to its verdict. Returns an error only when the scenario itself is wrong.
