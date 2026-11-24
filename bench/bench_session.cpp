@@ -50,7 +50,7 @@ struct Rig
         StoreOptions o;
         o.writer = {"bench", "srv"};
         o.sink = &log;
-        registerViewReducers(o.registry);
+        (void)registerViewReducers(o.registry);
         store = std::make_unique<Store>(std::move(o));
         views = std::make_unique<LogViewStore>(*store);
         canvas.addFile("a.cpp", fileOf(functions));
@@ -160,7 +160,7 @@ void runSessionBenchmarks(sub0bench::BenchRunner& runner, const std::size_t&, co
                 // The replay's result against the live state, once (the timed part below is the replay alone).
                 StoreOptions o;
                 o.writer = {"bench", "replica"};
-                registerViewReducers(o.registry);
+                (void)registerViewReducers(o.registry);
                 Store replica(std::move(o));
                 replica.replay(rig->log);
                 LogViewStore rv(replica);
@@ -178,7 +178,7 @@ void runSessionBenchmarks(sub0bench::BenchRunner& runner, const std::size_t&, co
             });
             StoreOptions o;
             o.writer = {"bench", "replica"};
-            registerViewReducers(o.registry);
+            (void)registerViewReducers(o.registry);
             Store replica(std::move(o));
             replica.replay(rig->log);
             ankerl::nanobench::doNotOptimizeAway(replica.eventCount());

@@ -102,13 +102,13 @@ public:
     [[nodiscard]] StoredItem* find(std::string_view key);
     [[nodiscard]] const StoredItem* find(std::string_view key) const;
     /// Makes a new item in `layer` (last in the layer's order). The key must not exist.
-    StoredItem& create(std::string key, std::string layer);
+    [[nodiscard]] StoredItem& create(std::string key, std::string layer);
     /// Moves an item to another layer (last in its order); a no-op for the layer it is in.
     void moveToLayer(StoredItem& item, const std::string& layer);
     /// Adds a link (and its reverse entry); false when this exact link is already stated.
-    bool addLink(StoredItem& item, Link link);
+    [[nodiscard]] bool addLink(StoredItem& item, Link link);
     /// Removes a link (and its reverse entry); false when it was not stated.
-    bool removeLink(StoredItem& item, const Link& link);
+    [[nodiscard]] bool removeLink(StoredItem& item, const Link& link);
     /// State of type `T` for a reducer that is not the core's.
     template <class T>
     [[nodiscard]] T& ext()
@@ -147,7 +147,7 @@ public:
     /// The core's kinds: `item.put@1`, `item.state@1`, `item.tag@1`, `item.untag@1`, `item.link@1`, `item.unlink@1`.
     [[nodiscard]] static ReducerRegistry core();
     /// Registers `reducer` for `kind`; false (and nothing changes) when the kind already has one.
-    bool add(std::string kind, Reducer reducer);
+    [[nodiscard]] bool add(std::string kind, Reducer reducer);
     [[nodiscard]] const Reducer* find(std::string_view kind) const;
     [[nodiscard]] std::size_t size() const { return reducers_.size(); }
 
@@ -215,16 +215,16 @@ public:
     void merge(std::vector<Event> events);
     /// Appends one event as given (its writer and lamport are the caller's) and forwards it to the sink. Returns false when an event with that writer and
     /// lamport is already held.
-    bool append(const Event& e);
+    [[nodiscard]] bool append(const Event& e);
     /// Makes an event of this store's writer with the next lamport value, appends it and returns it (valid until the next call that adds an event).
-    const Event& emit(std::string kind, std::string subject, std::string payload);
+    [[nodiscard]] const Event& emit(std::string kind, std::string subject, std::string payload);
 
     // Conveniences that build events (every one is an `emit`).
     /// Reconciles a re-derived layer by key (R-BB-2): a new key is open; a known key whose content differs is updated; a done or verified key that comes back
     /// is reopened (a dropped or held one is left as it is); an open or held key of this layer and source that is not offered is set done by the source.
     /// Nothing is deleted. Keys must be unique within `items`. Cost: events for the items that changed, plus one pass over the layer.
-    PutResult putLayer(const std::string& layer, const std::string& source, const std::vector<ItemInput>& items);
-    PutResult putLayer(const std::string& layer, const std::string& source, const std::vector<LayerItem>& items);
+    [[nodiscard]] PutResult putLayer(const std::string& layer, const std::string& source, const std::vector<ItemInput>& items);
+    [[nodiscard]] PutResult putLayer(const std::string& layer, const std::string& source, const std::vector<LayerItem>& items);
     /// Sets an item's state; `actor` names who (required). True when an event was made, false when the item already had that state.
     [[nodiscard]] std::expected<bool, std::string> setState(const std::string& key, ItemState state, const std::string& actor, const std::string& reason = {});
     /// Adds a tag (lower-case `[a-z0-9-/]`, 3.1). True when an event was made, false when the item already had it.
@@ -281,7 +281,7 @@ private:
     [[nodiscard]] bool afterHead(const Event& e) const;
     [[nodiscard]] bool beforeBase(const Event& e) const;   ///< sorts at or before the restored checkpoint's head: that part of the log is not held
     void resetToBase();
-    bool matches(const StoredItem& it, const Query& q) const;
+    [[nodiscard]] bool matches(const StoredItem& it, const Query& q) const;
     [[nodiscard]] std::string now() const { return options_.clock ? options_.clock() : std::string{}; }
 
     StoreOptions options_;

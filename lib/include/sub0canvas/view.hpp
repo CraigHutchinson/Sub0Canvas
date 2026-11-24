@@ -170,7 +170,7 @@ inline constexpr std::string_view kSessionPutKind = "session.put@1";
 
 /// Adds the reducers of the two kinds to `registry`, and the subscription reducers when the registry has none (a view owns one subscription). False when one of
 /// the two kinds already had a reducer.
-bool registerViewReducers(ReducerRegistry& registry);
+[[nodiscard]] bool registerViewReducers(ReducerRegistry& registry);
 
 /// The log-backed `ViewStore`: every `put` is an event of the store's writer, folded into `ViewsState`; a second store replaying the log holds the same records.
 class LogViewStore final : public ViewStore

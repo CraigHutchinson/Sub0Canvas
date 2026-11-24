@@ -16,6 +16,9 @@ the ladder in [TESTING.md](TESTING.md), and only then integrated, one iteration 
   exercise the edits code).
 * For local work, Sub0Squad's `. scripts/dev-env.sh` exports `CPM_Sub0Canvas_SOURCE` (a user-level variable on the Windows dev machine) pointing at a sibling checkout of this repository, so an
   unreleased change can be built there. **That override masks a missing tag**: before pushing a pin, configure once with it unset.
+* **`[[nodiscard]]` on the public value-returning API (C++23 adoption B1/B2, 2026-11-24)**: `expireDue`, `emitBlockCarries`, `emitBlockCarry`, `addNote`, `registerSubscriptionReducers`, `registerViewReducers`, `QueryDocument::addRevision`,
+  `StoreState::{create, addLink, removeLink}`, `ReducerRegistry::add`, `Store::{append, emit, putLayer, matches}` and `Workspace::sweep` now warn when the result is dropped, so a consumer built with `-Werror` fails until it uses the result or writes `(void)`.
+  Sub0Squad's copy of the loop is the likely place (`(void)registerViewReducers(...)`, `(void)store.emit(...)`); a behaviour change there is none.
 
 ## One iteration
 

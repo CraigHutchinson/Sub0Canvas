@@ -297,7 +297,7 @@ public:
     /// Ends a session: its views are closed and its subscriptions ended.
     [[nodiscard]] Result<void> close(std::string_view id, const Identity& who, Instant now);
     /// Expires every session idle past its limit at `now`; returns how many.
-    std::size_t sweep(Instant now);
+    [[nodiscard]] std::size_t sweep(Instant now);
     /// Sessions with a live object in this process.
     [[nodiscard]] std::size_t liveSessions() const { return sessions_.size(); }
 

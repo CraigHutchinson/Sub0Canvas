@@ -50,7 +50,7 @@ struct Rig
         StoreOptions o;
         o.writer = {"proj", "srv"};
         o.sink = &log;
-        registerViewReducers(o.registry);
+        (void)registerViewReducers(o.registry);
         store = std::make_unique<Store>(std::move(o));
         views = std::make_unique<LogViewStore>(*store);
         canvas.addFile("a.cpp", kT1);
@@ -494,7 +494,7 @@ int main()
 
         StoreOptions o;
         o.writer = {"proj", "replica"};
-        registerViewReducers(o.registry);
+        (void)registerViewReducers(o.registry);
         Store replica(std::move(o));
         replica.replay(r.log);
         LogViewStore rv(replica);
