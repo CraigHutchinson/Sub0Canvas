@@ -1179,7 +1179,7 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
             byKey[key] = items.size();
             current = items.size();
             char hash[17];
-            std::snprintf(hash, sizeof hash, "%016llx", static_cast<unsigned long long>(std::hash<std::string>{}(key)));
+            std::snprintf(hash, sizeof hash, "%016llx", static_cast<unsigned long long>(hashView(key)));   // the fixed hash: std::hash<std::string> differs between libstdc++ and libc++
             items.push_back({"issues", 0, kind, kind + " " + path + ":" + std::to_string(at) + ": " + message, line, {a}, "issues/" + kind + "/" + hash});
             continue;
         }
