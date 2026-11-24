@@ -960,14 +960,18 @@ std::vector<BlockEvent> EventLog::from(std::size_t from) const
     return out;
 }
 
-std::string BlockIndex::retiredJson() const
+void BlockIndex::writeRetired(json::Writer& w) const
 {
-    json::Writer w;
     w.beginArray();
-    for (const auto& [key, r] : s_->retired)
-        w.beginObject().kv("id", idText(key)).kv("path", r.path).kv("name", r.name).kv("mergedInto", r.mergedInto == 0 ? std::string{} : idText(r.mergedInto)).endObject();
+    char id[13], into[13];
+    for (const auto& [key, r] : s_->retired) {
+        idChars(key, id);
+        w.beginObject().kv("id", std::string_view{id, 13}).kv("path", r.path).kv("name", r.name);
+        if (r.mergedInto == 0) w.kv("mergedInto", std::string_view{});
+        else { idChars(r.mergedInto, into); w.kv("mergedInto", std::string_view{into, 13}); }
+        w.endObject();
+    }
     w.endArray();
-    return std::string{w.view()};
 }
 
 namespace {
@@ -993,15 +997,35 @@ std::string BlockIndex::json(std::size_t eventsFrom) const { return jsonFrom(eve
 
 std::string BlockIndex::jsonFrom(std::size_t eventsFrom, bool say) const
 {
-    json::Writer w;
-    w.beginObject().key("blocks").beginArray();
+    json::Writer w{jsonSizeHint(eventsFrom) + 64};
+    w.beginObject();
+    writeMembers(w, eventsFrom, say);
+    w.endObject();
+    return std::string{w.view()};
+}
+
+void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const { writeMembers(w, eventsFrom, true); }
+
+void BlockIndex::writeMembers(json::Writer& w, std::size_t eventsFrom, bool say) const
+{
+    w.key("blocks").beginArray();
     for (const auto& [p, fileIndex] : s_->byPath) for (const Block& b : s_->files[fileIndex].blocks) projection::writeBlock(w, b);
-    w.endArray().kvRaw("retired", retiredJson());
+    w.endArray().key("retired");
+    writeRetired(w);
     if (say) w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
     w.key("events").beginArray();
     for (std::size_t i = std::min(eventsFrom, s_->events.size()); i < s_->events.size(); ++i) writeEv(w, s_->events[i], *s_->pool);
-    w.endArray().endObject();
-    return std::string{w.view()};
+    w.endArray();
+}
+
+std::size_t BlockIndex::jsonSizeHint(std::size_t eventsFrom) const
+{
+    // About 70 bytes of keys and punctuation plus the three strings of a block; about 90 plus the strings of an event; 60 per retired block.
+    constexpr std::size_t kBlock = 80, kEvent = 110, kRetired = 70;
+    std::size_t bytes = 64 + s_->retired.size() * kRetired;
+    bytes += s_->liveBlocks * kBlock;
+    bytes += (s_->events.size() - std::min(eventsFrom, s_->events.size())) * kEvent;
+    return bytes;
 }
 
 std::string BlockIndex::eventLogNdjson(const std::string& document) const
@@ -1347,7 +1371,10 @@ const LayerMeta* defaultMeta(const std::string& layer)
 
 std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
 {
-    json::Writer w;
+    // The buffer is sized up front (a snapshot is mostly the texts and the blocks): growing by doubling copies the megabyte-sized document several times.
+    std::size_t hint = 4096 + index.jsonSizeHint(spec.eventsFrom);
+    for (const auto& [path, text] : spec.files) hint += path.size() + 160 + (spec.textsById && spec.textsCarried ? 0 : text.size() + text.size() / 16);
+    json::Writer w{hint};
     w.beginObject().kv("schema", "layered-doc-1").kv("turn", spec.turn).key("files").beginObject();
     std::map<std::string, std::string> ids;   // path -> content id
     for (const auto& [path, text] : spec.files) {
@@ -1373,8 +1400,7 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
         if (spec.textsCarried) spec.textsCarried->insert(here.begin(), here.end());
     }
     // The index's own JSON holds blocks, retired and events: spliced in whole, so there is one writer of that shape.
-    const std::string idx = index.json(spec.eventsFrom);
-    w.raw(std::string_view{idx}.substr(1, idx.size() - 2));
+    index.writeJsonMembers(w, spec.eventsFrom);
     if (!spec.policies.empty()) {
         w.key("policies").beginObject();
         for (const auto& [role, id] : spec.policies) w.kv(role, id);

@@ -16,13 +16,15 @@ namespace sub0canvas::json {
 class Writer
 {
 public:
+    /// `capacity` is the first buffer size: a writer that knows roughly what it will write passes it, so the builder does not double its way up (each doubling copies).
     Writer() : buffer_(1024) {}
+    explicit Writer(std::size_t capacity) : buffer_(capacity < 64 ? 64 : capacity) {}
     Writer& beginObject() { sep(); buffer_.append('{'); first_.push_back(true); return *this; }
     Writer& endObject() { buffer_.append('}'); first_.pop_back(); return *this; }
     Writer& beginArray() { sep(); buffer_.append('['); first_.push_back(true); return *this; }
     Writer& endArray() { buffer_.append(']'); first_.pop_back(); return *this; }
-    Writer& key(std::string_view k) { sep(); buffer_.escape_and_append_with_quotes(k); buffer_.append(':'); pendingKey_ = true; return *this; }
-    Writer& str(std::string_view v) { sep(); buffer_.escape_and_append_with_quotes(v); return *this; }
+    Writer& key(std::string_view k) { sep(); quoted(k); buffer_.append(':'); pendingKey_ = true; return *this; }
+    Writer& str(std::string_view v) { sep(); quoted(v); return *this; }
     Writer& num(std::int64_t v) { sep(); buffer_.append(v); return *this; }
     Writer& num(double v) { sep(); buffer_.append(v); return *this; }
     Writer& boolean(bool v) { sep(); buffer_.append(v); return *this; }
@@ -43,6 +45,25 @@ public:
     void clear() { buffer_.clear(); first_.clear(); pendingKey_ = false; }
 
 private:
+    /// `v` as a JSON string. Most strings a snapshot writes (keys, ids, paths, names, signatures) are short and need no escaping: a plain scan then copies them in one
+    /// piece, which costs less than the SIMD escaper's setup per call. Anything longer, or with a character to escape, goes to the builder's escaper (same bytes).
+    void quoted(std::string_view v)
+    {
+        if (v.size() <= 96) {
+            bool plain = true;
+            for (const char ch : v) {
+                const auto c = static_cast<unsigned char>(ch);
+                if (c < 0x20 || c == '"' || c == '\\') { plain = false; break; }
+            }
+            if (plain) {
+                buffer_.append('"');
+                buffer_.append_raw(v);
+                buffer_.append('"');
+                return;
+            }
+        }
+        buffer_.escape_and_append_with_quotes(v);
+    }
     void sep()
     {
         if (pendingKey_) { pendingKey_ = false; return; }

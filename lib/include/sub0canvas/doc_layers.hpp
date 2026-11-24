@@ -191,11 +191,16 @@ public:
     [[nodiscard]] BlockIndexStats stats() const;
     /// Event `i` written as the projection's JSON object (what `events()[i]` would be, without building it): for the library's own writers.
     void writeEventJson(json::Writer& w, std::size_t i) const;
+    /// The members `json(eventsFrom)` writes (`blocks`, `retired`, `eventsFrom`, `events`), into the caller's open object, with no intermediate string; and a
+    /// byte count near what they take, to size the caller's buffer.
+    void writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const;
+    [[nodiscard]] std::size_t jsonSizeHint(std::size_t eventsFrom) const;
 
 private:
     friend class EventLog;
     struct State;
-    [[nodiscard]] std::string retiredJson() const;
+    void writeRetired(json::Writer& w) const;
+    void writeMembers(json::Writer& w, std::size_t eventsFrom, bool say) const;
     [[nodiscard]] std::string jsonFrom(std::size_t eventsFrom, bool say) const;
     [[nodiscard]] BlockEvent eventAt(std::size_t i) const;
     [[nodiscard]] std::size_t eventCount() const;
