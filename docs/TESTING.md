@@ -109,6 +109,10 @@ on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two kin
 | **deterministic metrics** | counts and sizes: blocks found against the generator's truth, events, bytes `layeredJson` writes (per turn against cumulative, texts by id on and off), live heap bytes and allocations (a counting `operator new` in the executable), regions found | every tier, as the ctest tests `Sub0Canvas_Bench_metrics` (judged against `perf/metrics.json`) and `Sub0Canvas_Bench_smoke` (every workload once), label `smoke`; about 11 s |
 | **timing** | the benchmarks' wall-clock times, interleaved and calibrated, against `perf/baselines/<host>.json` | local only: the pre-push gate, the full level of `.ci/local.json` (a `perf` step marked `timing`, untimed on battery), and a developer's own runs |
 
+The viewer's interactivity is timed separately by K0 (`node tools/k0/run.mjs`, test `Sub0Canvas_K0_timing`, label `timing`, local only, skipped on battery, a busy machine or
+without a browser): [K0.md](K0.md), with the budgets of AUTHORING.md section 3.2 in `perf/k0/budgets.json` and a baseline per host in `perf/k0/<host>.json`. Its unit tests
+(`test/k0.test.js`: the judge, the machine rules, the generated bundle, the DevTools client) need no browser and run in `npm test`.
+
 Metric kinds in `perf/metrics.json`: `exact` for what must not move (counts, bytes written), `max` for a ceiling. Allocation counts differ between standard libraries (GCC's and
 MSVC's differ by up to 2x here), so their ceilings are the larger of the two plus 25%, heap bytes plus 10%: they catch a blow-up, not a drift; the timing rows catch the drift.
 The `max` metric `index cold 1e5: live heap bytes per block` is an **xfail** against SCALE.md's 200 bytes until S1; when it starts to pass the check says so and the xfail goes.

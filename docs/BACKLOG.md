@@ -29,9 +29,9 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **B0: one format revision. Steps 1-3 done here** (MS1, 2026-11-23; the mock squad drives it): item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
   `eventsFrom` (O5 confirmed), texts by content id, additive, read by the viewer in both shapes. **Left**: re-capture one real attempt with compiler diagnostics
   (R-U1-4), the release (v0.4.0) and the Sub0Squad PR (`SnapshotSpec`, `%2F` naming). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
-* **K0: the viewer's interactivity benchmark** ([AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): every interaction in the budget table on the
-  synthetic mirror and a large local subtree, 20 repetitions, 95th percentile, recorded with the machine. Before V1a. Brief:
-  [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
+* **K0: the viewer's interactivity benchmark, done** (2026-11-24, [K0.md](K0.md), `node tools/k0/run.mjs`, [AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): the mirror is inside
+  every budget; on the 1,590-file subtree eight of ten interactions breach by 2.3x to 11.6x (one full re-render per click), which orders V1a. **Left**: `--repo` for a real
+  repository, the shared sub0perf samples import (proposal in K0.md, Sub0Math S-M9). Brief: [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
 * **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10), design only: reverted state, stale stacks, evil
   merges, file footprints, guards, column units, case-only paths, regenerated files; each checkable on `fixtures/mirror/`. Before P0.
 

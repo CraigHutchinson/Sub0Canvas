@@ -1,0 +1,22 @@
+{
+  "schema": "k0-budgets-1",
+  "source": "docs/AUTHORING.md section 3.2 (R-AUTH-15); one row per interaction; a budget is the 95th percentile of the repetitions, in milliseconds, from the input to the next painted frame",
+  "percentile": 95,
+  "repetitions": 20,
+  "warmup": 2,
+  "driftTolerance": 0.25,
+  "interactions": {
+    "folder-toggle": {"title": "expand or collapse a folder", "budgetMs": 50},
+    "open-file": {"title": "open a file from the tree (text cached)", "budgetMs": 100},
+    "select-block": {"title": "select a block in the block list", "budgetMs": 50},
+    "select-block-code": {"title": "select a block in the code", "budgetMs": 50},
+    "switch-turn": {"title": "switch turn", "budgetMs": 200},
+    "centre-layer": {"title": "centre on a layer", "budgetMs": 100},
+    "centre-code": {"title": "back to code", "budgetMs": 100},
+    "filter-key": {"title": "one keystroke in the filter", "budgetMs": 30},
+    "first-tree": {"title": "first view: to the tree", "budgetMs": 1000},
+    "first-file": {"title": "first view: to the first file", "budgetMs": 2000},
+    "actor-event": {"title": "an event from another actor while reading", "budgetMs": 50, "notYetPossible": "needs V1a (events since a cursor, patched by key; R-AUTH-12)"},
+    "open-file-fetched": {"title": "open a file from the tree (text fetched)", "budgetMs": 300, "notYetPossible": "needs content on demand (R-AUTH-14); the bundle holds every text"}
+  }
+}

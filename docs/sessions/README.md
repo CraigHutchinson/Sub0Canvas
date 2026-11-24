@@ -45,7 +45,6 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 | [canvas-source-addressing.md](canvas-source-addressing.md) | Backlogged: shared source addressing for edits and diagnostics | 2026-11-20 |
 | [canvas-runtime-evidence.md](canvas-runtime-evidence.md) | Receive on-demand trace evidence from Sub0Squad on the exact canvas revision that ran | 2026-11-19 |
 | [b0-format-catch-up.md](b0-format-catch-up.md) | B0: the producer writes the viewer's optional fields; golden fixtures checked on both sides | 2026-11-18 |
-| [k0-ui-kpis.md](k0-ui-kpis.md) | K0: a scripted headless-browser benchmark of every viewer interaction against its budget, recorded with the machine | 2026-11-18 |
 | [v0-worktree-snapshot.md](v0-worktree-snapshot.md) | V0: a `sub0canvas snapshot` of this repository's docs, Markdown blocks, Markdown rendered in the viewer | 2026-11-18 |
 | [platform-migration.md](platform-migration.md) | Move Sub0Squad's platform layer to Sub0Platform, with the getenv fix; Squad and Canvas consume it | 2026-11-19 |
 
@@ -57,3 +56,4 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 | [d0-block-discovery-seam.md](d0-block-discovery-seam.md) | D0: the seam (outline result, providers, detection) and the block-comment, name and decorator faults; `index.outliners` and the unnamed-node policy left (the outcome lists them) | 2026-11-23 |
 | [ms0-mock-squad-baseline.md](ms0-mock-squad-baseline.md) | MS0: the mock squad consumer project, reference loop and ten baseline scenarios, frozen in today's format | 2026-11-23 |
 | [m0-synthetic-mirror.md](m0-synthetic-mirror.md) | M0: the synthetic mirror, its fixture and edge-case register | 2026-11-18 |
+| [k0-ui-kpis.md](k0-ui-kpis.md) | K0: a scripted headless-browser benchmark of every viewer interaction against its budget, recorded with the machine | 2026-11-24 |

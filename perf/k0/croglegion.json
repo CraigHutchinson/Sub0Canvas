@@ -1,0 +1,147 @@
+{
+ "format": "k0-baseline-1",
+ "host": "croglegion",
+ "machine": {
+  "system": "win32 10.0.26320",
+  "arch": "x64",
+  "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+  "logicalCpus": 24
+ },
+ "power": {
+  "state": "ac",
+  "onBattery": false,
+  "battery": true,
+  "busyCpu": 0.1,
+  "forced": false
+ },
+ "browser": {
+  "name": "msedge",
+  "version": "Edg/159.0.4402.13"
+ },
+ "node": "v24.22.0",
+ "commit": "d9f33f6",
+ "recorded": "2026-11-24T02:04:02.255Z",
+ "scopes": {
+  "mirror": {
+   "files": 49,
+   "blocks": 235,
+   "turns": 8,
+   "domNodes": 1127,
+   "bundleBytes": 1776743,
+   "frameFloorMs": 16.5,
+   "folderToggleFilesBelow": 44
+  },
+  "large": {
+   "files": 1590,
+   "blocks": 20034,
+   "turns": 3,
+   "domNodes": 60896,
+   "bundleBytes": 17271650,
+   "frameFloorMs": 16.6,
+   "folderToggleFilesBelow": 200
+  }
+ },
+ "benchmarks": {
+  "mirror/open-file": {
+   "p50": 18.7,
+   "p95": 19.2,
+   "n": 20
+  },
+  "mirror/select-block": {
+   "p50": 19.3,
+   "p95": 20.5,
+   "n": 20
+  },
+  "mirror/select-block-code": {
+   "p50": 19.9,
+   "p95": 20.9,
+   "n": 20
+  },
+  "mirror/switch-turn": {
+   "p50": 19.65,
+   "p95": 20.3,
+   "n": 20
+  },
+  "mirror/centre-layer": {
+   "p50": 19.7,
+   "p95": 20.5,
+   "n": 20
+  },
+  "mirror/centre-code": {
+   "p50": 19,
+   "p95": 20,
+   "n": 20
+  },
+  "mirror/filter-key": {
+   "p50": 18.5,
+   "p95": 20.2,
+   "n": 20
+  },
+  "mirror/folder-toggle": {
+   "p50": 19,
+   "p95": 20.3,
+   "n": 20
+  },
+  "mirror/first-tree": {
+   "p50": 73.25,
+   "p95": 88,
+   "n": 20
+  },
+  "mirror/first-file": {
+   "p50": 73.25,
+   "p95": 88,
+   "n": 20
+  },
+  "large/open-file": {
+   "p50": 406.45,
+   "p95": 530.2,
+   "n": 20
+  },
+  "large/select-block": {
+   "p50": 401.5,
+   "p95": 491.8,
+   "n": 20
+  },
+  "large/select-block-code": {
+   "p50": 442.5,
+   "p95": 579.1,
+   "n": 20
+  },
+  "large/switch-turn": {
+   "p50": 382.7,
+   "p95": 459.8,
+   "n": 20
+  },
+  "large/centre-layer": {
+   "p50": 408.45,
+   "p95": 530.2,
+   "n": 20
+  },
+  "large/centre-code": {
+   "p50": 386.55,
+   "p95": 409.9,
+   "n": 20
+  },
+  "large/filter-key": {
+   "p50": 106.85,
+   "p95": 223.2,
+   "n": 20
+  },
+  "large/folder-toggle": {
+   "p50": 386.25,
+   "p95": 446,
+   "n": 20
+  },
+  "large/first-tree": {
+   "p50": 636.25,
+   "p95": 700.4,
+   "n": 20
+  },
+  "large/first-file": {
+   "p50": 636.55,
+   "p95": 700.7,
+   "n": 20
+  }
+ },
+ "accepted": []
+}
