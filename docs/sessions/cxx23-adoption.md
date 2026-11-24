@@ -1,6 +1,6 @@
 # Follow-up session: C++23 adopted throughout, the RNG included
 
-Status: open (planned 2026-11-24 by the planning agent; slices A0-A3 done, see the Outcome). Backlog: [phase 1](../BACKLOG.md). Parent: [backbone-next-wave.md](backbone-next-wave.md).
+Status: open (planned 2026-11-24 by the planning agent; slices A0-A3 and B1-B4 done, see the Outcomes). Backlog: [phase 1](../BACKLOG.md). Parent: [backbone-next-wave.md](backbone-next-wave.md).
 
 ## Goal
 
@@ -77,3 +77,14 @@ Deviations: (1) rule 3 (`snprintf`) cannot pass on the tree as it is (5 calls in
 bench/ and lib/tests/ (not just corpus.cpp); a guard for the common shapes, not a proof. Comments and string literals are ignored by every rule. (3) corpus.cpp's own `kGolden` and `mix` are gone (now `rng::mix`).
 Left alone: braced-list draws in corpus.cpp (e.g. `ids = {word(r.skewed(..)), word(r.skewed(..))}`, well-defined left to right); the AGENTS.md brief's "state whether clang 22 uses libstdc++ or libc++" was not checked (no clang run).
 Remaining: the hosted full tier for clang, B1-B4, C, D.
+
+## Outcome (B1-B4)
+
+Done (2026-11-24, gcc 16 MinGW local; one commit each): **B1, B2, B3, B4**. `ctest --preset quick` (23 tests), `test_consumer_mock_squad` and `npm test` (136) pass after each slice; `git diff fixtures/ perf/` empty throughout, no byte moved. Not run: the hosted full tier (clang 19, clang 22, gcc 14), so those toolchains are unverified.
+
+* **B1/B2** `[[nodiscard]]` on every function the brief listed (line numbers had drifted a little; found by grep). Only 7 callers dropped a result: `registerSubscriptionReducers` (bench_inbox, test_inbox) and `registerViewReducers` (bench_session x3, test_views_sessions x2) now take `(void)`; every other caller already used the result, and the consumer needed no change. A scan of every header (multi-line declarations included) found no other public value-returning function without the attribute apart from `operator++(int)` and the defaulted `operator==`, left alone as idiomatic. INTEGRATION.md has the note.
+* **B3** the six `snprintf` calls (doc_layers.cpp x2, outline.cpp x3, record.cpp) are `std::format`; the allowlist in `tools/check_cxx_rules.cmake` is empty (a planted `snprintf` in bench/ fails the script). No `std::to_string` was converted: the brief only permitted it, and none of the chains was worth the risk.
+* **B4** every `printf`/`fprintf` is `std::println`; the two `eprintln` helpers in app/ call `std::println(stderr, ...)`; the GCC 13 comment is removed. Nothing parses that output (checked the node tests, tools and CMake).
+
+Deviation: B4 needed a build change the brief did not name. On MinGW GCC 16, `std::println` to a stream does not link without `-lstdc++exp` (undefined `std::__open_terminal`). `cmake/print_link.cmake` probes with `check_cxx_source_compiles` and links `stdc++exp` only when the plain link fails; it is included by the top-level and the consumer project. On Linux gcc 14 and clang 19 + libstdc++ the plain probe should pass (unverified here).
+Remaining: the hosted full tier for the clang and gcc 14 legs (including the print probe), C and D slices. The other `std::fputs`/`ostringstream` output paths in app/ were left as they are.
