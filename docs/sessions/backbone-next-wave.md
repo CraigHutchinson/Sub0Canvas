@@ -13,15 +13,19 @@ pinned and tip workers in the mock squad, and the views limits. Keep every exten
 
 - **Built and merged on `main`:** B0-B4, G1, S0, S1, K0, D0, V1a-q (pure query layer), views and sessions, the mock squad (MS0-MS3), the perf and CI adoption.
   S1's `layeredJson` and events-page timing regressions are fixed (`902827c`, `28d3341`); output bytes unchanged.
-- **Pushing:** Sub0Canvas `main` was 8 commits ahead of origin and going through the pre-push perf gate (slow: see TEST_AUDIT.md finding 2). Check
-  `git log origin/main..main` first; if non-empty, push through the gate on a quiet machine.
-- **Sub0Fabric** (`CraigHutchinson/Sub0Fabric`, public): F0 pushed, plus a local, unpushed commit that sets the executable bit on `cmake/git-semver.sh` (Linux CI failed
-  without it). Its gate retry was blocked by `decode canvas-event-1 line` +13.7%, judged load from concurrent builds. Push it after a quiet re-run, then confirm Linux CI.
+- **Pushed (end of 2026-11-24):** Sub0Canvas `main` at `018f593` and Sub0Fabric `main` at `dc1cc05`; both smoke CIs are green. Nothing is unpushed in either.
+  The pushes needed fixes found only on Linux: gcc 14 `-Werror` on range-for over simdjson temporaries (tests now use by-value `objectOf`/`arrayOf`), and `CHECK_EQ` binding
+  references into temporaries (`auto&& _a = (a)`, so `f()[0]`, `names().front()` and `string_view{temp}` dangle; name the value first). **Rule for new tests: never pass a
+  temporary-returning call's element or view to `CHECK_EQ`.** There is no local gcc 14 (WSL has cmake and ninja only); CI is the check, or ask the owner before installing one.
+- **Gate lesson:** a benchmark row must time the operation, not the setup (`bench_session.cpp` row `session replay` timed an empty call and stalled the gate for 70 minutes;
+  fixed in `516130f`; reported on [Sub0Math issue 6](https://github.com/CraigHutchinson/Sub0Math/issues/6)). A new row has no baseline, so the gate cannot judge it until a re-baseline.
+  The last push left 10 rows inconclusive, probably load from the llmengine session; re-run the gate on a quiet machine before trusting it.
+- **Sub0Fabric:** F0 is pushed and CI is green (the executable-bit fix is in). Its next work is W3/W4 below.
 - **Timing machine:** the Sub0LlmEngine session shares this host and was asked to keep quiet during timing. Tell the user when you need it, and when you are done.
 
 ## Do first (housekeeping, each small)
 
-1. Push Sub0Canvas `main` and Sub0Fabric `main` through their gates; confirm CI green on both, Linux clang included once issue #4 is fixed.
+1. Both repos are pushed and green (see above); re-confirm with `git log origin/main..main` and `gh run list`. Linux clang joins once issue #4 is fixed.
 2. **Issue #4 (Linux clang full tier):** five `layeredJson` byte metrics and the mock squad differ from gcc; some output depends on the standard library. It blocks the
    next release tag (v0.4.0). Find the dependence, fix it, make the metrics compiler-independent.
 3. **Re-baseline timings** only after one deliberate full steady run (AC, quiet, `accept` with reasons): the S1 rows and the `query` and `session` rows are not in
