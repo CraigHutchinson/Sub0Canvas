@@ -13,110 +13,196 @@
       "dc": "Balanced"
     }
   },
-  "calibration_ns": 4744.101,
-  "calibration_sustained_ns": 4816.45,
+  "calibration_ns": 4682.98,
+  "calibration_sustained_ns": 4743.55,
   "epochs": 0,
   "cpu": 23,
   "benchmarks": {
     "applyReply 1 ops": {
-      "median_ns": 177100.118,
-      "cv": 0.0428,
+      "median_ns": 156518.796,
+      "cv": 0.0123,
       "rounds": 5
     },
     "applyReply 10 ops": {
-      "median_ns": 504066.823,
-      "cv": 0.0179,
+      "median_ns": 466938.226,
+      "cv": 0.0244,
       "rounds": 5
     },
     "applyReply 50 ops": {
-      "median_ns": 648599.071,
-      "cv": 0.0113,
+      "median_ns": 586530.491,
+      "cv": 0.0297,
+      "rounds": 5
+    },
+    "claims 1e4 block claims, 5e3 merges": {
+      "median_ns": 24448576.571,
+      "cv": 0.0037,
+      "rounds": 5
+    },
+    "claims check 1e3 targets at 1e3 claims": {
+      "median_ns": 432200.149,
+      "cv": 0.0373,
+      "rounds": 5
+    },
+    "claims check 1e3 targets at 1e5 claims": {
+      "median_ns": 460333.541,
+      "cv": 0.0209,
+      "rounds": 5
+    },
+    "claims lookup 1e3 targets at 1e3 claims": {
+      "median_ns": 390972.417,
+      "cv": 0.015,
+      "rounds": 5
+    },
+    "claims lookup 1e3 targets at 1e5 claims": {
+      "median_ns": 414122.12,
+      "cv": 0.0463,
+      "rounds": 5
+    },
+    "claims replay 1e5 takes": {
+      "median_ns": 277770436.707,
+      "cv": 0.0033,
       "rounds": 5
     },
     "foldRegions C++ 1e5 lines, foldRegions()": {
-      "median_ns": 6708729.498,
-      "cv": 0.0086,
+      "median_ns": 4068063.131,
+      "cv": 0.0054,
       "rounds": 5
     },
     "foldRegions C++ 1e5 lines, hand-written brace scan": {
-      "median_ns": 572907.622,
-      "cv": 0.0055,
+      "median_ns": 532549.238,
+      "cv": 0.0019,
       "rounds": 5
     },
     "foldRegions Python 1e5 lines, foldRegions()": {
-      "median_ns": 1528567.182,
-      "cv": 0.0067,
+      "median_ns": 608159.576,
+      "cv": 0.0185,
       "rounds": 5
     },
     "foldRegions Python 1e5 lines, hand-written def scan": {
-      "median_ns": 302300.0,
-      "cv": 0.0181,
+      "median_ns": 282082.659,
+      "cv": 0.0087,
+      "rounds": 5
+    },
+    "history at() of revision 125 from a checkpoint, 2e4 lines": {
+      "median_ns": 60543230.411,
+      "cv": 0.0093,
+      "rounds": 5
+    },
+    "history replay, 200 commits over 2e4 lines": {
+      "median_ns": 485396603.739,
+      "cv": 0.004,
+      "rounds": 5
+    },
+    "history replay, a scope of five files over 200 commits": {
+      "median_ns": 10111771.848,
+      "cv": 0.0055,
+      "rounds": 5
+    },
+    "inbox cold read of one subscription (index built over 1e5 events)": {
+      "median_ns": 34639686.921,
+      "cv": 0.007,
+      "rounds": 5
+    },
+    "inbox read, warm index, one layer of 1e5 events": {
+      "median_ns": 49787.536,
+      "cv": 0.042,
       "rounds": 5
     },
     "index cold build 1e5 lines": {
-      "median_ns": 59201179.589,
-      "cv": 0.0024,
+      "median_ns": 50857880.131,
+      "cv": 0.0146,
       "rounds": 5
     },
     "index incremental update, 1e5 lines, per commit": {
-      "median_ns": 1456336.11,
-      "cv": 0.0104,
+      "median_ns": 1330577.461,
+      "cv": 0.0244,
       "rounds": 5
     },
     "index warm resolve and at, x1000": {
-      "median_ns": 3501.93,
-      "cv": 0.0334,
-      "rounds": 5,
-      "modes": [
-        3475.433,
-        3755.033
-      ]
+      "median_ns": 3172.912,
+      "cv": 0.003,
+      "rounds": 5
     },
     "layeredJson 1 turn 2e4 lines": {
-      "median_ns": 2795097.357,
-      "cv": 0.0228,
+      "median_ns": 2716159.462,
+      "cv": 0.0047,
       "rounds": 5
     },
     "layeredJson 8 turns 2e4 lines, cumulative events and inline texts": {
-      "median_ns": 22726189.873,
-      "cv": 0.0192,
-      "rounds": 5
+      "median_ns": 19869281.744,
+      "cv": 0.0268,
+      "rounds": 5,
+      "modes": [
+        19760964.716,
+        21743213.047
+      ]
     },
     "layeredJson 8 turns 2e4 lines, per-turn events and texts by id": {
-      "median_ns": 17796802.954,
-      "cv": 0.0214,
+      "median_ns": 16841739.649,
+      "cv": 0.0201,
       "rounds": 5
     },
     "revive scan 1e4 lines, copy of the retired index only": {
-      "median_ns": 992438.453,
-      "cv": 0.0168,
+      "median_ns": 1040913.732,
+      "cv": 0.053,
       "rounds": 5
     },
     "revive scan 1e4 lines, update of a file of novel blocks": {
-      "median_ns": 8730509.777,
-      "cv": 0.0117,
+      "median_ns": 8161282.502,
+      "cv": 0.0051,
       "rounds": 5
     },
     "revive scan 1e5 lines, copy of the retired index only": {
-      "median_ns": 14000865.909,
-      "cv": 0.0041,
+      "median_ns": 11518861.891,
+      "cv": 0.0492,
       "rounds": 5
     },
     "revive scan 1e5 lines, update of a file of novel blocks": {
-      "median_ns": 87558886.351,
-      "cv": 0.0247,
+      "median_ns": 78899589.062,
+      "cv": 0.0053,
+      "rounds": 5
+    },
+    "store emit 1e4 tags in order": {
+      "median_ns": 5202102.596,
+      "cv": 0.0033,
+      "rounds": 5
+    },
+    "store putLayer 1e4 items 10 changed": {
+      "median_ns": 1098939.604,
+      "cv": 0.0291,
+      "rounds": 5
+    },
+    "store replay 1e5 events": {
+      "median_ns": 103886509.598,
+      "cv": 0.0049,
+      "rounds": 5
+    },
+    "store snapshotJson 1e4 items": {
+      "median_ns": 12690903.819,
+      "cv": 0.0325,
       "rounds": 5
     }
   },
   "pairs": {
     "foldRegions C++ 1e5 lines, foldRegions()": {
       "reference": "foldRegions C++ 1e5 lines, hand-written brace scan",
-      "ratio": 11.6972
+      "ratio": 7.6533,
+      "modes": [
+        7.6076,
+        7.8648
+      ]
     },
     "foldRegions Python 1e5 lines, foldRegions()": {
       "reference": "foldRegions Python 1e5 lines, hand-written def scan",
-      "ratio": 5.0824
+      "ratio": 2.1691
     }
   },
-  "accepted": []
+  "accepted": [
+    {
+      "date": "2026-11-24",
+      "commit": "d44de5cc06baf37a0334b7e5fa57802276452b81",
+      "reason": "re-baseline after the D0 scan rewrite (foldRegions -35% C++, -58% Python) and the G1, B1, B2, B3 and B1b benchmarks",
+      "benchmarks": "all (re-recorded)"
+    }
+  ]
 }
