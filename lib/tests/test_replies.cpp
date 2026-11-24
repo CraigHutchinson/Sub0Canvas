@@ -69,7 +69,7 @@ bool parseReplyCase(const std::string& text, ReplyCase& c, std::string& error)
     };
     std::istringstream in(text);
     for (std::string line; std::getline(in, line);) {
-        if (line.rfind("--- ", 0) == 0) {
+        if (line.starts_with("--- ")) {
             close();
             std::istringstream h(line.substr(4));
             kind.clear();
@@ -81,7 +81,7 @@ bool parseReplyCase(const std::string& text, ReplyCase& c, std::string& error)
             continue;
         }
         if (!inSection) {
-            if (line.rfind("# ", 0) != 0) continue;
+            if (!line.starts_with("# ")) continue;
             const auto colon = line.find(": ");
             if (colon == std::string::npos) continue;
             const std::string key = line.substr(2, colon - 2), value = line.substr(colon + 2);
@@ -127,7 +127,7 @@ std::string runReplyCase(const ReplyCase& c)
     }
     if (!c.expectError.empty()) {
         if (refusal.empty()) return "expected a refusal containing '" + c.expectError + "', but the reply applied";
-        if (refusal.find(c.expectError) == std::string::npos) return "refused with '" + refusal + "', expected a message containing '" + c.expectError + "'";
+        if (!refusal.contains(c.expectError)) return "refused with '" + refusal + "', expected a message containing '" + c.expectError + "'";
         if (canvas.files() != before) return "refused, but the canvas changed";   // R-CAN-1: now checked on the canvas itself, not on a scratch copy
         return {};
     }
@@ -172,9 +172,9 @@ int main(int argc, char** argv)
         // The runner itself can fail: a case without an outcome is refused, and a wrong intended text is reported with its line.
         ReplyCase c;
         std::string err;
-        CHECK(!parseReplyCase("# name: x\n--- reply\nhello\n", c, err) && err.find("states no outcome") != std::string::npos);
+        CHECK(!parseReplyCase("# name: x\n--- reply\nhello\n", c, err) && err.contains("states no outcome"));
         CHECK(parseReplyCase("# name: x\n--- base a.py\nx = 1\n--- reply\n=== EDIT: a.py LINES 1 ===\nx = 2\n=== END EDIT ===\n--- want a.py\nx = 3\n", c, err));
-        CHECK(runReplyCase(c).find("differs from the intended text at line 1") != std::string::npos);
+        CHECK(runReplyCase(c).contains("differs from the intended text at line 1"));
     }
     {   // R-CAN-1 for a whole reply: a file written whole, then an edit that fails, leaves the canvas exactly as it was (no revision, no new file).
         Canvas cv;
@@ -182,11 +182,11 @@ int main(int argc, char** argv)
         const auto before = cv.files();
         const CanvasReply r = parseCanvasReply("=== FILE: b.py ===\ny = 2\n=== END FILE ===\n=== EDIT: a.py LINES 9 ===\nx = 3\n=== END EDIT ===\n");
         const auto out = applyReply(cv, r, {{"a.py", "b.py"}, "w", false});
-        CHECK(!out && out.error().find("a.py") != std::string::npos);
+        CHECK(!out && out.error().contains("a.py"));
         CHECK(cv.files() == before && cv.revision("a.py") == 1 && !cv.has("b.py") && cv.log().empty());
         // The same reply applied partially: the whole file lands, the bad edit is reported.
         const auto part = applyReply(cv, r, {{"a.py", "b.py"}, "w", true});
-        CHECK(part && part->skipped.size() == 1 && part->skipped[0].find("a.py") != std::string::npos && cv.text("b.py") == "y = 2\n" && cv.text("a.py") == "x = 1\n");
+        CHECK(part && part->skipped.size() == 1 && part->skipped[0].contains("a.py") && cv.text("b.py") == "y = 2\n" && cv.text("a.py") == "x = 1\n");
     }
     {   // R-EDIT-8: partial mode keeps the good operations beside a bad one, each against the revision the author was shown.
         Canvas cv;
@@ -199,10 +199,10 @@ int main(int argc, char** argv)
     {   // R-EDIT-5, R-EDIT-6 through the reply path: a path not allowed, an edit of a file that does not exist, a file both rewritten and edited.
         Canvas cv;
         cv.addFile("a.py", "x = 1\n");
-        CHECK(applyReply(cv, parseCanvasReply("=== FILE: z.py ===\nq\n=== END FILE ===\n"), {{"a.py"}, "w", false}).error().find("not one of the files") != std::string::npos);
-        CHECK(applyReply(cv, parseCanvasReply("=== EDIT: n.py LINES 1 ===\nq\n=== END EDIT ===\n"), {{"a.py", "n.py"}, "w", false}).error().find("there is no 'n.py' yet") != std::string::npos);
+        CHECK(applyReply(cv, parseCanvasReply("=== FILE: z.py ===\nq\n=== END FILE ===\n"), {{"a.py"}, "w", false}).error().contains("not one of the files"));
+        CHECK(applyReply(cv, parseCanvasReply("=== EDIT: n.py LINES 1 ===\nq\n=== END EDIT ===\n"), {{"a.py", "n.py"}, "w", false}).error().contains("there is no 'n.py' yet"));
         CHECK(applyReply(cv, parseCanvasReply("=== FILE: a.py ===\nx = 2\n=== END FILE ===\n=== EDIT: a.py LINES 1 ===\nx = 3\n=== END EDIT ===\n"), {{"a.py"}, "w", false})
-                  .error().find("both rewritten whole and edited") != std::string::npos);
+                  .error().contains("both rewritten whole and edited"));
         CHECK(cv.text("a.py") == "x = 1\n" && cv.revision("a.py") == 1);
         // applyReplyText: the convenience form; a reply with no edit is refused.
         const auto files = applyReplyText("=== EDIT: a.py LINES 1 ===\nx = 5\n=== END EDIT ===\n", {{"a.py", "x = 1\n"}}, {"a.py"}, "w");

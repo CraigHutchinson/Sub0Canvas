@@ -153,21 +153,21 @@ int main()
         CHECK_STR(viewJson(**C->view(vc)), recordBefore);
         CHECK_STR(C->read(vc, "a.cpp", {.overlay = false})->text, kT1);      // the pin did not move
         CHECK_EQ(C->openChannel(vc).error().code, std::string{"pinned"});
-        CHECK(C->openChannel(vc).error().message.find("pinned") != std::string::npos);
+        CHECK(C->openChannel(vc).error().message.contains("pinned"));
 
         const auto refused = C->land(vc);
         CHECK_EQ(refused->applied, std::size_t{0});
         CHECK_EQ(refused->refused.size(), std::size_t{1});
         CHECK_EQ(refused->refused[0].by, std::string{"t/alice"});
         CHECK_EQ(refused->refused[0].revision, 2);
-        CHECK(refused->refused[0].message.find("t/alice") != std::string::npos && refused->refused[0].message.find("revision 2") != std::string::npos);
+        CHECK(refused->refused[0].message.contains("t/alice") && refused->refused[0].message.contains("revision 2"));
         CHECK_STR(refused->refused[0].replacement, "    return 100;\n");
         CHECK_STR(r.canvas.text("a.cpp"), kT3);                              // the canvas is exactly as it was
         CHECK_EQ(r.canvas.revision("a.cpp"), 3);
         CHECK_EQ(C->pending(vc)->hunks, std::size_t{1});                     // C's scratch history is kept
         // The canvas's own refusal agrees with the one named (the same actor and revision).
         const TxResult own = r.canvas.apply({"a.cpp", 1, "t/carol", {CanvasOp{CanvasOp::Kind::replaceLines, 2, 2, "", "    return 100;\n"}}});
-        CHECK(!own.ok && own.error.find("t/alice") != std::string::npos && own.error.find("revision 2") != std::string::npos);
+        CHECK(!own.ok && own.error.contains("t/alice") && own.error.contains("revision 2"));
     }
 
     {   // Containment: one session cannot read another's pending edits or overlays, only published state (section 7).

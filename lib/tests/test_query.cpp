@@ -595,7 +595,7 @@ int main(int argc, char** argv)
             for (const char* bad : {R"({"tree":{"default":0}})", R"({"tree":{"default":9,"max":3}})", R"({"bogus":1})", R"({"tree":{"huge":1}})", R"({"unknownFields":"shout"})",
                                     R"({"maxHave":"many"})", "nope", R"({"layer":5})"})
                 CHECK(!parseQueryPolicy(bad).has_value());
-            CHECK(parseQueryPolicy(R"({"bogus":1})").error().find("bogus") != std::string::npos);
+            CHECK(parseQueryPolicy(R"({"bogus":1})").error().contains("bogus"));
             // A hidden prefix from the policy governs the layer answers, and the policy's page sizes govern every answer.
             World w;
             (void)w.store.putLayer("issues", "s", std::vector<LayerItem>{item("a", "error", "a"), item("b", "error", "b"), item("c", "error", "c")});

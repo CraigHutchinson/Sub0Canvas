@@ -70,7 +70,7 @@ int main()
         const auto back = parseEvent(expected);
         CHECK(back.has_value());
         if (back) CHECK(*back == e);
-        CHECK(expected.find("\"seq\"") == std::string::npos && expected.find("\"type\"") == std::string::npos);
+        CHECK(!expected.contains("\"seq\"") && !expected.contains("\"type\""));
         const KindRef k = splitKind(e.kind);
         CHECK_EQ(std::string(k.name), std::string("item.tag"));
         CHECK_EQ(std::string(k.version), std::string("1"));
@@ -368,20 +368,20 @@ int main()
         CHECK(s.tag("i2", "ready", "x").value());
         CHECK_EQ(keysOf(s).size(), std::size_t{4});   // the default query hides n1
         const std::string all = s.snapshotJson();
-        CHECK(all.find("a private thought") == std::string::npos);
-        CHECK(all.find("private/craig") == std::string::npos);
-        CHECK(all.find("a public note") != std::string::npos);
+        CHECK(!all.contains("a private thought"));
+        CHECK(!all.contains("private/craig"));
+        CHECK(all.contains("a public note"));
         Query ask;
         ask.tags = {"private/craig"};
         CHECK_EQ(keysOf(s, ask), std::vector<std::string>{"n1"});
-        CHECK(s.snapshotJson(ask).find("a private thought") != std::string::npos);
+        CHECK(s.snapshotJson(ask).contains("a private thought"));
         Query layer;
         layer.layers = {"issues"};
         layer.tags = {"ready"};
         CHECK_EQ(keysOf(s, layer), std::vector<std::string>{"i2"});
         const std::string scoped = s.snapshotJson(layer);
-        CHECK(scoped.find("\"number\":2,\"key\":\"i2\"") != std::string::npos);   // i2 is still issue 2
-        CHECK(scoped.find("\"notes\"") == std::string::npos);
+        CHECK(scoped.contains("\"number\":2,\"key\":\"i2\""));   // i2 is still issue 2
+        CHECK(!scoped.contains("\"notes\""));
         Query noHiding;
         noHiding.hiddenTagPrefixes.clear();
         CHECK_EQ(keysOf(s, noHiding).size(), std::size_t{5});   // policy as data: a client may change the prefixes
@@ -508,8 +508,8 @@ int main()
         CHECK_EQ(fullCp.head, std::uint64_t{7});
         CHECK_EQ(fullCp.events, std::uint64_t{13});
         // What was seen is kept as runs: each writer's lamports are consecutive, so one run each.
-        CHECK(fullCp.json.find(R"({"namespace":"p","writer":"w1","runs":[[1,6]]},{"namespace":"q","writer":"w2","runs":[[1,7]]})") != std::string::npos);
-        CHECK(fullCp.json.find(R"("L":[])") != std::string::npos);   // an emptied layer is still named
+        CHECK(fullCp.json.contains(R"({"namespace":"p","writer":"w1","runs":[[1,6]]},{"namespace":"q","writer":"w2","runs":[[1,7]]})"));
+        CHECK(fullCp.json.contains(R"("L":[])"));   // an emptied layer is still named
         CHECK_EQ(full.checkpoint().json, fullCp.json);              // deterministic
 
         // A checkpoint taken after any prefix, restored and caught up with the rest, equals the full replay: snapshot, checkpoint, reverse index, numbers.
@@ -618,17 +618,17 @@ int main()
         spec.turn = 3;
         spec.layers["issues"] = {};
         const std::string plain = layeredJson(spec, index);
-        CHECK(plain.find("\"store\"") == std::string::npos);
+        CHECK(!plain.contains("\"store\""));
         spec.store = &s;
         const std::string withStore = layeredJson(spec, index);
         CHECK_EQ(withStore, plain.substr(0, plain.size() - 1) + ",\"store\":" + s.snapshotJson() + "}");
-        CHECK(withStore.find("\"k1\"") == std::string::npos);   // the default query hides the private item (A11)
-        CHECK(withStore.find("\"state\":\"held\"") != std::string::npos);
+        CHECK(!withStore.contains("\"k1\""));   // the default query hides the private item (A11)
+        CHECK(withStore.contains("\"state\":\"held\""));
         Query all;
         all.tags = {"private/me"};
         spec.storeQuery = &all;
         CHECK_EQ(layeredJson(spec, index), plain.substr(0, plain.size() - 1) + ",\"store\":" + s.snapshotJson(all) + "}");
-        CHECK(layeredJson(spec, index).find("\"k1\"") != std::string::npos);
+        CHECK(layeredJson(spec, index).contains("\"k1\""));
         spec.store = nullptr;
         CHECK_EQ(layeredJson(spec, index), plain);   // a query without a store changes nothing
     }

@@ -211,14 +211,14 @@ int main()
             const CanvasReply clash = parseCanvasReply("=== EDIT: f.txt LINES 1 ===\nX\n=== END EDIT ===\n");
             const auto refused = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 1});
             const std::string why = !refused ? refused.error() : refused->skipped.empty() ? std::string{} : refused->skipped.front();
-            CHECK(why.find("changed by alice in revision 2") != std::string::npos);
+            CHECK(why.contains("changed by alice in revision 2"));
             CHECK(canvas.text("f.txt") == "A\nb\nc\nD\n" && canvas.revision("f.txt") == 3);
             // Without a base the same reply is made against the current text and simply applies; a base that does not exist is refused.
             const auto current = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 0});
             CHECK(current.has_value() && canvas.text("f.txt") == "X\nb\nc\nD\n");
             const auto missing = applyReply(canvas, clash, {{"f.txt"}, "bob", partial, 9});
             const std::string gone = !missing ? missing.error() : missing->skipped.empty() ? std::string{} : missing->skipped.front();
-            CHECK(gone.find("base revision 9 does not exist") != std::string::npos);
+            CHECK(gone.contains("base revision 9 does not exist"));
         }
     }
     return finish();

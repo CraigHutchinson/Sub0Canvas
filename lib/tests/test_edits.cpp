@@ -20,20 +20,20 @@ int main()
         auto ok = applyEdits("Here is the fix.\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n", files, allowed, err);
         CHECK(ok && ok->at("src/a.js") == "function add(a, b) {\n  return a + b;\n}\nexport { add };\n" && ok->at("src/b.js") == "export const x = 1;\n");
         auto two = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfunction add(a, b)\n=======\nfunction add(a, b = 0)\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  return a - b;\n=======\n  return a + b;\n>>>>>>> REPLACE\n=== END EDIT ===\n=== EDIT: src/b.js ===\n<<<<<<< SEARCH\nconst x = 1;\n=======\nconst x = 2;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err);
-        CHECK(two && two->at("src/a.js").find("b = 0") != std::string::npos && two->at("src/a.js").find("a + b") != std::string::npos && two->at("src/b.js") == "export const x = 2;\n");
+        CHECK(two && two->at("src/a.js").contains("b = 0") && two->at("src/a.js").contains("a + b") && two->at("src/b.js") == "export const x = 2;\n");
         {   // R-VIEW-1, R-VIEW-2, R-VIEW-6: folded views: structure stays, function bodies fold, focus regions open, READ requests are answered.
             std::string cpp = "#include <string>\nnamespace n {\nclass A {\npublic:\n  int get() const { return v; }\n  int v = 0;\n};\ndouble f(double x)\n{\n  double y = x;\n  if (y > 1) {\n    y = 2;\n  }\n  y += 1;\n  return y;\n}\nint g(int a) { return a; }\n}\n";
             const auto regions = foldRegions(cpp, false);
             CHECK(regions.size() == 1 && regions[0].name == "f" && regions[0].first == 8 && regions[0].bodyFrom == 10 && regions[0].bodyTo == 16);   // g and get are one line: nothing to fold; namespace and class stay open
             const std::string small = foldedView(cpp, false, {}, 100000);
-            CHECK(small.find("folded") == std::string::npos);                                  // fits: shown whole
+            CHECK(!small.contains("folded"));                                  // fits: shown whole
             std::string big = "namespace n {\nclass A {\n  int v = 0;\n};\n";   // two functions of 40 body lines each, so a budget can force folding
             for (const char* fn : {"first", "second"}) { big += std::string("double ") + fn + "(double x)\n{\n"; for (int k = 0; k < 40; ++k) big += "  x += " + std::to_string(k) + ";\n"; big += "  return x;\n}\n"; }
             big += "}\n";
             const std::string tight = foldedView(big, false, {}, 700);
-            CHECK(tight.find("lines folded: 7-47") != std::string::npos && tight.find("double first(double x)") != std::string::npos && tight.find("class A {") != std::string::npos && tight.find("x += 20;") == std::string::npos);
+            CHECK(tight.contains("lines folded: 7-47") && tight.contains("double first(double x)") && tight.contains("class A {") && !tight.contains("x += 20;"));
             const std::string open = foldedView(big, false, {70}, 1300);   // a failure at line 70 (inside `second`) keeps that function open, `first` stays folded
-            CHECK(open.find("lines folded: 7-47") != std::string::npos && open.find("lines folded: 51-") == std::string::npos && open.find("x += 20;") != std::string::npos);
+            CHECK(open.contains("lines folded: 7-47") && !open.contains("lines folded: 51-") && open.contains("x += 20;"));
             {   // Bodies of one or two lines are shown even when the view is folded; a failing test opening is pinned in test_canvas_agent (tier 0 write-tests).
                 std::string tests = "#include \"helpers/check.hpp\"\n";
                 for (int k = 0; k < 30; ++k) tests += "TEST(t" + std::to_string(k) + ") {\n    CHECK_EQ(f(" + std::to_string(k) + "), " + std::to_string(k) + ");\n}\n";
@@ -41,14 +41,14 @@ int main()
                 for (int k = 0; k < 30; ++k) tests += "    CHECK_EQ(g(" + std::to_string(k) + "), 0);\n";
                 tests += "}\n";
                 const std::string view = foldedView(tests, false, {}, 2500);
-                CHECK(view.find("CHECK_EQ(f(7), 7);") != std::string::npos && view.find("lines folded") != std::string::npos && view.find("CHECK_EQ(g(7), 0);") == std::string::npos);
+                CHECK(view.contains("CHECK_EQ(f(7), 7);") && view.contains("lines folded") && !view.contains("CHECK_EQ(g(7), 0);"));
             }
             const auto reqs = parseReadRequests("Let me look.\n=== READ: src/a.cpp LINES 9-12 ===\n=== READ: src/a.cpp SYMBOL f ===\n");
             CHECK(reqs.size() == 2 && reqs[0].from == 9 && reqs[0].to == 12 && reqs[1].symbol == "f");
             const std::string ans = answerRead(reqs[0], cpp, false);
-            CHECK(ans.find("   9| {") != std::string::npos && ans.find("  12| ") != std::string::npos && ans.find("  13| ") == std::string::npos);
-            CHECK(answerRead(reqs[1], cpp, false).find("double f(double x)") != std::string::npos);
-            CHECK(answerRead({"x.cpp", 99, 100, ""}, cpp, false).find("do not exist") != std::string::npos);
+            CHECK(ans.contains("   9| {") && ans.contains("  12| ") && !ans.contains("  13| "));
+            CHECK(answerRead(reqs[1], cpp, false).contains("double f(double x)"));
+            CHECK(answerRead({"x.cpp", 99, 100, ""}, cpp, false).contains("do not exist"));
             const std::string py = "import math\n\ndef a(x):\n    y = x\n    return y\n\ndef b():\n    pass\n";
             const auto pr = foldRegions(py, true);
             CHECK(pr.size() == 1 && pr[0].name == "a" && pr[0].first == 3 && pr[0].bodyTo == 5);
@@ -62,13 +62,13 @@ int main()
             auto stale = cv.apply({"a.cpp", 1, "w2", {{CanvasOp::Kind::replaceLines, 5, 5, "", "FIVE"}}});    // made against revision 1: line 5 is now line 6
             CHECK(stale.ok && stale.revision == 3 && cv.text("a.cpp") == "l1\nX\nY\nZ\nl4\nFIVE\nl6\n");
             auto clash = cv.apply({"a.cpp", 1, "w3", {{CanvasOp::Kind::replaceLines, 3, 3, "", "no"}}});       // line 3 was changed by w1 in revision 2
-            CHECK(!clash.ok && clash.error.find("w1") != std::string::npos && clash.error.find("revision 2") != std::string::npos && clash.revision == 3);
+            CHECK(!clash.ok && clash.error.contains("w1") && clash.error.contains("revision 2") && clash.revision == 3);
             auto bad = cv.apply({"a.cpp", 3, "w3", {{CanvasOp::Kind::replaceLines, 1, 1, "", "ONE"}, {CanvasOp::Kind::replaceLines, 99, 99, "", "x"}}});   // the second op is invalid: nothing applies
             CHECK(!bad.ok && cv.text("a.cpp") == "l1\nX\nY\nZ\nl4\nFIVE\nl6\n" && cv.revision("a.cpp") == 3);
             auto multi = cv.apply({"a.cpp", 3, "w3", {{CanvasOp::Kind::replaceLines, 1, 1, "", "ONE"}, {CanvasOp::Kind::insertAfter, 7, 0, "", "tail"}}});   // numbering of the base revision
             CHECK(multi.ok && cv.text("a.cpp") == "ONE\nX\nY\nZ\nl4\nFIVE\nl6\ntail\n");
             auto overlap = cv.apply({"a.cpp", 4, "w3", {{CanvasOp::Kind::replaceLines, 2, 4, "", "a"}, {CanvasOp::Kind::replaceLines, 4, 5, "", "b"}}});
-            CHECK(!overlap.ok && overlap.error.find("overlap") != std::string::npos);
+            CHECK(!overlap.ok && overlap.error.contains("overlap"));
             CHECK(cv.textAt("a.cpp", 1) == "l1\nl2\nl3\nl4\nl5\nl6\n");
             auto rv = cv.revertTo("a.cpp", 1, "owner");
             CHECK(rv.ok && rv.revision == 5 && cv.text("a.cpp") == cv.textAt("a.cpp", 1));
@@ -104,8 +104,8 @@ int main()
             CHECK(ins && ins->at("src/a.js") == "one\nnew\ntwo\nthree\nfour\nfive\n");
             auto both = applyEdits("=== EDIT: src/a.js LINES 1 ===\nONE\n=== END EDIT ===\n=== EDIT: src/a.js LINES 5 ===\nFIVE\n=== END EDIT ===", f2, al, err);   // numbering of the draft, not of the result
             CHECK(both && both->at("src/a.js") == "ONE\ntwo\nthree\nfour\nFIVE\n");
-            CHECK(!applyEdits("=== EDIT: src/a.js LINES 9 ===\nx\n=== END EDIT ===", f2, al, err) && err.find("5 lines") != std::string::npos);
-            CHECK(!applyEdits("=== EDIT: src/a.js LINES 2 ===\nx\n=== END EDIT ===\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\none\n=======\n1\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err) && err.find("one kind per file") != std::string::npos);
+            CHECK(!applyEdits("=== EDIT: src/a.js LINES 9 ===\nx\n=== END EDIT ===", f2, al, err) && err.contains("5 lines"));
+            CHECK(!applyEdits("=== EDIT: src/a.js LINES 2 ===\nx\n=== END EDIT ===\n=== EDIT: src/a.js ===\n<<<<<<< SEARCH\none\n=======\n1\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err) && err.contains("one kind per file"));
             // A SEARCH copied with the numbered view's "N| " column still matches.
             auto numbered = applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n   2| two\n=======\n2\n>>>>>>> REPLACE\n=== END EDIT ===", f2, al, err);
             CHECK(numbered && numbered->at("src/a.js") == "one\n2\nthree\nfour\nfive\n");
@@ -134,7 +134,7 @@ int main()
             CHECK(shallower && shallower->at("src/a.js") == "f() {\n  a();\n  if (x)\n      b();\n}\n");
             // A first line copied short names the whole line the file has.
             CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n    if (x) y();\n    w();\n=======\nz();\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "a\n    else if (x) y();\nb\n"}}, al, err) &&
-                  err.find("line 2 of the file is `else if (x) y();`") != std::string::npos);
+                  err.contains("line 2 of the file is `else if (x) y();`"));
         }
         {   // R-EDIT-4: the canvas reads a marked LINES edit the same way (tier 0 write-file: the markers were written into main.cpp and poisoned every later turn).
             const CanvasReply r = parseCanvasReply("=== EDIT: src/main.cpp LINES 67-68 ===\n    a();\n    b();\n=======\n    c();\n>>>>>>> REPLACE\n=== END EDIT ===\n");
@@ -158,11 +158,11 @@ int main()
         CHECK(replacementOfMarkedBlock("a\n>>>>>>> REPLACE in example\n") == "a\n>>>>>>> REPLACE in example\n");
         CHECK(replacementOfMarkedBlock("<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE\n") == "new\n");
         CHECK(replacementOfMarkedBlock("old\n=======\n>>>>>>> REPLACE\n").empty());   // an empty replacement deletes
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a * b;\n=======\n  return 0;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.find("does not appear") != std::string::npos);
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  \n=======\n  x\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "  a\n  b\n"}}, allowed, err) && err.find("more than once") != std::string::npos);
-        CHECK(!applyEdits("=== EDIT: ../evil.js ===\n<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.find("not one of the files") != std::string::npos);
-        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfoo\n=======\nbar\n=== END EDIT ===", files, allowed, err) && err.find("not closed") != std::string::npos);
-        CHECK(!applyEdits("no edits here", files, allowed, err) && err.find("no edit blocks") != std::string::npos);
+        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  return a * b;\n=======\n  return 0;\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.contains("does not appear"));
+        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\n  \n=======\n  x\n>>>>>>> REPLACE\n=== END EDIT ===", {{"src/a.js", "  a\n  b\n"}}, allowed, err) && err.contains("more than once"));
+        CHECK(!applyEdits("=== EDIT: ../evil.js ===\n<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n=== END EDIT ===", files, allowed, err) && err.contains("not one of the files"));
+        CHECK(!applyEdits("=== EDIT: src/a.js ===\n<<<<<<< SEARCH\nfoo\n=======\nbar\n=== END EDIT ===", files, allowed, err) && err.contains("not closed"));
+        CHECK(!applyEdits("no edits here", files, allowed, err) && err.contains("no edit blocks"));
     }
     return finish();
 }

@@ -262,7 +262,7 @@ void testUnit()
     {
         const std::string j = resolutionJson(resolveIn(d, "r2", a));
         CHECK(j.starts_with(R"({"outcome":"resolved","method":"exact","reason":"none","confidence":1.0,)"));
-        CHECK(j.find(R"("editable":true)") != std::string::npos);
+        CHECK(j.contains(R"("editable":true)"));
     }
 }
 

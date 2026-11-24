@@ -82,7 +82,7 @@ int main()
         CHECK_EQ(log->size(), std::uint64_t{2});
         CHECK(log->error().empty());
         const std::string text = slurp(file);
-        CHECK(text.rfind(headerLine + "\n" + line1 + "\n", 0) == 0);   // appended and flushed: a second reader sees it at once
+        CHECK(text.starts_with(headerLine + "\n" + line1 + "\n"));   // appended and flushed: a second reader sees it at once
         CHECK_EQ(std::count(text.begin(), text.end(), '\n'), 3);
     }
     {
@@ -133,7 +133,7 @@ int main()
         spit(dir / "corrupt.ndjson", headerLine + "\n" + line1 + "\n" + "not json\n" + line1 + "\n");
         const auto bad = FileLog::open(dir / "corrupt.ndjson");
         CHECK(!bad.has_value());
-        if (!bad) CHECK(bad.error().find("line 3") != std::string::npos);
+        if (!bad) CHECK(bad.error().contains("line 3"));
         spit(dir / "wrong.ndjson", R"({"schema":"journal-1"})" "\n" + line1 + "\n");
         CHECK(!FileLog::open(dir / "wrong.ndjson").has_value());
         spit(dir / "tornheader.ndjson", R"({"schema":"canvas-ev)");
@@ -181,7 +181,7 @@ int main()
         Store replayed;
         replayed.replay(*reread);
         CHECK_EQ(replayed.snapshotJson(), liveSnapshot);
-        CHECK(liveSnapshot.find("\"state\":\"open\"") != std::string::npos);
+        CHECK(liveSnapshot.contains("\"state\":\"open\""));
 
         StoreOptions lean;
         lean.retainEvents = false;

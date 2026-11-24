@@ -181,8 +181,8 @@ int main()
         CHECK(!d.where(call) && d.logged("retired", call));
         const LayerItem orphan = makeItem({.title = "test logarithms: log(100) is 4.6 but 2", .detail = "FAIL 9 - logarithms: ...", .key = "issues/test/logarithms",
                                            .anchors = {blockAnchor(call, path, 30, Anchor::Confidence::suspect)}});
-        CHECK(d.detail(orphan).find("no longer exists") != std::string::npos);
-        CHECK(d.summary({orphan}).find("a function that no longer exists") != std::string::npos);
+        CHECK(d.detail(orphan).contains("no longer exists"));
+        CHECK(d.summary({orphan}).contains("a function that no longer exists"));
         d.write(path, kCalc);                                            // written again (the canvas's "FILE first, then SYMBOL each function")
         CHECK_EQ(d.id(path, "call"), call);
         CHECK(d.logged("revived", call));
@@ -210,7 +210,7 @@ int main()
         if (issues.size() == 2) {
             CHECK(issues[0].anchors.empty());
             CHECK(issues[1].anchors.size() == 1 && issues[1].anchors[0].blockId == d.id(path, "term"));
-            CHECK(d.summary(issues).find(" 1. test invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n") != std::string::npos);
+            CHECK(d.summary(issues).contains(" 1. test invalid_input_throws: CHECK_THROWS failed: ev(\"(1-2\") did not throw\n"));
         }
     }
     {   // R-ISS-7: a runner that reports no expression (Python's unittest: `test_modulo: 30.0 != 1`) is localised from the test's own function in the
@@ -245,26 +245,26 @@ int main()
             CHECK_EQ(issues[1].key, std::string{"issues/test/factorial"});
             CHECK(issues[2].anchors.size() == 1 && issues[2].anchors[0].blockId == d.id(path, "call"));
             const std::string summary = d.summary(issues);
-            CHECK(summary.rfind("3 issues (`=== READ: ISSUE n ===`", 0) == 0);
-            CHECK(summary.find(" 1. test modulo: CHECK_NEAR failed: ev(\"10%3\")") != std::string::npos && summary.find("likely in term() (lines 16-24)") != std::string::npos);
-            CHECK(summary.find(" 3. test logarithms") != std::string::npos && summary.find("likely in call()") != std::string::npos);
+            CHECK(summary.starts_with("3 issues (`=== READ: ISSUE n ===`"));
+            CHECK(summary.contains(" 1. test modulo: CHECK_NEAR failed: ev(\"10%3\")") && summary.contains("likely in term() (lines 16-24)"));
+            CHECK(summary.contains(" 3. test logarithms") && summary.contains("likely in call()"));
             // The identities hold after a whole-file rewrite that moves everything down: the same issues render at the new lines.
             d.write(path, "// a header comment\n// and another\n" + kCalc);
-            CHECK(d.summary(issues).find("likely in term() (lines 18-26)") != std::string::npos);
+            CHECK(d.summary(issues).contains("likely in term() (lines 18-26)"));
             const std::string detail = d.detail(issues[0]);
-            CHECK(detail.rfind("=== ISSUE 1 (test) ===\nFAIL 6 - modulo", 0) == 0);
-            CHECK(detail.find("Likely in src/calc.cpp, term(), now at lines 18-26:\n  18|     double term()") != std::string::npos);
-            CHECK(d.focus(issues).find("src/calc.cpp:18\n") != std::string::npos);
+            CHECK(detail.starts_with("=== ISSUE 1 (test) ===\nFAIL 6 - modulo"));
+            CHECK(detail.contains("Likely in src/calc.cpp, term(), now at lines 18-26:\n  18|     double term()"));
+            CHECK(d.focus(issues).contains("src/calc.cpp:18\n"));
             // R-REN-3: the first issues in full under the summary, the rest left to a read; within a character budget, the first always.
             const std::string two = d.inlined(issues, 2);
-            CHECK(two.rfind("The first 2 in full:\n=== ISSUE 1 (test) ===", 0) == 0);
-            CHECK(two.find("=== ISSUE 2 (test) ===") != std::string::npos && two.find("=== ISSUE 3") == std::string::npos);
-            CHECK(two.find("  18|     double term()") != std::string::npos);
-            CHECK(two.find("The rest (3) are listed above: `=== READ: ISSUE n ===` shows one in full.\n") != std::string::npos);
+            CHECK(two.starts_with("The first 2 in full:\n=== ISSUE 1 (test) ==="));
+            CHECK(two.contains("=== ISSUE 2 (test) ===") && !two.contains("=== ISSUE 3"));
+            CHECK(two.contains("  18|     double term()"));
+            CHECK(two.contains("The rest (3) are listed above: `=== READ: ISSUE n ===` shows one in full.\n"));
             const std::string all = d.inlined(issues, 5);
-            CHECK(all.rfind("In full:\n", 0) == 0 && all.find("=== ISSUE 3") != std::string::npos && all.find("The rest") == std::string::npos);
+            CHECK(all.starts_with("In full:\n") && all.contains("=== ISSUE 3") && !all.contains("The rest"));
             const std::string tight = d.inlined(issues, 3, 10);
-            CHECK(tight.rfind("The first 1 in full:\n=== ISSUE 1", 0) == 0 && tight.find("The rest (2-3)") != std::string::npos);
+            CHECK(tight.starts_with("The first 1 in full:\n=== ISSUE 1") && tight.contains("The rest (2-3)"));
             CHECK(d.inlined(issues, 0).empty() && d.inlined({}).empty());
             // R-ISS-5 across turns: the same verdict against the moved text gives the same keys in the same order.
             const auto again = d.issues(verdict);
@@ -286,16 +286,16 @@ int main()
         CHECK_EQ(errs.size(), static_cast<std::size_t>(2));
         if (errs.size() == 2) {
             CHECK(errs[0].kind == "error" && errs[0].anchors.size() == 3);
-            CHECK(errs[0].key.rfind("issues/error/", 0) == 0 && errs[0].key != errs[1].key);
+            CHECK(errs[0].key.starts_with("issues/error/") && errs[0].key != errs[1].key);
             CHECK(errs[0].anchors[0].blockId == d.id(path, "expr") && errs[0].anchors[0].confidence == Anchor::Confidence::exact);
             CHECK(errs[0].anchors[2].blockId == d.id(path, "evaluate"));
-            CHECK(errs[0].detail.find("^~~~~") != std::string::npos);                            // the first occurrence keeps its caret
+            CHECK(errs[0].detail.contains("^~~~~"));                            // the first occurrence keeps its caret
             CHECK(errs[1].anchors.size() == 1 && errs[1].anchors[0].blockId.empty() && errs[1].anchors[0].line == 2);
             const std::string summary = d.summary(errs);
-            CHECK(summary.find("- in 3 places: expr(), evaluate()") != std::string::npos);
-            CHECK(summary.find("- in src/calc.cpp:2") != std::string::npos);
-            CHECK(d.detail(errs[0]).find("It occurs at 3 places") != std::string::npos);
-            CHECK(d.detail(errs[1]).find("At src/calc.cpp:2 (outside any function):") != std::string::npos);
+            CHECK(summary.contains("- in 3 places: expr(), evaluate()"));
+            CHECK(summary.contains("- in src/calc.cpp:2"));
+            CHECK(d.detail(errs[0]).contains("It occurs at 3 places"));
+            CHECK(d.detail(errs[1]).contains("At src/calc.cpp:2 (outside any function):"));
         }
         {   // R-REN-3: two issues in one function: inline, its code is shown once and the second names it; read alone, each shows its code.
             const auto both = d.issues("does not compile: src/calc.cpp\n  src/calc.cpp:11:35: error: 'terms' was not declared in this scope\n"
@@ -303,9 +303,9 @@ int main()
             CHECK_EQ(both.size(), static_cast<std::size_t>(2));
             if (both.size() == 2) {
                 const std::string inl = d.inlined(both);
-                CHECK(inl.find("In src/calc.cpp, expr(), now at lines") != std::string::npos);
-                CHECK(inl.find("=== ISSUE 2 (error) ===") != std::string::npos && inl.find("In expr() (lines ") != std::string::npos && inl.find(", shown above.\n") != std::string::npos);
-                CHECK(d.detail(both[1]).find("shown above") == std::string::npos);
+                CHECK(inl.contains("In src/calc.cpp, expr(), now at lines"));
+                CHECK(inl.contains("=== ISSUE 2 (error) ===") && inl.contains("In expr() (lines ") && inl.contains(", shown above.\n"));
+                CHECK(!d.detail(both[1]).contains("shown above"));
             }
         }
         // R-ISS-6: Python's syntax check names a line too.
@@ -326,9 +326,9 @@ int main()
         simdjson::dom::parser parser;
         simdjson::dom::element doc;
         CHECK(!parser.parse(j).get(doc));
-        CHECK(j.find("\"schema\":\"layered-doc-1\"") != std::string::npos && j.find("\"turn\":4") != std::string::npos);
-        CHECK(j.find("\"revision\":2") != std::string::npos && j.find("\"carry\":\"added\"") != std::string::npos);
-        CHECK(j.find("\"confidence\":\"suspect\"") != std::string::npos && j.find("\"blockId\":\"" + d.id(path, "term") + "\"") != std::string::npos);
+        CHECK(j.contains("\"schema\":\"layered-doc-1\"") && j.contains("\"turn\":4"));
+        CHECK(j.contains("\"revision\":2") && j.contains("\"carry\":\"added\""));
+        CHECK(j.contains("\"confidence\":\"suspect\"") && j.contains("\"blockId\":\"" + d.id(path, "term") + "\""));
     }
     {   // R-SRC-6, R-FMT-3: a compiler's column and range are read; two sites on one line stay two anchors; Python's form has no column.
         Doc d;
@@ -368,8 +368,8 @@ int main()
         const std::string text = d.snapshot(spec);
         CHECK(!parser.parse(text).get(doc));
         const auto item = doc["layers"]["issues"].at(0);
-        CHECK(std::string_view{item["id"]}.rfind("issues/error/", 0) == 0);
-        CHECK(std::string_view{item["title"]}.find("unary") != std::string_view::npos && std::string_view{item["detail"]}.find("^~~~~") != std::string_view::npos);   // old fields
+        CHECK(std::string_view{item["id"]}.starts_with("issues/error/"));
+        CHECK(std::string_view{item["title"]}.contains("unary") && std::string_view{item["detail"]}.contains("^~~~~"));   // old fields
         const auto anchor = item["anchors"].at(0);
         CHECK(int64_t{anchor["line"]} == 12 && int64_t{anchor["column"]} == 20 && int64_t{anchor["endLine"]} == 12 && int64_t{anchor["endColumn"]} == 25);
         CHECK(std::string_view{anchor["confidence"]} == "exact" && std::string_view{anchor["blockId"]} == d.id(path, "expr"));
@@ -429,8 +429,8 @@ int main()
         const std::string log = d.eventLog("calc");
         std::size_t lines = 0;
         for (const char c : log) lines += c == '\n';
-        CHECK(lines == d.eventCount() + 1 && log.rfind("{\"schema\":\"canvas-events-1\",\"document\":\"calc\"}\n", 0) == 0);
-        CHECK(log.find("{\"seq\":" + std::to_string(afterFirst) + ",\"kind\":\"block\"") != std::string::npos);
+        CHECK(lines == d.eventCount() + 1 && log.starts_with("{\"schema\":\"canvas-events-1\",\"document\":\"calc\"}\n"));
+        CHECK(log.contains("{\"seq\":" + std::to_string(afterFirst) + ",\"kind\":\"block\""));
     }
     {   // R-AUTH-14, R-FMT-5: by id, a text is carried once: a later snapshot lists the texts that are new and refers to the others; alone, a snapshot carries all it needs.
         Doc d;

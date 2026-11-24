@@ -138,7 +138,7 @@ int replayAttempt(const fs::path& dir)
         std::size_t count = 0;
         for (auto it : recorded) {
             const std::string detail = str(it, "detail");
-            CHECK(str(it, "kind") == "test" && detail.find('\n') == std::string::npos);   // the rebuild below is exact only for these (see the header)
+            CHECK(str(it, "kind") == "test" && !detail.contains('\n'));   // the rebuild below is exact only for these (see the header)
             verdict += detail + "\n";
             ++count;
         }

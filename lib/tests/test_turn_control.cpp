@@ -54,8 +54,8 @@ int main()
             CHECK_EQ(joinContinuation(head + "    int x = 1;\n", "    int y = 2;\n    int z"), head + "    int x = 1;\n    int y = 2;\n    int z");
             // The prompt: whole lines only, the unfinished line named.
             const std::string p = continuationPrompt(head + "    int x = 1;\n    return std");
-            CHECK(p.find("    int x = 1;\n```") != std::string::npos && p.find("the unfinished line `return std`") != std::string::npos && p.find("write it again in full") != std::string::npos);
-            CHECK(continuationPrompt(head + "    int x = 1;\n").find("Continue with the line that follows them") != std::string::npos);
+            CHECK(p.contains("    int x = 1;\n```") && p.contains("the unfinished line `return std`") && p.contains("write it again in full"));
+            CHECK(continuationPrompt(head + "    int x = 1;\n").contains("Continue with the line that follows them"));
         }
         // detectEditOverrun: a SEARCH of most of a file that exists (the file replaced in disguise), one edit past the limit; a stub or new file is not judged.
         {
@@ -83,7 +83,7 @@ int main()
             CHECK(detectRunaway(file + cycle + cycle, {}).instruction.empty());   // twice is not yet a loop
             const std::string again = "TEST(error_ln_of_negative) {\n    CHECK_THROWS(ev(\"ln(-1)\"));\n}\n";
             const Runaway third = detectRunaway(file + again + cycle + again + "TEST(x) {\n}\n" + again, {});
-            CHECK(third.kind == "repeat" && third.instruction.find("written a third time") != std::string::npos && third.instruction.find("different angle") != std::string::npos);
+            CHECK(third.kind == "repeat" && third.instruction.contains("written a third time") && third.instruction.contains("different angle"));
             // Not loops: `namespace {` and closing braces recur; distinct functions with similar bodies.
             std::string ok = file;
             for (int i = 0; i < 4; ++i) ok += "namespace {\nint f" + std::to_string(i) + "(int a) {\n    return a + " + std::to_string(i) + ";\n}\n}\n";
@@ -116,7 +116,7 @@ int main()
         CHECK(!detectRunaway(search, {{"a.cpp", draft}}));                                         // 40 lines: at the limit
         CHECK_EQ(detectRunaway(search + "int v41 = 41;\n", {{"a.cpp", draft}}).kind, std::string("long-search"));
         CHECK(!detectRunaway(search + "int v41 = 41", {{"a.cpp", draft}}));                        // the 41st line is not complete yet: no verdict on a partial line
-        CHECK(detectRunaway(search + "int v41 = 41;\n", {{"a.cpp", draft}}).instruction.find("LINES a-b") != std::string::npos);
+        CHECK(detectRunaway(search + "int v41 = 41;\n", {{"a.cpp", draft}}).instruction.contains("LINES a-b"));
         CHECK(!detectRunaway(search + "=======\nint v1 = 0;\n>>>>>>> REPLACE\n" + search, {{"a.cpp", draft}}));   // two blocks of 40 are two blocks
         std::string repeat = "=== EDIT: a.cpp AFTER 2 ===\n";
         for (int i = 0; i < 9; ++i) repeat += "    total += value;\n";

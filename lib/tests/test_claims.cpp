@@ -70,7 +70,7 @@ ClaimRequest file(const std::string& path)
 /// What a `BlockIndex` would log for a block that merged into another.
 BlockEvent mergedEvent(const std::string& id, const std::string& into) { return BlockEvent{Carry::merged, id, "src/a.cpp", "f", into, 1}; }
 
-bool contains(const std::string& text, const std::string& part) { return text.find(part) != std::string::npos; }
+bool contains(const std::string& text, const std::string& part) { return text.contains(part); }
 
 }  // namespace
 
@@ -407,7 +407,7 @@ int main()
         CHECK_EQ(a.state().unknownKinds.at("lease.frob@1"), std::size_t{1});
         CHECK_EQ(a.state().skipped, std::size_t{1});
         CHECK_EQ(claimCount(a), std::size_t{1});
-        CHECK(eventJson(a.events()[1]).find(R"("trace":"t-1")") != std::string::npos);
+        CHECK(eventJson(a.events()[1]).contains(R"("trace":"t-1")"));
         CHECK(*parseEvent(eventJson(a.events()[1])) == newer);
         Store replica = makeStore({"p", "r"});
         replica.replay(log);
