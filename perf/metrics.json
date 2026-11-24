@@ -94,7 +94,17 @@
     "claims merges 5e3: carries written": {"kind": "exact", "expected": 5000, "unit": "n"},
     "claims merges 5e3: claims found on the survivors": {"kind": "exact", "expected": 10000, "unit": "n"},
     "claims merges 5e3: claims found by the old ids": {"kind": "exact", "expected": 10000, "unit": "n"},
-    "claims merges 5e3: allocations per merge": {"kind": "max", "limit": 14.3, "unit": "n"}
+    "claims merges 5e3: allocations per merge": {"kind": "max", "limit": 14.3, "unit": "n"},
+    "inbox 1e5 events x 1e3 subscriptions: events indexed": {"kind": "exact", "expected": 101000, "unit": "n"},
+    "inbox 1e5 events x 1e3 subscriptions: events returned": {"kind": "exact", "expected": 100000, "unit": "n"},
+    "inbox 1e5 events x 1e3 subscriptions: items returned": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "inbox 1e5 events x 1e3 subscriptions: events examined per event returned": {"kind": "exact", "expected": 1, "unit": "n"},
+    "inbox 1e5 events x 1e3 subscriptions: allocations per event returned, index build included": {"kind": "max", "limit": 3.0, "unit": "n"},
+    "inbox after acknowledge: events returned": {"kind": "exact", "expected": 0, "unit": "n"},
+    "inbox after acknowledge: events examined": {"kind": "exact", "expected": 0, "unit": "n"},
+    "inbox 100 new events: events returned": {"kind": "exact", "expected": 100, "unit": "n"},
+    "inbox 100 new events: events examined": {"kind": "exact", "expected": 100, "unit": "n"},
+    "inbox 100 new events: events indexed by the extension": {"kind": "exact", "expected": 100, "unit": "n"}
   },
   "accepted": []
 }

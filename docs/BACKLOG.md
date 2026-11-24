@@ -64,6 +64,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
   coverage. Checked also on the owner's private reference topic, numbers only.
 * **B3 claims and notes: built** (2026-11-24, `claims.hpp`; BACKBONE 3.5 as built). Left for MS4: the two-actor mock scenarios (B8, B14) as claim tests, and Sub0Squad's fork executor taking write claims per section.
+* **B2 inboxes: library half done** (2026-11-24, `inbox.hpp`; BACKBONE.md 3.4 "As built"). **Left**: Sub0Squad's verdict through the store (the A/B over recorded replies, 0 changed bytes, R-BB-5's squad half), per-writer cursors when writers merge (V1), a stable item order across layer moves.
 * **B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
 
 ## Any time
