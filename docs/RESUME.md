@@ -21,6 +21,7 @@ in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](ses
 | `applyReply` (atomic), turn control, the 30 recorded-reply cases, moved from Sub0Squad | built, released in v0.3.0 | `test_replies`, `test_turn_control`; [DECISIONS.md](DECISIONS.md) section 2 |
 | the scale harness (S0, in part): the seeded corpus generator and `Sub0Canvas_Bench` (timing local only; 47 deterministic metrics in every tier), a first baseline, the numbers in SCALE.md section 6.0 | built, not yet released | `test_corpus`, `Sub0Canvas_Bench_metrics`, [TESTING.md](TESTING.md) "Performance" |
 | the mock squad (MS0): a consumer project fetching the library through CPM, a reference loop and gate, ten hand-written scenarios frozen in `fixtures/mock`, the consumer contract (R-CONS); the version bumped to 0.3.0 | built, not yet released (the next tag carries it) | `test_consumer_mock_squad` (label `full`), [MOCK_SQUAD.md](MOCK_SQUAD.md) |
+| the store core (B1): event envelope and log seam (`event.hpp`), `Store` with a reducer registry, `putLayer` reconcile, state, tags, links, item data, a query-scoped snapshot; pure; envelope frozen with no `seq`/`type` (BACKBONE A22) | built, not yet released; no file log, no inbox, no claims yet | `test_store`, 15 store metrics in `perf/metrics.json` |
 | requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, released in v0.3.0 | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
 
 ## The last measured result
