@@ -4,3 +4,4 @@ build/
 out/
 build-local-*/
 .ci/last-*.json
+.claude/worktrees/
