@@ -171,6 +171,15 @@ void acknowledge(Subscription& sub, std::uint64_t upTo);   // the cursor moves o
 * `READ ISSUE n` generalises to any layer by its keyword (`READ PLAN n`, `READ REVIEW n`); `parseIssueReads` already takes the keyword pattern.
 * Delivery is pull. A consumer asks for its inbox when it is ready (a worker at its next turn, a scheduler on a tick, a person on opening the view).
   Push (webhooks, a file watcher) only feeds the log; it never calls a subscriber. That keeps the core free of threads and callbacks.
+* **As built (B2)**, [inbox.hpp](../lib/include/sub0canvas/inbox.hpp), new files only (store.hpp and store.cpp untouched): `SubscriptionQuery : Query` adds `blocks`, `paths` (string prefixes of an anchor's path) and `events`
+  (kinds, whole or bare name); a `Subscription` is `{id, owner, query, cursor}`. Subscribing, unsubscribing and acknowledging are events (`sub.subscribe@1`, `sub.unsubscribe@1`, `sub.ack@1`) folded into
+  `StoreState::ext<SubscriptionState>()` by reducers that `registerSubscriptionReducers(registry)` adds, so replay gives the same cursors. The **position is the event's lamport value** (the envelope has no `seq`, A22): exact for one
+  writer; with several writers an event delivered late below an advanced cursor is not shown, and per-writer cursors are the fix, owed to the slice that merges writers (V1). `acknowledge` is monotone and idempotent (no event when the cursor
+  is already there; an error beyond the head). The inbox is `{items, events, upTo}`: the matching events since the cursor in merge order, the items they are about that still match now in layer order, and the head to acknowledge to. The
+  `sub.*` kinds are never in an inbox unless `events` names them. **Cost**: an `InboxReader` indexes `store.events()` by layer, path, block and event kind (built from the events alone, extended as the log grows, rebuilt when an older event
+  arrives late) and a read binary-searches the cursor in the narrowest bucket (`blocks`, else `paths`, else `events`, else `layers`), so it examines the events it returns when that bucket is the whole query; a query that has only
+  item filters (`states`, `tags`, `kinds`, `sources`, `text`) scans the events since the cursor. `layers`, `blocks` and `paths` match where the item was when the event was made; the other filters match the item now, as `Store::items` does
+  (`itemMatches` is that test, held to `Store::items` by a test). Measured: SCALE.md section 6.2 is G1's; B2's numbers are the `inbox` metrics in `perf/metrics.json`.
 
 ### 3.5 Claims
 
