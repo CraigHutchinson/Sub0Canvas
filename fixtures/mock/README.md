@@ -9,4 +9,4 @@ mock_squad <fixtures/scenarios/squad> <fixtures/mock> --update      # the binary
 ```
 
 `test_consumer_contract` runs every scenario and requires these bytes to be exactly what it writes, in both directions (no missing and no stale file).
-Review the diff by hand in the commit that regenerates them. MS1 regenerated them in the B0 format (item `id`, `column` and ranges, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom`; `events.ndjson` is the cumulative log; `g7` sends texts by content id).
+A scenario with `# policy: claims=on|enforce` (MS4) adds `claims/events.ndjson` (the merged claim events) and `claims/step-K.json` (the live claims after step K, `claims-1`). Review the diff by hand in the commit that regenerates them. MS1 regenerated them in the B0 format (item `id`, `column` and ranges, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom`; `events.ndjson` is the cumulative log; `g7` sends texts by content id).
