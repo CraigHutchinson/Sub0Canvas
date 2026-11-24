@@ -60,7 +60,7 @@ std::string checkOutcomes(const Scenario& sc, const Attempt& a)
         const Outcome& o = a.outcomes[i];
         const ExpectedOutcome& e = sc.expect[i];
         if (o.kind != e.kind) return "reply " + std::to_string(i) + ": expected '" + e.kind + "', got '" + o.kind + "' (" + o.text + ")";
-        if ((o.text + "\n" + o.verdict).find(e.needle) == std::string::npos) return "reply " + std::to_string(i) + " (" + o.kind + "): neither '" + o.text + "' nor its verdict contains '" + e.needle + "'";
+        if (!(o.text + "\n" + o.verdict).contains(e.needle)) return "reply " + std::to_string(i) + " (" + o.kind + "): neither '" + o.text + "' nor its verdict contains '" + e.needle + "'";
     }
     if (a.unusedReplies != 0) return std::to_string(a.unusedReplies) + " scripted reply(ies) were never sent";
     return {};
@@ -163,7 +163,7 @@ std::string checkStore(const Scenario& sc, const Attempt& a)
         } else if (w.size() >= 4 && w[0] == "state" && w[2] == ":") {
             std::string key;
             for (const auto& k : keys)
-                if (k.find(w[1]) != std::string::npos) { if (!key.empty()) return "'" + w[1] + "' names more than one item"; key = k; }
+                if (k.contains(w[1])) { if (!key.empty()) return "'" + w[1] + "' names more than one item"; key = k; }
             if (key.empty()) return "no item whose key holds '" + w[1] + "'";
             if (a.storeStates.size() != w.size() - 3) return "expected states after " + std::to_string(w.size() - 3) + " verdicts, the loop made " + std::to_string(a.storeStates.size());
             for (std::size_t i = 3; i < w.size(); ++i) {
@@ -210,7 +210,7 @@ std::string checkClaims(const Scenario& sc, const Attempt& a)
             const auto colon = holderK.rfind(':');
             if (colon == std::string::npos) return nullptr;
             const std::string holder = holderK.substr(0, colon);
-            const std::string id = (holder.find('/') == std::string::npos ? "mock/" : "") + holderK;
+            const std::string id = (!holder.contains('/') ? "mock/" : "") + holderK;
             for (const ClaimRow& r : at->claims) if (r.id == id) return &r;
             return nullptr;
         };
@@ -252,7 +252,7 @@ std::string checkViews(const Scenario& sc, const Attempt& a)
     for (const RefreshRow& r : a.refreshes) {
         if (r.briefBytes > 520) return "the brief of refresh " + std::to_string(r.step) + " is " + std::to_string(r.briefBytes) + " bytes, over 520";
         const RefreshRow* before = previous.count(r.actor) ? previous[r.actor] : nullptr;
-        if (before != nullptr && before->ack && r.step == before->step + 1 && r.json.find("\"files\":0") == std::string::npos)
+        if (before != nullptr && before->ack && r.step == before->step + 1 && !r.json.contains("\"files\":0"))
             return "refresh " + std::to_string(r.step) + " follows an acknowledged one and should hold no file: " + r.json.substr(0, 200);
         if (before == nullptr || before->ack) first[r.actor] = &r;
         const RefreshRow& f = *first[r.actor];
@@ -273,12 +273,12 @@ std::string checkSyncOrder(const Scenario& sc, const Attempt& a)
     const auto b = runScenario(other);
     if (!b) return b.error();
     for (const auto& [rel, bytes] : a.record) {
-        if (rel.rfind("claims/", 0) != 0) continue;
+        if (!rel.starts_with("claims/")) continue;
         const auto it = b->record.find(rel);
         if (it == b->record.end() || it->second != bytes) return "'" + rel + "' differs when the replicas merge in the other order";
     }
     for (const auto& [rel, bytes] : b->record)
-        if (rel.rfind("claims/", 0) == 0 && !a.record.count(rel)) return "'" + rel + "' exists only when the replicas merge in the other order";
+        if (rel.starts_with("claims/") && !a.record.contains(rel)) return "'" + rel + "' exists only when the replicas merge in the other order";
     return {};
 }
 
@@ -297,7 +297,7 @@ std::string checkStoreTransparent(const Scenario& sc, const Attempt& a)
         if (x.kind != y.kind || x.text != y.text || x.verdict != y.verdict || x.focus != y.focus) return "reply " + std::to_string(i) + ": the verdict differs with the store";
     }
     const auto strip = [](std::map<std::string, std::string> r) {
-        for (auto it = r.begin(); it != r.end();) it = it->first.rfind("store/", 0) == 0 || it->first == "mock-trace.json" ? r.erase(it) : std::next(it);
+        for (auto it = r.begin(); it != r.end();) it = it->first.starts_with("store/") || it->first == "mock-trace.json" ? r.erase(it) : std::next(it);
         return r;
     };
     if (strip(a.record) != strip(b->record)) return "the persisted attempt differs with the store";
@@ -330,7 +330,7 @@ std::string checkRecord(const Attempt& a, const fs::path& dir)
         if (it->second != bytes) return "'" + rel + "' differs from the stored attempt: " + firstDifference(it->second, bytes);
     }
     for (const auto& [rel, bytes] : stored)
-        if (!a.record.count(rel)) return "'" + rel + "' is stored but the loop no longer writes it";
+        if (!a.record.contains(rel)) return "'" + rel + "' is stored but the loop no longer writes it";
     return {};
 }
 
@@ -375,8 +375,8 @@ std::vector<std::string> mappedRows(const std::string& requirements)
     std::istringstream in(requirements);
     bool inSection = false;
     for (std::string line; std::getline(in, line);) {
-        if (line.rfind("## ", 0) == 0) inSection = line.find("Sub0Squad's use, mapped") != std::string::npos;
-        if (!inSection || line.rfind("| ", 0) != 0 || line.rfind("| Sub0Squad use", 0) == 0 || line.rfind("|---", 0) == 0) continue;
+        if (line.starts_with("## ")) inSection = line.contains("Sub0Squad's use, mapped");
+        if (!inSection || !line.starts_with("| ") || line.starts_with("| Sub0Squad use") || line.starts_with("|---")) continue;
         const auto end = line.find(" |", 2);
         cells.push_back(line.substr(2, end == std::string::npos ? std::string::npos : end - 2));
     }
@@ -470,11 +470,11 @@ int main(int argc, char** argv)
         const auto cells = mappedRows(slurp(argv[3]));
         CHECK_GE(cells.size(), static_cast<std::size_t>(10));
         for (const auto& cell : cells) {
-            const auto row = std::find_if(kRows.begin(), kRows.end(), [&](const Row& r) { return cell.find(r.key) != std::string::npos; });
+            const auto row = std::find_if(kRows.begin(), kRows.end(), [&](const Row& r) { return cell.contains(r.key); });
             if (row == kRows.end()) { std::println(stderr, "REQUIREMENTS.md row not covered or deferred in the consumer contract: {}", cell); CHECK(false); }
         }
         for (const auto& row : kRows) {
-            const bool inDocument = std::any_of(cells.begin(), cells.end(), [&](const std::string& c) { return c.find(row.key) != std::string::npos; });
+            const bool inDocument = std::any_of(cells.begin(), cells.end(), [&](const std::string& c) { return c.contains(row.key); });
             if (!inDocument) { std::println(stderr, "the consumer contract lists a row REQUIREMENTS.md no longer has: {}", row.key); CHECK(false); }
             if (row.called.empty() && row.deferred.empty()) { std::println(stderr, "row '{}' is neither exercised nor deferred with a reason", row.key); CHECK(false); }
             for (const auto& fn : row.called)

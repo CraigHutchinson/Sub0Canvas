@@ -68,7 +68,7 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
     std::istringstream in(text);
     for (std::string line; std::getline(in, line);) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
-        if (line.rfind("--- ", 0) == 0) {
+        if (line.starts_with("--- ")) {
             close();
             if (!bodyError.empty()) return std::unexpected(bodyError);
             const auto w = words(line.substr(4));
@@ -115,7 +115,7 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
             continue;
         }
         if (!inSection) {
-            if (line.rfind("# ", 0) != 0) continue;
+            if (!line.starts_with("# ")) continue;
             const auto colon = line.find(": ");
             if (colon == std::string::npos) continue;
             const std::string key = line.substr(2, colon - 2), value = trim(line.substr(colon + 2));

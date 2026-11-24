@@ -68,7 +68,7 @@ std::string leafOf(const std::string& name)
 }
 
 /// The squad's own stub test: a skeleton's placeholder bodies.
-bool isStub(const std::string& text) { return text.find("not implemented") != std::string::npos; }
+bool isStub(const std::string& text) { return text.contains("not implemented"); }
 
 /// One attempt. Mirrors `runCanvasAttempt` (Sub0Squad `src/canvas_agent.cpp`), reduced to what touches the library; the comments name the part it mirrors.
 class Loop
@@ -415,7 +415,7 @@ private:
         }
         if (r.op == "advance") {
             AdvanceOptions ao;
-            ao.atomic = r.attrs.count("atomic") != 0;
+            ao.atomic = r.attrs.contains("atomic");
             lib("Session::advance");
             const auto done = session->advance(view, ao);
             if (!done) return "advance: " + done.error().message;
@@ -446,7 +446,7 @@ private:
             ro.form = parseDeltaForm(form->second);
             if (!ro.form) return "refresh: form=" + form->second + " is not brief, elided, compacted or full";
         }
-        ro.acknowledge = r.attrs.count("ack") != 0;
+        ro.acknowledge = r.attrs.contains("ack");
         DeltaSources sources;
         sources.canvas = &canvas_;
         sources.store = &sessStore_;
@@ -657,7 +657,7 @@ private:
             row.expires = c->expires;
             row.liveAt = c->status == ClaimStatus::live && at >= c->taken && at < c->expires;
             for (const std::string& key : c->covers) {
-                const Block* b = key.rfind("block:", 0) == 0 ? index_.resolve(key.substr(6)) : nullptr;
+                const Block* b = key.starts_with("block:") ? index_.resolve(key.substr(6)) : nullptr;
                 row.covers.push_back(b != nullptr ? std::string{b->path} + ":" + leafOf(std::string{b->name}) : key);
             }
             step.claims.push_back(std::move(row));
@@ -807,7 +807,7 @@ private:
         lib("layerInline");
         const std::string inlined = layerInline(issues_, index_, canvas_.files(), static_cast<std::size_t>(p_.inlineIssues));
         if (tests) return text.substr(0, text.find('\n') + 1) + summary + inlined;   // the gate's count line, every failure, the first few in full
-        const bool allInline = !inlined.empty() && inlined.rfind("In full:", 0) == 0;
+        const bool allInline = !inlined.empty() && inlined.starts_with("In full:");
         return summary + inlined + (allInline ? std::string{} : "The compiler's own words:\n" + clip(text, clipAt));
     }
 
@@ -841,15 +841,15 @@ private:
     std::string keptFileMadeWhole(const std::string& kept, const std::string& next)
     {
         std::size_t h = kept.rfind("\n=== FILE:");
-        h = h == std::string::npos ? (kept.rfind("=== FILE:", 0) == 0 ? 0 : std::string::npos) : h + 1;
+        h = h == std::string::npos ? (kept.starts_with("=== FILE:") ? 0 : std::string::npos) : h + 1;
         if (h == std::string::npos || kept.find("=== END FILE", h) != std::string::npos) return {};
         const auto eol = kept.find('\n', h);
         if (eol == std::string::npos) return {};
         const std::string header = kept.substr(h, eol - h);
         std::istringstream in(next);
         std::string first;
-        while (std::getline(in, first) && (first.find_first_not_of(" \t\r") == std::string::npos || first.rfind("```", 0) == 0)) {}
-        if (first.rfind("=== ", 0) != 0 || first.rfind("=== END", 0) == 0 || first.substr(0, first.find_last_not_of(" \t\r") + 1) == header) return {};   // a continuation, or the file begun again
+        while (std::getline(in, first) && (first.find_first_not_of(" \t\r") == std::string::npos || first.starts_with("```"))) {}
+        if (!first.starts_with("=== ") || first.starts_with("=== END") || first.substr(0, first.find_last_not_of(" \t\r") + 1) == header) return {};   // a continuation, or the file begun again
         std::string path = header.substr(9);
         if (const auto close = path.rfind("==="); close != std::string::npos) path.erase(close);
         path.erase(0, path.find_first_not_of(" \t"));
@@ -920,7 +920,7 @@ private:
             partial_.clear();
             std::string v = runaway.instruction;
             // A loop is rolled back, not thrown away: what came before it is kept and the next reply continues it. The second loop in a row is not.
-            if (loopStreak_ == 1 && loopKept_.find("=== ") != std::string::npos) {
+            if (loopStreak_ == 1 && loopKept_.contains("=== ")) {
                 partial_ = loopKept_;
                 rolledBack_ = true;
                 interception_ = v;
@@ -947,7 +947,7 @@ private:
         rolledBack_ = false;
         interception_.clear();
         lib("cutOffInsideEdit");
-        const bool openFile = text.find("=== FILE:") != std::string::npos && text.find("=== END FILE") == std::string::npos;
+        const bool openFile = text.contains("=== FILE:") && !text.contains("=== END FILE");
         if (reply.cut && continuations_ < p_.freeContinuations && (cutOffInsideEdit(text) || openFile)) {
             ++continuations_;
             ++out_.continued;

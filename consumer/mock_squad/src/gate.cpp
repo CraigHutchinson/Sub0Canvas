@@ -11,7 +11,7 @@ namespace {
 bool holds(const std::map<std::string, std::string>& files, const GateRule& r)
 {
     const auto it = files.find(r.path);
-    return it != files.end() && it->second.find(r.text) != std::string::npos;
+    return it != files.end() && it->second.contains(r.text);
 }
 
 }  // namespace
@@ -22,7 +22,7 @@ std::expected<std::vector<GateRule>, std::string> parseGate(const std::vector<st
     for (const auto& line : lines) {
         GateRule r;
         const auto mid = [&](const std::string& s, const std::string& sep) { return s.find(sep); };
-        if (line.rfind("flap=", 0) == 0) {
+        if (line.starts_with("flap=")) {
             const auto space = line.find(' ');
             if (space == std::string::npos) return std::unexpected("not a gate rule (flap=<seed> <name>): " + line);
             char* end = nullptr;
@@ -36,7 +36,7 @@ std::expected<std::vector<GateRule>, std::string> parseGate(const std::vector<st
             rules.push_back(std::move(r));
             continue;
         }
-        if (line.rfind("test ", 0) == 0) {
+        if (line.starts_with("test ")) {
             const auto passes = mid(line, " passes when ");
             if (passes == std::string::npos) return std::unexpected("not a gate rule (test <name> passes when <path> contains|lacks <text>): " + line);
             r.kind = GateRule::Kind::test;
@@ -48,7 +48,7 @@ std::expected<std::vector<GateRule>, std::string> parseGate(const std::vector<st
             r.contains = verb == "contains";
             std::getline(rest, r.text);
             r.text.erase(0, r.text.find_first_not_of(' '));
-        } else if (line.rfind("compile ", 0) == 0) {
+        } else if (line.starts_with("compile ")) {
             const auto when = mid(line, " when ");
             if (when == std::string::npos) return std::unexpected("not a gate rule (compile <message> when <path> contains <text>): " + line);
             r.kind = GateRule::Kind::compile;
@@ -81,7 +81,7 @@ std::string compileCheck(const std::vector<GateRule>& rules, const std::map<std:
         if (it == files.end()) continue;
         const std::string& text = it->second;
         const auto at = text.find(r.text);
-        if (at == std::string::npos || (!r.unless.empty() && text.find(r.unless) != std::string::npos)) continue;
+        if (at == std::string::npos || (!r.unless.empty() && text.contains(r.unless))) continue;
         const std::size_t before = at == 0 ? std::string::npos : text.rfind('\n', at - 1);
         const std::size_t lineStart = before == std::string::npos ? 0 : before + 1;
         int line = 1;
