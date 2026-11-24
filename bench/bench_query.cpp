@@ -60,7 +60,7 @@ struct Served
             const bool code = path.ends_with(".cpp") || path.ends_with(".hpp") || path.ends_with(".py");
             if (!doc.addRevision(path, 1, {}, text)) continue;
             ++files;
-            if (firstFolder.empty() && path.find('/') != std::string::npos) firstFolder = path.substr(0, path.rfind('/'));
+            if (firstFolder.empty() && path.contains('/')) firstFolder = path.substr(0, path.rfind('/'));
             if (!code) continue;
             index.update(path, text);
             const std::size_t n = index.blocks(path).size();
