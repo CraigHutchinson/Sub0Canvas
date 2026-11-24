@@ -282,6 +282,12 @@ public:
 };
 ```
 
+**As built (G1, 2026-11-24): `DocumentSource` changed shape to meet A20 and A21.** The sketch above asked for a whole tree per revision; the built interface
+([source.hpp](../lib/include/sub0canvas/source.hpp)) is per SCOPE: `history(to, scope, limit)` (the first-parent revisions that changed the scope, newest first, each with its changes inside the scope
+and rename and copy detection applied; `cut` when the source's history is cut), `read(refs)` (many (revision, path) texts in one batch), `list(revision, scope)`, `changes(parent, revision)` (the whole diff, asked only to learn where
+an added file came from) and `resolve(name)`. A missing object is `Presence::unknown`, never an error. `app/git_source.cpp` implements it over git, `lib/src/git_plumbing.cpp` parses git's output purely, and a `Canvas` adapter in
+`lib/tests/fixture_source.hpp` is the second implementation. `ItemSource` and `WriteSink` are unchanged and unbuilt.
+
 The five rules from LAYERED_DOCUMENT.md stand, restated as interface contracts:
 
 1. **Adapters never compute block ids.** `fetch` returns source anchors (`revision`, `path`, line range, `quote`). The store's resolver maps them.
@@ -336,6 +342,10 @@ public:
   `term()`" and "main renamed `term()` to `parseTerm()`" meet on one id, and two PRs touching one block are a **conflict seen before either merges**.
 * **Checkpoints** (a serialised `BlockIndex` every N revisions, `json()` plus a reader) bound a replay. Only changed paths are re-indexed
   (`changedPaths`), so a 200-commit replay of a 50-file repository updates a few files per commit.
+* **As built (G1)**, [revision_index.hpp](../lib/include/sub0canvas/revision_index.hpp): the replay is per SCOPE, not per tree (`at(scope, revision)`, `named`, `history(scope, revision, id)`, `carry(scope, from, id, to)`;
+  `BlockIndex` unchanged). `BlockEvent.turn` holds the replay's ordinal (0 the baseline), and each `HistoryStep` pairs it with the revision id. Checkpoints are in-memory copies every N revisions of a line (persisting
+  them waits for a `BlockIndex` reader, B1); a head further along an already replayed line extends it. A rename retires the old path and indexes the new one (the revive rule keeps the identity); a single-path scope follows a
+  rename backwards; the files of one revision are applied smallest growth first, so a function moved between two files is retired before it is met again. `carry` across branches (`mergeBase`) waits for P0.
 * **Ids are local to a replay root.** Two replays from different roots give different ids for the same function. Interchange files therefore name the
   root (`index.root`), and ids are only compared within one root. A durable id across roots would need a content hash (Unison's approach); not proposed
   now, because a body edit would then change identity.

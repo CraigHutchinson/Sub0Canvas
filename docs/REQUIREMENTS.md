@@ -219,12 +219,12 @@ its slice is built.
 |---|---|---|---|
 | R-SRC-1 | Adapters never compute identities; they give source anchors (revision, path, range, quote), and one resolver maps every source's anchors by the same rules. | U3 | B4 |
 | R-SRC-2 | An anchor that cannot be resolved is shown outdated, never silently moved. | U3, U6 | B4 |
-| R-SRC-3 | A block's identity history follows it across a repository's commits, renames and moves, checked against hand-checked truth. | U3, U4 | G1 |
+| R-SRC-3 | A block's identity history follows it across a repository's commits, renames and moves, checked against hand-checked truth. | U3, U4 | G1: built (`test_revision_index`, `test/history.test.js`; truth in `fixtures/scenarios/g1-tinycalc`, an invented repository; real histories wait for S3) |
 | R-SRC-4 | Two pending changes (PRs) touching one block are reported as a conflict before either merges. | U3 | G1, G2 |
-| R-SRC-5 | Revision ids are opaque strings; a canvas's numbered revisions are one kind among others. | U1, U3 | B0 (A1): written (`revisionId`), read |
+| R-SRC-5 | Revision ids are opaque strings; a canvas's numbered revisions are one kind among others. | U1, U3 | B0 (A1): written (`revisionId`), read; G1: a `Canvas` as a second `DocumentSource` (test adapter), the same index over both |
 | R-SRC-6 | Anchors may span a range (start and end line and column). | U3, U5, U8 | B0 (A3): written from compilers' ranges, read |
 | R-SRC-7 | Nothing is written back to a source without the consumer's confirmation; a rejected proposal leaves no trace there. | U3, U6 | G5 |
-| R-SRC-8 | Tests read captured data; no test uses the network. | all | all |
+| R-SRC-8 | Tests read captured data; no test uses the network. | all | all (G1: `fixtures/git`, captured plumbing output; the live-git test runs only local repositories it builds) |
 
 ### Scale (R-SCALE; SCALE.md)
 
@@ -236,9 +236,9 @@ its slice is built.
 | R-SCALE-4 | Sketch-based candidate search loses no identity that the exhaustive rule keeps, on the synthetic corpus. | U4 | S2 |
 | R-SCALE-5 | Every path is classified before it is parsed; binary files get no blocks, and data and sidecar files are indexed only when the document's policy asks. | U4 | D0, S1 |
 | R-SCALE-6 | Per-blob tables are shared by every clone and worktree of a repository on one machine; an extra clone costs only its own small state. | U4, U12 | S1 (A19) |
-| R-SCALE-7 | A missing object (partial or shallow clone) makes an answer unknown, never an error; the view still renders. | U4, U3 | G1 (A20) |
+| R-SCALE-7 | A missing object (partial or shallow clone) makes an answer unknown, never an error; the view still renders. | U4, U3 | G1 (A20): built (`FileText::unknown`, `Replayed::unknown`, `historyCut`; a missing text, a missing tree, a shallow and a partial clone) |
 | R-SCALE-8 | A trunk merge costs in proportion to the paths it changed and the open changes whose footprints it meets, not to the number of open changes. | U4, U12 | S4, P1 |
-| R-SCALE-9 | Per-path history never walks commits that did not change the path (git's changed-path filters, or an equivalent index). | U4, U3 | G1 (A21) |
+| R-SCALE-9 | Per-path history never walks commits that did not change the path (git's changed-path filters, or an equivalent index). | U4, U3 | G1 (A21): built (one `git log -- <scope>`; a replay reads and applies only the revisions it lists; exact metrics `history sparse scope`) |
 
 ### Change views (R-CHG; CHANGE_VIEWS.md, U12)
 

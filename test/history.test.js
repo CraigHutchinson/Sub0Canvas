@@ -66,6 +66,19 @@ for (const sc of truth.scenarios) {
     });
 }
 
+test('the captured plumbing output is what the generator makes (byte-identical)', { skip: !hasGit && 'git is not installed' }, async () => {
+    const { capture } = await import(pathToFileURL(path.join(root, 'tools', 'git-fixture.mjs')).href);
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), 'sub0canvas-capture-'));
+    try {
+        capture(out);
+        const captured = path.join(root, 'fixtures', 'git', 'tinycalc');
+        assert.deepEqual(fs.readdirSync(out).sort(), fs.readdirSync(captured).sort());
+        for (const name of fs.readdirSync(out)) assert.ok(fs.readFileSync(path.join(out, name)).equals(fs.readFileSync(path.join(captured, name))), `${name} differs: re-capture and review`);
+    } finally {
+        fs.rmSync(out, { recursive: true, force: true });
+    }
+});
+
 test('git history asks git for the scope, never the tree (R-SCALE-9, A21)', { skip }, async () => {
     const r = await repositories();
     const out = run(r.full, 'main', ['src/numeric.cpp'], ['clamp']);
