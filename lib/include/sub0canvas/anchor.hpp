@@ -26,6 +26,7 @@ struct SourceAnchor
     std::string blockId;            ///< the block that held it at `revision`, in the identity space of the document it is resolved in; empty: derive it from `line`
     std::string textId;             ///< optional content id of the whole file text at `revision`: when the target text has the same id nothing changed and the
                                     ///< anchor resolves by position alone (duplicates included)
+    bool operator==(const SourceAnchor&) const = default;   // every field: `HeldAnchor` (view.hpp) compares its anchor
 };
 
 /// Build an anchor for the text of `text` from (`line`, `column`) to (`endLine`, `endColumn`) (the end column is just past the last character), taking up to
