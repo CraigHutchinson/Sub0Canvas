@@ -1073,7 +1073,7 @@ std::set<std::string> probeTokens(const std::string& expr)
             probe.insert(expr.substr(i, j - i));
             i = j;
         } else {
-            if (std::string_view{"%^!+-*/<>=&|,"}.find(expr[i]) != std::string_view::npos) probe.insert(std::string(1, expr[i]));
+            if (std::string_view{"%^!+-*/<>=&|,"}.contains(expr[i])) probe.insert(std::string(1, expr[i]));
             ++i;
         }
     }
@@ -1140,8 +1140,8 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
     for (const std::string& raw : splitLines(clean)) {
         const auto lead = raw.find_first_not_of(' ');
         const std::string line = lead == std::string::npos ? std::string{} : raw.substr(lead);
-        if (line.empty() || line.rfind("GATE ", 0) == 0) { current.reset(); continue; }
-        if (line.rfind("FAIL ", 0) == 0) {
+        if (line.empty() || line.starts_with("GATE ")) { current.reset(); continue; }
+        if (line.starts_with("FAIL ")) {
             // A failing test: `FAIL 6 - modulo: CHECK_NEAR failed: ev("10%3") is 3.33 but 1 is 1`, or a runner's `FAIL name: error`.
             std::string rest = line.substr(5);
             if (const auto dash = rest.find(" - "); dash != std::string::npos && dash < 8 && std::isdigit(static_cast<unsigned char>(rest[0]))) rest = rest.substr(dash + 3);
@@ -1153,12 +1153,12 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
             continue;
         }
         std::smatch m;
-        if (std::regex_search(line, m, diag) && line.find(" | ") == std::string::npos && line.rfind("location:", 0) != 0 && line.rfind("the test expected", 0) != 0) {
+        if (std::regex_search(line, m, diag) && !line.contains(" | ") && !line.starts_with("location:") && !line.starts_with("the test expected")) {
             const std::string kindWord = m[5].str(), message = m[6].str();
             if (kindWord == "note") { if (current) items[*current].detail += "\n" + line; continue; }
             const std::string path = m[1].str();
             const int at = std::atoi(m[2].str().c_str());
-            const std::string kind = kindWord == "warning" && message.find("-Werror") == std::string::npos ? "warning" : "error";
+            const std::string kind = kindWord == "warning" && !message.contains("-Werror") ? "warning" : "error";
             Anchor a{"", path, at, Anchor::Confidence::exact};
             if (m[3].matched) {   // `path:line:col:`, or `path:line:col-endcol:` where the compiler names the range
                 a.column = std::atoi(m[3].str().c_str());

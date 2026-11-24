@@ -114,13 +114,13 @@ Skeleton expandSkeleton(const std::string& declared, const std::string& path)
     std::size_t protoAt = lines.size();
     if (cpp)
         for (const auto& d : decls) {
-            if (!d.indent.empty() || nameBefore(d.signature).find(':') != std::string::npos || d.name == "main") continue;
+            if (!d.indent.empty() || nameBefore(d.signature).contains(':') || d.name == "main") continue;
             if (protoAt == lines.size()) protoAt = d.line;
             prototypes += d.signature + ";\n";
         }
-    bool needStdexcept = cpp && !decls.empty() && declared.find("<stdexcept>") == std::string::npos;
+    bool needStdexcept = cpp && !decls.empty() && !declared.contains("<stdexcept>");
     std::size_t lastInclude = lines.size();
-    if (needStdexcept) for (std::size_t i = 0; i < lines.size(); ++i) if (lines[i].rfind("#include", 0) == 0) lastInclude = i;
+    if (needStdexcept) for (std::size_t i = 0; i < lines.size(); ++i) if (lines[i].starts_with("#include")) lastInclude = i;
     if (needStdexcept && lastInclude == lines.size()) { out.text += "#include <stdexcept>\n"; needStdexcept = false; }
     std::size_t next = 0;
     for (std::size_t i = 0; i < lines.size(); ++i) {

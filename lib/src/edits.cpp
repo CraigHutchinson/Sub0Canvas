@@ -91,7 +91,7 @@ LooseMatch findLoose(const std::string& text, const std::string& search)
                  ", but the lines after it differ: copy them exactly as the file has them";
     } else if (m.count == 0) {   // the first line copied short (a dropped `else `, seen from the 35B): name the one line that contains it
         std::size_t found = 0, at = 0;
-        for (std::size_t i = 0; i < have.size(); ++i) if (have[i].find(want[0]) != std::string::npos) { ++found; at = i; }
+        for (std::size_t i = 0; i < have.size(); ++i) if (have[i].contains(want[0])) { ++found; at = i; }
         if (found == 1) m.hint = "; line " + std::to_string(at + 1) + " of the file is `" + have[at].substr(0, 120) + "`: copy whole lines exactly as the file has them";
     }
     return m;
@@ -228,7 +228,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
             std::size_t sepAt = seps.back();
             for (auto at = seps.rbegin(); seps.size() > 1 && at != seps.rend(); ++at) {
                 const std::string s = searchFrom <= *at ? body.substr(searchFrom, *at - searchFrom) : std::string{};
-                if (!s.empty() && (text.find(s) != std::string::npos || text.find(stripNumbers(s)) != std::string::npos || findLoose(text, s).count == 1)) { sepAt = *at; break; }
+                if (!s.empty() && (text.contains(s) || text.contains(stripNumbers(s)) || findLoose(text, s).count == 1)) { sepAt = *at; break; }
             }
             std::string search = searchFrom <= sepAt ? body.substr(searchFrom, sepAt - searchFrom) : std::string{};
             const std::size_t replFrom = body.find('\n', sepAt + 1) == std::string::npos ? repAt : body.find('\n', sepAt + 1) + 1;
@@ -236,8 +236,8 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
             b = repAt + 1;
             if (search.empty()) { error = "an edit of '" + path + "' has an empty SEARCH"; return std::nullopt; }
             const std::string searchPlain = stripNumbers(search);
-            auto at = text.find(search) != std::string::npos ? text.find(search) : text.find(searchPlain);
-            if (searchPlain != search && text.find(search) == std::string::npos && at != std::string::npos) search = searchPlain;
+            auto at = text.contains(search) ? text.find(search) : text.find(searchPlain);
+            if (searchPlain != search && !text.contains(search) && at != std::string::npos) search = searchPlain;
             if (at == std::string::npos) {
                 // Tolerant: the same lines with other indentation or trailing spaces (a small model rarely copies whitespace exactly). One place only.
                 const LooseMatch loose = findLoose(text, search);
@@ -267,7 +267,7 @@ std::optional<std::map<std::string, std::string>> applyEdits(const std::string& 
             std::istringstream in(files[path]);
             for (std::string l; std::getline(in, l);) lines.push_back(l);
         }
-        std::sort(edits.begin(), edits.end(), [](const LineEdit& a, const LineEdit& b) { return a.from > b.from; });
+        std::ranges::sort(edits, [](const LineEdit& a, const LineEdit& b) { return a.from > b.from; });
         std::size_t lastFrom = lines.size() + 2;
         for (const auto& e : edits) {
             const std::size_t lo = e.insertAfter ? e.from : e.from - (e.from ? 1 : 0), hi = e.insertAfter ? e.from : e.to;   // 0-based [lo, hi)

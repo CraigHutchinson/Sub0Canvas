@@ -34,7 +34,7 @@ std::string_view leafOf(std::string_view name)
 }
 
 /// A binary file has no blocks (docs/SCALE.md section 3, "kinds before blocks"): its text is indexed as empty.
-bool isBinary(const std::string& text) { return text.find('\0') != std::string::npos; }
+bool isBinary(const std::string& text) { return text.contains('\0'); }
 
 }  // namespace
 
@@ -299,7 +299,7 @@ RevisionIndex::Result<std::vector<std::string>> RevisionIndex::named(const Scope
     const auto state = at(scope, revision);
     if (!state) return std::unexpected(state.error());
     std::vector<std::string> ids;
-    const bool qualified = name.find(':') != std::string::npos;
+    const bool qualified = name.contains(':');
     for (const Block* b : (*state)->index.all()) {
         if (!path.empty() && b->path != path) continue;
         if (b->name == name || (!qualified && leafOf(b->name) == name)) ids.push_back(b->id);

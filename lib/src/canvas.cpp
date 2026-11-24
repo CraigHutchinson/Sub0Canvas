@@ -8,6 +8,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <sstream>
+#include <string_view>
 
 namespace sub0canvas {
 
@@ -42,7 +43,7 @@ void Canvas::addFile(const std::string& path, std::string text)
     log_.erase(std::remove_if(log_.begin(), log_.end(), [&](const CanvasLogEntry& e) { return e.path == path; }), log_.end());
 }
 
-bool Canvas::has(const std::string& path) const { return files_.count(path) != 0; }
+bool Canvas::has(const std::string& path) const { return files_.contains(path); }
 const std::string& Canvas::text(const std::string& path) const { const auto it = files_.find(path); return it == files_.end() ? empty_ : it->second.revisions.back(); }
 int Canvas::revision(const std::string& path) const { const auto it = files_.find(path); return it == files_.end() ? 0 : static_cast<int>(it->second.revisions.size()); }
 std::string Canvas::textAt(const std::string& path, int rev) const
@@ -83,7 +84,7 @@ TxResult Canvas::apply(const Transaction& tx)
                 if (!isPythonPath(tx.path))
                     for (int i = baseCount; i >= 1; --i) {
                         const std::string& l = baseLines[static_cast<std::size_t>(i) - 1];
-                        if (l.rfind('}', 0) == 0 && l.find("namespace") != std::string::npos) { at = i; break; }
+                        if (l.starts_with('}') && l.contains("namespace")) { at = i; break; }
                     }
                 s.from = at; s.to = at - 1; s.insert = true;
                 s.repl = split(op.text);
@@ -108,7 +109,7 @@ TxResult Canvas::apply(const Transaction& tx)
             // sent from column 0, the body copied at its old indentation: tier 0 of 2026-11-17, a body pushed four columns too far) is set on its own.
             const auto indentOf = [](const std::string& l) { return l.substr(0, l.find_first_not_of(" \t")); };
             const std::string want = indentOf(baseLines[static_cast<std::size_t>(s.from) - 1]);
-            const auto first = std::find_if(s.repl.begin(), s.repl.end(), [](const std::string& l) { return !trimmedEmpty(l); });
+            const auto first = std::ranges::find_if(s.repl, [](const std::string& l) { return !trimmedEmpty(l); });
             const auto last = std::find_if(s.repl.rbegin(), s.repl.rend(), [](const std::string& l) { return !trimmedEmpty(l); });
             if (first != s.repl.end()) {
                 const std::string closing = indentOf(*last), opening = indentOf(*first);
@@ -121,7 +122,7 @@ TxResult Canvas::apply(const Transaction& tx)
         }
         spans.push_back(std::move(s));
     }
-    std::stable_sort(spans.begin(), spans.end(), [](const Span& a, const Span& b) { return a.from < b.from || (a.from == b.from && a.to < b.to); });   // stable: two insertions after the same line keep the order they were given in
+    std::ranges::stable_sort(spans, [](const Span& a, const Span& b) { return a.from < b.from || (a.from == b.from && a.to < b.to); });   // stable: two insertions after the same line keep the order they were given in
     for (std::size_t i = 1; i < spans.size(); ++i)
         if (spans[i].from <= spans[i - 1].to) { r.error = "two operations overlap at line " + std::to_string(spans[i].from); return r; }
 
@@ -216,7 +217,7 @@ TxResult Canvas::revertTo(const std::string& path, int revision, const std::stri
 // ---- replies as transactions -----------------------------------------------------------------------------------------------------------------------
 namespace {
 
-bool startsWith(const std::string& s, const char* p) { return s.rfind(p, 0) == 0; }
+bool startsWith(const std::string& s, std::string_view p) { return s.starts_with(p); }
 
 /// `  12| code` -> `code` when EVERY non-blank line carries the number column of the view (a worker copied it); otherwise the text unchanged.
 std::string stripNumberColumn(const std::vector<std::string>& body)
@@ -280,11 +281,11 @@ CanvasReply parseCanvasReply(const std::string& reply)
         // A header written twice (seen from the 35B in write-function, the reply refused as an empty SYMBOL edit): the empty first copy is not a block.
         const auto trimmedEq = [](std::string a, std::string b) { for (auto* s : {&a, &b}) s->erase(s->find_last_not_of(" \t\r") + 1); return a == b; };
         if (j < lines.size() && trimmedEq(lines[j], headerLine) &&
-            std::all_of(body.begin(), body.end(), [](const std::string& l) { return l.find_first_not_of(" \t\r") == std::string::npos; }))
+            std::ranges::all_of(body, [](const std::string& l) { return l.find_first_not_of(" \t\r") == std::string::npos; }))
             continue;
         std::string raw;
         for (const auto& l : body) raw += l + "\n";
-        const bool search = raw.find("<<<<<<< SEARCH") != std::string::npos;
+        const bool search = raw.contains("<<<<<<< SEARCH");
         if (file) {
             if (head.empty()) { out.error = "a FILE block names no path"; return out; }
             if (search) { out.searchEdits += "=== EDIT: " + head + " ===\n" + raw + "=== END EDIT ===\n"; continue; }   // edit markers inside a file block: read as edits

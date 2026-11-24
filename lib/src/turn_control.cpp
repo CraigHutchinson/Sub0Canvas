@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 namespace sub0canvas {
@@ -33,7 +34,7 @@ std::string trimmed(const std::string& l)
     return l.substr(a, l.find_last_not_of(" \t") - a + 1);
 }
 
-bool startsWith(const std::string& s, const char* p) { return s.rfind(p, 0) == 0; }
+bool startsWith(const std::string& s, std::string_view p) { return s.starts_with(p); }
 
 /// The offset after a `  12| ` number column, or npos.
 std::size_t numberColumn(const std::string& line)
@@ -189,7 +190,7 @@ Runaway detectEditOverrun(std::string_view reply, const std::map<std::string, st
             std::string kind;
             h >> path >> kind;
             if (path.size() >= 3 && path.compare(path.size() - 3, 3, "===") == 0) path.resize(path.size() - 3);
-            in = locked.count(path) == 0 ? In::none : kind == "SYMBOL" || kind == "LINES" || kind == "AFTER" ? In::body : In::wait;
+            in = !locked.contains(path) ? In::none : kind == "SYMBOL" || kind == "LINES" || kind == "AFTER" ? In::body : In::wait;
             count = 0;
             continue;
         }
@@ -201,7 +202,7 @@ Runaway detectEditOverrun(std::string_view reply, const std::map<std::string, st
         if (in == In::wait) continue;
         ++count;
         if (in == In::search) {
-            const auto fileLines = static_cast<int>(std::count(locked.at(path).begin(), locked.at(path).end(), '\n'));
+            const auto fileLines = static_cast<int>(std::ranges::count(locked.at(path), '\n'));
             if (fileLines >= minFileLines && count >= 10 && static_cast<double>(count) >= searchShare * static_cast<double>(fileLines))
                 return {"rewrite-search", "Your reply was stopped: its SEARCH copies most of " + path + ", so it would replace the file whole, which exists and is not "
                                           "a stub. Improve it with edits instead: SYMBOL for a whole function (replaced, or added when it is new), a few functions a "
@@ -267,7 +268,7 @@ bool lostSpace(const std::string& fragment, const std::string& piece)
     }
     if (!isWordChar(a) && a != ')' && a != ']' && a != '"' && a != '\'') return false;
     static const char* const kOperators[] = {"==", "!=", "<=", ">=", "&&", "||", "+=", "-=", "*=", "/=", "= ", "? "};
-    return std::any_of(std::begin(kOperators), std::end(kOperators), [&](const char* op) { return piece.rfind(op, 0) == 0; });
+    return std::any_of(std::begin(kOperators), std::end(kOperators), [&](const char* op) { return piece.starts_with(op); });
 }
 
 }  // namespace
@@ -391,7 +392,7 @@ std::string joinContinuation(std::string_view partialView, const std::string& re
     if (skip < body.size()) {
         const std::string& line = body[skip];
         const std::string fragTrim = ltrimmed(fragment), fragIndent = fragment.substr(0, fragment.size() - fragTrim.size());
-        if (!rtrimmed(fragTrim).empty() && line.rfind(fragIndent, 0) == 0 && ltrimmed(line).rfind(rtrimmed(fragTrim), 0) == 0 && line.size() > fragment.size() &&
+        if (!rtrimmed(fragTrim).empty() && line.starts_with(fragIndent) && ltrimmed(line).starts_with(rtrimmed(fragTrim)) && line.size() > fragment.size() &&
             line.find_first_not_of(" \t") == fragIndent.size())
             return base + joinLines(body, skip);
     }
@@ -455,12 +456,12 @@ std::string completeCutFile(std::string_view cutView, const std::string& previou
     const auto prev = completeLines(previous);
     const auto regions = foldRegions(previous, python, true);
     std::size_t from = 0;
-    for (std::size_t i = 0; i < regions.size(); ++i) if (std::find(have.begin(), have.end(), regions[i].name) != have.end()) from = i + 1;
+    for (std::size_t i = 0; i < regions.size(); ++i) if (std::ranges::find(have, regions[i].name) != have.end()) from = i + 1;
     for (std::size_t i = from; i < regions.size(); ++i) {
         const auto& r = regions[i];
         if (r.name.empty() || r.first < 1 || static_cast<std::size_t>(r.bodyTo) > prev.size()) continue;
         const std::string& sig = prev[static_cast<std::size_t>(r.first) - 1];
-        if (sig.empty() || (!python && std::isspace(static_cast<unsigned char>(sig[0]))) || std::find(have.begin(), have.end(), r.name) != have.end()) continue;
+        if (sig.empty() || (!python && std::isspace(static_cast<unsigned char>(sig[0]))) || std::ranges::find(have, r.name) != have.end()) continue;
         out += "\n";
         for (int i = r.first; i <= r.bodyTo; ++i) out += prev[static_cast<std::size_t>(i) - 1] + "\n";
         have.push_back(r.name);
