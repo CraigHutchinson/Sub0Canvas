@@ -47,7 +47,25 @@
     "revive scan 1e5: retired blocks": {"kind": "exact", "expected": 4800, "unit": "blocks"},
     "revive scan 1e5: novel blocks indexed": {"kind": "exact", "expected": 22, "unit": "blocks"},
     "revive scan 1e5: events from the update": {"kind": "exact", "expected": 22, "unit": "n"},
-    "revive scan 1e5: allocations": {"kind": "max", "limit": 4753, "unit": "n"}
+    "revive scan 1e5: allocations": {"kind": "max", "limit": 4753, "unit": "n"},
+    "history replay 200: commits in the stream": {"kind": "exact", "expected": 200, "unit": "n"},
+    "history replay 200: paths changed over the commits": {"kind": "exact", "expected": 507, "unit": "n"},
+    "history replay 200: baseline files": {"kind": "exact", "expected": 58, "unit": "files"},
+    "history replay 200: commits replayed": {"kind": "exact", "expected": 200, "unit": "n"},
+    "history replay 200: updates after the baseline": {"kind": "exact", "expected": 507, "unit": "n"},
+    "history replay 200: files read after the baseline": {"kind": "exact", "expected": 493, "unit": "n"},
+    "history replay 200: checkpoints": {"kind": "exact", "expected": 5, "unit": "n"},
+    "history replay 200: events": {"kind": "exact", "expected": 2425, "unit": "n"},
+    "history replay 200: live blocks at the head": {"kind": "exact", "expected": 1396, "unit": "blocks"},
+    "history sparse scope: paths in the scope": {"kind": "exact", "expected": 5, "unit": "n"},
+    "history sparse scope: commits that touched it": {"kind": "exact", "expected": 66, "unit": "n"},
+    "history sparse scope: commits replayed, the root excluded": {"kind": "exact", "expected": 66, "unit": "n"},
+    "history sparse scope: paths changed in it": {"kind": "exact", "expected": 70, "unit": "n"},
+    "history sparse scope: updates, the root's excluded": {"kind": "exact", "expected": 70, "unit": "n"},
+    "history sparse scope: texts read, the root's excluded": {"kind": "exact", "expected": 70, "unit": "n"},
+    "history sparse scope: events": {"kind": "exact", "expected": 157, "unit": "n"},
+    "history at 125: commits replayed from the checkpoint": {"kind": "exact", "expected": 26, "unit": "n"},
+    "history at 125: ordinal of the state": {"kind": "exact", "expected": 126, "unit": "n"}
   },
   "accepted": []
 }

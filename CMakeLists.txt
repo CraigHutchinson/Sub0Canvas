@@ -45,7 +45,7 @@ target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 # The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
 option(SUB0CANVAS_BUILD_APP "Build the sub0canvas command line" ${SUB0CANVAS_TOP_LEVEL})
 if(SUB0CANVAS_BUILD_APP)
-  add_executable(sub0canvas_app app/sub0canvas.cpp)
+  add_executable(sub0canvas_app app/sub0canvas.cpp app/git_source.cpp app/history.cpp)
   set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
   target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
   target_include_directories(sub0canvas_app PRIVATE lib/src)     # json_util.hpp: one JSON writer for the library and its tools
@@ -92,7 +92,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
-  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp METRICS perf/metrics.json SMOKE_TEST)
+  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)

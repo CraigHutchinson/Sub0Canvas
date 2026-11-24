@@ -281,7 +281,9 @@ RevisionIndex::Result<RevisionIndex::Located> RevisionIndex::locate(const Scope&
         }
     }
     Line& built = buildLine(norm, *id);
-    return Located{&built, static_cast<int>(built.commits.size())};
+    const int ordinal = static_cast<int>(built.commits.size());
+    if (!built.ordinalOf.contains(*id)) built.askedAt[*id] = ordinal;   // the head did not change the scope itself: remember its answer
+    return Located{&built, ordinal};
 }
 
 RevisionIndex::Result<std::shared_ptr<const Replayed>> RevisionIndex::at(const Scope& scope, const std::string& revision)
