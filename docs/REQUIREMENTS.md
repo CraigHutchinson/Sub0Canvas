@@ -270,7 +270,7 @@ its slice is built.
 
 | id | requirement | serves | slice |
 |---|---|---|---|
-| R-AUTH-1 | Every view is bounded by attention, not data: it takes a scope and a budget and returns a summary with counts, the first few in full, and cursors for the rest; nothing loads a whole log or history. | U7, U4, U2 | V0-V2 |
+| R-AUTH-1 | Every view is bounded by attention, not data: it takes a scope and a budget and returns a summary with counts, the first few in full, and cursors for the rest; nothing loads a whole log or history. | U7, U4, U2 | V0-V2; the query half built at V1a-q (`test_query`: scoped, bounded answers, nodes visited as a metric) |
 | R-AUTH-2 | Opening the tool shows what needs the reader (their inbox, changes since they last looked); history is a drill-down. | U7 | V2 |
 | R-AUTH-3 | A comment is anchored to a block and to the selected text; after edits it stays on the right text or is shown outdated, never moved silently. | U7, U6 | V1, V3 |
 | R-AUTH-4 | A thread is items linked to the comment; addressing (`done`) and accepting (`verified`) are state changes that name their actor and reason. | U7, U6 | V1 |
@@ -283,5 +283,7 @@ its slice is built.
 | R-AUTH-11 | The viewer still opens a folder of snapshots read-only from `file://`. | U7, U1 | V0 |
 | R-AUTH-12 | An update from another actor reaches an open page as events that change only what they name; the reader's scroll, selection, open folds, expanded tree and unsent input are never reset by one, and a selection changed underneath is marked, not replaced. | U7, U6, U2 | V1a |
 | R-AUTH-13 | A click costs what is on screen, not what is loaded: lists render a window of rows, and no pane is rebuilt when nothing it shows changed. | U7, U4 | V1a |
-| R-AUTH-14 | A text is sent to the page once, by content id; a later turn or view sends only the texts the page has not seen. | U7, U4 | V1a; the format half is built at B0 (R-FMT-5) |
+| R-AUTH-14 | A text is sent to the page once, by content id; a later turn or view sends only the texts the page has not seen. | U7, U4 | V1a; the format half is built at B0 (R-FMT-5); the query half (`file` by content id, `have`) at V1a-q |
 | R-AUTH-15 | Every viewer interaction has a latency budget (AUTHORING.md section 3.2), measured at the reference scale by a scripted local benchmark and recorded with the machine; a change that breaks a budget says so. | U7, U4 | K0 |
+| R-AUTH-16 | The query protocol is versioned (`query-1`), pure (JSON in, JSON out, no transport), and bounded: page sizes, response bytes, scan length and request size are policy data; every answer names the position it was computed at; every failure is a structured error; unknown members are ignored, echoed or rejected by policy. | U7 | V1a-q: `test_query`, docs/QUERY.md |
+| R-AUTH-17 | The bundle is every query answered at once: the snapshot and the query answers are written through one projection definition (review D11), proved by reading every mock turn's files, texts, blocks, layer items and events back through the queries alone. | U7 | V1a-q: `test_query` (32 mock turns) |

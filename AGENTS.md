@@ -18,6 +18,7 @@ hold up on codebases of billions of lines.
 | [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, the ordered slices; section 14: the later use cases, amendments, the register of open decisions, policies as data |
 | [docs/AUTHORING.md](docs/AUTHORING.md) | the viewer becoming an authoring tool (the first use case to invest in): concise views, the server, comments and inboxes, scenarios, slices V0-V5 |
+| [docs/QUERY.md](docs/QUERY.md) | the live-views query protocol `query-1` (V1a-q, built): operations, bounds, cursors, the policy as data, one projection with the bundle |
 | [docs/SCALE.md](docs/SCALE.md) | scale, its one home: two target profiles (billions of lines; a work-dominated private monorepo, measured), requirements, design, indexes, budgets |
 | [docs/MIRROR.md](docs/MIRROR.md) | the synthetic mirror: a seeded invented project with real-world shape and edge cases, its modes and fixture |
 | [docs/CHANGE_VIEWS.md](docs/CHANGE_VIEWS.md) | pull requests, spikes and local branches as layers: topics, lineage, block-level overlap, landing coverage, slices P0-P5 |
