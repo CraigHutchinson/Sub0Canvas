@@ -66,6 +66,11 @@ if(SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_BENCHMARKS)
   target_compile_features(sub0canvas_bench_corpus PUBLIC cxx_std_23)
   target_include_directories(sub0canvas_bench_corpus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})   # #include "bench/corpus.hpp"
   target_compile_options(sub0canvas_bench_corpus PRIVATE ${SUB0CANVAS_STRICT})
+  # The shared deterministic generator (bench/rng.hpp): header-only, for the corpus and the tests, never the library (which draws nothing).
+  add_library(sub0canvas_rng INTERFACE)
+  target_compile_features(sub0canvas_rng INTERFACE cxx_std_23)
+  target_include_directories(sub0canvas_rng INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})   # #include "bench/rng.hpp"
+  target_link_libraries(sub0canvas_bench_corpus PUBLIC sub0canvas_rng)
 endif()
 
 # The benchmarks (bench/bench_canvas.cpp) run through Sub0Perf's tooling (docs/TESTING.md, "Performance"): Sub0Canvas_Bench, plus the _json, _runs, _check,
@@ -158,6 +163,11 @@ if(SUB0CANVAS_BUILD_TESTING)
   target_compile_options(test_corpus PRIVATE ${SUB0CANVAS_STRICT} -g)
   target_link_libraries(test_corpus PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
   add_test(NAME test_corpus COMMAND test_corpus)
+  # The shared generator (bench/rng.hpp): pinned outputs captured from the corpus's own generator before it moved.
+  add_executable(test_rng lib/tests/test_rng.cpp)
+  target_compile_options(test_rng PRIVATE ${SUB0CANVAS_STRICT} -g)
+  target_link_libraries(test_rng PRIVATE sub0canvas_rng Sub0Platform::sub0platform)
+  add_test(NAME test_rng COMMAND test_rng)
   # The compact, lazy block index (S1): birth ids, the text-source seam, the revive probe, the per-blob analysis. It uses the corpus's edit stream as its history.
   add_executable(test_block_index lib/tests/test_block_index.cpp)
   target_compile_options(test_block_index PRIVATE ${SUB0CANVAS_STRICT} -g)

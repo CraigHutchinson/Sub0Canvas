@@ -1,6 +1,7 @@
 // The synthetic corpus and its edit stream (bench/corpus.hpp). Integer-only randomness (SplitMix64, modulo picks, bucketed distributions) so the output does
 // not depend on the standard library's distributions: the same seed gives the same bytes everywhere.
 #include "bench/corpus.hpp"
+#include "bench/rng.hpp"
 
 #include <algorithm>
 #include <array>
@@ -13,36 +14,12 @@ namespace sub0canvas::bench {
 
 namespace {
 
-constexpr std::uint64_t kGolden = 0x9E3779B97F4A7C15ull;
 constexpr std::size_t kVocabulary = 2048;
 constexpr std::size_t kEntriesPerDirectory = 24;
 constexpr std::size_t kRetiredPoolMax = 64;
 
-struct Rng
-{
-    std::uint64_t state;
-    explicit Rng(std::uint64_t seed) : state(seed) {}
-    std::uint64_t next()
-    {
-        state += kGolden;
-        std::uint64_t z = state;
-        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
-        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
-        return z ^ (z >> 31);
-    }
-    std::size_t below(std::size_t n) { return n == 0 ? 0 : static_cast<std::size_t>(next() % n); }
-    std::size_t range(std::size_t lo, std::size_t hi) { return lo + below(hi - lo + 1); }   ///< inclusive
-    bool percent(std::size_t p) { return below(100) < p; }
-    /// A pick skewed toward low indexes (the product of two uniform picks): a few common words, a long tail of rare ones.
-    std::size_t skewed(std::size_t n) { return below(n) * below(n) / n; }
-};
-
-std::uint64_t mix(std::uint64_t a, std::uint64_t b)
-{
-    Rng r(a + kGolden * (b + 1));
-    r.next();
-    return r.next();
-}
+using Rng = rng::SplitMix64;   // bench/rng.hpp: the generator (and its frozen picks) every call site below keeps using
+using rng::mix;
 
 std::string syllable(std::size_t s)
 {
