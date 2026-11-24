@@ -4,6 +4,7 @@
 #include "json_util.hpp"
 #include "sub0canvas/content_id.hpp"
 #include "sub0canvas/outline.hpp"
+#include "sub0canvas/store.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -709,7 +710,10 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
         }
         w.endArray();
     }
-    w.endObject().endObject();
+    w.endObject();
+    // The store's own view of the layers (state, tags, links, authorship), beside the flat items: only when asked for, so a document written without it is byte for byte what it was.
+    if (spec.store != nullptr) w.kvRaw("store", spec.store->snapshotJson(spec.storeQuery != nullptr ? *spec.storeQuery : Query{}));
+    w.endObject();
     return std::string{w.view()};
 }
 

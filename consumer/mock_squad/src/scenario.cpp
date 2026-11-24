@@ -37,10 +37,10 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
             if (!body.empty()) body.pop_back();   // a reply loses its final newline
             reply.content = body;
             sc.replies.push_back(reply);
-        } else if (kind == "gate" || kind == "expect-ids") {
+        } else if (kind == "gate" || kind == "expect-ids" || kind == "expect-store") {
             std::istringstream in(body);
             for (std::string l; std::getline(in, l);)
-                if (!trim(l).empty() && trim(l)[0] != '#') (kind == "gate" ? sc.gateRules : sc.expectIds).push_back(trim(l));
+                if (!trim(l).empty() && trim(l)[0] != '#') (kind == "gate" ? sc.gateRules : kind == "expect-ids" ? sc.expectIds : sc.expectStore).push_back(trim(l));
         }
         body.clear();
     };
@@ -53,7 +53,7 @@ std::expected<Scenario, std::string> parseScenario(const std::string& text)
             kind = w.empty() ? std::string{} : w[0];
             arg.clear();
             reply = {};
-            if (kind != "base" && kind != "want" && kind != "reply" && kind != "gate" && kind != "expect-ids") return std::unexpected("unknown section '" + kind + "'");
+            if (kind != "base" && kind != "want" && kind != "reply" && kind != "gate" && kind != "expect-ids" && kind != "expect-store") return std::unexpected("unknown section '" + kind + "'");
             if (kind == "base" || kind == "want") {
                 if (w.size() < 2) return std::unexpected("a " + kind + " section names no path");
                 arg = w[1];

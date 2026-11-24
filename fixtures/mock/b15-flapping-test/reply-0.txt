@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp SYMBOL square ===
+// Squares a number.
+double square(double x)
+{
+    return x * x;
+}
+=== END EDIT ===

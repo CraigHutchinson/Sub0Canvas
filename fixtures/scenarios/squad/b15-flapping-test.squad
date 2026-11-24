@@ -1,0 +1,82 @@
+# name: b15-flapping-test
+# cites: docs/MOCK_SQUAD.md section 2, B15 (a flapping test: same key, no new item); synthetic, with no tier 0 case behind it yet. One test fails on alternate runs whatever the files hold: its issue is open when the run fails, done by its source when the next run passes, and REOPENED (never a second item) when it fails again. A revision judged by the flap is reverted as worse, as the squad's restoreBest would treat a flaky gate
+# policy: useStore=yes
+# expect: failed | reverted:best 1 | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+
+double area(double r)
+{
+    return 3 * square(r);
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+flap=0 timing_sensitive
+--- reply
+=== EDIT: src/calc.cpp SYMBOL square ===
+// Squares a number.
+double square(double x)
+{
+    return x * x;
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL area ===
+// The area of a disc, with a rough pi.
+double area(double r)
+{
+    return 3 * square(r);
+}
+=== END EDIT ===
+--- reply
+=== EDIT: src/calc.cpp SYMBOL divide ===
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+=== END EDIT ===
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+// Squares a number.
+double square(double x)
+{
+    return x * x;
+}
+
+double area(double r)
+{
+    return 3 * square(r);
+}
+--- expect-ids
+id @0 src/calc.cpp divide = d
+id @2 src/calc.cpp divide = d
+--- expect-store
+# Hand-written from the gate's rules. The gate runs are numbered from 0 (the starting files) and the flap has seed 0, so it fails on the even runs:
+#   run 0 (start)  divide and the flap fail                      the layer offers both            -> two puts: both open
+#   run 1 (reply 1) the flap passes, divide still fails (1 < best 2: kept)   the layer offers divide only   -> the flap is done by its source (1 event)
+#   run 2 (reply 2) the flap fails again (2 > best 1: reverted)  the layer offers both            -> the flap comes back: reopened, not a new item (1 event)
+#   run 3 (reply 3) divide fixed, the flap passes: all pass      the layer is empty               -> both done by their source (2 events)
+# Six events in all, two items ever: a duplicate would be a third.
+events 6
+items 2
+state divide : open open open done
+state timing_sensitive : open done open done

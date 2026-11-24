@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp SYMBOL area ===
+// The area of a disc, with a rough pi.
+double area(double r)
+{
+    return 3 * square(r);
+}
+=== END EDIT ===

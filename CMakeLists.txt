@@ -44,12 +44,20 @@ target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 
 # The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
 option(SUB0CANVAS_BUILD_APP "Build the sub0canvas command line" ${SUB0CANVAS_TOP_LEVEL})
+# The file log (app/file_log.*, B1b): the I/O half of the log seam, a library of its own so the tests can drive it without the command line.
+if(SUB0CANVAS_BUILD_APP OR SUB0CANVAS_BUILD_TESTING)
+  add_library(sub0canvas_io STATIC app/file_log.cpp)
+  target_compile_features(sub0canvas_io PUBLIC cxx_std_23)
+  target_include_directories(sub0canvas_io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app PRIVATE lib/src)   # lib/src: json_util.hpp
+  target_compile_options(sub0canvas_io PRIVATE ${SUB0CANVAS_STRICT})
+  target_link_libraries(sub0canvas_io PUBLIC sub0canvas PRIVATE simdjson::simdjson)
+endif()
 if(SUB0CANVAS_BUILD_APP)
   add_executable(sub0canvas_app app/sub0canvas.cpp app/git_source.cpp app/history.cpp)
   set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
   target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
   target_include_directories(sub0canvas_app PRIVATE lib/src)     # json_util.hpp: one JSON writer for the library and its tools
-  target_link_libraries(sub0canvas_app PRIVATE sub0canvas simdjson::simdjson)
+  target_link_libraries(sub0canvas_app PRIVATE sub0canvas sub0canvas_io simdjson::simdjson)
 endif()
 
 # The scale harness (bench/, docs/sessions/s0-scale-harness.md): the corpus generator is pure and links nothing; the tests use it as the truth for block identity.
@@ -125,11 +133,14 @@ if(SUB0CANVAS_BUILD_TESTING)
       SOURCE_SUBDIR cpp)
   endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
-  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control test_revision_index test_store test_claims test_inbox)
+  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control test_revision_index test_store test_claims test_inbox test_file_log)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)
     target_link_libraries(${name} PRIVATE sub0canvas simdjson::simdjson Sub0Platform::sub0platform)
+    if(name STREQUAL "test_file_log")
+      target_link_libraries(${name} PRIVATE sub0canvas_io)
+    endif()
     set(args "")
     if(name STREQUAL "test_golden_replay")
       set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)    # real producer output

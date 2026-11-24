@@ -137,6 +137,9 @@ struct LayerMeta
     std::string label, description, producer;
 };
 
+class Store;    // store.hpp: only a pointer is held here, so this header does not include it
+struct Query;
+
 /// Everything a snapshot is made of, by field name, so that a new field never breaks a caller (docs/MOCK_SQUAD.md section 6, question 3). The defaults write
 /// what the first version of the format held, plus the additive fields that need no input.
 struct SnapshotSpec
@@ -152,6 +155,10 @@ struct SnapshotSpec
     std::size_t eventsFrom = 0;                                     ///< the position in `index.events()` this snapshot's events start at: what earlier snapshots carried
     bool textsById = false;                                         ///< false: every file's `text` is written (what old readers need). true: only `textId`, and the texts a
                                                                     ///< reader has not been given are in `texts`
+    const Store* store = nullptr;                                   ///< when set, the document also carries the store's `store-snapshot-1` under `store` (B1b): item state, tags,
+                                                                    ///< links and authorship beside the flat layers. Null (the default): nothing is added, and the bytes are those of
+                                                                    ///< a document written before the store existed
+    const Query* storeQuery = nullptr;                              ///< with `store`: what the snapshot selects (A11, a private item stays out by default); null: the default query
     std::set<std::string>* textsCarried = nullptr;                  ///< textsById: the content ids earlier snapshots of this document carried, updated with this one's
                                                                     ///< (null: this snapshot carries every text it refers to, so it stands alone)
 };
