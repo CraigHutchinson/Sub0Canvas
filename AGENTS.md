@@ -52,7 +52,7 @@ hold up on codebases of billions of lines.
   (library target `sub0canvas_bench_corpus`, option `SUB0CANVAS_BUILD_BENCHMARKS`; tested by `lib/tests/test_corpus.cpp`), and `bench_canvas.cpp`, the benchmarks
   (`Sub0Canvas_Bench`, run through the family's sub0perf tooling; [docs/TESTING.md](docs/TESTING.md), "Performance").
 * `perf/`: `metrics.json`, the deterministic metrics `Sub0Canvas_Bench` reports (judged by the ctest tests `Sub0Canvas_Bench_metrics` and `_smoke`, label `smoke`, in every tier);
-  `baselines/<host>.json`, the recorded timings of one machine (the host is an alias, `SUB0MATH_PERF_HOST`; a public repository carries no real host names).
+  `baselines/<host>.json`, the recorded timings of one machine (the host is an alias, `SUB0PERF_HOST`; a public repository carries no real host names).
 * `fixtures/`: test data by kind, indexed with origin, checking test and refresh command in [fixtures/README.md](fixtures/README.md): `demo/`
   (generated), `golden/` (captured), `replies/` (hand-written), `scenarios/` (hand-written attempts), `mock/` (their persisted attempts, generated), `mirror/` (generated).
 * `docs/`: the design and process documents above; `docs/sessions/`: briefs for follow-up sessions.

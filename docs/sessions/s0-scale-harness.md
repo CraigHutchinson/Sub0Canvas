@@ -82,7 +82,7 @@ Remaining for this session: steps 2-4 as written, then the change sets and branc
 
 ## Outcome so far, part 2 of 4 (2026-11-23: the benchmarks, adopted on the family's performance tooling)
 
-Done: `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench` (`sub0math_add_benchmark`, [TESTING.md](../TESTING.md) "Performance"), 17 timing rows and 47 deterministic metrics
+Done: `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench` (`sub0perf_add_benchmark`, [TESTING.md](../TESTING.md) "Performance"), 17 timing rows and 47 deterministic metrics
 (`perf/metrics.json`), the first baseline (`perf/baselines/croglegion.json`, a steady full run on mains), and the numbers in [SCALE.md](../SCALE.md) section 6.0. The brief's name
 `bench_index` and its `timing` ctest label for the benchmarks changed: the tooling runs timing itself (`Sub0Canvas_Bench_check`, a `timing`-labelled ctest test wraps it for the
 `timing` preset), and the metrics and a smoke run are `smoke` tests in every tier. Not done: 10^7 and (streamed, sampled) 10^9 lines, profile B, the change sets, step 2's comparison of

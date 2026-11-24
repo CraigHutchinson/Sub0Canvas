@@ -13,8 +13,8 @@ export function browserCandidates(arg, env = process.env) {
 
 export const findBrowser = (arg, env = process.env, exists = existsSync) => browserCandidates(arg, env).find((p) => exists(p)) ?? null;
 
-/** The baseline name: SUB0MATH_PERF_HOST (the family's alias; this repository is public, so no real host names are committed), else the lower-case host name. */
-export const hostAlias = (env = process.env, host = hostname()) => (env.SUB0MATH_PERF_HOST || host).toLowerCase();
+/** The baseline name: SUB0PERF_HOST, or the pre-rename SUB0MATH_PERF_HOST (the family's alias; this repository is public, so no real host names are committed), else the lower-case host name. */
+export const hostAlias = (env = process.env, host = hostname()) => (env.SUB0PERF_HOST || env.SUB0MATH_PERF_HOST || host).toLowerCase();
 
 /**
  * Mains or battery from what a probe read. `battery` is `{present, discharging}`; a machine with no battery is on mains. Windows BatteryStatus 1 is
