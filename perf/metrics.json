@@ -80,7 +80,21 @@
     "store putLayer 1e4 items, 10 changed: allocations": {"kind": "max", "limit": 213, "unit": "n"},
     "store putLayer 1e4 items, 1000 changed: events": {"kind": "exact", "expected": 1000, "unit": "n"},
     "store putLayer 1e4 items, 1000 changed: items changed": {"kind": "exact", "expected": 1000, "unit": "n"},
-    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"}
+    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"},
+    "claims replay 1e5: events": {"kind": "exact", "expected": 100000, "unit": "n"},
+    "claims replay 1e5: claims": {"kind": "exact", "expected": 100000, "unit": "n"},
+    "claims replay 1e5: replays agree": {"kind": "exact", "expected": 1, "unit": "bool"},
+    "claims replay 1e5: allocations": {"kind": "max", "limit": 1632000, "unit": "n"},
+    "claims replay 1e5: live heap bytes per claim": {"kind": "max", "limit": 1110, "unit": "B/claim"},
+    "claims lookup 1e5: live claims found in 1000 lookups": {"kind": "exact", "expected": 799, "unit": "n"},
+    "claims lookup 1e5: allocations per lookup": {"kind": "max", "limit": 9.2, "unit": "n"},
+    "claims lookup 1e5: live claims found in all": {"kind": "exact", "expected": 79900, "unit": "n"},
+    "claims check 1e5: conflicts refused": {"kind": "exact", "expected": 79900, "unit": "n"},
+    "claims check 1e5: allocations per check": {"kind": "max", "limit": 5.7, "unit": "n"},
+    "claims merges 5e3: carries written": {"kind": "exact", "expected": 5000, "unit": "n"},
+    "claims merges 5e3: claims found on the survivors": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "claims merges 5e3: claims found by the old ids": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "claims merges 5e3: allocations per merge": {"kind": "max", "limit": 14.3, "unit": "n"}
   },
   "accepted": []
 }

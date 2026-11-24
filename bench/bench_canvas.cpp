@@ -66,6 +66,8 @@ void operator delete[](void* p, std::size_t) noexcept { countedFree(p); }
 
 /// The store's benchmarks (bench/bench_store.cpp), which share this file's counting operator new through the references.
 void runStoreBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
+/// The claim benchmarks (bench/bench_claims.cpp), the same.
+void runClaimsBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
 
 namespace {
 
@@ -615,6 +617,7 @@ int main(int argc, char** argv)
 
     historyBenchmarks(runner);   // bench_history.cpp (G1): the revision index
     runStoreBenchmarks(runner, gAllocations, gLiveBytes);
+    runClaimsBenchmarks(runner, gAllocations, gLiveBytes);
 
     return runner.finish();
 }
