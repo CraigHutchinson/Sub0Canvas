@@ -21,6 +21,7 @@ hold up on codebases of billions of lines.
 | [docs/QUERY.md](docs/QUERY.md) | the live-views query protocol `query-1` (V1a-q, built): operations, bounds, cursors, the policy as data, one projection with the bundle |
 | [docs/SCALE.md](docs/SCALE.md) | scale, its one home: two target profiles (billions of lines; a work-dominated private monorepo, measured), requirements, design, indexes, budgets |
 | [docs/MIRROR.md](docs/MIRROR.md) | the synthetic mirror: a seeded invented project with real-world shape and edge cases, its modes and fixture |
+| [docs/VIEWS.md](docs/VIEWS.md) | pinned and unpinned views (design, 2026-11-24): a pinned view is at a base revision for consistent editing, an unpinned one follows the tip with brief, elided, compacted or full refresh deltas and a live event channel; R-PIN-1..9 proposed |
 | [docs/CHANGE_VIEWS.md](docs/CHANGE_VIEWS.md) | pull requests, spikes and local branches as layers: topics, lineage, block-level overlap, landing coverage, slices P0-P5 |
 | [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
 | [docs/PLAN.md](docs/PLAN.md) | the consolidated plan: phases and gates across every track, the review that reconciled the design, the one sheet of decisions for the owner |

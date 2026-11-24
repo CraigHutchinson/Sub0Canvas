@@ -53,6 +53,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **V2: the agent's inbox and sync**: B2's inbox over the review layer, the CLI, views with budgets; the git-ref log backend (A17). **The acceptance
   test is a real review round on this repository's docs** (AUTHORING.md section 1).
 
+* **Pinned and unpinned views** ([VIEWS.md](VIEWS.md), design only; the owner's idea 2026-11-24): a view as an observer that is pinned at a base revision (consistent editing, no pushed changes, `since` on request) or unpinned at the tip (refresh deltas as brief, elided, compacted or full; a live events channel for the viewport viewer). Builds on B1-B4 and the query layer; six open questions for the owner at the end of the doc. Its R-PIN requirements are proposed, not yet in REQUIREMENTS.md.
+
 ## Then: phase 3, history and scale
 
 * **G1: the git document adapter and per-path history: done** (2026-11-24; A20, A21; outcome in [sessions/g1-git-history.md](sessions/g1-git-history.md)): `DocumentSource`, `RevisionIndex`, `GitSource`, `sub0canvas history`,
