@@ -83,6 +83,10 @@ and each must reach an open page without disturbing the reader (the owner, 2026-
 * **The bundle stays as the offline form.** A folder or bundle still opens from `file://` (R-AUTH-11): it is the same events and contents,
   replayed locally, so one renderer serves both.
 
+**Built (V1a-q, 2026-11-24)**: the query half, as a pure library layer: `QueryServer::handle(json) -> json` over a `QueryDocument`, schema `query-1`, one home
+[QUERY.md](QUERY.md) (operations `info`, `tree`, `file`, `revisions`, `blocks`, `layers`, `layer`, `events`; bounds and cursors; the policy as data; unknown members by policy).
+It writes through the same projection as the bundle, which a test proves on the mock attempts. The `serve` process, its transports and the page's windowing are not built.
+
 This is the same rule as U4's and section 2's, applied to time: what is sent and redrawn is proportional to what changed.
 
 ### 3.2 Interactivity budgets (the viewer's KPIs)
@@ -171,7 +175,7 @@ Each slice is used (by the owner, on this repository) before the next is built.
 | slice | what is built | check |
 |---|---|---|
 | **V0** a worktree snapshot | the `sub0canvas` executable with `snapshot <dir> [paths]` writing `layered-doc-1`; a minimal Markdown provider (headings, fences); the viewer renders Markdown (headings, lists, code) and code side by side | `sub0canvas snapshot . docs` opens in the viewer; every heading of every doc is a block; golden snapshot of `docs/` checked byte for byte |
-| **V1a** live views | section 3.1 without a store yet: `serve` answers scoped queries (tree, file at revision, blocks of a file, layer page) from the snapshot executable, texts by content id; the page renders per pane with keyed patches and windowed lists; turns as deltas (changed files, per-turn events) | on the 1,590-file subtree of SCALE.md 6.1: a click under 50 ms, first view under 1 s, and a scripted stream of 100 events applied while a reader is scrolled and has a block selected leaves scroll and selection unchanged (a scenario, R-AUTH-10) |
+| **V1a** live views (**V1a-q, the pure query layer, is built: [QUERY.md](QUERY.md)**; the server transport and the page remain) | section 3.1 without a store yet: `serve` answers scoped queries (tree, file at revision, blocks of a file, layer page) from the snapshot executable, texts by content id; the page renders per pane with keyed patches and windowed lists; turns as deltas (changed files, per-turn events) | on the 1,590-file subtree of SCALE.md 6.1: a click under 50 ms, first view under 1 s, and a scripted stream of 100 events applied while a reader is scrolled and has a block selected leaves scroll and selection unchanged (a scenario, R-AUTH-10) |
 | **V1** comments | `serve` with a minimal store (B1's core: `item.put`, `item.state`, `item.link`) and the log as its own module (A18), events with writer and Lamport clock (A15), written locally in the per-writer segment format; the bridge; comment, reply, resolve from the viewer | scenario: a comment and its thread survive a restart (replayed from the log) and render identically |
 | **V2** the agent's inbox | B2's `inbox` and `acknowledge` over the review layer; the CLI (`inbox`, `reply`, `state`); views with budgets (R-AUTH-1); the git-ref log backend (A17), so a review on one device reaches an agent on another | **the round of section 1 on this repository**, done for real, and recorded as a scenario |
 | **V3** edits and suggestions | editing in the page as transactions; suggestions with `fix`; quote re-anchoring (B4's resolver, first part) | scenario: a comment's anchor follows its text through an agent's rewrite of the section, or is marked outdated, never moved silently |

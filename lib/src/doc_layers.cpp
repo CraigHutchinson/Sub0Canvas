@@ -2,6 +2,7 @@
 #include "sub0canvas/doc_layers.hpp"
 
 #include "json_util.hpp"
+#include "projection.hpp"
 #include "sub0canvas/content_id.hpp"
 #include "sub0canvas/outline.hpp"
 #include "sub0canvas/store.hpp"
@@ -295,10 +296,7 @@ std::string BlockIndex::retiredJson() const
 
 namespace {
 
-void writeEvent(json::Writer& w, const BlockEvent& e)
-{
-    w.beginObject().kv("turn", e.turn).kv("carry", carryName(e.carry)).kv("id", e.id).kv("path", e.path).kv("name", e.name).kv("detail", e.detail).endObject();
-}
+void writeEvent(json::Writer& w, const BlockEvent& e) { projection::writeBlockEvent(w, e); }
 
 }  // namespace
 
@@ -310,8 +308,7 @@ std::string BlockIndex::jsonFrom(std::size_t eventsFrom, bool say) const
 {
     json::Writer w;
     w.beginObject().key("blocks").beginArray();
-    for (const Block* b : all())
-        w.beginObject().kv("id", b->id).kv("path", b->path).kv("name", b->name).kv("signature", b->signature).kv("first", b->first).kv("last", b->last).endObject();
+    for (const Block* b : all()) projection::writeBlock(w, *b);
     w.endArray().kvRaw("retired", retiredJson());
     if (say) w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
     w.key("events").beginArray();
@@ -661,7 +658,8 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
         ids[path] = known != spec.textIds.end() ? known->second : contentId(text);
         const int rev = spec.revisions.count(path) ? spec.revisions.at(path) : 0;
         const auto opaque = spec.revisionIds.find(path);
-        w.key(path).beginObject().kv("revision", rev).kv("revisionId", opaque != spec.revisionIds.end() ? opaque->second : "r" + std::to_string(rev)).kv("textId", ids[path]);
+        w.key(path).beginObject();
+        projection::writeFileRef(w, rev, opaque != spec.revisionIds.end() ? opaque->second : "r" + std::to_string(rev), ids[path]);
         if (!spec.textsById) w.kv("text", text);
         w.endObject();
     }
@@ -699,14 +697,9 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
     for (const auto& [name, items] : spec.layers) {
         w.key(name).beginArray();
         for (const auto& it : items) {
-            w.beginObject().kv("id", it.key).kv("number", it.number).kv("kind", it.kind).kv("title", it.title).kv("detail", it.detail).key("anchors").beginArray();
-            for (const auto& a : it.anchors) {
-                w.beginObject().kv("blockId", a.blockId).kv("path", a.path).kv("line", a.line);
-                if (a.column > 0) w.kv("column", a.column);
-                if (a.endColumn > 0) w.kv("endLine", a.endLine).kv("endColumn", a.endColumn);
-                w.kv("confidence", confidenceName(a.confidence)).endObject();
-            }
-            w.endArray().endObject();
+            w.beginObject();
+            projection::writeLayerItemMembers(w, it, it.number);
+            w.endObject();
         }
         w.endArray();
     }
@@ -727,5 +720,36 @@ std::string layeredJson(int turn, const std::map<std::string, std::string>& file
     spec.layers = layers;
     return layeredJson(spec, index);
 }
+
+namespace projection {
+
+void writeBlock(json::Writer& w, const Block& b)
+{
+    w.beginObject().kv("id", b.id).kv("path", b.path).kv("name", b.name).kv("signature", b.signature).kv("first", b.first).kv("last", b.last).endObject();
+}
+
+void writeBlockEvent(json::Writer& w, const BlockEvent& e)
+{
+    w.beginObject().kv("turn", e.turn).kv("carry", carryName(e.carry)).kv("id", e.id).kv("path", e.path).kv("name", e.name).kv("detail", e.detail).endObject();
+}
+
+void writeLayerItemMembers(json::Writer& w, const LayerItem& it, int number)
+{
+    w.kv("id", it.key).kv("number", number).kv("kind", it.kind).kv("title", it.title).kv("detail", it.detail).key("anchors").beginArray();
+    for (const auto& a : it.anchors) {
+        w.beginObject().kv("blockId", a.blockId).kv("path", a.path).kv("line", a.line);
+        if (a.column > 0) w.kv("column", a.column);
+        if (a.endColumn > 0) w.kv("endLine", a.endLine).kv("endColumn", a.endColumn);
+        w.kv("confidence", confidenceName(a.confidence)).endObject();
+    }
+    w.endArray();
+}
+
+void writeFileRef(json::Writer& w, int revision, std::string_view revisionId, std::string_view textId)
+{
+    w.kv("revision", revision).kv("revisionId", revisionId).kv("textId", textId);
+}
+
+}  // namespace projection
 
 }  // namespace sub0canvas

@@ -71,6 +71,8 @@ void runClaimsBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allo
 /// The inbox benchmarks (bench/bench_inbox.cpp, B2).
 void runInboxBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
 void runResolverBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
+/// The query layer's benchmarks (bench/bench_query.cpp, V1a-q).
+void runQueryBenchmarks(sub0bench::BenchRunner& runner, const std::size_t& allocations, const std::size_t& liveBytes);
 
 namespace {
 
@@ -623,6 +625,7 @@ int main(int argc, char** argv)
     runClaimsBenchmarks(runner, gAllocations, gLiveBytes);
     runInboxBenchmarks(runner, gAllocations, gLiveBytes);
     runResolverBenchmarks(runner, gAllocations, gLiveBytes);
+    runQueryBenchmarks(runner, gAllocations, gLiveBytes);
 
     return runner.finish();
 }

@@ -40,6 +40,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 * **V0, finished**: Markdown blocks (through D0's seam), Markdown rendered, the worktree's uncommitted state, merge commits titled by the change they
   merge. The snapshot itself is built (`app/`, `tools/serve.mjs`). Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
+* **V1a-q (the pure query layer): done** (2026-11-24, [QUERY.md](QUERY.md), `query.hpp`, `test_query`, 32 `query` metrics): `tree`, `file`, `blocks`, `layer(s)`, `events`, `revisions` as JSON in and out, bounded and scoped, the bundle proved to be the queries answered at once. **Left**: the `serve` process and transports (stdio, HTTP+SSE, W4), a store-side index so a selective layer filter costs its matches, a text backing from git, and V1a-page (the JS windowing and keyed patches, K0 to PASS).
 * **V1a: live views** ([AUTHORING.md](AUTHORING.md) section 3.1; measured need in [SCALE.md](SCALE.md) section 6.1): the `serve` process and the
   bridge; scoped queries; texts by content id (B0); turns as deltas; per-pane keyed patches, windowed lists. Its steps:
   * **the file tree on demand**: only open folders rendered, windowed; a toggle patches its rows; children listed when opened (streamed for very
