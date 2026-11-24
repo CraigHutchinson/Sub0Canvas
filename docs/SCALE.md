@@ -160,6 +160,12 @@ In the browser, served from git by `tools/serve.mjs` (1 turn):
 | 230 files | 1.8 s | 0.37 s | 0.28-0.34 s | 11,444 | |
 | 1,590 files | 4.0 s | 2.4 s | **1.9-2.1 s** | 65,397 | 60,238 (20,075 rows) |
 
+**Re-measured by K0 (2026-11-24, [K0.md](K0.md); mains power, headless Edge 159, p95 of 20 after 2 warm-up).** A generated subtree of the same size (1,590 files, 20,034
+blocks, 3 turns, 60,896 DOM nodes; shorter files than real code, so not the same page, and a different machine state) costs **0.38-0.46 s p50 per click** (p95 0.41-0.58 s), about
+a fifth of the 1.9-2.1 s above, and a first view of 0.70 s (bundle fetched; no snapshot). Every click is still the same full re-render, so the shape of the finding holds and the
+budgets of AUTHORING.md section 3.2 are breached by 2.3x to 11.6x on this scope (a filter keystroke matching every block: 223 ms against 30). The mirror (49 files) is inside every
+budget, at the idle frame. Slow interactions are recorded, not fixed here: V1a fixes them (K0.md, "What V1a must fix").
+
 **What the numbers say.**
 
 1. **Making a snapshot is not the bottleneck.** Seconds even for 19,000 files, and git's own work (history for a pathspec, one `cat-file` batch

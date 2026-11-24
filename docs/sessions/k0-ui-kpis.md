@@ -1,6 +1,6 @@
 # Follow-up session: K0, the viewer's interactivity KPIs
 
-Status: open (written 2026-11-18). Backlog: "K0: the viewer's interactivity KPIs" under *Next*. Design: [AUTHORING.md](../AUTHORING.md) section 3.2
+Status: done (2026-11-24; written 2026-11-18); see the Outcome at the end. Backlog: "K0: the viewer's interactivity KPIs" under *Next*. Design: [AUTHORING.md](../AUTHORING.md) section 3.2
 (the budget table and baselines) and section 3.1 (live views); [SCALE.md](../SCALE.md) section 6.1 (the measurements that motivate it);
 R-AUTH-15 in [REQUIREMENTS.md](../REQUIREMENTS.md).
 
@@ -57,3 +57,13 @@ session: measure, record and report against the budgets.
 Windows 11, Node 24, Microsoft Edge (or Chrome) installed; the build from `cmake --preset default` for `/snapshot`. The owner's standing rules
 ([AGENTS.md](../../AGENTS.md)): nothing leaves the machine; ask before downloads or installs (none are needed); closed-source references by
 shape and numbers only; commit as you go, confirm before pushing.
+
+## Outcome
+
+Built as `tools/k0/*.mjs` (not `tools/bench-ui.mjs`: several modules, one directory), documented in [../K0.md](../K0.md): a CDP driver on Node's built-in WebSocket, a scenario per
+row of the budget table, a deterministic budget judge, 20 repetitions after 2 warm-up at p95, the machine and power state recorded, `SKIP timing:` on battery or a busy machine.
+The samples go to `out/k0/last.samples.json` in K0's own format and the judge applies the budgets itself; the shared sub0perf import is proposed in K0.md, not built (Sub0Math is not
+touched). The data: the synthetic mirror and a generated 1,590-file, 20,034-block subtree (`gen-large.mjs`); a private repository through `--repo` is not wired.
+The `timing` ctest entry is `Sub0Canvas_K0_timing`. The first measured numbers are in AUTHORING.md section 3.2 and SCALE.md section 6.1: the mirror is inside every budget; on the
+large subtree eight of ten interactions breach by 2.3x to 11.6x, all one cost (a full re-render). Left: `--repo` for a real repository's numbers, an inspector-selection
+scenario, a real-input (CDP `Input.dispatch*`) cross-check of the in-page click timing, and the shared import in Sub0Math.

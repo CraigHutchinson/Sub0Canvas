@@ -40,7 +40,8 @@ hold up on codebases of billions of lines.
   `inbox` follow, AUTHORING.md section 3). Never under `src/`, which is the viewer's.
 * `index.html`, `src/*.js`: the static viewer (no build step, no dependencies). `test/*.test.js`: its node tests, and the tools'.
 * `tools/*.mjs`: the viewer's tools (demo generator, static server, screenshots). `tools/mirror/`: the synthetic mirror generator
-  (`npm run mirror -- <mode>`, [docs/MIRROR.md](docs/MIRROR.md)).
+  (`npm run mirror -- <mode>`, [docs/MIRROR.md](docs/MIRROR.md)). `tools/k0/*.mjs`: K0, the viewer's interactivity timing (a headless browser over DevTools;
+  `node tools/k0/run.mjs`, [docs/K0.md](docs/K0.md); local tier, ctest label `timing`; budgets and per-host baselines in `perf/k0/`).
 * `consumer/mock_squad/`: the mock squad ([docs/MOCK_SQUAD.md](docs/MOCK_SQUAD.md)): a separate CMake project that fetches this checkout through CPM as Sub0Squad
   does and links only the public target; its scenario reader, gate, reference loop and record writer, and `test_consumer_contract`. The top-level build runs it as
   `test_consumer_mock_squad` (label `full`).

@@ -92,16 +92,22 @@ subtree with 20,000 blocks (SCALE.md section 6.1) and the synthetic mirror (MIRR
 like any benchmark (local only, label `timing`). Time is from the input event to the next painted frame; a budget is the 95th percentile of 20
 repetitions.
 
-| interaction | budget | baseline (2026-11-18, 1,590 files, one run) | what the design changes (section 3.1) |
-|---|---|---|---|
-| expand or collapse a folder (1,588 files below it) | 50 ms | 1.25-1.35 s | the tree renders only open folders' rows, windowed; a toggle patches its own rows; children may be listed on demand (and streamed) instead of up front |
-| open a file from the tree | 100 ms (text cached), 300 ms (fetched) | 1.1 s | the code pane alone re-renders; the text is fetched on demand by content id, and the next likely files (neighbours, anchored files) prefetched |
-| select a block (list, code, inspector) | 50 ms | 1.1-1.3 s | patches the selection, the inspector and one scroll; nothing else |
-| switch turn | 200 ms | 1.0 s | applies the turn's delta: changed files and events only |
-| centre on a layer / back to code | 100 ms | 0.12 s / 0.77 s | windowed cards; the code pane kept, not rebuilt |
-| one keystroke in a filter | 30 ms | 0.06 s | windowed results; the search runs where the data is (the server at scale) |
-| first view of a served subtree | 1 s to the tree, 2 s to the first file | 1.6 s load and render, after a 2-4 s snapshot | the tree and the first file first, the rest on demand |
-| an event from another actor while reading | 50 ms, and nothing the reader holds moves | not possible (reload only) | events since a cursor, patched by key (R-AUTH-12) |
+| interaction | budget | baseline (2026-11-18, 1,590 files, one run) | what the design changes (section 3.1) | measured p95 (K0, 2026-11-24): mirror / 1,590 files |
+|---|---|---|---|---|
+| expand or collapse a folder (1,588 files below it) | 50 ms | 1.25-1.35 s | the tree renders only open folders' rows, windowed; a toggle patches its own rows; children may be listed on demand (and streamed) instead of up front | 20 ms / **446 ms** |
+| open a file from the tree | 100 ms (text cached), 300 ms (fetched) | 1.1 s | the code pane alone re-renders; the text is fetched on demand by content id, and the next likely files (neighbours, anchored files) prefetched | 19 ms / **530 ms** (cached: the bundle holds every text) |
+| select a block (list, code, inspector) | 50 ms | 1.1-1.3 s | patches the selection, the inspector and one scroll; nothing else | 21 ms / **492 ms** (list); 21 ms / **579 ms** (code) |
+| switch turn | 200 ms | 1.0 s | applies the turn's delta: changed files and events only | 20 ms / **460 ms** |
+| centre on a layer / back to code | 100 ms | 0.12 s / 0.77 s | windowed cards; the code pane kept, not rebuilt | 21 ms / **530 ms** (layer); 20 ms / **410 ms** (code) |
+| one keystroke in a filter | 30 ms | 0.06 s | windowed results; the search runs where the data is (the server at scale) | 20 ms / **223 ms** (`a` matches every block; p50 107 ms) |
+| first view of a served subtree | 1 s to the tree, 2 s to the first file | 1.6 s load and render, after a 2-4 s snapshot | the tree and the first file first, the rest on demand | 88 ms / 700 ms (bundle fetched, no snapshot; tree and first file paint together) |
+| an event from another actor while reading | 50 ms, and nothing the reader holds moves | not possible (reload only) | events since a cursor, patched by key (R-AUTH-12) | not measurable yet |
+
+**Measured (K0, [K0.md](K0.md), 2026-11-24, mains power, headless Edge 159, 20 repetitions after 2 warm-up).** On the mirror (49 files, 235 blocks) every interaction is
+inside its budget, at the idle frame (16.5 ms: vsync and the task hop are the floor under every number). On the 1,590-file subtree (20,034 blocks, 60,896 DOM nodes) **eight of ten
+interactions breach by 2.3x to 11.6x**, all of them the same cost (a full re-render, 380-460 ms at p50): selecting a block in the code (11.6x), in the list (9.8x), expanding a folder
+(8.9x), a filter keystroke that matches everything (7.4x, 223 ms), opening a file and centring on a layer (5.3x each), back to code (4.1x), switching turn (2.3x). The first view
+(bundle fetched, no snapshot) is inside both budgets at 700 ms. Machine and build are in the record (`perf/k0/<host>.json`); read the numbers to about 15%.
 
 **The block list needs a different design, not only a faster one.** Today it is one global list of every block in the document (20,075 rows,
 92% of the page), unscoped and rebuilt on every click. Candidate shapes, to be weighed when it is designed (BACKBONE.md 14.3's register): blocks
