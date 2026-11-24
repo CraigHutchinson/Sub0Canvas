@@ -85,7 +85,11 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     cmake_host_system_information(RESULT _canvas_perf_host QUERY HOSTNAME)
     string(TOLOWER "${_canvas_perf_host}" _canvas_perf_host)
   endif()
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perf/baselines/${_canvas_perf_host}.json")
+  # The gate is installed only from the main checkout (a linked git worktree has a .git file, not a directory, and shares the main checkout's hooks and
+  # sub0perf configuration: Sub0Math issue 5) and never when SUB0CANVAS_PERF_GATE is OFF.
+  option(SUB0CANVAS_PERF_GATE "Install the pre-push performance gate where this machine has a committed baseline" ON)
+  if(SUB0CANVAS_PERF_GATE AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git"
+     AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perf/baselines/${_canvas_perf_host}.json")
     set(SUB0MATH_PERF_GIT_HOOKS ON)
   else()
     set(SUB0MATH_PERF_GIT_HOOKS OFF)
