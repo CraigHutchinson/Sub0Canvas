@@ -182,6 +182,9 @@ if(SUB0CANVAS_BUILD_TESTING)
   target_include_directories(test_resolver PRIVATE lib/tests)
   target_link_libraries(test_resolver PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
   add_test(NAME test_resolver COMMAND test_resolver ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
+  # The determinism rules on the C++ text (tools/check_cxx_rules.cmake; AGENTS.md Code style): no <random> outside app/, no std::hash in lib/src, no new snprintf, one
+  # generator draw per statement. A script run by cmake itself: no dependency, quick tier.
+  add_test(NAME check_cxx_rules COMMAND ${CMAKE_COMMAND} -DREPO=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_cxx_rules.cmake)
   # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
   find_program(SUB0CANVAS_NODE node)
   if(SUB0CANVAS_NODE)

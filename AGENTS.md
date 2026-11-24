@@ -60,7 +60,7 @@ hold up on codebases of billions of lines.
 ## Build and test
 
 ```bash
-cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # CPM_SOURCE_CACHE: the global cache, below
+cmake --preset default -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++   # CPM_SOURCE_CACHE: the global cache, below; gcc 14 is the floor
 cmake --build --preset default
 ctest --preset quick      # what the pre-push gate and CI smoke run (the benchmark metrics included); ctest --preset full for everything but timing
 ctest --preset timing     # the local timing run (mains power, quiet machine); never in CI
@@ -78,6 +78,8 @@ and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --rep
 * C++23, `-Wall -Wextra -Werror` (GCC-style flags; there is no MSVC leg).
 * camelCase for functions and variables, PascalCase for types, `kName` for constants; `#pragma once`; Doxygen `///` on every public declaration,
   saying what it is for and its contract, not restating the name.
+* **Deterministic output** (docs/MOCK_SQUAD.md section 8): no `<random>` (engines, distributions, `std::shuffle`) outside `app/` and no `std::hash` in output paths: use `bench/rng.hpp` and a fixed hash; one generator
+  draw per statement, never two in an argument list or operator chain. `tools/check_cxx_rules.cmake` (the quick-tier test `check_cxx_rules`) enforces this.
 * `[[nodiscard]]` on functions whose result matters; `std::format` and `std::print`; `std::expected` for fallible operations in new code.
 * Line length about 160; comments explain why, and cite the doc section a rule comes from.
 * JavaScript, no dependencies, Node 20+, `node:test`; the module kind follows the directory: `src/*.js` are classic scripts that also export

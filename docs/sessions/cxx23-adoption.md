@@ -1,6 +1,6 @@
 # Follow-up session: C++23 adopted throughout, the RNG included
 
-Status: open (planned 2026-11-24 by the planning agent; slices A0-A3 first). Backlog: [phase 1](../BACKLOG.md). Parent: [backbone-next-wave.md](backbone-next-wave.md).
+Status: open (planned 2026-11-24 by the planning agent; slices A0-A3 done, see the Outcome). Backlog: [phase 1](../BACKLOG.md). Parent: [backbone-next-wave.md](backbone-next-wave.md).
 
 ## Goal
 
@@ -58,3 +58,22 @@ emission sequence); the corpus `below` modulo semantics; hot loops measured by `
 
 Work in your own full clone, never a checkout another session holds. Commit each slice separately with specific `git add` paths; verify with gcc locally and the hosted full tier (`gh workflow run ci-full.yml`) for
 clang; never regenerate a fixture or re-baseline to hide a difference; write a mechanical "identical modulo what changed" check for any fixture that moves.
+
+## Outcome (A0-A3)
+
+Done (2026-11-24, gcc/MinGW local; one commit each): **A0, A1, A2, A3**. Not started: B1-B4, C, D slices. Not run: the hosted full tier (clang 19, clang 22), so clang is unverified.
+
+* **A0** moved bytes, as the brief allowed. The `issues/<kind>/<hex>` keys do reach `fixtures/mock` (7 files: g4-rename-resign-move layers and store, g5 turn-0); `golden/`, `perf/` and the viewer fixtures do not carry them.
+  The key is now `hashView(key)` (the file's own fixed hash, no new function) instead of `std::hash<std::string>`; the fixtures were regenerated with `mock_squad --update` and
+  `tools/check_rekey_diff.cmake` proves every changed file is identical to its committed version once the keys are masked (7 files, all pass; a tampered file fails). A one-off tool, kept with its commit.
+* **A1** `bench/rng.hpp` and `lib/tests/test_rng.cpp`. The pinned values were captured by a throwaway program with a verbatim copy of the pre-move `Rng` (seed 0 matches the published `0xE220A8397B1DCDAF`); the seed-7 shuffle was checked against a plain
+  modulo Fisher-Yates reference. `test_corpus` and `Sub0Canvas_Bench_metrics` pass, `git diff fixtures/ perf/` empty. `skewed` now names its two draws (`a` then `b`; the product is symmetric, so gcc's old right-to-left order gave the same value).
+* **A2** both tests moved; neither pinned case counts or seeds. The new sequences exposed a bug **in the test model**, not the library: the rebase check sorted a stale transaction's ops by `from`, which ties `AFTER 22` and `LINES 22`
+  (case 470, seed 20261112); it now sorts by the span, as `modelApply` does. The insertAfter line also drew twice in one initialiser list and was split.
+* **A3** `tools/check_cxx_rules.cmake`, ctest `check_cxx_rules` (label smoke, in `quick`), plus the AGENTS.md bullet and "gcc 14 is the floor".
+
+Deviations: (1) rule 3 (`snprintf`) cannot pass on the tree as it is (5 calls in doc_layers.cpp and outline.cpp, slice B3), so the script holds an allowlist by count (doc_layers 2, outline 3); a new call fails and B3 empties the list.
+(2) Rule 4 is checked per statement, not per line as the brief says: a per-line check flags 11 legitimate lines (a `for` header, declarator lists and a braced list are all sequenced). It splits at `;`, at `?`/`:`, at commas outside parentheses and at braces, and covers
+bench/ and lib/tests/ (not just corpus.cpp); a guard for the common shapes, not a proof. Comments and string literals are ignored by every rule. (3) corpus.cpp's own `kGolden` and `mix` are gone (now `rng::mix`).
+Left alone: braced-list draws in corpus.cpp (e.g. `ids = {word(r.skewed(..)), word(r.skewed(..))}`, well-defined left to right); the AGENTS.md brief's "state whether clang 22 uses libstdc++ or libc++" was not checked (no clang run).
+Remaining: the hosted full tier for clang, B1-B4, C, D.
