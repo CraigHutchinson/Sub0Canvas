@@ -9,9 +9,9 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <cstring>
 #include <deque>
+#include <format>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -75,9 +75,7 @@ std::string numbered(const std::string& text, int from, int to, int maxLines = 8
     to = std::min(static_cast<int>(lines.size()), to);
     std::string out;
     for (int k = from; k <= to && k < from + maxLines; ++k) {
-        char n[16];
-        std::snprintf(n, sizeof n, "%4d| ", k);
-        out += n + lines[static_cast<std::size_t>(k) - 1] + "\n";
+        out += std::format("{:4}| ", k) + lines[static_cast<std::size_t>(k) - 1] + "\n";
     }
     return out;
 }
@@ -1178,8 +1176,7 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
             }
             byKey[key] = items.size();
             current = items.size();
-            char hash[17];
-            std::snprintf(hash, sizeof hash, "%016llx", static_cast<unsigned long long>(hashView(key)));   // the fixed hash: std::hash<std::string> differs between libstdc++ and libc++
+            const std::string hash = std::format("{:016x}", hashView(key));   // the fixed hash: std::hash<std::string> differs between libstdc++ and libc++
             items.push_back({"issues", 0, kind, kind + " " + path + ":" + std::to_string(at) + ": " + message, line, {a}, "issues/" + kind + "/" + hash});
             continue;
         }

@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <cstdlib>
+#include <format>
 #include <sstream>
 
 namespace sub0canvas {
@@ -24,7 +24,7 @@ constexpr int kShowBodyLines = 2;
 /// The numbered view with every region folded to one line except those marked open.
 std::string renderFolded(const std::vector<std::string>& lines, const std::vector<FoldRegion>& regions, const std::vector<bool>& open, bool python)
 {
-    const auto row = [&](std::size_t i) { char n[16]; std::snprintf(n, sizeof n, "%4zu| ", i + 1); return std::string(n) + lines[i] + "\n"; };
+    const auto row = [&](std::size_t i) { return std::format("{:4}| ", i + 1) + lines[i] + "\n"; };
     std::string out;
     std::size_t r = 0;
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -183,7 +183,7 @@ std::vector<FoldRegion> foldRegions(const std::string& text, bool python, bool a
 std::string foldedView(const std::string& text, bool python, const std::vector<int>& focus, std::size_t budget)
 {
     const auto lines = splitLines(text);
-    const auto row = [&](std::size_t i) { char n[16]; std::snprintf(n, sizeof n, "%4zu| ", i + 1); return std::string(n) + lines[i] + "\n"; };
+    const auto row = [&](std::size_t i) { return std::format("{:4}| ", i + 1) + lines[i] + "\n"; };
     std::string full;
     for (std::size_t i = 0; i < lines.size(); ++i) full += row(i);
     if (full.size() <= budget) return full;
@@ -274,7 +274,7 @@ std::string answerRead(const ReadRequest& r, const std::string& text, bool pytho
     if (from < 1 || to < from || from > static_cast<int>(lines.size())) return "=== " + r.path + ": lines " + std::to_string(r.from) + "-" + std::to_string(r.to) + " do not exist (the file has " + std::to_string(lines.size()) + " lines) ===\n";
     to = std::min({to, static_cast<int>(lines.size()), from + maxLines - 1});
     std::string out = "=== " + r.path + " lines " + std::to_string(from) + "-" + std::to_string(to) + " ===\n";
-    for (int k = from; k <= to; ++k) { char n[16]; std::snprintf(n, sizeof n, "%4d| ", k); out += std::string(n) + lines[static_cast<std::size_t>(k) - 1] + "\n"; }
+    for (int k = from; k <= to; ++k) { out += std::format("{:4}| ", k) + lines[static_cast<std::size_t>(k) - 1] + "\n"; }
     return out;
 }
 

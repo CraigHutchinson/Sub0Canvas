@@ -1,5 +1,6 @@
 #include "mock_squad/record.hpp"
 
+#include <format>
 #include <fstream>
 #include <sstream>
 
@@ -19,9 +20,7 @@ std::string jsonString(const std::string& s)
             case '\t': o += "\\t"; break;
             default:
                 if (c < 0x20) {
-                    char b[8];
-                    std::snprintf(b, sizeof b, "\\u%04x", c);
-                    o += b;
+                    o += std::format("\\u{:04x}", c);
                 } else {
                     o += static_cast<char>(c);
                 }

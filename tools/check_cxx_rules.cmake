@@ -3,7 +3,7 @@
 #
 #   1. no `std::mt19937`, `std::shuffle`, `std::random_device` or `<random>` outside app/ (their distributions and shuffle are implementation-defined: use bench/rng.hpp);
 #   2. no `std::hash<` in lib/src (implementation-defined: libstdc++ and libc++ differ; use the fixed hash in doc_layers.cpp or the content id);
-#   3. no `snprintf` or `sprintf` in lib/ and bench/ beyond the allowlist below (the old calls, to go with slice B3; `std::format` for new code);
+#   3. no `snprintf` or `sprintf` in lib/ and bench/ (`std::format` instead; the allowlist below is empty since slice B3);
 #   4. no statement in bench/ or lib/tests with two draws from a generator (`.below(`, `.range(`, `.percent(`, `.skewed(`, `.uniform(`, `.next(`) in one unsequenced
 #      expression: an argument list or an operator chain (unspecified evaluation order; docs/MOCK_SQUAD.md section 8). Draws in different declarators (`T a = r.f(), b = r.f();`),
 #      different elements of a braced list (and across a `{`), a `for` header's parts, or either side of `?` are sequenced and allowed. A guard against the common shapes, not a proof.
@@ -13,8 +13,8 @@ if(NOT REPO)
 endif()
 get_filename_component(REPO "${REPO}" ABSOLUTE)
 
-# The snprintf calls that predate rule 3, per file (slice B3 converts them to std::format and empties this list). A new call, or one more in these files, fails.
-set(snprintfAllowed "lib/src/doc_layers.cpp=2" "lib/src/outline.cpp=3")
+# Files allowed a number of snprintf calls, as "path=count". Empty since slice B3 converted the last ones to std::format: any snprintf in lib/ or bench/ fails.
+set(snprintfAllowed)
 
 set(violations 0)
 
@@ -186,7 +186,7 @@ foreach(file IN LISTS libAndBench)
     if(line MATCHES "(^|[^A-Za-z0-9_])(std::)?(snprintf|sprintf)[ ]*[(]")
       math(EXPR seen "${seen} + 1")
       if(seen GREATER allowed)
-        report("${file}" ${n} "no snprintf or sprintf in lib/ or bench/ beyond the allowlist (use std::format)" "${line}")
+        report("${file}" ${n} "no snprintf or sprintf in lib/ or bench/ (use std::format)" "${line}")
       endif()
     endif()
   endforeach()
