@@ -120,3 +120,18 @@ so a consumer must decide a cut-off by the finish reason, not by a parse error. 
 characters a piece, 10 being the limit): a message that quotes it is not stable across piece sizes. Partial application commits one revision per operation, so one reply of two operations
 is two revisions in the log. No library bug was found. Not built, from section 2: B2, B4-B7, B10, B11, B13-B18 and G3, G5; the split and merge steps of G4 (a rename, a re-signing and a move
 are there); `flap=<seed>` in the gate; the folded view the next message carries.
+
+## 7. What to feed back to the Sub0Squad session (2026-11-24)
+
+1. **The adoption is not closed**: the squad's adoption commits and the T0 comparison (`half-written`, `undeclared-member`, owner-run) are outstanding; one
+   `test_canvas_agent` failure was seen once and never captured.
+2. **B0 adoption**: move to `SnapshotSpec` (per-turn events, texts by id: 34% of today's bytes at 8 turns), use `%2F` revision-file naming (`_` maps
+   `src/a_b.cpp` and `src_a/b.cpp` to one name), and capture one real attempt with compiler diagnostics (R-U1-4).
+3. **Section 6's questions**: which loop parts become generic library code (the guard allowance, `keptFileMadeWhole`, best-revision restore, the outcome
+   vocabulary), a library-owned `attemptRecord`, one `.squad` scenario file read by `fake::Engine` too, the gate's text formats, the compile-key digit collapse.
+4. **The log module (Fabric)**: freeze `journal-1`'s tests as the behaviour to preserve; check its `seq` and `type` field names against the Canvas event
+   fields; writer ids become composite `{namespace, writer}`; the portal's work registry is the merged reader's source list; the per-attempt segment
+   option stays off by default.
+5. **HTTP**: reconcile the squad's decision on Boost.Beast with the review's D10 (lift the portal's server and the engine client onto Platform `net`).
+6. **Portal step 1**: Sub0Canvas will define a URL or view-spec scheme for deep links; the optional Node viewer reads the single projection definition (D11).
+7. **Sub0Platform**: Canvas `app/` and `serve` become its second C++ consumer (proc, file, net).

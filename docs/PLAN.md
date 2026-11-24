@@ -64,7 +64,7 @@ One sheet, so the answers can be given in one sitting. Each line has a recommend
 | O3 | **Confirmed** | the log interface is the seam for O2's smoke-test backends |
 | O4 | **Confirmed**: deterministic birth ids | |
 | O5 | **Confirmed**: per-turn events with `eventsFrom`; opaque string revision ids | |
-| O6 | **Deferred**: needs a wider architecture review first | Sub0Squad's portal must extend the canvas views (beside, integrated or within); the review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D7) settles the transport: protocol first, **native HTTP the local default** (HTTP/2 ideally where tooling supports it, HTTP/1.1 the baseline), stdio as the second transport, the Node bridge optional; the portal is joined to the canvas views in three steps, beside (deep links), integrated shell, then within at the data layer (D8, owner 2026-11-23) |
+| O6 | **Settled by the review** (D7) | Sub0Squad's portal must extend the canvas views (beside, integrated or within); the review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D7) settles the transport: protocol first, **native HTTP the local default** (HTTP/2 ideally where tooling supports it, HTTP/1.1 the baseline), stdio as the second transport, the Node bridge optional; the portal is joined to the canvas views in three steps, beside (deep links), integrated shell, then within at the data layer (D8, owner 2026-11-23) |
 | O7 | **Confirmed**: read-only through `gh`, separate target, write-back on confirmation | |
 | O8 | **Confirmed**: C++23 | |
 | O9 | **Confirmed**: optional target, per-grammar approval, adopted by measurement | |
