@@ -4,9 +4,9 @@
 // so it lives with the library.
 #include "sub0platform/testing/check.hpp"
 #include "sub0canvas/canvas.hpp"
+#include "bench/rng.hpp"
 
 #include <algorithm>
-#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -87,17 +87,24 @@ struct ModelCheck { int cases = 0, steps = 0, failures = 0; std::string firstFai
 ModelCheck check(int cases, unsigned seed)
 {
     ModelCheck out;
-    std::mt19937 rng(seed);
-    const auto pick = [&](int lo, int hi) { return lo + static_cast<int>(rng() % static_cast<unsigned>(hi - lo + 1)); };
+    sub0canvas::rng::SplitMix64 rng(seed);   // bench/rng.hpp: the same sequence on every standard library, one draw per statement
+    const auto pick = [&](int lo, int hi) { return lo + static_cast<int>(rng.below(static_cast<std::size_t>(hi - lo + 1))); };
     int label = 0;
     const auto fresh = [&](int n) { std::vector<std::string> v; for (int i = 0; i < n; ++i) v.push_back("line " + std::to_string(++label)); return v; };
     const auto randomOps = [&](int count, int lineCount) {
         std::vector<ModelOp> ops;
         for (int i = 0; i < count; ++i) {
-            if (pick(0, 3) == 0) ops.push_back({CanvasOp::Kind::insertAfter, pick(0, lineCount), 0, fresh(pick(1, 3))});
+            if (pick(0, 3) == 0) {
+                const int after = pick(0, lineCount);
+                const int count = pick(1, 3);
+                ops.push_back({CanvasOp::Kind::insertAfter, after, 0, fresh(count)});
+            }
             else {
-                const int a = pick(1, std::max(1, lineCount)), b = std::min(lineCount, a + pick(0, 3));
-                ops.push_back({CanvasOp::Kind::replaceLines, a, std::max(a, b), fresh(pick(0, 3))});
+                const int a = pick(1, std::max(1, lineCount));
+                const int span = pick(0, 3);
+                const int b = std::min(lineCount, a + span);
+                const int count = pick(0, 3);
+                ops.push_back({CanvasOp::Kind::replaceLines, a, std::max(a, b), fresh(count)});
             }
         }
         return ops;
@@ -132,7 +139,12 @@ ModelCheck check(int cases, unsigned seed)
                     const auto now = splitLines(canvas.text(path));
                     std::vector<std::string> wrote;
                     auto sorted = ops;
-                    std::sort(sorted.begin(), sorted.end(), [](const ModelOp& a, const ModelOp& b) { return a.from < b.from; });
+                    // The order the text takes is by the 0-based start of each span, then its end (modelApply's order): `AFTER 22` starts at 22 but `LINES 22` at 21,
+                    // so sorting by `from` alone left that tie to std::sort (a sequence from a new generator found it).
+                    const auto spanOf = [](const ModelOp& o) {
+                        return o.kind == CanvasOp::Kind::insertAfter ? std::pair{o.from, o.from} : std::pair{o.from - 1, o.to};
+                    };
+                    std::stable_sort(sorted.begin(), sorted.end(), [&](const ModelOp& a, const ModelOp& b) { return spanOf(a) < spanOf(b); });
                     for (const auto& op : sorted) wrote.insert(wrote.end(), op.text.begin(), op.text.end());
                     std::size_t at = 0;
                     for (const auto& l : now) if (at < wrote.size() && l == wrote[at]) ++at;

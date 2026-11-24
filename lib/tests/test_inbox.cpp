@@ -6,10 +6,10 @@
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/inbox.hpp"
 #include "sub0canvas/store.hpp"
+#include "bench/rng.hpp"
 
 #include <algorithm>
 #include <map>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -273,8 +273,8 @@ int main()
         // Any arrival order, and every event through its JSON line, gives the same.
         std::vector<Event> shuffled;
         for (const Event& e : log.events()) shuffled.push_back(*parseEvent(eventJson(e)));
-        std::mt19937 rng(7);
-        std::shuffle(shuffled.begin(), shuffled.end(), rng);
+        sub0canvas::rng::SplitMix64 rng(7);
+        sub0canvas::rng::shuffle(shuffled, rng);   // deterministic: std::shuffle's mapping differs between standard libraries
         Store viaLines(options());
         viaLines.merge(shuffled);
         CHECK_EQ(lines(inbox(viaLines, "w")->events), liveInbox);

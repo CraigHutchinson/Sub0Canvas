@@ -146,6 +146,9 @@ if(SUB0CANVAS_BUILD_TESTING)
     if(name STREQUAL "test_file_log")
       target_link_libraries(${name} PRIVATE sub0canvas_io)
     endif()
+    if(name STREQUAL "test_canvas_model" OR name STREQUAL "test_inbox")
+      target_link_libraries(${name} PRIVATE sub0canvas_rng)   # the shared deterministic generator (bench/rng.hpp), not <random>
+    endif()
     set(args "")
     if(name STREQUAL "test_golden_replay")
       set(args ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden)    # real producer output
