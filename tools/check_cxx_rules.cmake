@@ -8,6 +8,7 @@
 #      expression: an argument list or an operator chain (unspecified evaluation order; docs/MOCK_SQUAD.md section 8). Draws in different declarators (`T a = r.f(), b = r.f();`),
 #      different elements of a braced list (and across a `{`), a `for` header's parts, or either side of `?` are sequenced and allowed. A guard against the common shapes, not a proof.
 # Comments and string literals are ignored (they may name what is banned), so a rule is about code only. Every violation is reported, then the script fails.
+cmake_minimum_required(VERSION 3.24)   # script mode too: fixes the policies (CMP0054 and friends) so the script behaves the same on every CMake from 3.24
 if(NOT REPO)
   set(REPO "${CMAKE_CURRENT_LIST_DIR}/..")
 endif()
@@ -77,15 +78,23 @@ function(maxDraws statement out)
   if(length GREATER 0)
     foreach(i RANGE ${last})
       string(SUBSTRING "${statement}" ${i} 1 ch)
-      if(ch STREQUAL "(")
+      # string(COMPARE) rather than `if(ch STREQUAL "(")`: a parenthesis in an if() condition is read as grouping by CMake versions before the policy that quotes arguments.
+      string(COMPARE EQUAL "${ch}" "(" isOpen)
+      string(COMPARE EQUAL "${ch}" ")" isClose)
+      string(COMPARE EQUAL "${ch}" "?" isQuestion)
+      string(COMPARE EQUAL "${ch}" "{" isBraceOpen)
+      string(COMPARE EQUAL "${ch}" "}" isBraceClose)
+      string(COMPARE EQUAL "${ch}" "," isComma)
+      string(COMPARE EQUAL "${ch}" ":" isColon)
+      if(isOpen)
         math(EXPR depth "${depth} + 1")
-      elseif(ch STREQUAL ")" AND depth GREATER 0)   # a `)` with no `(` in this statement closes a `for (...;...;...)` header that was split at its `;`
+      elseif(isClose AND depth GREATER 0)   # a closing parenthesis with no opening one in this statement closes a `for (...;...;...)` header that was split at its `;`
         math(EXPR depth "${depth} - 1")
       endif()
       set(separator FALSE)
-      if(ch STREQUAL "?" OR ch STREQUAL "{" OR ch STREQUAL "}" OR (ch STREQUAL "," AND depth EQUAL 0))
+      if(isQuestion OR isBraceOpen OR isBraceClose OR (isComma AND depth EQUAL 0))
         set(separator TRUE)
-      elseif(ch STREQUAL ":" AND depth EQUAL 0)   # the `:` of `a ? b : c`, not the `::` of a scope
+      elseif(isColon AND depth EQUAL 0)   # the colon of `a ? b : c`, not the `::` of a scope
         math(EXPR before "${i} - 1")
         math(EXPR after "${i} + 1")
         set(prev "")
@@ -96,7 +105,9 @@ function(maxDraws statement out)
         if(after LESS length)
           string(SUBSTRING "${statement}" ${after} 1 next)
         endif()
-        if(NOT prev STREQUAL ":" AND NOT next STREQUAL ":")
+        string(COMPARE EQUAL "${prev}" ":" prevColon)
+        string(COMPARE EQUAL "${next}" ":" nextColon)
+        if(NOT prevColon AND NOT nextColon)
           set(separator TRUE)
         endif()
       endif()
