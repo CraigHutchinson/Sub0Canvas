@@ -1,6 +1,6 @@
 # Pinned and unpinned views: a tip workflow and a pinned workflow
 
-Status: **design, 2026-11-24.** Nothing here is built. This is the one home for the idea; the mechanisms it rests on are described where they are built
+Status: **design, 2026-11-24; first version built (section 8).** The channel and presence are not built. This is the one home for the idea; the mechanisms it rests on are described where they are built
 and are linked, not copied.
 
 The owner's idea (2026-11-24, verbatim): "a canvas view/observer could be pinned or unpinned. A pinned view is at a base revision for consistent editing
@@ -156,3 +156,30 @@ without changing it.
 
 Requirements this adds (to be numbered with R-PIN-1..9 when promoted into REQUIREMENTS.md): a session is the only holder of views; one session cannot read another's pending edits; a resumed
 session has the same views and positions it had; quotas refuse with a structured error naming the limit; presence never reaches the durable log.
+
+
+## 8. As built (first version, 2026-11-24)
+
+Files: `lib/include/sub0canvas/view.hpp` and `session.hpp`, `lib/src/view.cpp` and `session.cpp`, `lib/tests/test_views_sessions.cpp`, `bench/bench_session.cpp`; requirements R-PIN-1..13 in
+[REQUIREMENTS.md](REQUIREMENTS.md). Built on public APIs only (`Canvas`, `applyReply`, `Store`, `InboxReader`, the resolver); nothing in `doc_layers.cpp` or the block index was touched.
+
+* **Records are events.** `view.put@1` and `session.put@1` carry the whole record (an upsert, last in merge order wins); `registerViewReducers` folds them into `ViewsState` and adds the
+  subscription reducers if the registry has none. `LogViewStore` is the one `ViewStore`. Pending edits and presence are the session's memory, never the log's, so a resumed session has its
+  views and positions but not its pending edits.
+* **One subscription per view** (`view:<id>`, owner = the session id): its cursor is the view's store position, the inbox is the store half of a delta, and `Session::subscribe` adds free ones. Both count
+  against the session's `subscriptions` quota. Events of the view, session and subscription kinds are dropped from deltas (`isViewBookkeeping`).
+* **Pin** is `{base, overrides, sealed}`. A canvas keeps a revision per file, so `pinAtTip` records one override per file in scope and seals the pin (a file with no entry is absent: born after the
+  pin). An unpinned view keeps the revision set its last refresh left it at, so its first refresh after `unpin` is the delta since the old pin. `Position.generation` is the sum of the canvas's
+  file revisions.
+* **Editing** is `stage` then `land`. `stage` applies a reply to the view's `ScratchLayer` (`FileScratch`: pending text per file, in the view's own numbering) and tells at once where it meets
+  others' changes (`overlaps`, advisory). `land` turns the pending text into hunks against the pinned text (`diffLines`) and applies them through `applyReply` with `baseRevision` set to the
+  pin (grouped by base revision), so the canvas rebases or refuses; a refusal names the other actor and revision, found by `conflictSince`, which restates the canvas's own rule (a test holds the
+  two together). `partial` is the default, `atomic` applies nothing at the first refusal. Refused hunks stay pending after `land` and move to `kept` after `advance`.
+* **Four forms** (`view-delta-1`): `brief` (counts, top-3 kinds and actors, overlaps; 355 bytes at 20 or 1,020 edits), `elided` (new text, changed lines marked `+`, `... (n lines)`), `compacted`
+  (net hunks per block through the `Compactor`; `compact.by` = `block` or `block+item`), `full` (every edit's hunks and every event). Each carries the brief. Over budget a form degrades whole to the next
+  (full, elided, compacted, brief) and says `requested` and `degraded`; there is no paging inside a form yet.
+* **Containment.** A session id is checked against the caller's identity on every `attach`; another session's view id answers `unknown-view`. `SessionPolicy` is an interface (`DataSessionPolicy`: limits per actor,
+  required capabilities, touch granularity as JSON); expiry compares numbers (`idleTtl`, `sweep(now)`, `attach(.., now)`).
+* **Costs and limits to know.** `currentPosition` and `makeDelta` scan the canvas's paths when the generation moved, so a whole-canvas scope should be narrowed by path prefixes at scale; `Canvas::textAt`
+  returns copies; an atomic `land` over several base revisions copies the canvas (so does `applyReply`'s all-or-nothing); the caller keeps its `BlockIndex` fed, and `advance` resolves held anchors against
+  the index as it stands (the session's own landed lines are not yet in it). The channel (R-PIN-8) and presence (R-PIN-13) are not built; `openChannel` refuses a pinned view naming the pin.
