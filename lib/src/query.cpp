@@ -202,7 +202,7 @@ const std::vector<FileRevision>* QueryDocument::revisions(std::string_view path,
 
 const std::string* QueryDocument::text(std::string_view textId) const
 {
-    const auto it = texts_.find(std::string{textId});
+    const auto it = texts_.find(textId);
     return it == texts_.end() ? nullptr : &it->second;
 }
 

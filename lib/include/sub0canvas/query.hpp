@@ -117,7 +117,7 @@ public:
 
 private:
     Folder root_;
-    std::unordered_map<std::string, std::string> texts_;
+    std::unordered_map<std::string, std::string, StringHash, std::equal_to<>> texts_;   ///< by content id; looked up by view, never iterated
     std::map<std::string, LayerMeta> meta_;
     const BlockIndex* index_ = nullptr;
     const Store* store_ = nullptr;
