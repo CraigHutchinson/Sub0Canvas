@@ -57,7 +57,7 @@ std::string hex(Rng& r, std::size_t digits)
     return s;
 }
 
-std::size_t countLines(const std::string& text) { return static_cast<std::size_t>(std::count(text.begin(), text.end(), '\n')); }
+std::size_t countLines(const std::string& text) { return static_cast<std::size_t>(std::ranges::count(text, '\n')); }
 
 bool startsWith(const std::string& s, std::string_view p) { return s.compare(0, p.size(), p) == 0; }
 

@@ -198,7 +198,7 @@ void historyBenchmarks(sub0bench::BenchRunner& runner)
                 for (const auto& c : h.source->stream()) for (const PathChange& ch : c) ++touches[ch.path];
                 std::vector<std::pair<std::size_t, std::string>> ranked;
                 for (const auto& [p, n] : touches) ranked.push_back({n, p});
-                std::sort(ranked.begin(), ranked.end(), [](const auto& a, const auto& b) { return a.first != b.first ? a.first > b.first : a.second < b.second; });
+                std::ranges::sort(ranked, [](const auto& a, const auto& b) { return a.first != b.first ? a.first > b.first : a.second < b.second; });
                 for (std::size_t i = 0; i < 5 && i < ranked.size(); ++i) scope.push_back(ranked[i].second);
             }
             once([&] {

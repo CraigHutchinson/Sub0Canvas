@@ -365,7 +365,7 @@ Replies makeReplies()
     for (const auto& path : f.cppPaths)
     {
         const std::string& text = f.corpus.files.at(path);
-        if (std::count(text.begin(), text.end(), '\n') >= 200) picked.push_back(path);
+        if (std::ranges::count(text, '\n') >= 200) picked.push_back(path);
         if (picked.size() == 5) break;
     }
     for (const auto& path : picked) { r.canvas.addFile(path, f.corpus.files.at(path)); r.allowed.insert(path); }

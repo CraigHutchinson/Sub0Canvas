@@ -73,7 +73,7 @@ std::unique_ptr<World> makeWorld()
             const auto it = w->files.find(f->path);
             return static_cast<long>(f->text ? f->text->size() : 0) - (it == w->files.end() ? 0L : static_cast<long>(it->second.size()));
         };
-        std::stable_sort(order.begin(), order.end(), [&](const auto* x, const auto* y) { return growth(x) < growth(y); });
+        std::ranges::stable_sort(order, [&](const auto* x, const auto* y) { return growth(x) < growth(y); });
         for (const corpus::FileChange* f : order) {
             if (f->text) { w->files[f->path] = *f->text; w->index.update(f->path, *f->text); }
             else { w->files.erase(f->path); w->index.update(f->path, ""); }
