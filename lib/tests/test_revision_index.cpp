@@ -484,7 +484,8 @@ int main(int argc, char** argv)
             const auto ids = index.named(scope, "HEAD", name);
             std::vector<std::string> out;
             if (!ids || ids->size() != 1) { out.push_back("not found"); return out; }
-            for (const HistoryStep& s : *index.history(scope, "HEAD", ids->front()))
+            const auto steps = index.history(scope, "HEAD", ids->front());
+            for (const HistoryStep& s : *steps)
                 out.push_back(std::format("{}|{}|{}|{}|{}", s.revision, carryName(s.event.carry), s.event.path, s.event.name, s.event.detail));
             return out;
         };

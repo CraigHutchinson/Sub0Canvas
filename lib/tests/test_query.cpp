@@ -33,6 +33,11 @@ using Strings = std::vector<std::string>;
 
 namespace {
 
+// By-value unwrapping of simdjson results: a range-for over `x.get_array().value()` binds a reference into a temporary, which gcc 14 reports
+// (-Wdangling-reference); returning the view by value is the same thing without the warning.
+simdjson::dom::object objectOf(simdjson::dom::element e) { return e.get_object().value(); }
+simdjson::dom::array arrayOf(simdjson::dom::element e) { return e.get_array().value(); }
+
 /// One parsed response. Not movable: the DOM points into the padded text this object holds.
 struct Resp
 {
@@ -48,7 +53,7 @@ struct Resp
     [[nodiscard]] bool has(const char* k) const { return !root[k].error(); }
     [[nodiscard]] bool isNull(const char* k) const { return root[k].is_null(); }
     [[nodiscard]] std::string errorCode() const { return std::string{std::string_view{root["error"]["code"]}}; }
-    [[nodiscard]] simdjson::dom::array entries() const { return root["entries"].get_array().value(); }
+    [[nodiscard]] simdjson::dom::array entries() const { return arrayOf(root["entries"]); }
     [[nodiscard]] Strings names(const char* member = "name") const
     {
         Strings out;
@@ -548,7 +553,7 @@ int main(int argc, char** argv)
             auto e = ask(QueryServer(w.doc), req);
             CHECK(e->ok());
             Strings echoed;
-            for (simdjson::dom::element n : e->root["unknownFields"].get_array().value()) echoed.emplace_back(std::string_view{n});
+            for (simdjson::dom::element n : arrayOf(e->root["unknownFields"])) echoed.emplace_back(std::string_view{n});
             CHECK_EQ(echoed, (Strings{"zeta", "query.what", "alpha"}));
             // ignore: answered as if absent, byte for byte as the same request without them.
             QueryPolicy ignore;
@@ -566,7 +571,7 @@ int main(int argc, char** argv)
             for (int k = 0; k < 100; ++k) many += ",\"" + std::string(100, 'n') + std::to_string(k) + "\":1";
             many += "}";
             auto m = ask(QueryServer(w.doc), many);
-            CHECK_EQ(m->root["unknownFields"].get_array().value().size(), std::size_t{16});
+            CHECK_EQ(arrayOf(m->root["unknownFields"]).size(), std::size_t{16});
             CHECK_EQ(std::string_view{m->root["unknownFields"].get_array().at(0).value()}.size(), std::size_t{64});
         }
         {
@@ -629,7 +634,7 @@ int main(int argc, char** argv)
                     // The document: files in path order at their revisions, the index replayed as the loop did (every file, every turn).
                     index.setTurn(turn);
                     std::map<std::string, std::string> textsNow;
-                    for (auto kv : bundle["files"].get_object().value()) {
+                    for (auto kv : objectOf(bundle["files"])) {
                         const std::string path{kv.key};
                         std::string text;
                         if (!kv.value["text"].error()) text = std::string{std::string_view{kv.value["text"]}};
@@ -641,15 +646,15 @@ int main(int argc, char** argv)
                     // The layers: this turn's items, in order, in a store of their own (a store keeps what vanished; the snapshot lists the turn's items).
                     Store store([] { StoreOptions o; o.writer = {"mock", "w-1"}; return o; }());
                     std::map<std::string, std::size_t> layerSizes;
-                    for (auto layer : bundle["layers"].get_object().value()) {
+                    for (auto layer : objectOf(bundle["layers"])) {
                         std::vector<LayerItem> items;
-                        for (simdjson::dom::element e : layer.value.get_array().value()) {
+                        for (simdjson::dom::element e : arrayOf(layer.value)) {
                             LayerItem li;
                             li.key = std::string{std::string_view{e["id"]}};
                             li.kind = std::string{std::string_view{e["kind"]}};
                             li.title = std::string{std::string_view{e["title"]}};
                             li.detail = std::string{std::string_view{e["detail"]}};
-                            for (simdjson::dom::element a : e["anchors"].get_array().value()) {
+                            for (simdjson::dom::element a : arrayOf(e["anchors"])) {
                                 Anchor an;
                                 an.blockId = std::string{std::string_view{a["blockId"]}};
                                 an.path = std::string{std::string_view{a["path"]}};
@@ -673,7 +678,7 @@ int main(int argc, char** argv)
 
                     // files: walk the tree (folders then files, each page by its cursor), compare each file with the snapshot's, and its text by content id.
                     std::map<std::string, simdjson::dom::element> bundleFiles;
-                    for (auto kv : bundle["files"].get_object().value()) bundleFiles.emplace(std::string{kv.key}, kv.value);
+                    for (auto kv : objectOf(bundle["files"])) bundleFiles.emplace(std::string{kv.key}, kv.value);
                     std::set<std::string> seen;
                     std::function<void(const std::string&)> walk = [&](const std::string& dir) {
                         std::string cursor;
@@ -706,7 +711,7 @@ int main(int argc, char** argv)
 
                     // blocks: per file, paged, equal to the snapshot's blocks of that file, object by object; no block of another file appears.
                     std::map<std::string, std::vector<std::string>> bundleBlocks;
-                    for (simdjson::dom::element b : bundle["blocks"].get_array().value()) bundleBlocks[std::string{std::string_view{b["path"]}}].push_back(simdjson::minify(b));
+                    for (simdjson::dom::element b : arrayOf(bundle["blocks"])) bundleBlocks[std::string{std::string_view{b["path"]}}].push_back(simdjson::minify(b));
                     std::size_t blockTotal = 0;
                     for (const auto& [path, _] : bundleFiles) {
                         std::vector<std::string> got;
@@ -730,11 +735,11 @@ int main(int argc, char** argv)
                     // layers: the names and counts, then each layer's items, paged: every member of the snapshot's item is the answer's, and the answer adds only the
                     // store's own (source, state, tags).
                     auto ls = ask(layerServer, R"({"op":"layers"})");
-                    CHECK_EQ(ls->entries().size(), bundle["layers"].get_object().value().size());
-                    for (auto layer : bundle["layers"].get_object().value()) {
+                    CHECK_EQ(ls->entries().size(), objectOf(bundle["layers"]).size());
+                    for (auto layer : objectOf(bundle["layers"])) {
                         const std::string name{layer.key};
                         std::vector<simdjson::dom::element> want;
-                        for (simdjson::dom::element e : layer.value.get_array().value()) want.push_back(e);
+                        for (simdjson::dom::element e : arrayOf(layer.value)) want.push_back(e);
                         std::size_t at = 0;
                         std::string cursor;
                         std::vector<std::unique_ptr<Resp>> pagesHeld;
@@ -747,9 +752,9 @@ int main(int argc, char** argv)
                                 CHECK(at < want.size());
                                 if (at >= want.size()) break;
                                 std::set<std::string> have;
-                                const simdjson::dom::object eObj = e.get_object().value();
+                                const simdjson::dom::object eObj = objectOf(e);
                                 for (auto kv : eObj) have.insert(std::string{kv.key});
-                                const simdjson::dom::object wantObj = want[at].get_object().value();
+                                const simdjson::dom::object wantObj = objectOf(want[at]);
                                 for (auto kv : wantObj) {
                                     if (simdjson::minify(e[kv.key]) != simdjson::minify(kv.value)) { std::fprintf(stderr, "%s: %s item %zu member %s differs\n", where.c_str(), name.c_str(), at, std::string{kv.key}.c_str()); CHECK(false); }
                                     have.erase(std::string{kv.key});
@@ -769,7 +774,7 @@ int main(int argc, char** argv)
                     const std::int64_t from = bundle["eventsFrom"].get_int64().value();
                     auto ev = ask(server, R"({"op":"events","limit":2000,"from":)" + std::to_string(from) + "}");
                     CHECK(ev->ok());
-                    const auto want = bundle["events"].get_array().value();
+                    const auto want = arrayOf(bundle["events"]);
                     CHECK_EQ(ev->entries().size(), want.size());
                     std::size_t k = 0;
                     for (simdjson::dom::element e : want) {
