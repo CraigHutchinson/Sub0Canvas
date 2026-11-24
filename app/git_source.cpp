@@ -114,7 +114,7 @@ History GitSource::history(const std::string& to, const Scope& scope, std::size_
     if (shallow()) {
         const bool limitHit = limit != 0 && out.commits.size() >= limit;
         // A shallow clone's first-parent walk ends at its boundary unless the limit stopped it first: the history is cut there.
-        out.cut = !limitHit || (!out.commits.empty() && boundary_.count(out.commits.back().info.id) != 0);
+        out.cut = !limitHit || (!out.commits.empty() && boundary_.contains(out.commits.back().info.id));
     }
     return out;
 }

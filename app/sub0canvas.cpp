@@ -129,7 +129,7 @@ std::map<std::string, std::string> readBlobs(const Options& o, const std::string
         const auto size = std::stoull(header.substr(header.rfind(' ') + 1));
         std::string text = raw.substr(at, size);
         at += size + 1;
-        if (size <= o.maxFileBytes && text.find('\0') == std::string::npos) out[p] = std::move(text);
+        if (size <= o.maxFileBytes && !text.contains('\0')) out[p] = std::move(text);
     }
     return out;
 }
