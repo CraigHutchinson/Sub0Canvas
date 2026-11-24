@@ -149,7 +149,7 @@ std::vector<std::string> documentPaths(const std::vector<TreeEntry>& entries)
     std::vector<std::string> out;
     for (const auto& e : entries)
         if (e.type == "blob" && (e.mode == "100644" || e.mode == "100755")) out.push_back(e.path);
-    std::sort(out.begin(), out.end());
+    std::ranges::sort(out);
     return out;
 }
 

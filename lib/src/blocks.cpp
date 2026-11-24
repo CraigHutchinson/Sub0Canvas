@@ -358,13 +358,13 @@ std::string Languages::detect(std::string_view path, std::string_view firstLine)
     const auto slash = path.find_last_of("/\\");
     const std::string_view file = slash == std::string_view::npos ? path : path.substr(slash + 1);
     for (const auto& d : detects_)
-        if (std::find(d.filenames.begin(), d.filenames.end(), file) != d.filenames.end()) return d.language;
+        if (std::ranges::find(d.filenames, file) != d.filenames.end()) return d.language;
     for (const auto& d : detects_)
         for (const auto& e : d.extensions) if (endsWith(path, e)) return d.language;
     if (firstLine.starts_with("#!")) {
         const std::string word = interpreterOf(firstLine);
         for (const auto& d : detects_)
-            if (std::find(d.interpreters.begin(), d.interpreters.end(), word) != d.interpreters.end()) return d.language;
+            if (std::ranges::find(d.interpreters, word) != d.interpreters.end()) return d.language;
     }
     return {};
 }
@@ -411,9 +411,9 @@ std::vector<std::pair<std::string, std::string>> outlinersOf(const std::vector<s
         const OutlineProvider* p = defaultLanguages().provider(language);
         if (!p) continue;
         std::pair<std::string, std::string> row{language, p->name()};
-        if (std::find(out.begin(), out.end(), row) == out.end()) out.push_back(row);
+        if (std::ranges::find(out, row) == out.end()) out.push_back(row);
     }
-    std::sort(out.begin(), out.end());
+    std::ranges::sort(out);
     return out;
 }
 
