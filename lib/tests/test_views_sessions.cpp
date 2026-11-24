@@ -310,7 +310,8 @@ int main()
         CHECK_STR(r.canvas.text("a.cpp"), f.newText);
 
         const auto compacted = A->refresh(tip, {.form = DeltaForm::compacted});
-        CHECK(compacted->json.find(R"("changes":[{"path":"a.cpp","block":"b2","name":"beta","hunks":[{"at":6,"before":["    return 2;"],"after":["    return 20;"]}]}])") != std::string::npos);
+        CHECK(!f.regions[0].blockId.empty());                                  // ids are birth ids (A16): take the spelling from the delta, not a counter
+        CHECK(compacted->json.find(R"("changes":[{"path":"a.cpp","block":")" + f.regions[0].blockId + R"(","name":"beta","hunks":[{"at":6,"before":["    return 2;"],"after":["    return 20;"]}]}])") != std::string::npos);
         CHECK_STR(A->refresh(tip, {.form = DeltaForm::compacted})->json, compacted->json);   // not acknowledged: the same answer again
         CHECK_EQ(compacted->files, std::size_t{1});
         (void)A->refresh(tip, {.form = DeltaForm::full, .acknowledge = true});
