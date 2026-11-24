@@ -35,7 +35,7 @@ endif()
 # The library: folded views and READ requests (outline), search/replace and line edits (edits), the revisioned canvas and its transactions (canvas),
 # stable block ids and layers (doc_layers), the event envelope and log seam (event) and the store core folded from events (store).
 add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/blocks.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp
-            lib/src/git_plumbing.cpp lib/src/revision_index.cpp lib/src/event.cpp lib/src/store.cpp lib/src/claims.cpp lib/src/inbox.cpp)
+            lib/src/git_plumbing.cpp lib/src/revision_index.cpp lib/src/event.cpp lib/src/store.cpp lib/src/claims.cpp lib/src/inbox.cpp lib/src/anchor.cpp lib/src/resolver.cpp)
 add_library(sub0canvas::sub0canvas ALIAS sub0canvas)
 target_compile_features(sub0canvas PUBLIC cxx_std_23)
 target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/src)
@@ -104,7 +104,7 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
   endif()
   include("${Sub0Math_SOURCE_DIR}/cmake/Sub0MathTooling.cmake")
 
-  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp METRICS perf/metrics.json SMOKE_TEST)
+  sub0math_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp bench/bench_resolver.cpp METRICS perf/metrics.json SMOKE_TEST)
   target_include_directories(Sub0Canvas_Bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_options(Sub0Canvas_Bench PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(Sub0Canvas_Bench PRIVATE sub0canvas sub0canvas_bench_corpus)
@@ -156,6 +156,12 @@ if(SUB0CANVAS_BUILD_TESTING)
   target_compile_options(test_corpus PRIVATE ${SUB0CANVAS_STRICT} -g)
   target_link_libraries(test_corpus PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
   add_test(NAME test_corpus COMMAND test_corpus)
+  # The source-anchor resolver (B4): truth from the mock attempts (fixtures/mock) and the corpus's edit stream, so it links the corpus generator too.
+  add_executable(test_resolver lib/tests/test_resolver.cpp)
+  target_compile_options(test_resolver PRIVATE ${SUB0CANVAS_STRICT} -g)
+  target_include_directories(test_resolver PRIVATE lib/tests)
+  target_link_libraries(test_resolver PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
+  add_test(NAME test_resolver COMMAND test_resolver ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
   # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
   find_program(SUB0CANVAS_NODE node)
   if(SUB0CANVAS_NODE)
