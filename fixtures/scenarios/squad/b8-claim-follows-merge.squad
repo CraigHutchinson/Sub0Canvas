@@ -1,0 +1,72 @@
+# name: b8-claim-follows-merge
+# cites: tier 0 forked sessions, a worker that kept a stale view (R-BB-6, R-ID-9, MOCK_SQUAD.md section 4): a claims twice, then inlines it into quad, so the index logs twice as merged into quad and the claim follows; b, still naming twice by the id it saw first, is refused naming a; after a releases, b's claim on the old id is taken and covers the survivor
+# actors: a b
+# policy: claims=enforce
+# expect: claimed:mock/a:1 | failed | claim-refused:held (write) by mock/a until 1300 | released:mock/a:1 | claimed:mock/b:4 | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double twice(double x)
+{
+    double y = x;
+    return y + x;
+}
+
+double quad(double x)
+{
+    return twice(twice(x));
+}
+
+double square(double x)
+{
+    return x - 1;
+}
+--- gate
+test quad passes when src/calc.cpp contains return y + x + y + x;
+test square passes when src/calc.cpp contains return x * x;
+--- claim as=a at=1000 ttl=300 block=src/calc.cpp:twice
+--- reply as=a at=1100
+=== EDIT: src/calc.cpp LINES 3-12 ===
+double quad(double x)
+{
+    double y = x;
+    return y + x + y + x;
+}
+=== END EDIT ===
+--- claim as=b at=1200 block=src/calc.cpp:twice@0
+--- release as=a at=1250 block=src/calc.cpp:twice@0
+--- claim as=b at=1260 ttl=300 block=src/calc.cpp:twice@0
+--- reply as=a at=1270
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- expect-ids
+id @0 src/calc.cpp quad = q
+id @1 src/calc.cpp quad = q
+gone @1 src/calc.cpp twice
+--- expect-claims
+# a:1 is a's first event (its replica was empty). The loop then writes the carry (twice merged into quad) as lamport 2 after merging a's take, so a's release is lamport 3
+# (a merged the carry first) and b's later take is lamport 4 (b merged the release first); b's refused claim wrote nothing
+covers a:1 src/calc.cpp:twice @0
+covers a:1 src/calc.cpp:quad @1
+live 1 @2
+status a:1 live @2
+status a:1 released @3
+live 0 @3
+status b:4 live @4
+covers b:4 src/calc.cpp:quad @4
+holder src/calc.cpp:twice mock/b until 1560 @4
+live 1 @5
+--- want src/calc.cpp
+#include <stdexcept>
+
+double quad(double x)
+{
+    double y = x;
+    return y + x + y + x;
+}
+
+double square(double x)
+{
+    return x * x;
+}

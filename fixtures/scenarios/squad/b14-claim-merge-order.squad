@@ -1,0 +1,53 @@
+# name: b14-claim-merge-order
+# cites: tier 0 forked sessions, two workers offline (R-BB-6, MOCK_SQUAD.md section 4): a and b both claim divide without having seen each other, each in an empty replica, so both takes are lamport 1; the merge settles them by (lamport, writer): a's stands and b's is kept as refused, naming a, in whichever order the replicas merge
+# actors: a b
+# policy: claims=enforce
+# expect: claimed:mock/a:1 | claimed:mock/b:1 | settled:mock/b:1 refused by mock/a:1 | refused:held (write) by mock/a until 1300 | passed
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) return 0;
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- claim as=a at=1000 ttl=300 block=src/calc.cpp:divide offline
+--- claim as=b at=1000 ttl=300 block=src/calc.cpp:divide offline
+--- sync at=1050
+--- reply as=b at=1100
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) return -1;
+=== END EDIT ===
+--- reply as=a at=1100
+=== EDIT: src/calc.cpp LINES 5 ===
+    if (d == 0) throw std::domain_error("division by zero");
+=== END EDIT ===
+--- expect-claims
+# both takes are lamport 1 (each replica was empty); (1, mock/a) sorts before (1, mock/b), so a's claim stands and b's is refused, naming a's
+status a:1 live @0
+status b:1 refused @2
+holder src/calc.cpp:divide mock/a until 1300 @2
+live 1 @2
+live 1 @4
+status b:1 refused
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

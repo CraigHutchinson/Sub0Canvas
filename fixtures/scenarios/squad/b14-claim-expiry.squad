@@ -1,0 +1,53 @@
+# name: b14-claim-expiry
+# cites: tier 0 forked sessions, a worker that stopped (R-BB-6, MOCK_SQUAD.md section 4): a's claim frees the block at its expiry, at plus ttl and exclusive, with no event needed: b's edit at 1299 is refused, at 1300 it lands; the expire step then writes the fact down
+# actors: a b
+# policy: claims=enforce
+# expect: claimed:mock/a:1 | refused:held (write) by mock/a until 1300 | passed | expired:1 claim(s) expired at 1300
+--- base src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x + x;
+}
+--- gate
+test divide passes when src/calc.cpp contains throw std::domain_error
+test square passes when src/calc.cpp contains return x * x;
+--- claim as=a at=1000 ttl=300 block=src/calc.cpp:square
+--- reply as=b at=1299
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- reply as=b at=1300
+=== EDIT: src/calc.cpp LINES 11 ===
+    return x * x;
+=== END EDIT ===
+--- expire at=1300
+--- expect-claims
+# the claim is held until 1300 exclusive: live at 1299, not live at 1300 although nothing has been written down yet; the expire step writes it
+live 1 @0
+live 1 @1
+holder src/calc.cpp:square mock/a until 1300 @1
+live 0 @2
+status a:1 live @2
+status a:1 expired @3
+live 0 @3
+--- want src/calc.cpp
+#include <stdexcept>
+
+double divide(double a, double d)
+{
+    if (d == 0) throw std::domain_error("division by zero");
+    return a / d;
+}
+
+double square(double x)
+{
+    return x * x;
+}

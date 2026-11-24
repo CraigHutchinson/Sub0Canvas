@@ -1,0 +1,7 @@
+=== EDIT: src/calc.cpp LINES 3-12 ===
+double quad(double x)
+{
+    double y = x;
+    return y + x + y + x;
+}
+=== END EDIT ===

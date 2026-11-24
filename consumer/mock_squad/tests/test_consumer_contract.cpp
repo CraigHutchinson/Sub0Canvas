@@ -177,6 +177,85 @@ std::string checkStore(const Scenario& sc, const Attempt& a)
     return {};
 }
 
+bool usesClaims(const Scenario& sc)
+{
+    bool on = false;
+    for (const auto& [k, v] : sc.policy) if (k == "claims") on = v != "off";
+    return on;
+}
+
+/// "" when the claims' truth holds (MS4). Lines, written by hand in the scenario from the lease rules (a take at `at` with `ttl` holds until `at + ttl`, exclusive;
+/// a Lamport value is the replica's head + 1 at the take, so it is derived by hand and never copied from the output). Each ends with an optional `@step`, the position
+/// in the scenario's steps (default: the last step run); a holder is `a` for `mock/a`:
+///   `live <n>`                                 n claims are live at that step's instant
+///   `status <holder>:<k> <status>`             the claim `mock/<holder>:<k>` has that status (live, released, expired, retired, refused)
+///   `holder <path:leaf> <ns/w> until <t>`      that writer holds the target, live, until t
+///   `covers <holder>:<k> <path:leaf>`          the claim now covers that block (a merged block's claim covers the survivor)
+/// A scenario runs claims exactly when it says what the claims must be.
+std::string checkClaims(const Scenario& sc, const Attempt& a)
+{
+    if (usesClaims(sc) != !sc.expectClaims.empty()) return "a scenario with claims=on or enforce needs an expect-claims section, and one without it must not have one";
+    if (a.claimStates.empty() && !sc.expectClaims.empty()) return "the loop recorded no claim state";
+    for (const auto& line : sc.expectClaims) {
+        auto w = wordsOf(line);
+        int step = a.claimStates.empty() ? 0 : a.claimStates.back().step;
+        if (!w.empty() && w.back().size() > 1 && w.back()[0] == '@') {
+            step = std::atoi(w.back().c_str() + 1);
+            w.pop_back();
+        }
+        const auto at = std::find_if(a.claimStates.begin(), a.claimStates.end(), [&](const ClaimStep& c) { return c.step == step; });
+        if (at == a.claimStates.end()) return "no claim state after step " + std::to_string(step) + " in: " + line;
+        const auto rowOf = [&](const std::string& holderK) -> const ClaimRow* {
+            const auto colon = holderK.rfind(':');
+            if (colon == std::string::npos) return nullptr;
+            const std::string holder = holderK.substr(0, colon);
+            const std::string id = (holder.find('/') == std::string::npos ? "mock/" : "") + holderK;
+            for (const ClaimRow& r : at->claims) if (r.id == id) return &r;
+            return nullptr;
+        };
+        if (w.size() == 2 && w[0] == "live") {
+            std::size_t n = 0;
+            for (const ClaimRow& r : at->claims) n += r.liveAt ? 1 : 0;
+            if (n != static_cast<std::size_t>(std::atoi(w[1].c_str()))) return "expected " + w[1] + " live claim(s) after step " + std::to_string(step) + ", the loop's merged replica holds " + std::to_string(n);
+        } else if (w.size() == 3 && w[0] == "status") {
+            const ClaimRow* r = rowOf(w[1]);
+            if (r == nullptr) return "no claim " + w[1] + " after step " + std::to_string(step);
+            if (r->status != w[2]) return "claim " + w[1] + " after step " + std::to_string(step) + ": expected " + w[2] + ", got " + r->status;
+        } else if (w.size() == 5 && w[0] == "holder" && w[3] == "until") {
+            const bool found = std::any_of(at->claims.begin(), at->claims.end(), [&](const ClaimRow& r) {
+                return r.liveAt && r.label == w[1] && r.holder == w[2] && r.expires == std::atoll(w[4].c_str());
+            });
+            if (!found) return "after step " + std::to_string(step) + ": " + w[2] + " does not hold " + w[1] + " until " + w[4];
+        } else if (w.size() == 3 && w[0] == "covers") {
+            const ClaimRow* r = rowOf(w[1]);
+            if (r == nullptr) return "no claim " + w[1] + " after step " + std::to_string(step);
+            if (std::find(r->covers.begin(), r->covers.end(), w[2]) == r->covers.end()) return "claim " + w[1] + " after step " + std::to_string(step) + " does not cover " + w[2];
+        } else {
+            return "not a claims expectation: " + line;
+        }
+    }
+    return {};
+}
+
+/// "" when the claims do not depend on the order the replicas merge in (R-CONS-7): a scenario with a `sync` step run again with the actors in the other order (which is the
+/// order `sync` merges them in) persists byte-identical claim files. Every step of such a scenario names its actor, so only the merge order changes.
+std::string checkSyncOrder(const Scenario& sc, const Attempt& a)
+{
+    if (std::none_of(sc.replies.begin(), sc.replies.end(), [](const ScriptedReply& r) { return r.op == "sync"; })) return {};
+    Scenario other = sc;
+    std::reverse(other.actors.begin(), other.actors.end());
+    const auto b = runScenario(other);
+    if (!b) return b.error();
+    for (const auto& [rel, bytes] : a.record) {
+        if (rel.rfind("claims/", 0) != 0) continue;
+        const auto it = b->record.find(rel);
+        if (it == b->record.end() || it->second != bytes) return "'" + rel + "' differs when the replicas merge in the other order";
+    }
+    for (const auto& [rel, bytes] : b->record)
+        if (rel.rfind("claims/", 0) == 0 && !a.record.count(rel)) return "'" + rel + "' exists only when the replicas merge in the other order";
+    return {};
+}
+
 /// "" when the loop's observable output does not depend on the store: the same scenario with the policy flipped gives the same outcomes (kind, text, verdict, focus)
 /// and the same persisted bytes, apart from what the store adds under store/ and the list of library calls in the trace.
 std::string checkStoreTransparent(const Scenario& sc, const Attempt& a)
@@ -238,11 +317,11 @@ const std::vector<Row> kRows = {
     {"`canvas_agent.cpp`: READ ISSUE answered", {"layerDetail", "parseIssueReads"}, ""},
     {"reads (`parseReadRequests`", {"answerRead"}, "parseReadRequests: the loop reads through parseCanvasReply, which finds the READ blocks itself; llm_agent's own path is not mocked"},
     {"`parseCanvasReply`, `applyEdits`", {"parseCanvasReply", "Canvas::revertTo", "Canvas::logJson"},
-     "applyEdits, replaceText and Canvas::apply are reached through applyReply, never called by the loop (a stale author is ApplyOptions::baseRevision, scenario b8); textAt has no loop use yet (fork.cpp compares revisions: MS4)"},
+     "applyEdits, replaceText and Canvas::apply are reached through applyReply, never called by the loop (a stale author is ApplyOptions::baseRevision, scenario b8); textAt has no loop use yet (fork.cpp compares revisions: the fork executor is a later slice)"},
     {"a parsed reply applied all or nothing", {"applyReply"}, ""},
     {"`joinContinuation`", {"joinContinuation", "continuationPrompt", "detectRunaway", "detectEditOverrun", "cutOffInsideEdit", "completeCutFile"},
      "continuationText belongs to llm_agent's prefill path, which the loop does not mirror (MOCK_SQUAD.md section 6)"},
-    {"`expandSkeleton`", {}, "the fork and contract paths are not part of the canvas loop; the fork executor is MS4"},
+    {"`expandSkeleton`", {}, "the fork and contract paths are not part of the canvas loop; MS4 built the claims of two actors, not the fork executor"},
     {"`foldedView`", {}, "the folded view the next message carries is not built by the MS0 loop (it would be asserted only by the writer's own bytes)"},
     {"19 calls of `isPythonPath`", {"isPythonPath"}, ""},
     {"the adaptive threshold", {}, "squad policy, not library behaviour: it is a field of LoopPolicy (issueMode, adaptiveIssues), not a row to cover"},
@@ -275,7 +354,7 @@ int main(int argc, char** argv)
     for (const auto& e : fs::directory_iterator(argv[1]))
         if (e.path().extension() == ".squad") files.push_back(e.path());
     std::sort(files.begin(), files.end());
-    CHECK_GE(files.size(), static_cast<std::size_t>(15));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12
+    CHECK_GE(files.size(), static_cast<std::size_t>(20));   // G1-G7 (G3, G5, G7 added with MS1), B1, B3, B8, B9 (two), B10-B12, B15 (MS3), B14 x3 and B8 claims (MS4)
 
     std::set<std::string> libraryCalls;
     std::map<std::string, Attempt> attempts;
@@ -294,6 +373,8 @@ int main(int argc, char** argv)
         report("files", checkFiles(*sc, *attempt));
         report("identities", checkIds(*sc, *attempt));
         report("store", checkStore(*sc, *attempt));                                     // MS3: hand-checked open, done, reopened
+        report("claims", checkClaims(*sc, *attempt));                                   // MS4: hand-checked holders, expiry, merge order, a claim that follows a merge
+        report("claims merge order", checkSyncOrder(*sc, *attempt));                    // the same claim files whichever replica merges first
         report("store transparency", checkStoreTransparent(*sc, *attempt));            // the verdict through the store equals the direct one
         report("stored attempt", checkRecord(*attempt, fs::path(argv[2]) / sc->name));   // (d)
         for (const auto& v : attempt->violations) report("invariant", v);               // (e) a refusal that changed the canvas, an anchor that does not resolve
@@ -316,6 +397,15 @@ int main(int argc, char** argv)
         CHECK(attempts.count("b15-flapping-test") && attempts["b15-flapping-test"].reverted == 1);
         for (const char* fn : {"Store::putLayer", "Store::item", "Store::checkpoint", "Store::restore", "Store::replay", "Store::merge", "eventJson", "parseEvent"})
             if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS3)\n", fn); CHECK(false); }
+        for (const char* fn : {"takeClaim", "checkClaim", "releaseClaim", "expireDue", "emitBlockCarries", "claimsJson", "findClaim", "diffLines"})
+            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS4)\n", fn); CHECK(false); }
+        {   // The four claim scenarios show what they were written for (R-CONS-6, R-CONS-7); each refusal also left the canvas unchanged (the loop's own invariant).
+            const char* names[] = {"b14-claim-contention", "b14-claim-expiry", "b14-claim-merge-order", "b8-claim-follows-merge"};
+            for (const char* n : names) CHECK(attempts.count(n) && attempts[n].verified);
+            CHECK(attempts.count("b14-claim-contention") && attempts["b14-claim-contention"].refused == 1);
+            CHECK(attempts.count("b14-claim-expiry") && attempts["b14-claim-expiry"].refused == 1);
+            CHECK(attempts.count("b14-claim-merge-order") && attempts["b14-claim-merge-order"].refused == 1);
+        }
     }
     {   // (b) every row of REQUIREMENTS.md "Sub0Squad's use, mapped" is exercised by a scenario or deferred with its reason.
         const auto cells = mappedRows(slurp(argv[3]));
@@ -352,6 +442,26 @@ int main(int argc, char** argv)
             Attempt altered = a;
             altered.record["canvas.json"] += " ";
             CHECK(!checkRecord(altered, fs::path(argv[2]) / sc->name).empty());
+        }
+    }
+    {   // The claim checker can fail too: a wrong holder, status, count or cover is reported, and a scenario that disagrees with its own sync order would be.
+        const auto sc = parseScenario(slurp(fs::path(argv[1]) / "b14-claim-contention.squad"));
+        CHECK(sc.has_value());
+        if (sc && attempts.count(sc->name)) {
+            const Attempt& a = attempts[sc->name];
+            Scenario wrong = *sc;
+            wrong.expectClaims = {"live 2 @0"};
+            CHECK(!checkClaims(wrong, a).empty());
+            wrong.expectClaims = {"status a:1 expired @0"};
+            CHECK(!checkClaims(wrong, a).empty());
+            wrong.expectClaims = {"holder src/calc.cpp:square mock/b until 1300 @0"};
+            CHECK(!checkClaims(wrong, a).empty());
+            wrong.expectClaims = {"holder src/calc.cpp:square mock/a until 1301 @0"};
+            CHECK(!checkClaims(wrong, a).empty());
+            wrong.expectClaims = {"covers a:1 src/calc.cpp:divide @0"};
+            CHECK(!checkClaims(wrong, a).empty());
+            wrong.expectClaims.clear();
+            CHECK(!checkClaims(wrong, a).empty());   // claims run, but the scenario states nothing about them
         }
     }
     {   // (f) the library says the release it is: the same as package.json, and not older than the newest tag of this checkout (v0.3.0 shipped saying 0.2.1).

@@ -1,0 +1,5 @@
+{"schema":"canvas-events-1","document":"b8-claim-follows-merge","producers":{"mock-squad":"1"}}
+{"kind":"claim.take@1","writer":{"namespace":"mock","writer":"a"},"lamport":1,"subject":"mock/a:1","time":"","payload":{"kind":"block","target":"bf1edbb57b3d6","path":"src/calc.cpp","mode":"write","at":1000,"ttl":300}}
+{"kind":"block.carry@1","writer":{"namespace":"mock","writer":"loop"},"lamport":2,"subject":"bf1edbb57b3d6","time":"","payload":{"carry":"merged","into":["b5de0b1550155"]}}
+{"kind":"claim.release@1","writer":{"namespace":"mock","writer":"a"},"lamport":3,"subject":"mock/a:1","time":"","payload":{"reason":"released","at":1250}}
+{"kind":"claim.take@1","writer":{"namespace":"mock","writer":"b"},"lamport":4,"subject":"mock/b:4","time":"","payload":{"kind":"block","target":"bf1edbb57b3d6","path":"src/calc.cpp","mode":"write","at":1260,"ttl":300}}

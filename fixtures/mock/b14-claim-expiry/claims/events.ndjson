@@ -1,0 +1,3 @@
+{"schema":"canvas-events-1","document":"b14-claim-expiry","producers":{"mock-squad":"1"}}
+{"kind":"claim.take@1","writer":{"namespace":"mock","writer":"a"},"lamport":1,"subject":"mock/a:1","time":"","payload":{"kind":"block","target":"b8e3e5d9bd0ab","path":"src/calc.cpp","mode":"write","at":1000,"ttl":300}}
+{"kind":"claim.expire@1","writer":{"namespace":"mock","writer":"loop"},"lamport":2,"subject":"mock/a:1","time":"","payload":{"at":1300}}

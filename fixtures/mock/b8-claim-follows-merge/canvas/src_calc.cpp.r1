@@ -1,0 +1,17 @@
+#include <stdexcept>
+
+double twice(double x)
+{
+    double y = x;
+    return y + x;
+}
+
+double quad(double x)
+{
+    return twice(twice(x));
+}
+
+double square(double x)
+{
+    return x - 1;
+}

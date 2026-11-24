@@ -1,0 +1,1 @@
+{"schema":"claims-1","at":1150,"claims":[{"id":"mock/a:1","kind":"block","target":"b8e3e5d9bd0ab","path":"src/calc.cpp","mode":"write","holder":{"namespace":"mock","writer":"a"},"taken":1000,"expires":1300,"covers":["block:b8e3e5d9bd0ab"]}]}
