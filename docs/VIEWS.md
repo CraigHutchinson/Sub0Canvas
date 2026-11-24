@@ -114,6 +114,8 @@ with a moved block re-anchors the issue as `moved` and refuses an edit until re-
 (the viewpoint-clone receiving case); a tip reviewer refreshes in all four forms over the same history and every form reaches the same end state; a channel
 dropped mid-stream resumes; a slow channel under a 200-event burst is coalesced.
 
+**Built in the mock squad (MS5, 2026-11-24)**: `b8-pinned-workers-land` (two workers pinned at r1: one lands, the other's disjoint edit lands rebased, its overlapping edit is refused naming the first worker and the revision with the hunk kept; `since` changes nothing; `advance` refuses the kept hunk again and moves the pin; the redo lands) and `b14-tip-worker-four-forms` (a pinned worker lands two edits; a tip worker refreshes in `brief`, `elided`, `compacted` and `full` with an acknowledgement, and a last refresh is empty), R-CONS-8 and R-CONS-9, [MOCK_SQUAD.md](MOCK_SQUAD.md) section 4. Still to build from the list above: advance with a moved block, fork a stuck turn, a dropped channel, a slow channel.
+
 **Metrics and budgets** (deterministic counters in `perf/metrics.json`; timing local only): `brief` tokens per refresh (budget: under 100 regardless of
 edit size); `compacted` tokens relative to `full` on the S0 edit stream; events visited per refresh equal to events in scope (as `InboxReader`); a pinned
 read at an old position under 10 ms with checkpoints (SCALE.md budgets); advance with rebase plus re-anchoring of 2,000 anchors inside the resolver's

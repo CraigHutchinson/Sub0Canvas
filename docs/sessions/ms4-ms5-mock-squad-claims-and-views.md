@@ -1,6 +1,6 @@
 # Follow-up session: MS4 and MS5, two-actor claims and pinned/tip workers in the mock squad
 
-Status: open (planned 2026-11-24 by the planning agent; MS4 first). Backlog: [phase 1](../BACKLOG.md). Design: [MOCK_SQUAD.md](../MOCK_SQUAD.md) section 4,
+Status: MS4 and MS5 built 2026-11-24 (see the two Outcome sections; not pushed). Backlog: [phase 1](../BACKLOG.md). Design: [MOCK_SQUAD.md](../MOCK_SQUAD.md) section 4,
 [VIEWS.md](../VIEWS.md), [BACKBONE.md](../BACKBONE.md) section 3.4. Parent brief: [backbone-next-wave.md](backbone-next-wave.md).
 
 ## Ground truth
@@ -97,3 +97,25 @@ Deviations from the plan, all following the code:
 - The brief file itself was untracked in the clone; it is committed with this section.
 
 Left: MS5 (pinned and tip workers on sessions), the VIEWS.md section 8 limits, the inbox half of B2 (not mocked), the Lamport values stay derived by hand in each scenario's `expect-claims` comment.
+
+## Outcome (MS5)
+
+Built 2026-11-24 in `Sub0Canvas-dev` (not pushed): the session side of the loop, then the two scenarios with the contract, then the docs. `ctest --preset quick` 21 of 21 and the full `test_consumer_mock_squad` pass;
+`git status fixtures/mock` shows only the two new directories (`b8-pinned-workers-land`, `b14-tip-worker-four-forms`), so the twenty earlier attempts are byte-identical.
+
+Built as planned: header `# views: a=pinned b=tip` (`Scenario::views`), a session side built only then (`sessStore_` with writer `mock/ws` and its own `MemoryLog`, `LogViewStore`, `DataSessionPolicy{}`, `BlockCompactor`, `Workspace` over `canvas_`
+and `index_`; one session and view per named actor, opened after the base files and the first index update), a pinned actor's reply through `stage` then `land`, the control steps `since`, `advance` and `refresh form=... [ack]`
+with the R-PIN-6 consumer invariant (`checkDelta`), `views/<actor>-refresh-K-<form>.json`, `views/<actor>-final.json` and `sessions/events.ndjson` (parsed back and replayed to the same views), the contract's `checkViews`
+(with a negative check), the 22-scenario count and the MS5 library-call list, R-CONS-8, R-CONS-9, evidence on R-PIN-2, R-PIN-3, R-PIN-6, MOCK_SQUAD.md section 4 and VIEWS.md section 5.
+
+Deviations from the plan, all following the code:
+
+- `b8-pinned-workers-land` has three gate tests, not two, and `b` redoes its edit after the advance: the gate must not pass before the overlapping edit and the `advance`, because a reply after a pass is skipped. The sequence is `a` lands on `divide`, `b` lands `square` (rebased from line 11 to 12), `b`'s overlapping edit to `divide` is refused (`changed by mock/a in revision 2`), `since as=b`, `advance as=b` (`applied 0, refused 1, anchors 0, pin r3`, the hunk kept: the verdict names it) and a last reply that lands from the new text and passes. The plan's "overlapping second edit" is third here because the disjoint edit comes first.
+- `b14-tip-worker-four-forms`: `a`'s two edits are disjoint (`divide`, then `square`, both in r1 numbering), since the second of two overlapping edits through one pin would be refused against `a`'s own first. The last `compacted` refresh gives `"files":0` as planned. The first four answers carry the same `to` (the canvas, the index and the session store's head as they stand); the fifth, after the acknowledgement, has a later store head, because the acknowledgement is itself logged. The contract compares `to`, `files` and `events` from an acknowledged refresh (or the first) up to and including the next acknowledged one.
+- Outcome kinds `since` (text and verdict: the brief JSON), `advanced` (`applied N, refused M, anchors K, pin rB`; verdict adds each refusal and the kept hunk's text) and `refreshed` (`form=F files=N events=M [degraded] [ack]`; verdict: the `view-delta-1` answer). Every step run records one outcome, as in MS4.
+- The loop builds the delta itself (`makeDelta` with no inbox, so `events` is 0 in these scenarios: no store items change) from the view's record before the refresh and checks the answer's file count against it; the four forms are checked at the consumer, not only by the library's own test.
+- `since` is checked to change nothing: canvas files, the session store's event count and the view's pending summary. `advance` is checked to leave the view at `pinAtTip`; an `advance` that lands edits is a scenario error (the loop gates a landing only after a reply), as are `since`/`advance` on a tip view, `refresh` on a pinned view, `base=rN` on a pinned actor's reply, `# views:` with `scratch=yes` or with claims.
+- A refused hunk stays pending in the view after `land` (the library's rule), so a pinned actor's next reply stages on top of it until `advance` clears it; the scenario redoes the edit only after the advance.
+- `# expect` needles are the hand-written truth (refusal naming `mock/a` and `revision 2`, `pin r3`, the form and file counts); there is no `expect-views` section.
+
+Left: a pinned actor's reads (`answerRead`) still show the tip, not the pin; an `advance` that lands edits through the loop; views together with claims; fork, atomic land over two base revisions, advance with a moved block (held anchors are never held in these scenarios, so `anchors` is always 0); the channel and presence; the VIEWS.md section 8 limits; the inbox half of B2. Sub0Squad's copy of the loop is not touched.
