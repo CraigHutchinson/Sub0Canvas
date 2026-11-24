@@ -10,10 +10,19 @@ namespace sub0canvas {
 namespace {
 
 using scan::nameBefore;
-using scan::splitLines;
+using scan::splitViews;
+using View = std::string_view;
 
-/// Net brace change of a line, ignoring string and character literals and // comments (block comments are rare in generated code and not tracked).
-int braceDelta(const std::string& line, bool& opensHere)
+/// The first column that is not a blank or a tab; `npos` when the line is blank.
+std::size_t firstNonBlank(View line)
+{
+    std::size_t k = 0;
+    while (k < line.size() && (line[k] == ' ' || line[k] == '\t')) ++k;
+    return k == line.size() ? View::npos : k;
+}
+
+/// Net brace change of a line, ignoring string and character literals and // comments (block comments are blanked beforehand, `blankBlockComments`).
+int braceDelta(View line, bool& opensHere)
 {
     int d = 0;
     char quote = 0;
@@ -23,23 +32,27 @@ int braceDelta(const std::string& line, bool& opensHere)
         if (quote) { if (c == '\\') ++i; else if (c == quote) quote = 0; continue; }
         if (c == '"' || c == '\'' || c == '`') { quote = c; continue; }
         if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
-        if (c == '#' && i == line.find_first_not_of(" \t")) break;   // a preprocessor line
+        if (c == '#' && i == firstNonBlank(line)) break;   // a preprocessor line
         if (c == '{') { ++d; opensHere = true; }
         else if (c == '}') --d;
     }
     return d;
 }
 
-/// The lines with every `/* ... */` comment (across lines too) blanked to spaces, so a brace, a keyword or a signature inside one never counts (R-BLK-5). String and
-/// character literals and `//` comments are read as `braceDelta` reads them (a comment opener inside one is not an opener); the line count and every column are kept.
-std::vector<std::string> blankBlockComments(std::vector<std::string> lines)
+/// `text` with every `/* ... */` comment (across lines too) blanked to spaces, so a brace, a keyword or a signature inside one never counts (R-BLK-5). String and
+/// character literals and `//` comments are read as `braceDelta` reads them (a comment opener inside one is not an opener); every offset is kept, so the
+/// views of `lines` (into `text`) map onto the result by offset. The caller runs this only for a text that contains "/*" at all: a text without one is scanned as it is.
+std::string blankBlockComments(View text, const std::vector<View>& lines)
 {
+    std::string buf(text);
     bool inComment = false;
-    for (auto& line : lines) {
+    for (const View ln : lines) {
+        char* line = buf.data() + (ln.data() - text.data());
+        const std::size_t n = ln.size();
         char quote = 0;
-        for (std::size_t i = 0; i < line.size(); ++i) {
+        for (std::size_t i = 0; i < n; ++i) {
             if (inComment) {
-                const bool closes = line[i] == '*' && i + 1 < line.size() && line[i + 1] == '/';
+                const bool closes = line[i] == '*' && i + 1 < n && line[i + 1] == '/';
                 line[i] = ' ';
                 if (closes) { line[++i] = ' '; inComment = false; }
                 continue;
@@ -47,29 +60,31 @@ std::vector<std::string> blankBlockComments(std::vector<std::string> lines)
             const char c = line[i];
             if (quote) { if (c == '\\') ++i; else if (c == quote) quote = 0; continue; }
             if (c == '"' || c == '\'' || c == '`') { quote = c; continue; }
-            if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
-            if (c == '#' && i == line.find_first_not_of(" \t")) break;   // a preprocessor line
-            if (c == '/' && i + 1 < line.size() && line[i + 1] == '*') { line[i] = line[i + 1] = ' '; ++i; inComment = true; }
+            if (c == '/' && i + 1 < n && line[i + 1] == '/') break;
+            if (c == '#' && i == firstNonBlank(View(line, n))) break;   // a preprocessor line
+            if (c == '/' && i + 1 < n && line[i + 1] == '*') { line[i] = line[i + 1] = ' '; ++i; inComment = true; }
         }
     }
-    return lines;
+    return buf;
 }
 
-bool functionLike(const std::string& line)
+bool functionLike(View line)
 {
     // A signature: has '(' before its '{', and is not a control statement (those live inside a function body that is folded as a whole).
     const auto brace = line.find('{');
     const auto paren = line.find('(');
-    if (paren == std::string::npos || (brace != std::string::npos && brace < paren)) return false;
-    const std::string t = line.substr(line.find_first_not_of(" \t") == std::string::npos ? 0 : line.find_first_not_of(" \t"));
-    for (const char* kw : {"if", "for", "while", "switch", "catch", "else", "return"})
-        if (t.rfind(kw, 0) == 0 && (t.size() == std::string(kw).size() || !(std::isalnum(static_cast<unsigned char>(t[std::string(kw).size()])) || t[std::string(kw).size()] == '_'))) return false;
+    if (paren == View::npos || (brace != View::npos && brace < paren)) return false;
+    const auto first = firstNonBlank(line);
+    const View t = line.substr(first == View::npos ? 0 : first);
+    for (const View kw : {View("if"), View("for"), View("while"), View("switch"), View("catch"), View("else"), View("return")})
+        if (t.starts_with(kw) && (t.size() == kw.size() || !(std::isalnum(static_cast<unsigned char>(t[kw.size()])) || t[kw.size()] == '_'))) return false;
     return true;
 }
 
-std::string collapse(const std::string& s)
+std::string collapse(View s)
 {
     std::string out;
+    out.reserve(s.size());
     for (const char c : s) {
         if (std::isspace(static_cast<unsigned char>(c))) { if (!out.empty() && out.back() != ' ') out += ' '; }
         else out += c;
@@ -82,7 +97,7 @@ bool identChar(char c) { return std::isalnum(static_cast<unsigned char>(c)) || c
 bool nameChar(char c) { return identChar(c) || c == ':' || c == '~'; }   // what `nameBefore` reads: identifiers and their `Class::` qualifiers
 
 /// The text of `s[0, end)` read backwards as a name (`nameChar`), skipping spaces before `end` first.
-std::string nameEndingAt(const std::string& s, std::size_t end)
+View nameEndingAt(View s, std::size_t end)
 {
     while (end > 0 && std::isspace(static_cast<unsigned char>(s[end - 1]))) --end;
     std::size_t b = end;
@@ -91,7 +106,7 @@ std::string nameEndingAt(const std::string& s, std::size_t end)
 }
 
 /// The trailing identifier of `s` (`export const handler` -> `handler`).
-std::string lastIdent(const std::string& s)
+View lastIdent(View s)
 {
     std::size_t e = s.size();
     while (e > 0 && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
@@ -101,47 +116,48 @@ std::string lastIdent(const std::string& s)
 }
 
 /// Go: `func (p *Parser) Term(` and `func Map[T any](` (a receiver, a type-parameter list). Gives `Parser::Term` and `Map`; "" when `line` is neither.
-std::string goName(const std::string& line)
+std::string goName(View line)
 {
-    const auto first = line.find_first_not_of(" \t");
-    if (first == std::string::npos || line.compare(first, 5, "func ") != 0) return {};
+    const auto first = firstNonBlank(line);
+    if (first == View::npos || line.compare(first, 5, "func ") != 0) return {};
     std::size_t i = first + 5;
     while (i < line.size() && line[i] == ' ') ++i;
     std::string receiver;
     if (i < line.size() && line[i] == '(') {
         const auto close = line.find(')', i);
-        if (close == std::string::npos) return {};
-        std::string r = line.substr(i + 1, close - i - 1);
-        if (const auto br = r.find('['); br != std::string::npos) r.erase(br);   // `Stack[T]` -> `Stack`
-        receiver = lastIdent(r);
+        if (close == View::npos) return {};
+        View r = line.substr(i + 1, close - i - 1);
+        if (const auto br = r.find('['); br != View::npos) r = r.substr(0, br);   // `Stack[T]` -> `Stack`
+        receiver = std::string(lastIdent(r));
         i = close + 1;
         while (i < line.size() && line[i] == ' ') ++i;
     }
     const std::size_t b = i;
     while (i < line.size() && identChar(line[i])) ++i;
     if (i == b) return {};
-    const std::string name = line.substr(b, i - b);
+    const View name = line.substr(b, i - b);
     if (i < line.size() && line[i] == '[') {   // type parameters: `[T any, U comparable]`
         int depth = 0;
         for (; i < line.size(); ++i) { if (line[i] == '[') ++depth; else if (line[i] == ']' && --depth == 0) { ++i; break; } }
     }
     if (i >= line.size() || line[i] != '(') return {};
-    return receiver.empty() ? name : receiver + "::" + name;
+    return receiver.empty() ? std::string(name) : receiver + "::" + std::string(name);
 }
 
 /// The position of the '(' that opens the parameter list: the first one outside `<...>` type arguments (`fn parse<T>(`, `std::function<void(int)> make(`), or the
 /// first '(' when angle brackets do not balance. `operator<` and a comparison are not type arguments.
-std::size_t parameterParen(const std::string& line)
+std::size_t parameterParen(View line)
 {
     int angle = 0;
     for (std::size_t i = 0; i < line.size(); ++i) {
         const char c = line[i];
         if (c == '(' && angle == 0) return i;
-        std::size_t p = i;
-        while (p > 0 && std::isspace(static_cast<unsigned char>(line[p - 1]))) --p;
-        const std::string prev = p > 0 ? nameEndingAt(line, p) : std::string{};
-        const bool afterOperator = prev.size() >= 8 && prev.compare(prev.size() - 8, 8, "operator") == 0;
-        if (c == '<' && p > 0 && (identChar(line[p - 1]) || line[p - 1] == '>') && !afterOperator) ++angle;
+        if (c == '<') {
+            std::size_t p = i;
+            while (p > 0 && std::isspace(static_cast<unsigned char>(line[p - 1]))) --p;
+            const bool afterOperator = p >= 8 && line.compare(p - 8, 8, "operator") == 0;   // the name read back from `p` ends in `operator`
+            if (p > 0 && (identChar(line[p - 1]) || line[p - 1] == '>') && !afterOperator) ++angle;
+        }
         else if (c == '>' && angle > 0 && (i == 0 || line[i - 1] != '-')) --angle;
     }
     return line.find('(');
@@ -149,25 +165,25 @@ std::size_t parameterParen(const std::string& line)
 
 /// The name of a function bound to a variable, property or field: `const add = (a, b) => {`, `let f = function (a) {`, `run: function (a) {`,
 /// `handler: Handler = async (req) => {` give `add`, `f`, `run`, `handler`. `head` is the text before the parameter list.
-std::string assignedName(const std::string& head)
+View assignedName(View head)
 {
-    std::size_t eq = std::string::npos;
+    std::size_t eq = View::npos;
     for (std::size_t i = 0; i < head.size(); ++i)
-        if (head[i] == '=' && (i + 1 >= head.size() || (head[i + 1] != '=' && head[i + 1] != '>')) && (i == 0 || std::string("!<>=").find(head[i - 1]) == std::string::npos)) { eq = i; break; }
-    std::string lhs = head.substr(0, eq);   // npos: the whole head, an object property or a label
-    if (eq == std::string::npos && lhs.find(':') == std::string::npos) return {};
+        if (head[i] == '=' && (i + 1 >= head.size() || (head[i + 1] != '=' && head[i + 1] != '>')) && (i == 0 || View("!<>=").find(head[i - 1]) == View::npos)) { eq = i; break; }
+    View lhs = head.substr(0, eq);   // npos: the whole head, an object property or a label
+    if (eq == View::npos && lhs.find(':') == View::npos) return {};
     for (std::size_t i = 0; i < lhs.size(); ++i)   // a type annotation: `handler: Handler`
-        if (lhs[i] == ':' && !(i + 1 < lhs.size() && lhs[i + 1] == ':') && !(i > 0 && lhs[i - 1] == ':')) { lhs.erase(i); break; }
+        if (lhs[i] == ':' && !(i + 1 < lhs.size() && lhs[i + 1] == ':') && !(i > 0 && lhs[i - 1] == ':')) { lhs = lhs.substr(0, i); break; }
     return lastIdent(lhs);
 }
 
 /// The name of the function a signature line declares, as the source qualifies it. Reads what `nameBefore` reads and, where that gives nothing usable, the
 /// declaration forms it could not: Go receivers and type parameters, generic parameter lists, operators, and functions bound to a name.
-std::string signatureName(const std::string& line)
+std::string signatureName(View line)
 {
-    if (const std::string go = goName(line); !go.empty()) return go;
+    if (std::string go = goName(line); !go.empty()) return go;
     const std::size_t paren = parameterParen(line);
-    if (paren == std::string::npos) return {};
+    if (paren == View::npos) return {};
     std::size_t nameEnd = paren;   // before a type-argument list: `parse<T>(` reads `parse`
     while (nameEnd > 0 && std::isspace(static_cast<unsigned char>(line[nameEnd - 1]))) --nameEnd;
     if (nameEnd > 0 && line[nameEnd - 1] == '>') {
@@ -180,36 +196,34 @@ std::string signatureName(const std::string& line)
         }
         if (angle == 0 && k > 0 && identChar(line[k - 1])) nameEnd = k;
     }
-    std::string id = nameEndingAt(line, nameEnd);
+    const View id = nameEndingAt(line, nameEnd);
     if (id.empty()) {   // `bool operator<(`: the symbol before the '(' belongs to an `operator` keyword
         std::size_t e = paren;
         while (e > 0 && std::isspace(static_cast<unsigned char>(line[e - 1]))) --e;
         std::size_t b = e;
-        while (b > 0 && std::string("+-*/%^&|~!=<>,[]").find(line[b - 1]) != std::string::npos) --b;
+        while (b > 0 && View("+-*/%^&|~!=<>,[]").find(line[b - 1]) != View::npos) --b;
         if (b < e) {
-            const std::string before = nameEndingAt(line, b);
+            const View before = nameEndingAt(line, b);
             if (before.size() >= 8 && before.compare(before.size() - 8, 8, "operator") == 0) {
-                std::string symbol = line.substr(b, e - b);
+                std::string symbol(line.substr(b, e - b));
                 symbol.erase(std::remove_if(symbol.begin(), symbol.end(), [](char c) { return std::isspace(static_cast<unsigned char>(c)); }), symbol.end());
-                return before + symbol;
+                return std::string(before) + symbol;
             }
         }
     }
     if (id.empty() || id == "function" || id == "async") {
-        std::string head = line.substr(0, paren);
-        if (const std::string named = assignedName(head); !named.empty()) return named;
+        if (const View named = assignedName(line.substr(0, paren)); !named.empty()) return std::string(named);
     }
-    return id;
+    return std::string(id);
 }
 
 /// One function-like block as the heuristics find it, before it becomes a node.
 struct Found { int sig, bodyFrom, bodyTo; std::string qualified; int spanFirst = 0; };
 
-OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
+OutlineNode toNode(Found&& f, const std::vector<View>& lines)
 {
     OutlineNode n;
     n.kind = "function";
-    n.qualifiedName = f.qualified;
     const auto colon = f.qualified.rfind(':');
     n.name = colon == std::string::npos ? f.qualified : f.qualified.substr(colon + 1);
     n.first = f.spanFirst > 0 ? f.spanFirst : f.sig;
@@ -218,6 +232,7 @@ OutlineNode toNode(const Found& f, const std::vector<std::string>& lines)
     n.bodyFrom = f.bodyFrom;
     n.bodyTo = f.bodyTo;
     n.signature = collapse(lines[static_cast<std::size_t>(f.sig) - 1]);
+    n.qualifiedName = std::move(f.qualified);
     return n;
 }
 
@@ -227,8 +242,16 @@ public:
     [[nodiscard]] std::string name() const override { return "braces@3"; }
     [[nodiscard]] Outline outline(std::string_view text) const override
     {
-        const auto raw = splitLines(std::string(text));
-        const auto lines = blankBlockComments(raw);
+        const auto raw = splitViews(text);
+        // A text with no "/*" has no block comment to blank: it is scanned as it is, with no copy (the cost of R-BLK-5 is paid by the texts that have one).
+        std::string blanked;
+        std::vector<View> blankedLines;
+        if (text.find("/*") != View::npos) {
+            blanked = blankBlockComments(text, raw);
+            blankedLines.reserve(raw.size());
+            for (const View l : raw) blankedLines.emplace_back(blanked.data() + (l.data() - text.data()), l.size());
+        }
+        const auto& lines = blankedLines.empty() ? raw : blankedLines;
         Outline out;
         out.provider = name();
         int depth = 0;
@@ -236,9 +259,9 @@ public:
             bool opens = false;
             const int d = braceDelta(lines[i], opens);
             // Allman style: the signature is on the line before a lone '{'.
-            const auto firstNonBlank = lines[i].find_first_not_of(" \t");
-            const bool loneBrace = firstNonBlank != std::string::npos && lines[i][firstNonBlank] == '{' && lines[i].find_first_not_of(" \t", firstNonBlank + 1) == std::string::npos;
-            const bool allman = loneBrace && i > 0 && lines[i - 1].find('(') != std::string::npos && lines[i - 1].find('{') == std::string::npos && lines[i - 1].find(';') == std::string::npos && functionLike(lines[i - 1] + " {");
+            const auto firstNb = firstNonBlank(lines[i]);
+            const bool loneBrace = firstNb != View::npos && lines[i][firstNb] == '{' && firstNonBlank(lines[i].substr(firstNb + 1)) == View::npos;
+            const bool allman = loneBrace && i > 0 && lines[i - 1].find('(') != View::npos && lines[i - 1].find('{') == View::npos && lines[i - 1].find(';') == View::npos && functionLike(lines[i - 1]);
             if (opens && d > 0 && (allman || functionLike(lines[i]))) {
                 const int start = depth;
                 const std::size_t sig = allman ? i - 1 : i;
@@ -251,7 +274,7 @@ public:
                 i = j;
                 continue;
             }
-            if (opens && d == 0 && functionLike(lines[i]) && lines[i].find('}') != std::string::npos && lines[i].find(';') != std::string::npos && lines[i].find('{') < lines[i].rfind('}'))
+            if (opens && d == 0 && functionLike(lines[i]) && lines[i].find('}') != View::npos && lines[i].find(';') != View::npos && lines[i].find('{') < lines[i].rfind('}'))
                 out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(i) + 1, static_cast<int>(i) + 1, signatureName(lines[i])}, raw));   // a function written on one line
             depth += d;
         }
@@ -265,26 +288,25 @@ public:
     [[nodiscard]] std::string name() const override { return "indent@2"; }
     [[nodiscard]] Outline outline(std::string_view text) const override
     {
-        const auto lines = splitLines(std::string(text));
+        const auto lines = splitViews(text);
         Outline out;
         out.provider = name();
-        const auto indentOf = [](const std::string& l) { return l.find_first_not_of(" \t"); };
         std::size_t floor = 0;   // the first line after the previous block: a decorator search never reaches into it
         for (std::size_t i = 0; i < lines.size(); ++i) {
-            const auto ind = indentOf(lines[i]);
-            if (ind == std::string::npos) continue;
-            const std::string t = lines[i].substr(ind);
-            if (t.rfind("def ", 0) != 0 && t.rfind("async def ", 0) != 0) continue;
+            const auto ind = firstNonBlank(lines[i]);
+            if (ind == View::npos) continue;
+            const View t = lines[i].substr(ind);
+            if (!t.starts_with("def ") && !t.starts_with("async def ")) continue;
             std::size_t j = i + 1, lastBody = i;
             for (; j < lines.size(); ++j) {
-                const auto in2 = indentOf(lines[j]);
-                if (in2 == std::string::npos) continue;   // blank line
+                const auto in2 = firstNonBlank(lines[j]);
+                if (in2 == View::npos) continue;   // blank line
                 if (in2 <= ind) break;
                 lastBody = j;
             }
             // decorators: the `@name` lines directly above, at the same indent, belong to the block (R-BLK-6)
             std::size_t span = i;
-            while (span > floor && indentOf(lines[span - 1]) == ind && lines[span - 1][ind] == '@') --span;
+            while (span > floor && firstNonBlank(lines[span - 1]) == ind && lines[span - 1][ind] == '@') --span;
             // a multi-line signature: the body starts after the line that ends the signature
             out.nodes.push_back(toNode({static_cast<int>(i) + 1, static_cast<int>(std::min(i + 1, lastBody)) + 1, static_cast<int>(lastBody) + 1, nameBefore(lines[i]), static_cast<int>(span) + 1}, lines));
             i = lastBody;

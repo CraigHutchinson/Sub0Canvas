@@ -156,14 +156,28 @@ std::vector<FoldRegion> foldRegionsOf(const Outline& outline, bool all)
     return out;
 }
 
+namespace {
+
+/// `foldRegionsOf` for an outline nobody else keeps: the names move into the regions instead of being copied.
+std::vector<FoldRegion> takeRegions(Outline&& outline, bool all)
+{
+    std::vector<FoldRegion> out;
+    out.reserve(outline.nodes.size());
+    for (auto& n : outline.nodes)
+        if (all || n.bodyTo > n.bodyFrom) out.push_back({n.nameLine, n.bodyFrom, n.bodyTo, std::move(n.qualifiedName), n.first});
+    return out;
+}
+
+}  // namespace
+
 std::vector<FoldRegion> foldRegionsFor(const std::string& path, const std::string& text, bool all)
 {
-    return foldRegionsOf(defaultLanguages().outline(path, text), all);
+    return takeRegions(defaultLanguages().outline(path, text), all);
 }
 
 std::vector<FoldRegion> foldRegions(const std::string& text, bool python, bool all)
 {
-    return foldRegionsOf((python ? indentProvider() : bracesProvider()).outline(text), all);
+    return takeRegions((python ? indentProvider() : bracesProvider()).outline(text), all);
 }
 
 std::string foldedView(const std::string& text, bool python, const std::vector<int>& focus, std::size_t budget)
