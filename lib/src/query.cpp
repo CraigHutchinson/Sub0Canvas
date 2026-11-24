@@ -708,7 +708,7 @@ void opEvents(Ctx& c)
     for (; pos < end; ++pos) {
         if (sent >= limit || (sent > 0 && full(c))) break;
         if (fromStore) c.w.raw(eventJson(c.doc.store()->events()[static_cast<std::size_t>(pos - base)]));
-        else projection::writeBlockEvent(c.w, c.doc.index()->events()[static_cast<std::size_t>(pos)]);
+        else c.doc.index()->writeEventJson(c.w, static_cast<std::size_t>(pos));
         ++sent;
     }
     c.w.endArray().kv("next", static_cast<std::int64_t>(pos));   // always a position: a caught-up reader keeps it and asks again

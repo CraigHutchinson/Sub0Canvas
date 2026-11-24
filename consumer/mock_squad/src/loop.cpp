@@ -284,14 +284,14 @@ private:
         out_.record["layers/turn-" + std::to_string(turns_) + ".json"] = layeredJson(spec, index_) + "\n";
         eventsCarried_ = index_.events().size();
         LayerTurn turn;
-        for (const Block* b : index_.all()) turn.blocks.push_back({b->path, leafOf(b->name), b->id});
+        for (const Block* b : index_.all()) turn.blocks.push_back({std::string{b->path}, leafOf(std::string{b->name}), b->id});
         for (const auto& it : issues_) {
             IssueAt at{it.number, it.key, it.title, {}};
             for (const auto& a : it.anchors) {
                 const Block* b = a.blockId.empty() ? nullptr : index_.resolve(a.blockId);
                 if (!a.blockId.empty() && !b)   // R-VWR-7: every block anchor in a turn file resolves to a live block
                     out_.violations.push_back("turn " + std::to_string(turns_) + ": the anchor of '" + it.title + "' names a block that does not resolve");
-                at.anchors.push_back(b ? b->path + " " + leafOf(b->name) : a.path);
+                at.anchors.push_back(b ? std::string{b->path} + " " + leafOf(std::string{b->name}) : a.path);
             }
             turn.issues.push_back(std::move(at));
         }

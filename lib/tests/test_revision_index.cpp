@@ -138,7 +138,7 @@ std::vector<std::string> describe(const FixtureSource& src, const Replayed& at, 
         std::string detail = s.event.detail;
         if (s.event.carry == Carry::merged) {
             const Block* survivor = at.index.resolve(s.event.detail);
-            detail = "->" + (survivor ? survivor->name : std::string("?"));
+            detail = "->" + (survivor ? std::string{survivor->name} : std::string("?"));
         }
         out.push_back(std::format("{}|{}|{}|{}|{}", label, carryName(s.event.carry), s.event.path, s.event.name, detail));
     }

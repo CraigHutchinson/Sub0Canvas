@@ -77,7 +77,7 @@ public:
     [[nodiscard]] std::string id(const std::string& path, const std::string& leaf) const
     {
         for (const auto* b : index_.blocks(path))
-            if (leafOf(b->name) == leaf) return b->id;
+            if (leafOf(std::string{b->name}) == leaf) return b->id;
         return {};
     }
     /// Where the block of identity `id` is now (following a merge to its survivor); nullopt when it is gone with no successor.
@@ -85,7 +85,7 @@ public:
     {
         const auto* b = index_.resolve(id);
         if (!b) return std::nullopt;
-        return Span{b->path, b->name, b->first, b->last};
+        return Span{std::string{b->path}, std::string{b->name}, b->first, b->last};
     }
     /// The identity a lookup of `id` lands on now: itself while live, its survivor after a merge, "" when gone.
     [[nodiscard]] std::string resolvesTo(const std::string& id) const
@@ -103,7 +103,7 @@ public:
     [[nodiscard]] std::vector<Span> blocks(const std::string& path) const
     {
         std::vector<Span> out;
-        for (const auto* b : index_.blocks(path)) out.push_back({b->path, b->name, b->first, b->last});
+        for (const auto* b : index_.blocks(path)) out.push_back({std::string{b->path}, std::string{b->name}, b->first, b->last});
         return out;
     }
     /// Whether the history records `carry` for `id`.
@@ -138,7 +138,11 @@ public:
     [[nodiscard]] bool holdsLiteral(const std::string& id, const std::string& literal) const
     {
         const auto* b = index_.resolve(id);
-        return b && b->literals.count(literal) == 1;
+        if (!b) return false;
+        const auto here = index_.blocks(std::string{b->path});
+        const auto lits = index_.literals(std::string{b->path});
+        for (std::size_t k = 0; k < here.size(); ++k) if (here[k] == b) return lits[k].count(literal) == 1;
+        return false;
     }
 
     /// The issues of a gate's verdict, anchored to the document as it stands. `sources`: the test files, by path.

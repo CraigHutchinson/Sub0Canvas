@@ -286,7 +286,9 @@ Resolution AnchorResolver::resolve(const SourceAnchor& a)
     const AnchorDocument::Identity identity = document_.identity(a);
     const Block* blk = identity.block;
     const bool followed = blk && (blk->id != identity.madeId || blk->path != a.path);
-    const std::string& path = blk ? blk->path : a.path;
+    const bool elsewhere = blk && blk->path != a.path;   // the block moved to another file: only then is a path string built
+    const std::string movedTo = elsewhere ? std::string{blk->path} : std::string{};
+    const std::string& path = elsewhere ? movedTo : a.path;
 
     Prepared* prep = prepare(path);
     if (!prep) {

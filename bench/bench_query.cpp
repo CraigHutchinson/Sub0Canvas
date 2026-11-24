@@ -70,8 +70,8 @@ struct Served
             LayerItem it;
             it.key = "issues/" + b->id;
             it.kind = items.size() % 2 == 0 ? "test" : "error";
-            it.title = "case in " + b->name;
-            it.detail = "FAIL - " + b->name + ": expected 1 got 2";
+            it.title = "case in " + std::string{b->name};
+            it.detail = "FAIL - " + std::string{b->name} + ": expected 1 got 2";
             Anchor a;
             a.blockId = b->id;
             a.path = b->path;

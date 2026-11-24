@@ -11,24 +11,29 @@
 /// its detail are layer-neutral, so the review and prose layers reuse them. Pure data, no I/O.
 
 #include <cstddef>
+#include <cstdint>
+#include <iterator>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace sub0canvas {
 
-/// One semantic block of a file, with its stable identity and where it stands now.
+/// One semantic block of a file, with its stable identity and where it stands now. The index keeps NO token sets and no texts (docs/SCALE.md section 4, S1): the
+/// strings below are views into the index's interned pool, so a `Block` is a small record, and a rule that needs a block's tokens or literals reads the text back
+/// through the index's `TextSource`.
 struct Block
 {
-    std::string id;                    ///< "b7": stable for the life of the index; never reused
-    std::string path;
-    std::string name;                  ///< as `foldRegions` names it (may be qualified: `Parser::term`)
-    std::string signature;             ///< the signature line, whitespace collapsed
+    std::string id;                    ///< "b" and 12 hex digits, a deterministic BIRTH id (A16): stable for the life of the index and across replays; never reused; opaque
+    std::string_view path;             ///< interned: valid as long as the index it came from (or a copy of it) lives
+    std::string_view name;             ///< as `foldRegions` names it (may be qualified: `Parser::term`); interned
+    std::string_view signature;        ///< the signature line, whitespace collapsed; interned
     int first = 0, last = 0;           ///< the lines it spans now (1-based, inclusive, signature to closing line)
-    std::set<std::string> tokens;      ///< identifiers and numbers of its body: what content similarity compares
-    std::set<std::string> literals;    ///< the contents of its string and character literals ("%", "asin"): what issue localisation matches
 };
 
 /// How a block's identity was carried through the last update of its file (for the log and the tests).
@@ -45,11 +50,89 @@ struct BlockEvent
     int turn = 0;                         ///< the turn it happened in (`setTurn`)
 };
 
+/// Where a `BlockIndex` reads text back when a rule needs text it does not hold (docs/SCALE.md section 4: "texts fetched from the document source when needed, never
+/// held"). The index asks by path AND content id: `BlockIndex::textId(text)` of the text the index was given for that path, so a source keyed by object id (a git
+/// blob) answers for the VERSION asked about, including the version a path had before the update in progress. The index never holds what a source returns beyond
+/// the call that asked. An index with no source retains the current text of every path itself, which is what a caller that cannot serve old versions needs.
+class TextSource
+{
+public:
+    virtual ~TextSource() = default;
+    /// The text of `path` whose content id is `textId`, or nullopt when it is not available (partial or shallow history: the rule then treats the block as unknown,
+    /// never fails). The view stays valid until the next call on this source.
+    [[nodiscard]] virtual std::optional<std::string_view> text(std::string_view path, std::uint64_t textId) const = 0;
+};
+
+namespace json { class Writer; }   // lib/src/json_util.hpp: internal, only named here
+class BlockIndex;
+
+/// The index's history as a read-only random-access range of `BlockEvent`s, held compactly inside the index and materialised on access (an event is built when read:
+/// the elements are values, so `const auto& e = log[i]` binds a temporary). Valid while its index lives and is not updated.
+class EventLog
+{
+public:
+    class iterator
+    {
+    public:
+        using iterator_category = std::input_iterator_tag;
+        using value_type = BlockEvent;
+        using difference_type = std::ptrdiff_t;
+        using pointer = const BlockEvent*;
+        using reference = BlockEvent;
+        iterator() = default;
+        [[nodiscard]] BlockEvent operator*() const;
+        iterator& operator++() { ++i_; return *this; }
+        iterator operator++(int) { iterator t = *this; ++i_; return t; }
+        [[nodiscard]] bool operator==(const iterator& o) const { return i_ == o.i_; }
+        [[nodiscard]] bool operator!=(const iterator& o) const { return i_ != o.i_; }
+    private:
+        friend class EventLog;
+        iterator(const BlockIndex* x, std::size_t i) : x_(x), i_(i) {}
+        const BlockIndex* x_ = nullptr;
+        std::size_t i_ = 0;
+    };
+    [[nodiscard]] std::size_t size() const;
+    [[nodiscard]] bool empty() const { return size() == 0; }
+    [[nodiscard]] BlockEvent operator[](std::size_t i) const;
+    [[nodiscard]] BlockEvent front() const { return (*this)[0]; }
+    [[nodiscard]] BlockEvent back() const { return (*this)[size() - 1]; }
+    [[nodiscard]] iterator begin() const { return iterator{x_, 0}; }
+    [[nodiscard]] iterator end() const { return iterator{x_, size()}; }
+    /// The events from position `from` on, as a vector (what an API that takes `std::vector<BlockEvent>` is given).
+    [[nodiscard]] std::vector<BlockEvent> from(std::size_t from) const;
+private:
+    friend class BlockIndex;
+    explicit EventLog(const BlockIndex* x) : x_(x) {}
+    const BlockIndex* x_;
+};
+
+/// What the index did, for tests and the benchmarks: counts, not behaviour.
+struct BlockIndexStats
+{
+    std::size_t parses = 0;             ///< files folded into blocks (`foldRegionsFor` calls)
+    std::size_t analysisHits = 0;       ///< updates served from the per-blob analysis cache without folding
+    std::size_t textFetches = 0;        ///< texts read back from the source (or the retained texts) because a rule needed them
+    std::size_t reviveCandidates = 0;   ///< retired blocks compared exactly during revive probes (a probe never scans every retired block)
+    std::size_t mergeCandidates = 0;    ///< live blocks whose tokens were read back to confirm a merge (the rest were excluded by their filters)
+};
+
 /// Every block of a document, with identities that survive edits. Feed it each file's new text after any change (`update` is cheap when the text is the
 /// same); ask it where an id is now, or which block holds a line.
+///
+/// Compact and lazy (S1, docs/SCALE.md): a block is about a hundred bytes, its strings are interned, and the index holds no file text and no token sets. A rule that
+/// needs text (a similarity test against an old block, a merge, a literal) reads it back through the `TextSource` (or, with no source, the index's own retained
+/// copy of each path's current text). Ids are deterministic birth ids; lookups by id are O(1); a revive probe consults indexes, never every retired block.
+/// An index and its copies share one string pool, so they must not be updated from different threads at the same time.
 class BlockIndex
 {
 public:
+    BlockIndex();
+    BlockIndex(const BlockIndex& other);
+    BlockIndex(BlockIndex&& other) noexcept;
+    BlockIndex& operator=(const BlockIndex& other);
+    BlockIndex& operator=(BlockIndex&& other) noexcept;
+    ~BlockIndex();
+
     /// Reconcile the blocks of `path` with its new text. In order, a new block keeps the id of an unmatched old block of the same file that has
     ///   1. the same signature (a SYMBOL replace, a body edit, a move within the file),
     ///   2. the same name, when that name is unique on both sides (a signature change),
@@ -57,9 +140,27 @@ public:
     /// or else revives a RETIRED id of any file with the same signature or a near-identical body (a block deleted and written again, a move across files);
     /// or else gets a new id. An old block left unmatched is retired: when most of its body now lives in one block (token containment >= 0.6) it is
     /// recorded as MERGED into that block, whose id its layer items follow; otherwise its items are orphans.
+    /// The old text a rule needs is read through `textSource()`; one it cannot supply makes those blocks unknown to the similarity rules (they are retired, never merged
+    /// or renamed), never an error.
     void update(const std::string& path, const std::string& text);
     /// The turn later events are stamped with.
     void setTurn(int turn) { turn_ = turn; }
+    /// The revision a block born now is born in, for its birth id (A16, DECISIONS.md section 4): an id is a hash of (this, path, signature, ordinal among identical
+    /// births), so every replay of the same history derives the same ids with no counter. Empty (the default): the turn number stands in.
+    void setBirthRevision(std::string_view revision);
+
+    /// Where old text is read back (see `TextSource`), or nullptr: the index then retains each path's current text itself. The source is not owned, must outlive the
+    /// index and any copy, and must serve every text the index was given until the update that replaces it has finished. Set it before the first `update`.
+    void setTextSource(const TextSource* source);
+    [[nodiscard]] const TextSource* textSource() const;
+    /// The content id of a text: a 64-bit hash that is the same on every machine and run (never `std::hash`), what `TextSource` is asked for and what a file's blocks are
+    /// keyed by.
+    [[nodiscard]] static std::uint64_t textId(std::string_view text);
+    /// The content id of the text `path` was last indexed at; 0 when never indexed.
+    [[nodiscard]] std::uint64_t indexedTextId(const std::string& path) const;
+    /// Keep the analysis (the folded blocks, their spans, hashes and filters) of up to `files` distinct (path, content id) pairs, so a text indexed again (a revert, a
+    /// branch or clone that holds the same blob) is not folded again. 0 (the default) keeps none; each kept entry is about the size of its blocks.
+    void setAnalysisCacheLimit(std::size_t files);
 
     /// The live block of that id, or of the block it was merged into; nullptr when the id is retired without a successor (its items are orphans).
     [[nodiscard]] const Block* resolve(const std::string& id) const;
@@ -67,10 +168,16 @@ public:
     [[nodiscard]] const Block* at(const std::string& path, int line) const;
     /// The live blocks of `path`, in file order.
     [[nodiscard]] std::vector<const Block*> blocks(const std::string& path) const;
-    /// Every live block of every file.
+    /// Every live block of every file, files in path order.
     [[nodiscard]] std::vector<const Block*> all() const;
+    /// How many blocks are live, and how many retired ones the index remembers.
+    [[nodiscard]] std::size_t liveCount() const;
+    [[nodiscard]] std::size_t retiredCount() const;
+    /// The string literals of each live block of `path` (in file order, as `blocks(path)`): what issue localisation matches. Read back from the text, so empty sets
+    /// when the source cannot supply it.
+    [[nodiscard]] std::vector<std::set<std::string>> literals(const std::string& path) const;
     /// What happened to ids, in order.
-    [[nodiscard]] const std::vector<BlockEvent>& events() const { return events_; }
+    [[nodiscard]] EventLog events() const { return EventLog{this}; }
     /// The index as JSON (`{"blocks":[{id,path,name,first,last}],"retired":[{id,name,mergedInto}],"events":[...]}`), kept beside the canvas for a later reader.
     /// `events` is the whole log.
     [[nodiscard]] std::string json() const;
@@ -81,18 +188,19 @@ public:
     /// `{"seq":n,"kind":"block","source":"canvas/index","subject":id,"data":{turn,carry,path,name,detail}}`, `seq` being the position in `events()` (the cursor
     /// a snapshot's `eventsFrom` names). A provisional subset of the design's Event: the actor and time are not recorded here, and B1's store owns the final writer.
     [[nodiscard]] std::string eventLogNdjson(const std::string& document) const;
+    [[nodiscard]] BlockIndexStats stats() const;
+    /// Event `i` written as the projection's JSON object (what `events()[i]` would be, without building it): for the library's own writers.
+    void writeEventJson(json::Writer& w, std::size_t i) const;
 
 private:
-    struct Retired { Block block; std::string mergedInto; };
+    friend class EventLog;
+    struct State;
     [[nodiscard]] std::string retiredJson() const;
     [[nodiscard]] std::string jsonFrom(std::size_t eventsFrom, bool say) const;
-    std::map<std::string, std::string> texts_;            ///< the text each path was last indexed at
-    std::map<std::string, std::size_t> hashes_;           ///< by live id: a hash of its text, to tell an edited block from an untouched one
-    std::map<std::string, std::vector<Block>> live_;      ///< by path, in file order
-    std::map<std::string, Retired> retired_;              ///< by id
-    std::vector<BlockEvent> events_;
-    int next_ = 1;
+    [[nodiscard]] BlockEvent eventAt(std::size_t i) const;
+    [[nodiscard]] std::size_t eventCount() const;
     int turn_ = 0;
+    std::unique_ptr<State> s_;
 };
 
 /// Where a layer item belongs: a block id when it lies in a block (resolved to lines at render time), else a path and line of the revision it was found in.

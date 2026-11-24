@@ -329,7 +329,7 @@ int main(int argc, char** argv)
             CHECK_EQ(st.visited, std::size_t{3});
             // The entry is the bundle's block: id, path, name, signature, first, last, and nothing else (no token sets).
             const auto first = b->entries().at(0).value();
-            CHECK_EQ(simdjson::minify(first), std::string{R"j({"id":"b13","path":"src/b.cpp","name":"fnb0","signature":"int fnb0(int a)","first":1,"last":4})j"});
+            CHECK_EQ(simdjson::minify(first), "{\"id\":\"" + w.index.blocks("src/b.cpp").front()->id + R"j(","path":"src/b.cpp","name":"fnb0","signature":"int fnb0(int a)","first":1,"last":4})j");   // a birth id (A16): read from the index, never spelled
             // Paging: pages of 5 concatenate to the file's blocks in order.
             Strings want;
             for (int i = 0; i < 12; ++i) want.push_back("fna" + std::to_string(i));
@@ -450,7 +450,7 @@ int main(int argc, char** argv)
             CHECK_EQ(all->num("end"), 4);
             CHECK_EQ(all->num("next"), 4);
             CHECK_EQ(all->names("carry"), (Strings{"added", "added", "added", "merged"}));
-            CHECK_EQ(all->entries().at(3)["id"].get_string().value(), std::string_view{"b3"});   // the retired fn2, merged into a survivor
+            CHECK_EQ(all->entries().at(3)["id"].get_string().value(), std::string_view{w.index.events()[3].id});   // the retired fn2, merged into a survivor
             auto tail = ask(server, R"({"op":"events","from":3})");
             CHECK_EQ(tail->names("carry"), (Strings{"merged"}));
             CHECK_EQ(tail->num("from"), 3);

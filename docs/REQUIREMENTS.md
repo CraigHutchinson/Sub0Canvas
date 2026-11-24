@@ -232,11 +232,11 @@ its slice is built.
 | id | requirement | serves | slice |
 |---|---|---|---|
 | R-SCALE-1 | Cost is proportional to what is touched (paths viewed, anchored, subscribed to or changed), never to the repository. | U4 | S0-S4 |
-| R-SCALE-2 | The budgets of SCALE.md section 6, once measured, hold at 10^5, 10^7 and 10^9 lines (locally, label `timing`). | U4 | S0, S1 |
-| R-SCALE-3 | Identity allocation needs no global counter: shards and per-path replays allocate without coordinating. | U4 | S1, S4 (A2) |
+| R-SCALE-2 | The budgets of SCALE.md section 6, once measured, hold at 10^5, 10^7 and 10^9 lines (locally, label `timing`). | U4 | S0, S1: S1 built, at 10^5 only (SCALE.md 6.3: all time budgets met; 319 of 200 bytes a block, an xfail) |
+| R-SCALE-3 | Identity allocation needs no global counter: shards and per-path replays allocate without coordinating. | U4 | S1 (A16): built: birth ids, `test_block_index`; S4 (A2) |
 | R-SCALE-4 | Sketch-based candidate search loses no identity that the exhaustive rule keeps, on the synthetic corpus. | U4 | S2 |
 | R-SCALE-5 | Every path is classified before it is parsed; binary files get no blocks, and data and sidecar files are indexed only when the document's policy asks. | U4 | D0, S1 |
-| R-SCALE-6 | Per-blob tables are shared by every clone and worktree of a repository on one machine; an extra clone costs only its own small state. | U4, U12 | S1 (A19) |
+| R-SCALE-6 | Per-blob tables are shared by every clone and worktree of a repository on one machine; an extra clone costs only its own small state. | U4, U12 | S1 (A19): partly: the index is keyed by content id and caches an analysis per (path, content id), per index; the shared per-user cache is not built |
 | R-SCALE-7 | A missing object (partial or shallow clone) makes an answer unknown, never an error; the view still renders. | U4, U3 | G1 (A20): built (`FileText::unknown`, `Replayed::unknown`, `historyCut`; a missing text, a missing tree, a shallow and a partial clone) |
 | R-SCALE-8 | A trunk merge costs in proportion to the paths it changed and the open changes whose footprints it meets, not to the number of open changes. | U4, U12 | S4, P1 |
 | R-SCALE-9 | Per-path history never walks commits that did not change the path (git's changed-path filters, or an equivalent index). | U4, U3 | G1 (A21): built (one `git log -- <scope>`; a replay reads and applies only the revisions it lists; exact metrics `history sparse scope`) |

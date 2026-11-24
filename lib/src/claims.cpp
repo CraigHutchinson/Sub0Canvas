@@ -537,6 +537,11 @@ std::size_t emitBlockCarries(Store& store, const std::vector<BlockEvent>& events
     return written;
 }
 
+std::size_t emitBlockCarries(Store& store, const EventLog& events, std::size_t from)
+{
+    return emitBlockCarries(store, events.from(from), 0);
+}
+
 const Event& addNote(Store& store, TargetKind kind, const std::string& target, const std::string& text)
 {
     return store.emit(std::string{kNote}, target, payloadOf({{"kind", std::string{targetKindName(kind)}}, {"text", text}}));

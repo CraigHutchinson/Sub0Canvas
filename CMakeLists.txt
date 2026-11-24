@@ -158,6 +158,11 @@ if(SUB0CANVAS_BUILD_TESTING)
   target_compile_options(test_corpus PRIVATE ${SUB0CANVAS_STRICT} -g)
   target_link_libraries(test_corpus PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
   add_test(NAME test_corpus COMMAND test_corpus)
+  # The compact, lazy block index (S1): birth ids, the text-source seam, the revive probe, the per-blob analysis. It uses the corpus's edit stream as its history.
+  add_executable(test_block_index lib/tests/test_block_index.cpp)
+  target_compile_options(test_block_index PRIVATE ${SUB0CANVAS_STRICT} -g)
+  target_link_libraries(test_block_index PRIVATE sub0canvas sub0canvas_bench_corpus simdjson::simdjson Sub0Platform::sub0platform)
+  add_test(NAME test_block_index COMMAND test_block_index)
   # The source-anchor resolver (B4): truth from the mock attempts (fixtures/mock) and the corpus's edit stream, so it links the corpus generator too.
   add_executable(test_resolver lib/tests/test_resolver.cpp)
   target_compile_options(test_resolver PRIVATE ${SUB0CANVAS_STRICT} -g)

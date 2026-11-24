@@ -2,8 +2,7 @@
 
 Status: **design, for the owner to read** (2026-11-18). This is the one home for scale: the target profiles, the requirements they set, the design
 that answers them, and the budgets. It consolidates what was in USE_CASES.md (U4), BACKBONE.md section 12 and the scale rows of REQUIREMENTS.md,
-which now point here. Nothing here is built. S0 ([sessions/s0-scale-harness.md](sessions/s0-scale-harness.md)) replaces the guesses with
-measurements.
+which now point here. S0 ([sessions/s0-scale-harness.md](sessions/s0-scale-harness.md)) replaced the guesses with measurements; S1 (the compact, lazy `BlockIndex`, section 6.3) is built. The rest of the design is not.
 
 ## 1. The rule
 
@@ -43,10 +42,10 @@ From profile A (stated in U4 since 2026-11-17):
 
 | requirement | why | today's code |
 |---|---|---|
-| **Lazy, per-path indexing.** A path is indexed when first needed, never the whole tree. | 10^7 files cannot be read for one view | `BlockIndex` indexes what it is fed: fine, the consumer decides |
-| **Content-addressed reuse.** Blocks of a file are computed once per blob (its git object id) and shared across revisions, branches and clones. | most files are identical across most revisions | not built: `update` re-scans text, keyed by path |
-| **No full texts held.** The index keeps hashes, spans and sketches, and fetches text from the document source on demand. | 10^9 lines of text do not fit in memory | `BlockIndex::texts_` keeps every path's text; `Block` keeps two `std::set<std::string>` |
-| **Sub-linear candidate search.** Revive, merge and hunk matching use a sketch index (MinHash with locality-sensitive hashing), not a scan. | a scan over every retired block is quadratic across history | `retired_` is scanned in full on every unmatched block |
+| **Lazy, per-path indexing.** A path is indexed when first needed, never the whole tree. | 10^7 files cannot be read for one view | `BlockIndex` indexes what it is fed: fine, the consumer decides (unchanged) |
+| **Content-addressed reuse.** Blocks of a file are computed once per blob (its git object id) and shared across revisions, branches and clones. | most files are identical across most revisions | built (S1): a file is keyed by its content id (`BlockIndex::textId`), an unchanged text costs one hash, and an opt-in analysis cache (`setAnalysisCacheLimit`) serves a (path, content id) folded before. Not yet shared across clones (A19, with the per-user cache) |
+| **No full texts held.** The index keeps hashes, spans and sketches, and fetches text from the document source on demand. | 10^9 lines of text do not fit in memory | built (S1): no text and no token set is held when a `TextSource` is set; the rules read text back through it (section 6.3) |
+| **Sub-linear candidate search.** Revive, merge and hunk matching use a sketch index (MinHash with locality-sensitive hashing), not a scan. | a scan over every retired block is quadratic across history | built for revive (S1): a (signature, name) table and an exact prefix-filter posting index; the merge rule still scans live blocks, through a 128-bit filter per block (S2 removes it) |
 | **Per-path history.** Replay follows one path's revisions with rename detection and checkpoints, never every commit of the tree. | replaying 10^7 commits for one anchor is impossible | `RevisionIndex` is designed per tree; section 4 makes it per path |
 | **Sharded store and log.** Items, events and indexes are partitioned by path prefix; queries read only the shards of their area. | one log of a monorepo's events is too large to replay | the store is not built (B1): decide before building |
 | **Bounded output.** Snapshots and views are scoped by a query, never "everything". | `layeredJson` writes every file and block | fine for U1; scoped writers for U3, U4, U12 |
@@ -101,7 +100,7 @@ First targets; S0 replaces them with measurements, and R-SCALE-2 holds them at 1
 |---|---|---|
 | cold indexing of a code file | at least 1 million lines per second per core | timing: `index cold build 1e5 lines`; every tier: blocks found equal the generator's truth |
 | classification of a path | under 10 us, without reading the file for most paths | not yet benchmarked (the classifier is S2's) |
-| a compact block | under about 200 bytes | every tier: metric `index cold 1e5: live heap bytes per block`, an xfail until S1; its ceiling (total live heap bytes) holds meanwhile |
+| a compact block | under about 200 bytes | every tier: metric `index cold 1e5: live heap bytes per block`, **still an xfail: S1 reached 319 bytes** (section 6.3); its ceiling (total live heap bytes) holds |
 | a warm anchor resolution | under 10 ms | timing: `index warm resolve and at, x1000` |
 | an incremental commit or merge | proportional to the paths it changed and the open changes it meets | timing: `index incremental update, 1e5 lines, per commit`; every tier: events, live blocks and allocations over a fixed 100-commit stream |
 | a change's footprint | proportional to its diff; computed once per (base, head) | not yet benchmarked (P0) |
@@ -200,6 +199,37 @@ them touched) took 0.73 s over 9 git processes; a larger C++ project (291 first-
 processes, of which 40 were whole-diff queries asked because a file was added in the scope (the rename chase). About 30 revisions a second end to end: on Windows the process count, not the replay, is the cost
 (about 0.1 s per git process), and the next gain is fewer processes (a long-lived `cat-file --batch`, a stopping revision, batching the added-file diffs), not a faster index. Not measured: memory (the index holds every
 text and a copy per checkpoint until S1), a partial clone's cost, a repository of 10^5 commits (S3).
+
+### 6.3 Built and measured: the compact, lazy block index (S1, 2026-11-24)
+
+What `BlockIndex` is now (`lib/src/doc_layers.cpp`, `doc_layers.hpp`), against the numbers of section 6.0 (same corpus, same machine and baseline `croglegion`, mains power; A/B against the pre-change build, two to three interleaved runs each, so read to a few percent):
+
+| what | before | after |
+|---|---|---|
+| live heap per block, cold 1e5 (no text held) | 2,613 B (2,122 without the held texts) | **319 B** (1.53 MB; 4,800 blocks): still above the 200 B target |
+| allocations, cold 1e5 | 917,863 (85 per block) | 14,298 (3 per block) |
+| cold index build, 1e5 lines | 45-50 ms | 18 ms (2.6 times faster; 5.5 million lines per second) |
+| incremental update, per commit | 1.19-1.28 ms | 0.81-0.82 ms |
+| warm `resolve` and `at`, x1000 | 3.0 ms (3.0 us each) | 0.10 ms (0.10 us each: 29 times) |
+| revive scan, 22 novel blocks against 4,800 retired | 71-74 ms | 2.5-2.8 ms (the copy of the index is 11 ms before, 2.4 ms after); against 486 retired: 8.0 ms to 0.36 ms |
+| `history` replay of 200 commits | 450-475 ms | 140-150 ms (3 times); `at()` of a revision from a checkpoint: 52-57 ms to 8.3 ms |
+| resolver, 2,000 warm anchors | 9.3-10.4 ms | 3.7-3.9 ms |
+| not better | | `layeredJson`: one turn 2.55-2.70 to 2.8-3.0 ms (+10%), eight turns with cumulative events 17.6-20.6 to 21.3-23.7 ms (+10 to +15%); query `events` page of 200 10.2-11.9 to 11.6 ms (+13%); `blocks` of the largest file +3%. Their output grew by the id width (2% to 7%: a birth id is 13 characters, the counter's was 2 to 5), and the events are now written from the compact log without building a `BlockEvent`; a few percent remain, not explained yet |
+
+How the 319 bytes split: a 120-byte record (the `Block`: id string, three interned views, span; and the hash, signature-line and 128-bit token filter), about 27 for the id table, 32 for the block's event in the log, about 110 for its interned name and signature (bytes, index and table). What would reach 200: the event log held in memory is the log module's job (B0; the index can keep a cursor and drop it); the id as a 13-character string and the signature as a string are part of the public `Block`, which Sub0Squad reads.
+
+**What changed.**
+
+* **Ids are deterministic birth ids** (A16): 48 bits of a hash of (birth revision, path, signature, ordinal among identical births), written `b` and 12 hex digits. `setBirthRevision` names the revision (the turn number stands in), a clash takes the next ordinal. The hash is the library's own, little-endian, never `std::hash`: the same ids on every machine and replay. `resolve` goes through a flat id table (O(1)); `at` finds the file by path and walks its blocks.
+* **No text, no token sets held.** A block keeps `bodyHash` (to tell an edit from a reflow), its signature line and a 128-bit one-hash token filter. Strings (path, name, signature) are interned in a pool that copies of an index share. A rule that needs text reads it back through `TextSource::text(path, contentId)`: the OLD text of the file being updated (a similarity test against an unmatched old block), the current text of a file holding a merge candidate, and literals (`BlockIndex::literals`, which `parseIssues` uses for a failing test). With no source the index retains each path's current text itself (what every earlier caller did, with the same decisions); with a source it retains none, and the source must serve the content ids the index was given (git does, by blob id). A text it cannot serve makes those blocks unknown to the similarity rules, never an error (R-SCALE-7).
+* **The retired set is indexed.** A revive probe takes the lowest retired id with the same signature and name (a hash table), else the best Jaccard of at least 0.8 among retired blocks that share a token with the probe's **prefix** (an exact filter: two sets whose Jaccard reaches t share a token among the first `n - ceil(tn) + 1` of each in any one total order; the order is first-sight rank, so the postings stay short) and pass the size bound. Candidates are then compared exactly. On the corpus a probe compares tens of retired blocks, not 4,800 (`stats().reviveCandidates`).
+* **Merge candidates** go through the per-block token filter (no false negatives: a block holding 60% of a retired body's tokens always passes), then are confirmed from their text. This is still a pass over live blocks, a few bit tests each (the old rule compared token sets with every live block); the inverted index that removes it is S2.
+* **The event log is compact** (32 bytes an event, strings interned); `events()` is an `EventLog`, a read-only range whose elements are built on access. `emitBlockCarries` takes it, and the JSON writers write from the compact record.
+* **`Block` lost `tokens` and `literals`; `path`, `name` and `signature` are views** into the pool, valid while the index (or a copy) lives. An index and its copies share the pool: do not update them from different threads at once.
+
+Not changed: the rules and their tie orders (by id, and by path then position), checked by `test_doc_layers`, `test_golden_replay`, `test_corpus`'s truth, `test_revision_index` and the mock attempts, whose regenerated files differ from the old ones in the spelling of block ids only (reviewed by canonicalising ids on both sides: 52 files, identical). `test_block_index` covers what S1 added, with the revive and merge thresholds met exactly at the edge.
+
+Remaining against section 4: per-user, per-blob sharing across clones (A19: the analysis cache is per index and off by default); LSH or an inverted index for the merge pass (S2); expiry of retired blocks after a horizon (the retired set and its postings only grow); S0's 10^7 and 10^9 line runs.
 
 ## 7. Proving at scale
 
