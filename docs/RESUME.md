@@ -80,7 +80,7 @@ waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
 
 ## Known gaps and debts
 
-* **The full tier is red on Linux clang** (parked 2026-11-23, [issue #4](https://github.com/CraigHutchinson/Sub0Canvas/issues/4)): five exact `layeredJson` byte metrics and the mock squad differ from gcc and MinGW, so some output depends on the standard library. Fix before the next release tag.
+* Issue #4 (the full tier red on Linux clang) is **closed** (2026-11-24): two unspecified-evaluation-order expressions, fixed; the full tier is green. Rule: [MOCK_SQUAD.md](MOCK_SQUAD.md) section 8. MS4 and MS5 (claims, pinned and tip workers) are built into the mock squad.
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
 * Block discovery (D0, 2026-11-23): the seam is built (`blocks.hpp`, providers `braces@3`, `indent@2`) and the faults of block comments, names (generics, arrow functions, Go receivers, operators)
   and Python decorators are fixed. Still open: Rust lifetimes on a signature line, CRLF text in Allman style (a `\r` on every line), nested functions and classes as nodes, unnamed nodes still carry an

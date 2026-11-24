@@ -13,10 +13,19 @@ pinned and tip workers in the mock squad, and the views limits. Keep every exten
 
 - **Built and merged on `main`:** B0-B4, G1, S0, S1, K0, D0, V1a-q (pure query layer), views and sessions, the mock squad (MS0-MS3), the perf and CI adoption.
   S1's `layeredJson` and events-page timing regressions are fixed (`902827c`, `28d3341`); output bytes unchanged.
-- **Pushed (end of 2026-11-24):** Sub0Canvas `main` at `018f593` and Sub0Fabric `main` at `dc1cc05`; both smoke CIs are green. Nothing is unpushed in either.
-  The pushes needed fixes found only on Linux: gcc 14 `-Werror` on range-for over simdjson temporaries (tests now use by-value `objectOf`/`arrayOf`), and `CHECK_EQ` binding
-  references into temporaries (`auto&& _a = (a)`, so `f()[0]`, `names().front()` and `string_view{temp}` dangle; name the value first). **Rule for new tests: never pass a
-  temporary-returning call's element or view to `CHECK_EQ`.** There is no local gcc 14 (WSL has cmake and ninja only); CI is the check, or ask the owner before installing one.
+- **Done since the first version of this brief (2026-11-24, second session):** issue #4 closed (the hosted full tier is green on Linux gcc, Linux clang and Windows MinGW at
+  `45b0fe2`); MS4 (two-actor claims, R-CONS-6/7) and MS5 (pinned and tip workers on sessions, R-CONS-8/9) built; see [ms4-ms5-mock-squad-claims-and-views.md](ms4-ms5-mock-squad-claims-and-views.md)
+  Outcomes for the deviations and what each left. Sub0Fabric `main` is at `dc1cc05`, CI green.
+- **Lessons that changed the code (read before writing tests or generators):**
+  1. gcc 14 `-Werror` on range-for over simdjson temporaries: tests use by-value `objectOf`/`arrayOf`. `CHECK_EQ` binds references (`auto&& _a = (a)`), so `f()[0]`,
+     `names().front()` and `string_view{temp}` dangle: name the value first. CI is the check (no local gcc 14).
+  2. **Evaluation order** is unspecified: gcc and the Windows toolchains go right to left, Linux clang left to right. Never put two generator draws, or a read and a write of
+     one variable, in one argument list or operator chain (corpus generator and the loop's `failed` record were fixed; [MOCK_SQUAD.md](../MOCK_SQUAD.md) section 8).
+  3. A test that builds temporary git repositories must not inherit the hook's `GIT_DIR` (`test_viewer` now unsets it).
+  4. Do not share one checkout between sessions: another session had switched `D:\Craig\GitHub\Sub0Canvas` to its own branch under this one, and a push from a linked worktree
+     left that checkout with `core.bare=true` (restored; see [Sub0Math issue 5](https://github.com/CraigHutchinson/Sub0Math/issues/5)). **Work in your own full clone** (this
+     session used `D:\Craig\GitHub\Sub0Canvas-dev` and `-fix`; the gate reads that clone's own `.git/sub0perf`), never a linked worktree, and never in a checkout another session holds.
+     Those clones are scratch: remove them (and the `Sub0Canvas-clang-build` directory) when no longer needed.
 - **Gate lesson:** a benchmark row must time the operation, not the setup (`bench_session.cpp` row `session replay` timed an empty call and stalled the gate for 70 minutes;
   fixed in `516130f`; reported on [Sub0Math issue 6](https://github.com/CraigHutchinson/Sub0Math/issues/6)). A new row has no baseline, so the gate cannot judge it until a re-baseline.
   The last push left 10 rows inconclusive, probably load from the llmengine session; re-run the gate on a quiet machine before trusting it.
@@ -25,9 +34,9 @@ pinned and tip workers in the mock squad, and the views limits. Keep every exten
 
 ## Do first (housekeeping, each small)
 
-1. Both repos are pushed and green (see above); re-confirm with `git log origin/main..main` and `gh run list`. Linux clang joins once issue #4 is fixed.
-2. **Issue #4 (Linux clang full tier):** five `layeredJson` byte metrics and the mock squad differ from gcc; some output depends on the standard library. It blocks the
-   next release tag (v0.4.0). Find the dependence, fix it, make the metrics compiler-independent.
+1. Re-confirm with `git log origin/main..main` and `gh run list`; take your own clone first (lesson 4). The sub0perf-extraction session (PR 6, branch `use-sub0perf`) may
+   have merged by now: re-pin Sub0Perf per its change.
+2. **Release v0.4.0** (owner confirms before the tag): issue #4 no longer blocks it; the full tier is green. It carries S1, B1-B4, G1, V1a-q, views/sessions, MS0-MS5.
 3. **Re-baseline timings** only after one deliberate full steady run (AC, quiet, `accept` with reasons): the S1 rows and the `query` and `session` rows are not in
    `perf/baselines/croglegion.json`, so the gate cannot judge them.
 4. **Test audit** ([TEST_AUDIT.md](../TEST_AUDIT.md)): measure the runtimes, add the small variant rows and the tier test, then demote the heavy rows once Sub0Math can
@@ -37,9 +46,9 @@ pinned and tip workers in the mock squad, and the views limits. Keep every exten
 
 ## Then the backbone, in this order
 
-1. **MS4 and MS5, the mock squad's missing scenarios:** two-actor claim tests, and a pinned worker and a tip worker on the sessions layer (edits land through
-   `applyReply` with `baseRevision`; the tip worker refreshes in each of the four forms). Add R-CONS rows; regenerate `fixtures/mock` only if the byte change is the intended one
-   and verify identity modulo what changed.
+1. **Mock-squad leftovers from MS4/MS5** (the Outcome sections list them): a pinned actor's reads (`answerRead`) still show the tip, not the pin; an `advance` that lands edits
+   through the loop; views combined with claims; fork; atomic land over two base revisions; `advance` with a moved held block (no anchors are held, so `anchors` is 0); the inbox
+   half of B2 is not mocked. Regenerate `fixtures/mock` only if the byte change is the intended one and verify identity modulo what changed.
 2. **Views and sessions, the limits** in VIEWS.md section 8: write them down as tests or as `SessionPolicy` data, one at a time. Presence and peer patches stay deferred.
 3. **Fabric W3, protocol and projection** (`CraigHutchinson/Sub0Fabric`): the `query-1` protocol over the store; the projection shared with `layeredJson`.
 4. **Fabric W4, transport:** the single `IHttpFront` / `IHttpClient` seam; implementation A is Sub0Squad's hand-rolled HTTP/1.1 lifted onto Sub0Platform `net`
