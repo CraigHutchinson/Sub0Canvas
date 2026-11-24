@@ -20,6 +20,8 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
+#include <string_view>
 #include <new>
 #include <set>
 #include <string>
@@ -100,10 +102,25 @@ bench::Corpus makeCorpus(std::size_t lines, std::uint64_t seed = 1)
     return std::move(*corpus);
 }
 
+/// The corpus's files as the index's text source: the caller (a canvas, git) holds the texts, the index holds none (S1). Only the current text of a path is served,
+/// which is all a cold build and the memory measurement ask for (no rule needs an old text while every file is new).
+struct CorpusTexts final : TextSource
+{
+    const std::map<std::string, std::string>* files;
+    explicit CorpusTexts(const std::map<std::string, std::string>* f) : files(f) {}
+    [[nodiscard]] std::optional<std::string_view> text(std::string_view path, std::uint64_t) const override
+    {
+        const auto it = files->find(std::string{path});
+        if (it == files->end()) return std::nullopt;
+        return std::string_view{it->second};
+    }
+};
+
 /// A corpus of about `lines` lines with the commits an edit stream makes over it, built once per process on first use.
 struct Fixture
 {
     bench::Corpus corpus;
+    CorpusTexts texts{&corpus.files};
     std::vector<std::string> cppPaths, pyPaths;
     std::size_t textBytes = 0;
     explicit Fixture(std::size_t lines) : corpus(makeCorpus(lines))
@@ -115,6 +132,16 @@ struct Fixture
             textBytes += text.size();
         }
     }
+    /// The cold index as a consumer that serves its texts from elsewhere builds it: no text held by the index.
+    [[nodiscard]] BlockIndex lazyColdIndex() const
+    {
+        BlockIndex index;
+        index.setTextSource(&texts);
+        for (const auto& [path, text] : corpus.files)
+            if (isCode(path)) index.update(path, text);
+        return index;
+    }
+    /// The cold index with no source: it retains each path's current text itself, which later updates of the benchmarks read back.
     [[nodiscard]] BlockIndex coldIndex() const
     {
         BlockIndex index;
@@ -215,9 +242,9 @@ Turns buildTurns(const Fixture& f, int turns)
             item.layer = "issues";
             item.number = static_cast<int>(items.size()) + 1;
             item.kind = "warning";
-            item.title = "unused variable in " + blocks[i]->name;
-            item.detail = blocks[i]->path + ": warning: unused variable in " + blocks[i]->name;
-            item.key = "unused-" + blocks[i]->name;
+            item.title = "unused variable in " + std::string{blocks[i]->name};
+            item.detail = std::string{blocks[i]->path} + ": warning: unused variable in " + std::string{blocks[i]->name};
+            item.key = "unused-" + std::string{blocks[i]->name};
             Anchor a;
             a.blockId = blocks[i]->id;
             a.path = blocks[i]->path;
@@ -379,7 +406,7 @@ int main(int argc, char** argv)
             const Fixture& f = fixture1e5();
             once([&] {
                 const std::size_t a0 = gAllocations, live0 = gLiveBytes;
-                const BlockIndex index = f.coldIndex();
+                const BlockIndex index = f.lazyColdIndex();
                 const std::size_t allocs = gAllocations - a0, live = gLiveBytes - live0;
                 const std::size_t blocks = index.all().size();
                 runner.metric("corpus 1e5: lines", static_cast<double>(f.corpus.stats.codeLines), "lines");
@@ -389,13 +416,10 @@ int main(int argc, char** argv)
                 runner.metric("index cold 1e5: events", static_cast<double>(index.events().size()), "n");
                 metricsOf(runner, "index cold 1e5", allocs);
                 runner.metric("index cold 1e5: live heap bytes", static_cast<double>(live), "B", MetricKind::max);
-                // The held texts (`texts_`) are one copy of the sources; S1 drops them, so the per-block figure is given with and without.
+                // The index holds no text (its source does), so the whole live heap is the index's: per block.
                 runner.metric("index cold 1e5: live heap bytes per block", static_cast<double>(live) / static_cast<double>(blocks), "B/block", MetricKind::max);
-                runner.metric("index cold 1e5: heap bytes per block, held text removed",
-                              static_cast<double>(live - std::min(live, f.textBytes + f.cppPaths.size() + f.pyPaths.size())) / static_cast<double>(blocks), "B/block",
-                              MetricKind::max);
             });
-            const BlockIndex index = f.coldIndex();
+            const BlockIndex index = f.lazyColdIndex();
             ankerl::nanobench::doNotOptimizeAway(index);
         });
     }
@@ -455,7 +479,7 @@ int main(int argc, char** argv)
             for (const auto& id : warm->ids)
             {
                 const Block* b = warm->index.resolve(id);
-                const Block* at = warm->index.at(b->path, (b->first + b->last) / 2);
+                const Block* at = warm->index.at(std::string{b->path}, (b->first + b->last) / 2);
                 sum += static_cast<std::size_t>(b->first) + (at ? 1U : 0U);
             }
             ankerl::nanobench::doNotOptimizeAway(sum);

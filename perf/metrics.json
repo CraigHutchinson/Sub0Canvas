@@ -6,48 +6,47 @@
     "corpus 1e5: blocks (generator truth)": {"kind": "exact", "expected": 4800, "unit": "blocks"},
     "index cold 1e5: blocks found": {"kind": "exact", "expected": 4800, "unit": "blocks"},
     "index cold 1e5: events": {"kind": "exact", "expected": 4800, "unit": "n"},
-    "index cold 1e5: allocations": {"kind": "max", "limit": 917863, "unit": "n"},
-    "index cold 1e5: live heap bytes": {"kind": "max", "limit": 13796997, "unit": "B"},
-    "index cold 1e5: live heap bytes per block": {"kind": "max", "limit": 200, "unit": "B/block", "xfail": "SCALE.md section 6 asks for about 200 bytes per compact block; each block holds two std::set<std::string> and the index a copy of every text. Waits for S1's compact layout"},
-    "index cold 1e5: heap bytes per block, held text removed": {"kind": "max", "limit": 2335, "unit": "B/block"},
+    "index cold 1e5: allocations": {"kind": "max", "limit": 14298, "unit": "n"},
+    "index cold 1e5: live heap bytes": {"kind": "max", "limit": 1531392, "unit": "B"},
+    "index cold 1e5: live heap bytes per block": {"kind": "max", "limit": 200, "unit": "B/block", "xfail": "SCALE.md section 6 asks for about 200 bytes per compact block. S1 measured 319 (from 2,613; the ceiling is the metric above): per block a 120-byte record, about 27 for the id table, 32 for its event, and about 110 for its interned name and signature. What remains: the event log held in memory (belongs to the log module, which can drop it behind a cursor), the 13-character id and the signature kept as strings in the public Block"},
     "incremental 100 commits: files changed": {"kind": "exact", "expected": 259, "unit": "files"},
     "incremental 100 commits: events": {"kind": "exact", "expected": 626, "unit": "n"},
     "incremental 100 commits: live blocks after": {"kind": "exact", "expected": 5167, "unit": "blocks"},
-    "incremental 100 commits: allocations": {"kind": "max", "limit": 947233, "unit": "n"},
+    "incremental 100 commits: allocations": {"kind": "max", "limit": 115304, "unit": "n"},
     "warm resolve: ids sampled": {"kind": "exact", "expected": 1000, "unit": "n"},
     "warm resolve: ids resolved": {"kind": "exact", "expected": 1000, "unit": "n"},
     "foldRegions C++ 1e5: files": {"kind": "exact", "expected": 190, "unit": "files"},
     "foldRegions C++ 1e5: regions": {"kind": "exact", "expected": 3597, "unit": "n"},
     "foldRegions Python 1e5: files": {"kind": "exact", "expected": 72, "unit": "files"},
     "foldRegions Python 1e5: regions": {"kind": "exact", "expected": 1203, "unit": "n"},
-    "applyReply 1 ops: allocations": {"kind": "max", "limit": 3788, "unit": "n"},
+    "applyReply 1 ops: allocations": {"kind": "max", "limit": 3003, "unit": "n"},
     "applyReply 1 ops: applied": {"kind": "exact", "expected": 1, "unit": "bool"},
     "applyReply 1 ops: log entries": {"kind": "exact", "expected": 1, "unit": "n"},
-    "applyReply 10 ops: allocations": {"kind": "max", "limit": 9657, "unit": "n"},
+    "applyReply 10 ops: allocations": {"kind": "max", "limit": 7618, "unit": "n"},
     "applyReply 10 ops: applied": {"kind": "exact", "expected": 1, "unit": "bool"},
     "applyReply 10 ops: log entries": {"kind": "exact", "expected": 5, "unit": "n"},
-    "applyReply 50 ops: allocations": {"kind": "max", "limit": 10004, "unit": "n"},
+    "applyReply 50 ops: allocations": {"kind": "max", "limit": 7886, "unit": "n"},
     "applyReply 50 ops: applied": {"kind": "exact", "expected": 1, "unit": "bool"},
     "applyReply 50 ops: log entries": {"kind": "exact", "expected": 5, "unit": "n"},
-    "layeredJson 1 turn 2e4: allocations": {"kind": "max", "limit": 933, "unit": "n"},
-    "layeredJson 1 turn 2e4: output bytes": {"kind": "exact", "expected": 777088, "unit": "B"},
+    "layeredJson 1 turn 2e4: allocations": {"kind": "max", "limit": 721, "unit": "n"},
+    "layeredJson 1 turn 2e4: output bytes": {"kind": "exact", "expected": 795317, "unit": "B"},
     "layeredJson 1 turn 2e4: files": {"kind": "exact", "expected": 58, "unit": "files"},
     "layeredJson 1 turn 2e4: blocks": {"kind": "exact", "expected": 988, "unit": "blocks"},
-    "layeredJson 8 turns 2e4 per-turn: allocations": {"kind": "max", "limit": 3774, "unit": "n"},
-    "layeredJson 8 turns 2e4: bytes, per-turn events, texts by id": {"kind": "exact", "expected": 2129436, "unit": "B"},
+    "layeredJson 8 turns 2e4 per-turn: allocations": {"kind": "max", "limit": 2851, "unit": "n"},
+    "layeredJson 8 turns 2e4: bytes, per-turn events, texts by id": {"kind": "exact", "expected": 2212791, "unit": "B"},
     "layeredJson 8 turns 2e4: files changed over the turns": {"kind": "exact", "expected": 22, "unit": "files"},
-    "layeredJson 8 turns 2e4 cumulative: allocations": {"kind": "max", "limit": 3335, "unit": "n"},
-    "layeredJson 8 turns 2e4: bytes, cumulative events, inline texts": {"kind": "exact", "expected": 6230854, "unit": "B"},
-    "layeredJson 8 turns 2e4: bytes, per-turn events, inline texts": {"kind": "exact", "expected": 5486815, "unit": "B"},
-    "layeredJson 8 turns 2e4: bytes, cumulative events, texts by id": {"kind": "exact", "expected": 2873475, "unit": "B"},
+    "layeredJson 8 turns 2e4 cumulative: allocations": {"kind": "max", "limit": 2518, "unit": "n"},
+    "layeredJson 8 turns 2e4: bytes, cumulative events, inline texts": {"kind": "exact", "expected": 6377890, "unit": "B"},
+    "layeredJson 8 turns 2e4: bytes, per-turn events, inline texts": {"kind": "exact", "expected": 5570170, "unit": "B"},
+    "layeredJson 8 turns 2e4: bytes, cumulative events, texts by id": {"kind": "exact", "expected": 3020511, "unit": "B"},
     "revive scan 1e4: retired blocks": {"kind": "exact", "expected": 486, "unit": "blocks"},
     "revive scan 1e4: novel blocks indexed": {"kind": "exact", "expected": 22, "unit": "blocks"},
     "revive scan 1e4: events from the update": {"kind": "exact", "expected": 22, "unit": "n"},
-    "revive scan 1e4: allocations": {"kind": "max", "limit": 4753, "unit": "n"},
+    "revive scan 1e4: allocations": {"kind": "max", "limit": 351, "unit": "n"},
     "revive scan 1e5: retired blocks": {"kind": "exact", "expected": 4800, "unit": "blocks"},
     "revive scan 1e5: novel blocks indexed": {"kind": "exact", "expected": 22, "unit": "blocks"},
     "revive scan 1e5: events from the update": {"kind": "exact", "expected": 22, "unit": "n"},
-    "revive scan 1e5: allocations": {"kind": "max", "limit": 4753, "unit": "n"},
+    "revive scan 1e5: allocations": {"kind": "max", "limit": 334, "unit": "n"},
     "history replay 200: commits in the stream": {"kind": "exact", "expected": 200, "unit": "n"},
     "history replay 200: paths changed over the commits": {"kind": "exact", "expected": 507, "unit": "n"},
     "history replay 200: baseline files": {"kind": "exact", "expected": 58, "unit": "files"},
@@ -121,7 +120,7 @@
     "resolver 2e3 anchors at 1e5 lines: candidates examined in all": {"kind": "max", "limit": 2500, "unit": "n"},
     "resolver 2e3 anchors at 1e5 lines: fuzzy windows scored in all": {"kind": "max", "limit": 500, "unit": "n"},
     "resolver 2e3 anchors at 1e5 lines: files prepared": {"kind": "max", "limit": 230, "unit": "n"},
-    "resolver 2e3 anchors at 1e5 lines: allocations per resolve": {"kind": "max", "limit": 6, "unit": "n"},
+    "resolver 2e3 anchors at 1e5 lines: allocations per resolve": {"kind": "max", "limit": 5.631, "unit": "n"},
     "query tree flat 1588 files: nodes visited, one page": {"kind": "exact", "expected": 1589, "unit": "n"},
     "query tree flat 1588 files: entries, one page": {"kind": "exact", "expected": 1588, "unit": "n"},
     "query tree flat 1588 files: response bytes, one page": {"kind": "exact", "expected": 225657, "unit": "B"},
@@ -143,14 +142,14 @@
     "query tree one folder 1e5: response bytes": {"kind": "exact", "expected": 3807, "unit": "B"},
     "query blocks of the largest file 1e5: blocks in the file": {"kind": "exact", "expected": 70, "unit": "n"},
     "query blocks of the largest file 1e5: nodes visited": {"kind": "exact", "expected": 70, "unit": "n"},
-    "query blocks of the largest file 1e5: response bytes": {"kind": "exact", "expected": 13088, "unit": "B"},
+    "query blocks of the largest file 1e5: response bytes": {"kind": "exact", "expected": 13648, "unit": "B"},
     "query layer 4,800 items, page of 50 at the start: nodes visited": {"kind": "exact", "expected": 50, "unit": "n"},
-    "query layer 4,800 items, page of 50 at the start: response bytes": {"kind": "exact", "expected": 13493, "unit": "B"},
+    "query layer 4,800 items, page of 50 at the start: response bytes": {"kind": "exact", "expected": 14511, "unit": "B"},
     "query layer 4,800 items, page of 50 at item 4,000: nodes visited": {"kind": "exact", "expected": 50, "unit": "n"},
-    "query layer 4,800 items, page of 50 at item 4,000: response bytes": {"kind": "exact", "expected": 14797, "unit": "B"},
+    "query layer 4,800 items, page of 50 at item 4,000: response bytes": {"kind": "exact", "expected": 15597, "unit": "B"},
     "query layer 4,800 items, page of 50 of one kind in two: nodes visited": {"kind": "exact", "expected": 100, "unit": "n"},
     "query events page of 200 from 2,000: entries": {"kind": "exact", "expected": 200, "unit": "n"},
-    "query events page of 200 from 2,000: response bytes": {"kind": "exact", "expected": 22078, "unit": "B"},
+    "query events page of 200 from 2,000: response bytes": {"kind": "exact", "expected": 23678, "unit": "B"},
     "query file the largest text 1e5: response bytes": {"kind": "exact", "expected": 40973, "unit": "B"},
     "query file the largest text 1e5: text bytes": {"kind": "exact", "expected": 38866, "unit": "B"},
     "query layer page of 50: allocations": {"kind": "max", "limit": 12, "unit": "n"}
@@ -189,6 +188,142 @@
         "store checkpoint 1e5: bytes per item": {
           "from": null,
           "to": 779.9471,
+          "kind": "max"
+        }
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "commit": "bfdaf2cd79530aeb0032fdac2d10c091731d041a",
+      "reason": "S1: block ids are deterministic birth ids (A16), 13 characters ('b' and 12 hex digits) instead of the counter's b1..b4800, so every written byte count that carries ids grows by the id width; nothing else in the output changed (fixtures/mock reviewed: identical after ids are canonicalised)",
+      "metrics": {
+        "layeredJson 1 turn 2e4: output bytes": {
+          "from": 777088,
+          "to": 795317,
+          "kind": "exact"
+        },
+        "layeredJson 8 turns 2e4: bytes, per-turn events, texts by id": {
+          "from": 2129436,
+          "to": 2212791,
+          "kind": "exact"
+        },
+        "layeredJson 8 turns 2e4: bytes, cumulative events, inline texts": {
+          "from": 6230854,
+          "to": 6377890,
+          "kind": "exact"
+        },
+        "layeredJson 8 turns 2e4: bytes, per-turn events, inline texts": {
+          "from": 5486815,
+          "to": 5570170,
+          "kind": "exact"
+        },
+        "layeredJson 8 turns 2e4: bytes, cumulative events, texts by id": {
+          "from": 2873475,
+          "to": 3020511,
+          "kind": "exact"
+        },
+        "query blocks of the largest file 1e5: response bytes": {
+          "from": 13088,
+          "to": 13648,
+          "kind": "exact"
+        },
+        "query layer 4,800 items, page of 50 at the start: response bytes": {
+          "from": 13493,
+          "to": 14511,
+          "kind": "exact"
+        },
+        "query layer 4,800 items, page of 50 at item 4,000: response bytes": {
+          "from": 14797,
+          "to": 15597,
+          "kind": "exact"
+        },
+        "query events page of 200 from 2,000: response bytes": {
+          "from": 22078,
+          "to": 23678,
+          "kind": "exact"
+        }
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "commit": "bfdaf2cd79530aeb0032fdac2d10c091731d041a",
+      "reason": "S1: compact index (interned strings, no token sets, no held texts, ids by table): the ceiling follows the measured value so a regression shows",
+      "metrics": {
+        "index cold 1e5: allocations": {
+          "from": 917863,
+          "to": 14298,
+          "kind": "max"
+        },
+        "index cold 1e5: live heap bytes": {
+          "from": 13796997,
+          "to": 1530784,
+          "kind": "max"
+        },
+        "incremental 100 commits: allocations": {
+          "from": 947233,
+          "to": 115304,
+          "kind": "max"
+        },
+        "revive scan 1e4: allocations": {
+          "from": 4753,
+          "to": 350,
+          "kind": "max"
+        },
+        "revive scan 1e5: allocations": {
+          "from": 4753,
+          "to": 334,
+          "kind": "max"
+        },
+        "layeredJson 1 turn 2e4: allocations": {
+          "from": 933,
+          "to": 721,
+          "kind": "max"
+        },
+        "layeredJson 8 turns 2e4 per-turn: allocations": {
+          "from": 3774,
+          "to": 2851,
+          "kind": "max"
+        },
+        "layeredJson 8 turns 2e4 cumulative: allocations": {
+          "from": 3335,
+          "to": 2518,
+          "kind": "max"
+        },
+        "applyReply 1 ops: allocations": {
+          "from": 3788,
+          "to": 3003,
+          "kind": "max"
+        },
+        "applyReply 10 ops: allocations": {
+          "from": 9657,
+          "to": 7618,
+          "kind": "max"
+        },
+        "applyReply 50 ops: allocations": {
+          "from": 10004,
+          "to": 7886,
+          "kind": "max"
+        },
+        "resolver 2e3 anchors at 1e5 lines: allocations per resolve": {
+          "from": 6,
+          "to": 5.631,
+          "kind": "max"
+        }
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "commit": "bfdaf2cd79530aeb0032fdac2d10c091731d041a",
+      "reason": "S1: the string pool's index by chunks (no vector doubling) moved the ceilings by under 0.1%: 1,531,392 B and 351 allocations",
+      "metrics": {
+        "index cold 1e5: live heap bytes": {
+          "from": 1530784,
+          "to": 1531392,
+          "kind": "max"
+        },
+        "revive scan 1e4: allocations": {
+          "from": 350,
+          "to": 351,
           "kind": "max"
         }
       }

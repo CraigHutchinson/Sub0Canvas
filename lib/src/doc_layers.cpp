@@ -10,10 +10,14 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <cstring>
+#include <deque>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <regex>
 #include <sstream>
+#include <unordered_map>
 
 namespace sub0canvas {
 
@@ -32,71 +36,16 @@ std::vector<std::string> splitLines(const std::string& text)
     return lines;
 }
 
-std::string collapse(const std::string& s)
-{
-    std::string out;
-    for (const char c : s) {
-        if (std::isspace(static_cast<unsigned char>(c))) { if (!out.empty() && out.back() != ' ') out += ' '; }
-        else out += c;
-    }
-    while (!out.empty() && (out.back() == ' ' || out.back() == '{')) out.pop_back();
-    return out;
-}
-
-std::string leaf(const std::string& name)
+std::string leaf(std::string_view name)
 {
     const auto c = name.rfind(':');
-    return c == std::string::npos ? name : name.substr(c + 1);
+    return std::string{c == std::string_view::npos ? name : name.substr(c + 1)};
 }
 
 std::string lower(std::string s)
 {
     for (char& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return s;
-}
-
-/// Identifiers and numbers outside literals go to `tokens`; the contents of string and character literals to `literals`. `//` and `#` comments are skipped.
-void scan(const std::string& line, std::set<std::string>& tokens, std::set<std::string>& literals)
-{
-    for (std::size_t i = 0; i < line.size();) {
-        const char c = line[i];
-        if (c == '"' || c == '\'') {
-            std::string lit;
-            std::size_t j = i + 1;
-            for (; j < line.size() && line[j] != c; ++j) {
-                if (line[j] == '\\' && j + 1 < line.size()) ++j;
-                lit += line[j];
-            }
-            if (!lit.empty()) literals.insert(lit);
-            i = j + 1;
-            continue;
-        }
-        if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
-        if (std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
-            std::size_t j = i;
-            while (j < line.size() && (std::isalnum(static_cast<unsigned char>(line[j])) || line[j] == '_' || line[j] == '.')) ++j;
-            tokens.insert(line.substr(i, j - i));
-            i = j;
-            continue;
-        }
-        ++i;
-    }
-}
-
-double jaccard(const std::set<std::string>& a, const std::set<std::string>& b)
-{
-    if (a.size() < kMinTokensToCompare || b.size() < kMinTokensToCompare) return 0.0;
-    std::size_t both = 0;
-    for (const auto& t : a) both += b.count(t);
-    return static_cast<double>(both) / static_cast<double>(a.size() + b.size() - both);
-}
-
-double containment(const std::set<std::string>& part, const std::set<std::string>& whole)
-{
-    if (part.size() < kMinTokensToCompare) return 0.0;
-    std::size_t both = 0;
-    for (const auto& t : part) both += whole.count(t);
-    return static_cast<double>(both) / static_cast<double>(part.size());
 }
 
 const char* carryName(Carry c)
@@ -147,117 +96,797 @@ std::string place(const Anchor& a, const BlockIndex& index)
 }  // namespace
 
 // ---- the block index ----------------------------------------------------------------------------------------------------------------------------------
+//
+// S1 (docs/SCALE.md sections 3-4, docs/BACKBONE.md): the index keeps a compact record per block and nothing else per block. What it does not hold, it derives again
+// from text it reads back through a `TextSource`; what it must find quickly, it finds through an index:
+//   * ids: a flat table, id -> (file, position): `resolve` is O(1), `at` walks one file's blocks;
+//   * strings: interned in a pool the copies of an index share, so a block holds three views and an int pair, never a string of its own (the id apart: 13 characters,
+//     inside the small-string buffer);
+//   * the retired: a revive probe consults a (signature, name) table and a prefix-filter posting index over token ranks, so only blocks that can reach the 0.8 threshold
+//     are compared, and the comparison is the same exact rule as before (the filter has no false negatives, see `reviveProbe`);
+//   * merge candidates: every live block carries a 128-bit token filter, an exact pre-test with no false negatives (a block holding 60% of a body's tokens passes), after
+//     which the few survivors are confirmed from their text. The scan over live blocks remains (cheap: a few bit tests per block); S2's inverted index removes it.
+// Identity decisions are those of the set-based implementation: the same rules, the same tie orders (by id, and by path then position), tested by test_doc_layers,
+// test_golden_replay, test_consumer_contract and the corpus truth.
+
+namespace {
+
+using Hash = std::uint64_t;
+
+constexpr Hash kMul = 0x9FB21C651E98DF25ULL;
+
+[[nodiscard]] constexpr Hash mix64(Hash x)
+{
+    x ^= x >> 32;
+    x *= 0xD6E8FEB86659FD93ULL;
+    x ^= x >> 32;
+    x *= 0xD6E8FEB86659FD93ULL;
+    x ^= x >> 32;
+    return x;
+}
+
+/// A 64-bit hash of bytes that is the same on every machine and run: little-endian reads composed by hand, no `std::hash` (A16: ids derived from it must agree
+/// across clones).
+[[nodiscard]] Hash hashBytes(const char* p, std::size_t n, Hash seed = 0)
+{
+    Hash h = seed ^ (static_cast<Hash>(n) * 0x9E3779B97F4A7C15ULL);
+    const auto* u = reinterpret_cast<const unsigned char*>(p);
+    while (n >= 8) {
+        const Hash v = static_cast<Hash>(u[0]) | static_cast<Hash>(u[1]) << 8 | static_cast<Hash>(u[2]) << 16 | static_cast<Hash>(u[3]) << 24 | static_cast<Hash>(u[4]) << 32 |
+                       static_cast<Hash>(u[5]) << 40 | static_cast<Hash>(u[6]) << 48 | static_cast<Hash>(u[7]) << 56;
+        h = (h ^ v) * kMul;
+        h ^= h >> 29;
+        u += 8;
+        n -= 8;
+    }
+    if (n > 0) {
+        Hash v = 0;
+        for (std::size_t i = 0; i < n; ++i) v |= static_cast<Hash>(u[i]) << (8 * i);
+        h = (h ^ v) * kMul;
+        h ^= h >> 29;
+    }
+    return mix64(h);
+}
+
+[[nodiscard]] Hash hashView(std::string_view s, Hash seed = 0) { return hashBytes(s.data(), s.size(), seed); }
+
+constexpr Hash kTokenSeed = 0x70C3A5ULL;
+constexpr Hash kIdMask = (Hash{1} << 48) - 1;
+
+/// The id of a block as text: "b" and its 48-bit key in 12 lowercase hex digits (13 characters: inside the small-string buffer, no allocation).
+/// `idText` into a caller's buffer (a writer needs no `std::string`).
+inline void idChars(Hash key, char (&buf)[13])
+{
+    static constexpr char digits[] = "0123456789abcdef";
+    buf[0] = 'b';
+    for (int i = 0; i < 12; ++i) buf[1 + i] = digits[(key >> (44 - 4 * i)) & 15];
+}
+
+[[nodiscard]] std::string idText(Hash key)
+{
+    char buf[13];
+    idChars(key, buf);
+    return std::string(buf, 13);
+}
+
+/// The key of an id written by `idText`; 0 for any other text (an id of another scheme resolves to nothing).
+[[nodiscard]] Hash idKey(std::string_view id)
+{
+    if (id.size() != 13 || id[0] != 'b') return 0;
+    Hash key = 0;
+    for (std::size_t i = 1; i < 13; ++i) {
+        const char c = id[i];
+        const int d = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
+        if (d < 0) return 0;
+        key = key << 4 | static_cast<Hash>(d);
+    }
+    return key;
+}
+
+/// `text` split at '\n' exactly as `std::getline` does (a final newline adds no empty line); views into `text`.
+[[nodiscard]] std::vector<std::string_view> splitViews(std::string_view text)
+{
+    std::vector<std::string_view> out;
+    for (std::size_t pos = 0; pos < text.size();) {
+        const auto e = text.find('\n', pos);
+        if (e == std::string_view::npos) { out.push_back(text.substr(pos)); break; }
+        out.push_back(text.substr(pos, e - pos));
+        pos = e + 1;
+    }
+    return out;
+}
+
+/// `collapse(lines joined by "\n")` of the lines `from..to` (1-based) into `out`, without building the joined text: whitespace runs become one space, trailing
+/// spaces and braces go.
+void collapseLines(const std::vector<std::string_view>& lines, int from, int to, std::string& out)
+{
+    out.clear();
+    for (int k = from; k <= to; ++k) {
+        for (const char c : lines[static_cast<std::size_t>(k) - 1]) {
+            if (std::isspace(static_cast<unsigned char>(c))) { if (!out.empty() && out.back() != ' ') out += ' '; }
+            else out += c;
+        }
+        if (!out.empty() && out.back() != ' ') out += ' ';   // the "\n" that ends the line
+    }
+    while (!out.empty() && (out.back() == ' ' || out.back() == '{')) out.pop_back();
+}
+
+/// Calls `emit(token)` for each identifier or number of `line` outside string and character literals; `//` starts a comment. (One scanner for tokens, one for literals.)
+template <class Emit>
+void scanTokens(std::string_view line, Emit&& emit)
+{
+    for (std::size_t i = 0; i < line.size();) {
+        const char c = line[i];
+        if (c == '"' || c == '\'') {
+            std::size_t j = i + 1;
+            for (; j < line.size() && line[j] != c; ++j) if (line[j] == '\\' && j + 1 < line.size()) ++j;
+            i = j + 1;
+            continue;
+        }
+        if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
+        if (std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
+            std::size_t j = i;
+            while (j < line.size() && (std::isalnum(static_cast<unsigned char>(line[j])) || line[j] == '_' || line[j] == '.')) ++j;
+            emit(line.substr(i, j - i));
+            i = j;
+            continue;
+        }
+        ++i;
+    }
+}
+
+/// The contents of the string and character literals of `line`, into `literals`.
+void scanLiterals(std::string_view line, std::set<std::string>& literals)
+{
+    for (std::size_t i = 0; i < line.size();) {
+        const char c = line[i];
+        if (c == '"' || c == '\'') {
+            std::string lit;
+            std::size_t j = i + 1;
+            for (; j < line.size() && line[j] != c; ++j) {
+                if (line[j] == '\\' && j + 1 < line.size()) ++j;
+                lit += line[j];
+            }
+            if (!lit.empty()) literals.insert(lit);
+            i = j + 1;
+            continue;
+        }
+        if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') break;
+        if (std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
+            std::size_t j = i;
+            while (j < line.size() && (std::isalnum(static_cast<unsigned char>(line[j])) || line[j] == '_' || line[j] == '.')) ++j;
+            i = j;
+            continue;
+        }
+        ++i;
+    }
+}
+
+/// A 128-bit one-hash token filter: no false negatives, so "a block holds at least k of these tokens" can only be over-reported (SCALE.md section 4: the exact rule
+/// confirms every candidate).
+struct Bloom
+{
+    std::uint64_t w[2] = {0, 0};
+    void add(Hash h) { const unsigned b = static_cast<unsigned>(h >> 17) & 127U; w[b >> 6] |= std::uint64_t{1} << (b & 63U); }
+    [[nodiscard]] bool has(Hash h) const { const unsigned b = static_cast<unsigned>(h >> 17) & 127U; return (w[b >> 6] >> (b & 63U) & 1U) != 0; }
+};
+
+/// A block as the index holds it: the public record plus what the rules need and the text cannot give cheaply (where the signature line is, a hash of the
+/// collapsed text, the token filter).
+struct LiveBlock : Block
+{
+    int sigLine = 0;       ///< the signature line (`first` is the first decorator when there is one); scanning for tokens skips lines up to it
+    Hash bodyHash = 0;     ///< of the collapsed text of first..last: an edit changes it, a reflow does not
+    Bloom bloom;           ///< of the tokens of the body
+};
+
+/// Sorted, de-duplicated token hashes: the exact token set of a block, derived from its text when a rule needs it.
+using Tokens = std::vector<Hash>;
+
+[[nodiscard]] std::size_t overlap(const Tokens& a, const Tokens& b)
+{
+    std::size_t both = 0;
+    for (auto x = a.begin(), y = b.begin(); x != a.end() && y != b.end();) {
+        if (*x < *y) ++x;
+        else if (*y < *x) ++y;
+        else { ++both; ++x; ++y; }
+    }
+    return both;
+}
+
+[[nodiscard]] double jaccardOf(const Tokens& a, const Tokens& b)
+{
+    if (a.size() < kMinTokensToCompare || b.size() < kMinTokensToCompare) return 0.0;
+    const std::size_t both = overlap(a, b);
+    return static_cast<double>(both) / static_cast<double>(a.size() + b.size() - both);
+}
+
+[[nodiscard]] double containmentOf(const Tokens& part, const Tokens& whole)
+{
+    if (part.size() < kMinTokensToCompare) return 0.0;
+    return static_cast<double>(overlap(part, whole)) / static_cast<double>(part.size());
+}
+
+/// The tokens of block `b` from the lines of the text it was indexed at. The signature (and decorator) lines are not scanned unless the block is one line.
+[[nodiscard]] Tokens tokensOfBlock(const std::vector<std::string_view>& lines, const LiveBlock& b)
+{
+    Tokens t;
+    for (int k = std::max(1, b.first); k <= b.last && static_cast<std::size_t>(k) <= lines.size(); ++k)
+        if (k > b.sigLine || b.first == b.last) scanTokens(lines[static_cast<std::size_t>(k) - 1], [&](std::string_view x) { t.push_back(hashView(x, kTokenSeed)); });
+    std::sort(t.begin(), t.end());
+    t.erase(std::unique(t.begin(), t.end()), t.end());
+    return t;
+}
+
+/// The smallest overlap that `double(both) / double(n) >= threshold` allows, computed with the same arithmetic as the comparison so a filter built on it can never
+/// disagree with the rule.
+[[nodiscard]] std::size_t leastOverlap(std::size_t n, double threshold)
+{
+    std::size_t both = static_cast<std::size_t>(threshold * static_cast<double>(n));
+    both = both > 1 ? both - 1 : 0;
+    while (static_cast<double>(both) / static_cast<double>(n) < threshold) ++both;
+    return both;
+}
+
+}  // namespace
+
+namespace {
+
+/// A file's blocks, as `update` found them and a copy of the cache may hold them (ids not yet assigned).
+struct Analysis
+{
+    std::uint32_t pathId = 0;
+    Hash textId = 0;
+    std::vector<LiveBlock> blocks;
+};
+
+/// The compact history record of one event: the strings are interned, and the id and any block named in `detail` are keys.
+struct Ev
+{
+    Hash id = 0;
+    Hash detail = 0;                 ///< detailKind 1: an interned string id; 2: a block key
+    std::uint32_t path = 0, name = 0;
+    std::int32_t turn = 0;
+    Carry carry = Carry::kept;
+    std::uint8_t detailKind = 0;     ///< 0: none
+};
+
+/// One string pool: bytes in chunks that never move, so a view stays valid for the life of the pool; an open-addressing table over them. Also the token ranks (below).
+struct Pool
+{
+    static constexpr std::size_t kChunk = 64 * 1024;
+    std::vector<std::unique_ptr<char[]>> chunks;
+    char* cur = nullptr;
+    std::size_t left = 0;
+    /// The strings by id, in fixed chunks (no doubling slack, a shift and a mask to index). Id 0 is the empty string.
+    static constexpr std::size_t kSpanShift = 10, kSpanChunk = std::size_t{1} << kSpanShift;
+    std::vector<std::unique_ptr<std::string_view[]>> spanChunks;
+    std::size_t spanCount = 0;
+    Pool() { addSpan(std::string_view{}); }
+    Pool(const Pool&) = delete;
+    Pool& operator=(const Pool&) = delete;
+    void addSpan(std::string_view v)
+    {
+        if ((spanCount & (kSpanChunk - 1)) == 0) spanChunks.push_back(std::make_unique<std::string_view[]>(kSpanChunk));
+        spanChunks[spanCount >> kSpanShift][spanCount & (kSpanChunk - 1)] = v;
+        ++spanCount;
+    }
+    [[nodiscard]] std::string_view span(std::size_t id) const { return spanChunks[id >> kSpanShift][id & (kSpanChunk - 1)]; }
+    std::vector<std::uint32_t> table = std::vector<std::uint32_t>(1024, 0);
+    std::unordered_map<Hash, std::uint32_t> ranks;             // token hash -> rank, by first sight: the order of the revive prefix filter
+    std::uint32_t nextRank = 1;
+
+    std::uint32_t intern(std::string_view s)
+    {
+        if (s.empty()) return 0;
+        const Hash h = hashView(s, 0x5EED);
+        const std::size_t mask = table.size() - 1;
+        std::size_t i = static_cast<std::size_t>(h) & mask;
+        for (; table[i] != 0; i = (i + 1) & mask) if (span(table[i]) == s) return table[i];
+        char* dst = allocate(s.size());
+        std::memcpy(dst, s.data(), s.size());
+        addSpan(std::string_view{dst, s.size()});
+        const auto id = static_cast<std::uint32_t>(spanCount - 1);
+        table[i] = id;
+        if (spanCount * 10 > table.size() * 7) grow();
+        return id;
+    }
+    [[nodiscard]] std::string_view view(std::uint32_t id) const { return span(id); }
+    [[nodiscard]] std::string_view internView(std::string_view s) { return view(intern(s)); }
+    /// The rank of a token: assigned the first time the token is asked about, so common tokens rank low and the first tokens a prefix filter keeps are the newest, which
+    /// are the rarest in practice. Any total order is correct; this one keeps the postings short.
+    [[nodiscard]] std::uint32_t rankOf(Hash token)
+    {
+        const auto [it, inserted] = ranks.try_emplace(token, nextRank);
+        if (inserted) ++nextRank;
+        return it->second;
+    }
+
+private:
+    char* allocate(std::size_t n)
+    {
+        if (n > kChunk / 4) {
+            chunks.push_back(std::make_unique<char[]>(n));
+            return chunks.back().get();
+        }
+        if (left < n) {
+            chunks.push_back(std::make_unique<char[]>(kChunk));
+            cur = chunks.back().get();
+            left = kChunk;
+        }
+        char* p = cur;
+        cur += n;
+        left -= n;
+        return p;
+    }
+    void grow()
+    {
+        std::vector<std::uint32_t> bigger(table.size() * 2, 0);
+        const std::size_t mask = bigger.size() - 1;
+        for (std::size_t id = 1; id < spanCount; ++id) {
+            std::size_t i = static_cast<std::size_t>(hashView(span(id), 0x5EED)) & mask;
+            while (bigger[i] != 0) i = (i + 1) & mask;
+            bigger[i] = static_cast<std::uint32_t>(id);
+        }
+        table = std::move(bigger);
+    }
+};
+
+/// id key -> (file, position): open addressing with backward-shift deletion (no tombstones), keys are well-mixed already so the low bits index.
+struct IdTable
+{
+    struct Slot { Hash key = 0; std::uint32_t file = 0, pos = 0; };
+    std::vector<Slot> slots = std::vector<Slot>(16);
+    std::size_t count = 0;
+
+    [[nodiscard]] const Slot* find(Hash key) const
+    {
+        const std::size_t mask = slots.size() - 1;
+        for (std::size_t i = static_cast<std::size_t>(key) & mask; slots[i].key != 0; i = (i + 1) & mask) if (slots[i].key == key) return &slots[i];
+        return nullptr;
+    }
+    void put(Hash key, std::uint32_t file, std::uint32_t pos)
+    {
+        if ((count + 1) * 10 > slots.size() * 7) grow();
+        const std::size_t mask = slots.size() - 1;
+        std::size_t i = static_cast<std::size_t>(key) & mask;
+        for (; slots[i].key != 0; i = (i + 1) & mask) if (slots[i].key == key) { slots[i] = {key, file, pos}; return; }
+        slots[i] = {key, file, pos};
+        ++count;
+    }
+    void erase(Hash key)
+    {
+        const std::size_t mask = slots.size() - 1;
+        std::size_t i = static_cast<std::size_t>(key) & mask;
+        for (; slots[i].key != key; i = (i + 1) & mask) if (slots[i].key == 0) return;
+        --count;
+        for (std::size_t j = (i + 1) & mask;; j = (j + 1) & mask) {   // shift the following run back over the hole
+            if (slots[j].key == 0) break;
+            const std::size_t home = static_cast<std::size_t>(slots[j].key) & mask;
+            if (((j - home) & mask) >= ((j - i) & mask)) { slots[i] = slots[j]; i = j; }
+        }
+        slots[i] = Slot{};
+    }
+private:
+    void grow()
+    {
+        std::vector<Slot> old = std::move(slots);
+        slots.assign(old.size() * 2, Slot{});
+        count = 0;
+        for (const Slot& s : old) if (s.key != 0) put(s.key, s.file, s.pos);
+    }
+};
+
+struct FileState
+{
+    std::string_view path;             ///< interned
+    std::uint32_t pathId = 0;
+    Hash textId = 0;                   ///< of the text the blocks were found in
+    std::size_t textSize = 0;
+    bool indexed = false;
+    std::string retainedText;          ///< only when the index has no TextSource
+    std::vector<LiveBlock> blocks;     ///< in file order
+};
+
+/// A retired block: what the revive and merge rules need of it, and where its items went.
+struct Retired
+{
+    std::string_view path, name, signature;
+    Hash mergedInto = 0;               ///< a block key; 0: none (an orphan)
+    Tokens tokens;                     ///< exact, kept because the old text is gone by the time the rule asks (a revival after the file changed)
+};
+
+}  // namespace
+
+struct BlockIndex::State
+{
+    std::shared_ptr<Pool> pool = std::make_shared<Pool>();
+    const TextSource* source = nullptr;
+    std::string birthRevision;
+    std::vector<FileState> files;
+    std::map<std::string_view, std::uint32_t> byPath;               // path order, as the std::map<std::string> it replaces
+    IdTable live;
+    std::size_t liveBlocks = 0;
+    std::map<Hash, Retired> retired;                                // by key, which is by id text order
+    std::unordered_multimap<Hash, Hash> bySignature;                // hash(signature, name) -> retired key
+    std::unordered_map<std::uint32_t, std::vector<Hash>> postings;  // token rank -> retired keys whose revive prefix holds it
+    std::deque<Ev> events;   // chunked: no doubling slack on a log that only grows
+    std::unordered_map<Hash, std::shared_ptr<const Analysis>> cache;
+    std::deque<Hash> cacheOrder;
+    std::size_t cacheLimit = 0;
+    BlockIndexStats stats;
+
+    [[nodiscard]] static Hash signatureKey(std::string_view signature, std::string_view name) { return hashView(name, hashView(signature, 0x516)); }
+
+    /// The text of file `f` as it was when its content id was `textId`, or nullopt. Views into the source's buffer or the retained text: use before the next call.
+    [[nodiscard]] std::optional<std::string_view> fetch(std::uint32_t f, Hash textId)
+    {
+        ++stats.textFetches;
+        const FileState& fs = files[f];
+        if (source != nullptr) return source->text(fs.path, textId);
+        if (fs.indexed && fs.textId == textId) return std::string_view{fs.retainedText};
+        return std::nullopt;
+    }
+
+    /// The revive prefix of a token set: its highest-ranked tokens, `n - ceil(0.8 n) + 1` of them (the prefix-filter lemma: two sets whose Jaccard reaches t share a
+    /// token among the first `n - ceil(t n) + 1` of each, in any one total order). Ranks are assigned here, so a probe and the retired block agree.
+    [[nodiscard]] std::vector<std::uint32_t> prefixRanks(const Tokens& tokens)
+    {
+        std::vector<std::uint32_t> ranks;
+        ranks.reserve(tokens.size());
+        for (const Hash t : tokens) ranks.push_back(pool->rankOf(t));
+        std::sort(ranks.begin(), ranks.end(), std::greater<>{});
+        const std::size_t n = tokens.size();
+        ranks.resize(n - (4 * n + 4) / 5 + 1);   // ceil(4n/5) in integers: kReviveJaccard is 4/5
+        return ranks;
+    }
+
+    void addRetired(Hash key, Retired r)
+    {
+        bySignature.emplace(signatureKey(r.signature, r.name), key);
+        if (r.tokens.size() >= kMinTokensToCompare) for (const std::uint32_t rank : prefixRanks(r.tokens)) postings[rank].push_back(key);
+        retired.emplace(key, std::move(r));
+    }
+
+    void dropRetired(Hash key)
+    {
+        const auto it = retired.find(key);
+        const Retired& r = it->second;
+        const auto range = bySignature.equal_range(signatureKey(r.signature, r.name));
+        for (auto b = range.first; b != range.second; ++b) if (b->second == key) { bySignature.erase(b); break; }
+        if (r.tokens.size() >= kMinTokensToCompare)
+            for (const std::uint32_t rank : prefixRanks(r.tokens)) {
+                auto& list = postings[rank];
+                list.erase(std::remove(list.begin(), list.end(), key), list.end());
+                if (list.empty()) postings.erase(rank);
+            }
+        retired.erase(it);
+    }
+
+    /// The retired id a new block brings back, or 0. The rule of the scan it replaces, in its order: a retired block with the same signature and name (the lowest
+    /// id first), else the retired block of the highest Jaccard of at least 0.8 (the highest id among equals). Only retired blocks that can reach 0.8 are compared:
+    /// those sharing a token with the probe's revive prefix, within the size bound `5 min >= 4 max` that J >= 4/5 implies.
+    template <class TokensOf>
+    [[nodiscard]] Hash reviveProbe(const LiveBlock& fresh, TokensOf&& tokensOf)
+    {
+        if (retired.empty()) return 0;
+        Hash lowest = 0;
+        const auto range = bySignature.equal_range(signatureKey(fresh.signature, fresh.name));
+        for (auto b = range.first; b != range.second; ++b) {
+            const Retired& r = retired.at(b->second);
+            if (r.signature == fresh.signature && r.name == fresh.name && (lowest == 0 || b->second < lowest)) lowest = b->second;
+        }
+        if (lowest != 0) return lowest;
+        const Tokens& tokens = tokensOf();
+        if (tokens.size() < kMinTokensToCompare) return 0;
+        std::vector<Hash> candidates;
+        for (const std::uint32_t rank : prefixRanks(tokens)) {
+            const auto p = postings.find(rank);
+            if (p != postings.end()) candidates.insert(candidates.end(), p->second.begin(), p->second.end());
+        }
+        std::sort(candidates.begin(), candidates.end());
+        candidates.erase(std::unique(candidates.begin(), candidates.end()), candidates.end());
+        double best = kReviveJaccard;
+        Hash pick = 0;
+        for (const Hash key : candidates) {
+            const Retired& r = retired.at(key);
+            const std::size_t lo = std::min(r.tokens.size(), tokens.size()), hi = std::max(r.tokens.size(), tokens.size());
+            if (5 * lo < 4 * hi) continue;
+            ++stats.reviveCandidates;
+            if (const double j = jaccardOf(r.tokens, tokens); j >= best) { best = j; pick = key; }
+        }
+        return pick;
+    }
+};
+
+namespace {
+
+/// A file's text as lines, fetched at most once per update (an owned copy when it came from a source: the next fetch may reuse the source's buffer).
+struct FileLines
+{
+    std::string owned;
+    std::vector<std::string_view> lines;
+    bool ok = false;
+};
+
+}  // namespace
+
+BlockIndex::BlockIndex() : s_(std::make_unique<State>()) {}
+BlockIndex::BlockIndex(const BlockIndex& other) : turn_(other.turn_), s_(std::make_unique<State>(*other.s_)) {}
+BlockIndex::BlockIndex(BlockIndex&& other) noexcept = default;
+BlockIndex& BlockIndex::operator=(const BlockIndex& other)
+{
+    if (this != &other) { turn_ = other.turn_; s_ = std::make_unique<State>(*other.s_); }
+    return *this;
+}
+BlockIndex& BlockIndex::operator=(BlockIndex&& other) noexcept = default;
+BlockIndex::~BlockIndex() = default;
+
+std::uint64_t BlockIndex::textId(std::string_view text) { return hashView(text, 0x7E47); }
+
+void BlockIndex::setBirthRevision(std::string_view revision) { s_->birthRevision = std::string{revision}; }
+
+void BlockIndex::setTextSource(const TextSource* source)
+{
+    s_->source = source;
+    if (source != nullptr) for (auto& f : s_->files) { f.retainedText.clear(); f.retainedText.shrink_to_fit(); }
+}
+
+const TextSource* BlockIndex::textSource() const { return s_->source; }
+
+void BlockIndex::setAnalysisCacheLimit(std::size_t files)
+{
+    s_->cacheLimit = files;
+    while (s_->cacheOrder.size() > files) { s_->cache.erase(s_->cacheOrder.front()); s_->cacheOrder.pop_front(); }
+}
+
+std::uint64_t BlockIndex::indexedTextId(const std::string& path) const
+{
+    const auto it = s_->byPath.find(std::string_view{path});
+    return it == s_->byPath.end() || !s_->files[it->second].indexed ? 0 : s_->files[it->second].textId;
+}
+
+BlockIndexStats BlockIndex::stats() const { return s_->stats; }
+std::size_t BlockIndex::liveCount() const { return s_->liveBlocks; }
+std::size_t BlockIndex::retiredCount() const { return s_->retired.size(); }
 
 void BlockIndex::update(const std::string& path, const std::string& text)
 {
-    if (const auto t = texts_.find(path); t != texts_.end() && t->second == text) return;
-    texts_[path] = text;
-    const auto lines = splitLines(text);
-    std::vector<Block> fresh;
-    std::vector<std::size_t> hashes;
-    for (const auto& r : foldRegionsFor(path, text, true)) {
-        Block b;
-        b.path = path;
-        b.name = r.name;
-        b.first = r.spanFirst > 0 ? r.spanFirst : r.first;   // decorators are inside the block (R-BLK-6)
-        b.last = std::max(r.first, r.bodyTo);
-        b.signature = collapse(lines[static_cast<std::size_t>(r.first) - 1]);
-        std::string whole;
-        for (int k = b.first; k <= b.last; ++k) {
-            const std::string& l = lines[static_cast<std::size_t>(k) - 1];
-            whole += l + "\n";
-            if (k > r.first || b.first == b.last) scan(l, b.tokens, b.literals);
+    State& S = *s_;
+    Pool& pool = *S.pool;
+    const Hash tid = textId(text);
+
+    std::uint32_t f;
+    if (const auto found = S.byPath.find(std::string_view{path}); found != S.byPath.end()) f = found->second;
+    else {
+        f = static_cast<std::uint32_t>(S.files.size());
+        FileState fs;
+        fs.pathId = pool.intern(path);
+        fs.path = pool.view(fs.pathId);
+        S.files.push_back(std::move(fs));
+        S.byPath.emplace(S.files.back().path, f);
+    }
+    if (S.files[f].indexed && S.files[f].textId == tid && S.files[f].textSize == text.size()) return;
+    const std::string_view pathView = S.files[f].path;
+    const std::uint32_t pathId = S.files[f].pathId;
+    const bool hadOld = S.files[f].indexed;
+    const Hash oldTextId = S.files[f].textId;
+
+    // ---- the new text's blocks: the analysis of a blob is reused when this (path, content id) was folded before ----
+    const auto lines = splitViews(text);
+    const Hash cacheKey = mix64(tid ^ (static_cast<Hash>(pathId) * kMul));
+    std::vector<LiveBlock> fresh;
+    if (const auto hit = S.cacheLimit > 0 ? S.cache.find(cacheKey) : S.cache.end(); hit != S.cache.end() && hit->second->pathId == pathId && hit->second->textId == tid) {
+        ++S.stats.analysisHits;
+        fresh = hit->second->blocks;
+    } else {
+        ++S.stats.parses;
+        std::string scratch;
+        const auto regions = foldRegionsFor(path, text, true);
+        fresh.reserve(regions.size());   // exact: a block vector is never over-allocated
+        for (const auto& r : regions) {
+            LiveBlock b;
+            b.path = pathView;
+            b.name = pool.internView(r.name);
+            b.first = r.spanFirst > 0 ? r.spanFirst : r.first;   // decorators are inside the block (R-BLK-6)
+            b.last = std::max(r.first, r.bodyTo);
+            b.sigLine = r.first;
+            collapseLines(lines, r.first, r.first, scratch);
+            b.signature = pool.internView(scratch);
+            for (int k = b.first; k <= b.last; ++k)
+                if (k > r.first || b.first == b.last) scanTokens(lines[static_cast<std::size_t>(k) - 1], [&](std::string_view t) { b.bloom.add(hashView(t, kTokenSeed)); });
+            collapseLines(lines, b.first, b.last, scratch);
+            b.bodyHash = hashView(scratch);
+            fresh.push_back(std::move(b));
         }
-        fresh.push_back(std::move(b));
-        hashes.push_back(std::hash<std::string>{}(collapse(whole)));
+        if (S.cacheLimit > 0) {
+            auto entry = std::make_shared<Analysis>();
+            entry->pathId = pathId;
+            entry->textId = tid;
+            entry->blocks = fresh;
+            if (S.cache.emplace(cacheKey, std::move(entry)).second) S.cacheOrder.push_back(cacheKey);
+            while (S.cacheOrder.size() > S.cacheLimit) { S.cache.erase(S.cacheOrder.front()); S.cacheOrder.pop_front(); }
+        }
     }
-    std::vector<Block> old = std::move(live_[path]);
-    std::vector<std::size_t> oldHashes;
-    for (const auto& o : old) {   // the old block's text, from the text it was indexed at, is not kept: its hash is
-        oldHashes.push_back(hashes_.count(o.id) ? hashes_.at(o.id) : 0);
-    }
-    std::vector<int> match(fresh.size(), -1);   // index into `old`
+
+    std::vector<LiveBlock> old = std::move(S.files[f].blocks);
+    S.files[f].blocks.clear();
+
+    // Text read back by a rule, once per update: the old text of this file, and the current text of any other a merge candidate lives in.
+    std::unordered_map<std::uint32_t, FileLines> fetched;
+    const auto load = [&](std::uint32_t file, Hash id) -> const FileLines& {
+        auto [it, inserted] = fetched.try_emplace(file);
+        if (inserted) {
+            if (const auto t = S.fetch(file, id)) {
+                if (S.source != nullptr) { it->second.owned.assign(*t); it->second.lines = splitViews(it->second.owned); }   // the source may reuse its buffer
+                else it->second.lines = splitViews(*t);   // the retained text stays put until the end of this update
+                it->second.ok = true;
+            }
+        }
+        return it->second;
+    };
+    const auto linesOfOld = [&]() -> const FileLines& {
+        if (!hadOld) return fetched.try_emplace(f).first->second;
+        return load(f, oldTextId);
+    };
+    std::vector<Tokens> freshTokens(fresh.size());
+    std::vector<char> freshReady(fresh.size(), 0);
+    const std::vector<LiveBlock>* freshBlocks = &fresh;   // the new blocks, wherever they stand (moved into the file's state below)
+    const auto tokF = [&](std::size_t n) -> const Tokens& {
+        if (!freshReady[n]) { freshTokens[n] = tokensOfBlock(lines, (*freshBlocks)[n]); freshReady[n] = 1; }
+        return freshTokens[n];
+    };
+    std::vector<Tokens> oldTokens(old.size());
+    bool oldReady = false;
     std::vector<bool> used(old.size(), false);
+    const auto ensureOldTokens = [&] {   // the tokens of the old blocks no rule has matched yet, from the old text
+        if (oldReady) return;
+        oldReady = true;
+        const FileLines& fl = linesOfOld();
+        if (!fl.ok) return;
+        for (std::size_t o = 0; o < old.size(); ++o) if (!used[o]) oldTokens[o] = tokensOfBlock(fl.lines, old[o]);
+    };
+
+    const auto same = [](std::string_view a, std::string_view b) { return a.data() == b.data() && a.size() == b.size(); };   // interned: identical text is the same bytes
+    std::vector<int> match(fresh.size(), -1);   // index into `old`
     std::vector<Carry> how(fresh.size(), Carry::added);
     const auto take = [&](std::size_t n, std::size_t o, Carry c) { match[n] = static_cast<int>(o); used[o] = true; how[n] = c; };
     // 1. the same signature and name
     for (std::size_t n = 0; n < fresh.size(); ++n)
         for (std::size_t o = 0; o < old.size(); ++o)
-            if (!used[o] && old[o].signature == fresh[n].signature && old[o].name == fresh[n].name) { take(n, o, Carry::kept); break; }
+            if (!used[o] && same(old[o].signature, fresh[n].signature) && same(old[o].name, fresh[n].name)) { take(n, o, Carry::kept); break; }
     // 2. the same name, unique on both sides
     for (std::size_t n = 0; n < fresh.size(); ++n) {
         if (match[n] >= 0) continue;
         int oldCount = 0, newCount = 0;
         std::size_t at = 0;
-        for (std::size_t o = 0; o < old.size(); ++o) if (!used[o] && old[o].name == fresh[n].name) { ++oldCount; at = o; }
-        for (std::size_t m = 0; m < fresh.size(); ++m) if (match[m] < 0 && fresh[m].name == fresh[n].name) ++newCount;
+        for (std::size_t o = 0; o < old.size(); ++o) if (!used[o] && same(old[o].name, fresh[n].name)) { ++oldCount; at = o; }
+        for (std::size_t m = 0; m < fresh.size(); ++m) if (match[m] < 0 && same(fresh[m].name, fresh[n].name)) ++newCount;
         if (oldCount == 1 && newCount == 1) take(n, at, Carry::resigned);
     }
-    // 3. a similar body: the best pairs first
-    while (true) {
-        double best = kRenameJaccard;
-        int bn = -1, bo = -1;
-        for (std::size_t n = 0; n < fresh.size(); ++n) {
-            if (match[n] >= 0) continue;
-            for (std::size_t o = 0; o < old.size(); ++o) {
-                if (used[o]) continue;
-                if (const double j = jaccard(old[o].tokens, fresh[n].tokens); j >= best) { best = j; bn = static_cast<int>(n); bo = static_cast<int>(o); }
+    // 3. a similar body: the best pairs first (only when both sides have a block left: the old text is read only then)
+    const auto anyLeft = [&](const std::vector<bool>& u) { return std::find(u.begin(), u.end(), false) != u.end(); };
+    if (anyLeft(used) && std::find(match.begin(), match.end(), -1) != match.end()) {
+        ensureOldTokens();
+        while (true) {
+            double best = kRenameJaccard;
+            int bn = -1, bo = -1;
+            for (std::size_t n = 0; n < fresh.size(); ++n) {
+                if (match[n] >= 0) continue;
+                for (std::size_t o = 0; o < old.size(); ++o) {
+                    if (used[o]) continue;
+                    if (const double j = jaccardOf(oldTokens[o], tokF(n)); j >= best) { best = j; bn = static_cast<int>(n); bo = static_cast<int>(o); }
+                }
             }
+            if (bn < 0) break;
+            take(static_cast<std::size_t>(bn), static_cast<std::size_t>(bo), Carry::renamed);
         }
-        if (bn < 0) break;
-        take(static_cast<std::size_t>(bn), static_cast<std::size_t>(bo), Carry::renamed);
     }
+
+    const std::int32_t turn = turn_;
+    const auto event = [&](Carry carry, Hash id, std::uint32_t nameId, std::uint8_t detailKind, Hash detail) {
+        S.events.push_back(Ev{id, detail, pathId, nameId, turn, carry, detailKind});
+    };
+    std::vector<Hash> keys(fresh.size(), 0);
+    std::vector<char> born(fresh.size(), 0);   // blocks of this update that got a new id: the ordinal of A16 counts the identical ones before a birth
     for (std::size_t n = 0; n < fresh.size(); ++n) {
         if (match[n] >= 0) {
-            const Block& o = old[static_cast<std::size_t>(match[n])];
+            const LiveBlock& o = old[static_cast<std::size_t>(match[n])];
+            keys[n] = idKey(o.id);
             fresh[n].id = o.id;
-            const bool edited = oldHashes[static_cast<std::size_t>(match[n])] != hashes[n];
-            if (how[n] != Carry::kept || edited)
-                events_.push_back({how[n], o.id, path, fresh[n].name, how[n] == Carry::renamed ? o.name : how[n] == Carry::resigned ? o.signature : std::string{"edited"}, turn_});
+            const bool edited = o.bodyHash != fresh[n].bodyHash;
+            if (how[n] != Carry::kept || edited) {
+                const std::string_view detail = how[n] == Carry::renamed ? o.name : how[n] == Carry::resigned ? o.signature : std::string_view{"edited"};
+                event(how[n], keys[n], pool.intern(fresh[n].name), 1, pool.intern(detail));
+            }
             continue;
         }
         // 4. a retired id comes back: the same signature, or a near-identical body (deleted and written again; moved from another file)
-        std::string revive;
-        double best = kReviveJaccard;
-        for (const auto& [id, r] : retired_) {
-            if (r.block.signature == fresh[n].signature && r.block.name == fresh[n].name) { revive = id; break; }
-            if (const double j = jaccard(r.block.tokens, fresh[n].tokens); j >= best) { best = j; revive = id; }
-        }
-        if (!revive.empty()) {
-            fresh[n].id = revive;
-            events_.push_back({Carry::revived, revive, path, fresh[n].name, retired_.at(revive).block.path, turn_});
-            retired_.erase(revive);
+        if (const Hash revive = S.reviveProbe(fresh[n], [&]() -> const Tokens& { return tokF(n); }); revive != 0) {
+            const std::string_view from = S.retired.at(revive).path;
+            keys[n] = revive;
+            fresh[n].id = idText(revive);
+            event(Carry::revived, revive, pool.intern(fresh[n].name), 1, pool.intern(from));
+            S.dropRetired(revive);
+            S.live.put(revive, f, static_cast<std::uint32_t>(n));
             continue;
         }
-        // 5. a block not seen before
-        fresh[n].id = "b" + std::to_string(next_++);
-        events_.push_back({Carry::added, fresh[n].id, path, fresh[n].name, {}, turn_});
+        // 5. a block not seen before: its birth id (A16), a hash of the revision it was born in, its path, its signature and the ordinal among identical births
+        const Hash base = hashView(fresh[n].signature, hashView(pathView, S.birthRevision.empty() ? mix64(static_cast<Hash>(turn) ^ 0xA16) : hashView(S.birthRevision, 0xA16)));
+        Hash ordinal = 0;
+        for (std::size_t m = 0; m < n; ++m) ordinal += born[m] && same(fresh[m].signature, fresh[n].signature);
+        Hash key;
+        for (;; ++ordinal) {   // a clash (48 bits) takes the next ordinal: deterministic as well
+            key = mix64(base ^ (ordinal * kMul)) & kIdMask;
+            if (key != 0 && S.live.find(key) == nullptr && S.retired.find(key) == S.retired.end()) break;
+        }
+        born[n] = 1;
+        S.live.put(key, f, static_cast<std::uint32_t>(n));   // taken now, so a later birth of this update cannot choose it
+        keys[n] = key;
+        fresh[n].id = idText(key);
+        event(Carry::added, key, pool.intern(fresh[n].name), 0, 0);
     }
-    for (std::size_t n = 0; n < fresh.size(); ++n) hashes_[fresh[n].id] = hashes[n];
-    live_[path] = std::move(fresh);
+
+    if (anyLeft(used)) ensureOldTokens();   // while the file still names its old text (a retained text is found by its content id)
+
+    // The new blocks are live; the old ones' keys leave the table first (a carried id is put back at its new position).
+    for (const LiveBlock& o : old) S.live.erase(idKey(o.id));
+    S.liveBlocks -= old.size();
+    S.files[f].blocks = std::move(fresh);
+    std::vector<LiveBlock>& blocks = S.files[f].blocks;
+    freshBlocks = &blocks;
+    for (std::size_t n = 0; n < blocks.size(); ++n) S.live.put(keys[n], f, static_cast<std::uint32_t>(n));
+    S.liveBlocks += blocks.size();
+    S.files[f].textId = tid;
+    S.files[f].textSize = text.size();
+    S.files[f].indexed = true;
+
     // Old blocks left over are retired; one whose body now mostly lives in a single live block was merged into it.
-    for (std::size_t o = 0; o < old.size(); ++o) {
-        if (used[o]) continue;
-        std::string into;
-        double best = kMergeContainment;
-        for (const auto& [p, blocks] : live_)
-            for (const auto& b : blocks)
-                if (const double c = containment(old[o].tokens, b.tokens); c >= best) { best = c; into = b.id; }
-        events_.push_back({into.empty() ? Carry::retired : Carry::merged, old[o].id, path, old[o].name, into, turn_});
-        const std::string id = old[o].id;   // copied first: in `retired_[x.id] = {std::move(x), ...}` the move happens before the key is read
-        hashes_.erase(id);
-        retired_[id] = {std::move(old[o]), into};
+    if (anyLeft(used)) {
+        ensureOldTokens();
+        for (std::size_t o = 0; o < old.size(); ++o) {
+            if (used[o]) continue;
+            Hash into = 0;
+            const Tokens& body = oldTokens[o];
+            if (body.size() >= kMinTokensToCompare) {
+                double best = kMergeContainment;
+                const std::size_t need = leastOverlap(body.size(), kMergeContainment);
+                const std::size_t slack = body.size() - need;   // misses a candidate may show and still qualify
+                for (const auto& [p, fileIndex] : S.byPath) {
+                    for (std::size_t k = 0; k < S.files[fileIndex].blocks.size(); ++k) {
+                        const LiveBlock& b = S.files[fileIndex].blocks[k];
+                        std::size_t misses = 0;
+                        for (const Hash t : body) if (!b.bloom.has(t) && ++misses > slack) break;
+                        if (misses > slack) continue;
+                        ++S.stats.mergeCandidates;
+                        const Tokens* theirs;
+                        Tokens local;
+                        if (fileIndex == f) theirs = &tokF(k);
+                        else {
+                            const FileLines& theirLines = load(fileIndex, S.files[fileIndex].textId);
+                            if (!theirLines.ok) continue;   // text not available: unknown, so not a merge target
+                            local = tokensOfBlock(theirLines.lines, b);
+                            theirs = &local;
+                        }
+                        if (const double c = containmentOf(body, *theirs); c >= best) { best = c; into = idKey(b.id); }
+                    }
+                }
+            }
+            const Hash key = idKey(old[o].id);
+            event(into == 0 ? Carry::retired : Carry::merged, key, pool.intern(old[o].name), into == 0 ? std::uint8_t{0} : std::uint8_t{2}, into);
+            S.addRetired(key, Retired{old[o].path, old[o].name, old[o].signature, into, std::move(oldTokens[o])});
+        }
     }
+    if (S.source == nullptr) S.files[f].retainedText = text;
 }
 
 const Block* BlockIndex::resolve(const std::string& id) const
 {
-    std::string at = id;
-    for (int hops = 0; hops < 16; ++hops) {
-        for (const auto& [p, blocks] : live_)
-            for (const auto& b : blocks) if (b.id == at) return &b;
-        const auto r = retired_.find(at);
-        if (r == retired_.end() || r->second.mergedInto.empty()) return nullptr;
+    Hash at = idKey(id);
+    for (int hops = 0; hops < 16 && at != 0; ++hops) {
+        if (const auto* slot = s_->live.find(at)) return &s_->files[slot->file].blocks[slot->pos];
+        const auto r = s_->retired.find(at);
+        if (r == s_->retired.end()) return nullptr;
         at = r->second.mergedInto;
     }
     return nullptr;
@@ -265,23 +894,69 @@ const Block* BlockIndex::resolve(const std::string& id) const
 
 const Block* BlockIndex::at(const std::string& path, int line) const
 {
-    const auto it = live_.find(path);
-    if (it == live_.end()) return nullptr;
-    for (const auto& b : it->second) if (line >= b.first && line <= b.last) return &b;
+    const auto it = s_->byPath.find(std::string_view{path});
+    if (it == s_->byPath.end()) return nullptr;
+    for (const auto& b : s_->files[it->second].blocks) if (line >= b.first && line <= b.last) return &b;
     return nullptr;
 }
 
 std::vector<const Block*> BlockIndex::blocks(const std::string& path) const
 {
     std::vector<const Block*> out;
-    if (const auto it = live_.find(path); it != live_.end()) for (const auto& b : it->second) out.push_back(&b);
+    if (const auto it = s_->byPath.find(std::string_view{path}); it != s_->byPath.end()) for (const auto& b : s_->files[it->second].blocks) out.push_back(&b);
     return out;
 }
 
 std::vector<const Block*> BlockIndex::all() const
 {
     std::vector<const Block*> out;
-    for (const auto& [p, blocks] : live_) for (const auto& b : blocks) out.push_back(&b);
+    out.reserve(s_->liveBlocks);
+    for (const auto& [p, fileIndex] : s_->byPath) for (const auto& b : s_->files[fileIndex].blocks) out.push_back(&b);
+    return out;
+}
+
+std::vector<std::set<std::string>> BlockIndex::literals(const std::string& path) const
+{
+    std::vector<std::set<std::string>> out;
+    const auto it = s_->byPath.find(std::string_view{path});
+    if (it == s_->byPath.end()) return out;
+    State& S = *s_;   // the fetch counts itself; the index is otherwise untouched
+    const FileState& fs = S.files[it->second];
+    out.resize(fs.blocks.size());
+    const auto text = S.fetch(it->second, fs.textId);
+    if (!text) return out;
+    const auto lines = splitViews(*text);
+    for (std::size_t n = 0; n < fs.blocks.size(); ++n) {
+        const LiveBlock& b = fs.blocks[n];
+        for (int k = std::max(1, b.first); k <= b.last && static_cast<std::size_t>(k) <= lines.size(); ++k)
+            if (k > b.sigLine || b.first == b.last) scanLiterals(lines[static_cast<std::size_t>(k) - 1], out[n]);
+    }
+    return out;
+}
+
+BlockEvent BlockIndex::eventAt(std::size_t i) const
+{
+    const Ev& e = s_->events[i];
+    const Pool& pool = *s_->pool;
+    BlockEvent out;
+    out.carry = e.carry;
+    out.id = idText(e.id);
+    out.path = std::string{pool.view(e.path)};
+    out.name = std::string{pool.view(e.name)};
+    out.detail = e.detailKind == 1 ? std::string{pool.view(static_cast<std::uint32_t>(e.detail))} : e.detailKind == 2 ? idText(e.detail) : std::string{};
+    out.turn = e.turn;
+    return out;
+}
+
+std::size_t BlockIndex::eventCount() const { return s_->events.size(); }
+
+BlockEvent EventLog::iterator::operator*() const { return x_->eventAt(i_); }
+std::size_t EventLog::size() const { return x_->eventCount(); }
+BlockEvent EventLog::operator[](std::size_t i) const { return x_->eventAt(i); }
+std::vector<BlockEvent> EventLog::from(std::size_t from) const
+{
+    std::vector<BlockEvent> out;
+    for (std::size_t i = from; i < size(); ++i) out.push_back(x_->eventAt(i));
     return out;
 }
 
@@ -289,16 +964,28 @@ std::string BlockIndex::retiredJson() const
 {
     json::Writer w;
     w.beginArray();
-    for (const auto& [id, r] : retired_) w.beginObject().kv("id", id).kv("path", r.block.path).kv("name", r.block.name).kv("mergedInto", r.mergedInto).endObject();
+    for (const auto& [key, r] : s_->retired)
+        w.beginObject().kv("id", idText(key)).kv("path", r.path).kv("name", r.name).kv("mergedInto", r.mergedInto == 0 ? std::string{} : idText(r.mergedInto)).endObject();
     w.endArray();
     return std::string{w.view()};
 }
 
 namespace {
 
-void writeEvent(json::Writer& w, const BlockEvent& e) { projection::writeBlockEvent(w, e); }
+/// One logged event, written from its compact record without building a `BlockEvent`.
+void writeEv(json::Writer& w, const Ev& e, const Pool& pool)
+{
+    char id[13], into[13];
+    idChars(e.id, id);
+    std::string_view detail;
+    if (e.detailKind == 1) detail = pool.view(static_cast<std::uint32_t>(e.detail));
+    else if (e.detailKind == 2) { idChars(e.detail, into); detail = std::string_view{into, 13}; }
+    projection::writeBlockEventParts(w, e.turn, carryName(e.carry), std::string_view{id, 13}, pool.view(e.path), pool.view(e.name), detail);
+}
 
 }  // namespace
+
+void BlockIndex::writeEventJson(json::Writer& w, std::size_t i) const { writeEv(w, s_->events[i], *s_->pool); }
 
 std::string BlockIndex::json() const { return jsonFrom(0, false); }
 
@@ -308,11 +995,11 @@ std::string BlockIndex::jsonFrom(std::size_t eventsFrom, bool say) const
 {
     json::Writer w;
     w.beginObject().key("blocks").beginArray();
-    for (const Block* b : all()) projection::writeBlock(w, *b);
+    for (const auto& [p, fileIndex] : s_->byPath) for (const Block& b : s_->files[fileIndex].blocks) projection::writeBlock(w, b);
     w.endArray().kvRaw("retired", retiredJson());
     if (say) w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
     w.key("events").beginArray();
-    for (std::size_t i = std::min(eventsFrom, events_.size()); i < events_.size(); ++i) writeEvent(w, events_[i]);
+    for (std::size_t i = std::min(eventsFrom, s_->events.size()); i < s_->events.size(); ++i) writeEv(w, s_->events[i], *s_->pool);
     w.endArray().endObject();
     return std::string{w.view()};
 }
@@ -325,10 +1012,10 @@ std::string BlockIndex::eventLogNdjson(const std::string& document) const
         w.beginObject().kv("schema", "canvas-events-1").kv("document", document).endObject();
         out += std::string{w.view()} + '\n';
     }
-    for (std::size_t i = 0; i < events_.size(); ++i) {
+    for (std::size_t i = 0; i < s_->events.size(); ++i) {
         json::Writer w;
-        w.beginObject().kv("seq", static_cast<std::int64_t>(i)).kv("kind", "block").kv("source", "canvas/index").kv("subject", events_[i].id).key("data");
-        writeEvent(w, events_[i]);
+        w.beginObject().kv("seq", static_cast<std::int64_t>(i)).kv("kind", "block").kv("source", "canvas/index").kv("subject", idText(s_->events[i].id)).key("data");
+        writeEv(w, s_->events[i], *s_->pool);
         w.endObject();
         out += std::string{w.view()} + '\n';
     }
@@ -338,13 +1025,14 @@ std::string BlockIndex::eventLogNdjson(const std::string& document) const
 std::vector<BlockEvent> blockHistory(const BlockIndex& index, const std::string& id)
 {
     std::set<std::string> ids{id};
+    const auto log = index.events();
     for (bool grew = true; grew;) {   // every id merged into one of these, transitively
         grew = false;
-        for (const auto& e : index.events())
+        for (const auto& e : log)
             if (e.carry == Carry::merged && ids.count(e.detail) && !ids.count(e.id)) { ids.insert(e.id); grew = true; }
     }
     std::vector<BlockEvent> out;
-    for (const auto& e : index.events()) if (ids.count(e.id)) out.push_back(e);
+    for (const auto& e : log) if (ids.count(e.id)) out.push_back(e);
     return out;
 }
 
@@ -374,7 +1062,7 @@ std::set<std::string> probeTokens(const std::string& expr)
 /// 1/k points to each of the k blocks whose literals hold it (a rare token says more). An operator character counts only when ONE block holds it: `+`
 /// in `expr()` and `unary()` says nothing about which is wrong, and a wrong pointer costs more than none (tier 0, bugs-10). Every block at the top
 /// score, in file order, at most three; no evidence, no suspect.
-std::vector<Anchor> suspects(const std::string& testName, const std::string& expr, const std::vector<const Block*>& blocks)
+std::vector<Anchor> suspects(const std::string& testName, const std::string& expr, const std::vector<const Block*>& blocks, const std::vector<std::set<std::string>>& literals)
 {
     std::map<std::string, double> score;
     std::string words = testName;
@@ -383,7 +1071,7 @@ std::vector<Anchor> suspects(const std::string& testName, const std::string& exp
     for (std::string w; ws >> w;) for (const Block* b : blocks) if (lower(leaf(b->name)) == lower(w)) score[b->id] += 3.0;
     for (const auto& t : probeTokens(expr)) {
         std::vector<const Block*> holders;
-        for (const Block* b : blocks) if (b->literals.count(t)) holders.push_back(b);
+        for (std::size_t k = 0; k < blocks.size(); ++k) if (literals[k].count(t)) holders.push_back(blocks[k]);
         const bool word = std::isalpha(static_cast<unsigned char>(t[0])) || t[0] == '_';
         if (!word && holders.size() != 1) continue;
         for (const Block* b : holders) score[b->id] += 1.0 / static_cast<double>(holders.size());
@@ -393,7 +1081,7 @@ std::vector<Anchor> suspects(const std::string& testName, const std::string& exp
     std::vector<Anchor> out;
     if (top <= 0) return out;
     for (const Block* b : blocks)
-        if (score.count(b->id) && score[b->id] >= top - 1e-9 && out.size() < 3) out.push_back({b->id, b->path, b->first, Anchor::Confidence::suspect});
+        if (score.count(b->id) && score[b->id] >= top - 1e-9 && out.size() < 3) out.push_back({b->id, std::string{b->path}, b->first, Anchor::Confidence::suspect});
     return out;
 }
 
@@ -481,6 +1169,15 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
     // function in the given sources (a runner such as Python's unittest reports `test_modulo: 30.0 != 1`, never the expression; the line it names is
     // usually a shared assertion helper, so the function is found by name).
     const auto blocks = index.all();
+    std::vector<std::set<std::string>> literals;   // each block's string literals, read back from the text: only a failing test needs them
+    if (!testNames.empty()) {
+        literals.reserve(blocks.size());
+        for (std::size_t k = 0; k < blocks.size();) {   // `all()` lists a file's blocks together, in file order
+            const std::string path{blocks[k]->path};
+            auto here = index.literals(path);
+            for (std::size_t j = 0; j < here.size() && k < blocks.size(); ++j, ++k) literals.push_back(std::move(here[j]));
+        }
+    }
     for (const auto& [i, name] : testNames) {
         LayerItem& it = items[i];
         std::string expr;
@@ -497,7 +1194,7 @@ std::vector<LayerItem> parseIssues(const std::string& verdict, const BlockIndex&
                 }
             }
         }
-        it.anchors = suspects(name, expr, blocks);
+        it.anchors = suspects(name, expr, blocks, literals);
     }
     for (std::size_t i = 0; i < items.size(); ++i) items[i].number = static_cast<int>(i) + 1;
     return items;
@@ -562,8 +1259,8 @@ std::string detailOf(const LayerItem& item, const BlockIndex& index, const std::
                 continue;
             }
             if (shown++ >= 3) { s += "... and in " + leaf(b->name) + "() " + lines + "\n"; continue; }
-            const auto f = files.find(b->path);
-            s += std::string{a.confidence == Anchor::Confidence::suspect ? "Likely in " : "In "} + b->path + ", " + leaf(b->name) + "(), now at lines " + std::to_string(b->first) + "-" + std::to_string(b->last) + ":\n" +
+            const auto f = files.find(std::string{b->path});
+            s += std::string{a.confidence == Anchor::Confidence::suspect ? "Likely in " : "In "} + std::string{b->path} + ", " + leaf(b->name) + "(), now at lines " + std::to_string(b->first) + "-" + std::to_string(b->last) + ":\n" +
                  (f == files.end() ? std::string{} : numbered(f->second, b->first, b->last));
         } else if (a.line > 0 && file != files.end()) {
             if (shown++ >= 3) { s += "... and at " + a.path + ":" + std::to_string(a.line) + "\n"; continue; }
@@ -610,7 +1307,7 @@ std::string layerFocus(const std::vector<LayerItem>& items, const BlockIndex& in
     std::string s;
     for (const auto& it : items)
         for (const auto& a : it.anchors) {
-            if (!a.blockId.empty()) { if (const Block* b = index.resolve(a.blockId)) s += b->path + ":" + std::to_string(b->first) + "\n"; }
+            if (!a.blockId.empty()) { if (const Block* b = index.resolve(a.blockId)) s += std::string{b->path} + ":" + std::to_string(b->first) + "\n"; }
             else if (a.line > 0) s += a.path + ":" + std::to_string(a.line) + "\n";
         }
     return s;
@@ -728,9 +1425,11 @@ void writeBlock(json::Writer& w, const Block& b)
     w.beginObject().kv("id", b.id).kv("path", b.path).kv("name", b.name).kv("signature", b.signature).kv("first", b.first).kv("last", b.last).endObject();
 }
 
-void writeBlockEvent(json::Writer& w, const BlockEvent& e)
+void writeBlockEvent(json::Writer& w, const BlockEvent& e) { writeBlockEventParts(w, e.turn, carryName(e.carry), e.id, e.path, e.name, e.detail); }
+
+void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail)
 {
-    w.beginObject().kv("turn", e.turn).kv("carry", carryName(e.carry)).kv("id", e.id).kv("path", e.path).kv("name", e.name).kv("detail", e.detail).endObject();
+    w.beginObject().kv("turn", turn).kv("carry", carry).kv("id", id).kv("path", path).kv("name", name).kv("detail", detail).endObject();
 }
 
 void writeLayerItemMembers(json::Writer& w, const LayerItem& it, int number)

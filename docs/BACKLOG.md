@@ -60,8 +60,7 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **G1: the git document adapter and per-path history: done** (2026-11-24; A20, A21; outcome in [sessions/g1-git-history.md](sessions/g1-git-history.md)): `DocumentSource`, `RevisionIndex`, `GitSource`, `sub0canvas history`,
   checked on an invented 200-commit repository against hand-checked truth. **Left**: the truth on real histories (S3: the brief's five functions of a sibling project, the Linux kernel; the owner approves
   each download), persisted checkpoints (B1: `BlockIndex` has no reader), a stopping revision on `history` so extending a line does not re-read it, branch-to-main `carry` (P0, with `mergeBase`).
-* **S1: the compact, lazy index** (after S0's numbers): blocks keyed by id and by blob (`BlockIndex::resolve` scans every live block today, which
-  made a per-event lookup quadratic at 200,000 blocks, SCALE.md section 6.1), birth ids (A16), no texts held.
+* **S1: the compact, lazy index: done** (2026-11-24; SCALE.md 6.3): birth ids (A16), an id table, interned strings, no texts or token sets held (`TextSource`), an indexed revive, a compact event log. 319 bytes a block (target 200, the metric stays an xfail), cold build 2.6 times faster, resolve 29 times, revive 28 times. **Left**: the last 120 bytes (the event log behind a cursor in the log module; the public `Block`'s id and signature strings), the merge pass over live blocks (S2), the per-user cache shared across clones (A19), expiry of retired blocks, `layeredJson` and the query `events` page a few percent slower (output grew by the id width), the 10^7 and 10^9 runs.
 * **D1: the conformance corpus** per language, hand-checked outlines.
 * **S2** the sketch index and per-path checkpoints.
 * **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.

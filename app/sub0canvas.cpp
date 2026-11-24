@@ -219,7 +219,7 @@ int snapshot(const Options& o)
             std::set<std::string> seen;
             for (const auto& e : index.events()) {
                 if (e.turn != static_cast<int>(t) || e.carry == Carry::retired || e.carry == Carry::merged || !seen.insert(e.id).second) continue;
-                if (const auto b = live.find(e.id); b != live.end()) item.anchors.push_back({b->second->id, b->second->path, b->second->first, Anchor::Confidence::exact});
+                if (const auto b = live.find(e.id); b != live.end()) item.anchors.push_back({b->second->id, std::string{b->second->path}, b->second->first, Anchor::Confidence::exact});
             }
         }
         item.detail = std::format("{} by {} on {}\n{}\n{} blocks added or changed", commits[t].sha, commits[t].author, commits[t].date, commits[t].subject,
