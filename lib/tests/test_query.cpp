@@ -165,7 +165,8 @@ int main(int argc, char** argv)
             CHECK_EQ(simdjson::minify(r1.root["entries"]), simdjson::minify(r2.root["entries"]));
             CHECK_EQ(r1.num("folders"), 0);
             CHECK_EQ(r1.num("files"), 10);
-            CHECK_EQ(r1.names().front(), std::string{"f00000.cpp"});
+            const Strings firstNames = r1.names();   // named: CHECK_EQ binds references, which must not point into a temporary
+            CHECK_EQ(firstNames.front(), std::string{"f00000.cpp"});
 
             // The root: folders first (by name), then files; each folder entry carries its counts, no text and no child.
             QueryStats root;
@@ -187,7 +188,8 @@ int main(int argc, char** argv)
             CHECK_EQ((*it)["bytes"].get_int64().value(), 8);
             CHECK_EQ((*it)["lines"].get_int64().value(), 1);
             CHECK_EQ((*it)["revisionId"].get_string().value(), std::string_view{"r1"});
-            CHECK_EQ((*it)["textId"].get_string().value(), std::string_view{contentId("read me\n")});
+            const std::string readMeId = contentId("read me\n");
+            CHECK_EQ((*it)["textId"].get_string().value(), std::string_view{readMeId});
 
             // Paging: the pages of src/b, followed by their cursors, are exactly the sorted list; the page size is the request's, clamped to the policy's.
             Strings want;
@@ -274,7 +276,8 @@ int main(int argc, char** argv)
             auto revs = ask(server, R"({"op":"revisions","path":"hello.txt"})");
             CHECK_EQ(revs->num("total"), 2);
             CHECK_EQ(revs->names("revisionId"), (Strings{"r1", "r2"}));
-            CHECK_EQ(revs->names("textId")[0], kHello);
+            const Strings textIds = revs->names("textId");
+            CHECK_EQ(textIds[0], kHello);
             CHECK_EQ(allPages(server, R"({"op":"revisions","path":"hello.txt","limit":1)", "revisionId"), (Strings{"r1", "r2"}));
             // A revision that does not rise, and a malformed path, are refused by the document.
             CHECK(!w.doc.addRevision("hello.txt", 2, {}, "again"));
@@ -366,7 +369,8 @@ int main(int argc, char** argv)
             QueryStats st;
             auto p1 = ask(server, R"({"op":"layer","layer":"issues","limit":10})", &st);
             CHECK(p1->ok());
-            CHECK_EQ(p1->names("id").front(), std::string{"issues/000"});
+            const Strings pageIds = p1->names("id");
+            CHECK_EQ(pageIds.front(), std::string{"issues/000"});
             CHECK_EQ(p1->entries().at(9)["number"].get_int64().value(), 10);
             CHECK_EQ(st.visited, std::size_t{10});   // ten items examined of forty, none of the review layer
             CHECK_EQ(p1->num("total"), 40);

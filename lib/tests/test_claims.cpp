@@ -230,8 +230,10 @@ int main()
         CHECK(!onOldId.has_value());
         if (!onOldId) CHECK_EQ(onOldId.error().expires, Instant{1300});
         CHECK_EQ(claimsOn(b, TargetKind::block, "b1", 1100).size(), std::size_t{1});
-        CHECK_EQ(resolveBlock(b, "b1")[0], std::string("b2"));
-        CHECK_EQ(resolveBlock(b, "b9")[0], std::string("b9"));   // unknown ids stand for themselves
+        const std::vector<std::string> resolvedOld = resolveBlock(b, "b1");   // named: CHECK_EQ binds references, which must not point into a temporary
+        CHECK_EQ(resolvedOld[0], std::string("b2"));
+        const std::vector<std::string> resolvedUnknown = resolveBlock(b, "b9");
+        CHECK_EQ(resolvedUnknown[0], std::string("b9"));   // unknown ids stand for themselves
         CHECK(releaseClaim(a, kA, c->id, 1200).has_value());
         b.merge(a.events());
         CHECK(checkClaim(b, policy, kB, block("b2"), 1200).has_value());
