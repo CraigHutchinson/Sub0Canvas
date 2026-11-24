@@ -302,7 +302,12 @@ struct InboxReader::Impl
         }
         placementOf.push_back(pl);
         byKind[e.kind].push_back(p);
-        byKindName[std::string{splitKind(e.kind).name}].push_back(p);
+        {   // a probe by view first: the name is copied into a key only the first time it is seen
+            const std::string_view name = splitKind(e.kind).name;
+            auto bucket = byKindName.find(name);
+            if (bucket == byKindName.end()) bucket = byKindName.emplace(std::string{name}, Bucket{}).first;
+            bucket->second.push_back(p);
+        }
         if (pl != kNoVersion) {
             const Placement& at = placements[pl];
             byLayer[at.layer].push_back(p);
@@ -360,7 +365,7 @@ struct InboxReader::Impl
     {
         const Event& e = store.events()[pos];
         if (!q.events.empty()) {
-            if (!q.events.contains(e.kind) && !q.events.contains(std::string{splitKind(e.kind).name})) return false;
+            if (!q.events.contains(e.kind) && !q.events.contains(splitKind(e.kind).name)) return false;
         } else if (isSubscriptionKind(e.kind)) {
             return false;
         }
