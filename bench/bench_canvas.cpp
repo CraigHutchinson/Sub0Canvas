@@ -15,12 +15,14 @@
 #include "sub0canvas/outline.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <map>
 #include <memory>
 #include <optional>
+#include <print>
 #include <string_view>
 #include <new>
 #include <set>
@@ -100,7 +102,7 @@ bench::Corpus makeCorpus(std::size_t lines, std::uint64_t seed = 1)
     spec.seed = seed;
     spec.targetLines = lines;
     auto corpus = bench::generateCorpus(spec);
-    if (!corpus) { std::fprintf(stderr, "corpus: %s\n", corpus.error().c_str()); std::exit(2); }
+    if (!corpus) { std::println(stderr, "corpus: {}", corpus.error()); std::exit(2); }
     return std::move(*corpus);
 }
 

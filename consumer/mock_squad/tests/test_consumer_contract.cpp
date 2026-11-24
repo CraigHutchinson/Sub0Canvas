@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <print>
 #include <set>
 #include <sstream>
 #include <tuple>
@@ -387,7 +388,7 @@ std::vector<std::string> mappedRows(const std::string& requirements)
 int main(int argc, char** argv)
 {
     if (argc < 5) {
-        std::fprintf(stderr, "usage: test_consumer_contract <fixtures/scenarios/squad> <fixtures/mock> <docs/REQUIREMENTS.md> <package.json>\n");
+        std::println(stderr, "usage: test_consumer_contract <fixtures/scenarios/squad> <fixtures/mock> <docs/REQUIREMENTS.md> <package.json>");
         return 2;
     }
     std::vector<fs::path> files;
@@ -400,13 +401,13 @@ int main(int argc, char** argv)
     std::map<std::string, Attempt> attempts;
     for (const auto& f : files) {
         const auto sc = parseScenario(slurp(f));
-        if (!sc) { std::fprintf(stderr, "%s: unreadable scenario: %s\n", f.filename().string().c_str(), sc.error().c_str()); CHECK(false); continue; }
+        if (!sc) { std::println(stderr, "{}: unreadable scenario: {}", f.filename().string(), sc.error()); CHECK(false); continue; }
         CHECK(sc->name == f.stem().string());
         const auto attempt = runScenario(*sc);
-        if (!attempt) { std::fprintf(stderr, "%s: %s\n", f.filename().string().c_str(), attempt.error().c_str()); CHECK(false); continue; }
+        if (!attempt) { std::println(stderr, "{}: {}", f.filename().string(), attempt.error()); CHECK(false); continue; }
         const auto report = [&](const char* what, const std::string& why) {
             if (why.empty()) return;
-            std::fprintf(stderr, "%s: %s: %s\n", sc->name.c_str(), what, why.c_str());
+            std::println(stderr, "{}: {}: {}", sc->name, what, why);
             CHECK(false);
         };
         report("outcomes", checkOutcomes(*sc, *attempt));   // (c)
@@ -428,7 +429,7 @@ int main(int argc, char** argv)
         std::set<std::string> names;
         for (const auto& f : files) names.insert(f.stem().string());
         for (const auto& e : fs::directory_iterator(argv[2]))
-            if (e.is_directory() && !names.count(e.path().filename().string())) { std::fprintf(stderr, "fixtures/mock/%s has no scenario\n", e.path().filename().string().c_str()); CHECK(false); }
+            if (e.is_directory() && !names.count(e.path().filename().string())) { std::println(stderr, "fixtures/mock/{} has no scenario", e.path().filename().string()); CHECK(false); }
     }
     {   // Behaviour the scenarios were written to show: each library rule that matters to the squad has at least one scenario that reaches it.
         CHECK(attempts.count("b9-file-and-bad-edit-atomic") && attempts["b9-file-and-bad-edit-atomic"].refused == 1);
@@ -437,9 +438,9 @@ int main(int argc, char** argv)
         CHECK(attempts.count("g4-rename-resign-move") && attempts["g4-rename-resign-move"].staged == 3);
         CHECK(attempts.count("b15-flapping-test") && attempts["b15-flapping-test"].reverted == 1);
         for (const char* fn : {"Store::putLayer", "Store::item", "Store::checkpoint", "Store::restore", "Store::replay", "Store::merge", "eventJson", "parseEvent"})
-            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS3)\n", fn); CHECK(false); }
+            if (!libraryCalls.count(fn)) { std::println(stderr, "no scenario makes the loop call {} (MS3)", fn); CHECK(false); }
         for (const char* fn : {"takeClaim", "checkClaim", "releaseClaim", "expireDue", "emitBlockCarries", "claimsJson", "findClaim", "diffLines"})
-            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS4)\n", fn); CHECK(false); }
+            if (!libraryCalls.count(fn)) { std::println(stderr, "no scenario makes the loop call {} (MS4)", fn); CHECK(false); }
         {   // The four claim scenarios show what they were written for (R-CONS-6, R-CONS-7); each refusal also left the canvas unchanged (the loop's own invariant).
             const char* names[] = {"b14-claim-contention", "b14-claim-expiry", "b14-claim-merge-order", "b8-claim-follows-merge"};
             for (const char* n : names) CHECK(attempts.count(n) && attempts[n].verified);
@@ -449,7 +450,7 @@ int main(int argc, char** argv)
         }
         for (const char* fn : {"Workspace::open", "Workspace::attach", "Session::openView", "Session::stage", "Session::land", "Session::since", "Session::advance", "Session::kept", "Session::refresh",
                                "makeDelta", "textAtPin", "applyHunks", "pinAtTip"})
-            if (!libraryCalls.count(fn)) { std::fprintf(stderr, "no scenario makes the loop call %s (MS5)\n", fn); CHECK(false); }
+            if (!libraryCalls.count(fn)) { std::println(stderr, "no scenario makes the loop call {} (MS5)", fn); CHECK(false); }
         {   // The two view scenarios show what they were written for (R-CONS-8, R-CONS-9, R-PIN-2, R-PIN-3, R-PIN-6).
             CHECK(attempts.count("b8-pinned-workers-land") && attempts["b8-pinned-workers-land"].verified && attempts["b8-pinned-workers-land"].refused == 1);
             CHECK(attempts.count("b14-tip-worker-four-forms") && attempts["b14-tip-worker-four-forms"].verified);
@@ -470,14 +471,14 @@ int main(int argc, char** argv)
         CHECK_GE(cells.size(), static_cast<std::size_t>(10));
         for (const auto& cell : cells) {
             const auto row = std::find_if(kRows.begin(), kRows.end(), [&](const Row& r) { return cell.find(r.key) != std::string::npos; });
-            if (row == kRows.end()) { std::fprintf(stderr, "REQUIREMENTS.md row not covered or deferred in the consumer contract: %s\n", cell.c_str()); CHECK(false); }
+            if (row == kRows.end()) { std::println(stderr, "REQUIREMENTS.md row not covered or deferred in the consumer contract: {}", cell); CHECK(false); }
         }
         for (const auto& row : kRows) {
             const bool inDocument = std::any_of(cells.begin(), cells.end(), [&](const std::string& c) { return c.find(row.key) != std::string::npos; });
-            if (!inDocument) { std::fprintf(stderr, "the consumer contract lists a row REQUIREMENTS.md no longer has: %s\n", row.key.c_str()); CHECK(false); }
-            if (row.called.empty() && row.deferred.empty()) { std::fprintf(stderr, "row '%s' is neither exercised nor deferred with a reason\n", row.key.c_str()); CHECK(false); }
+            if (!inDocument) { std::println(stderr, "the consumer contract lists a row REQUIREMENTS.md no longer has: {}", row.key); CHECK(false); }
+            if (row.called.empty() && row.deferred.empty()) { std::println(stderr, "row '{}' is neither exercised nor deferred with a reason", row.key); CHECK(false); }
             for (const auto& fn : row.called)
-                if (!libraryCalls.count(fn)) { std::fprintf(stderr, "row '%s': no scenario makes the loop call %s\n", row.key.c_str(), fn.c_str()); CHECK(false); }
+                if (!libraryCalls.count(fn)) { std::println(stderr, "row '{}': no scenario makes the loop call {}", row.key, fn); CHECK(false); }
         }
     }
     {   // The checkers themselves can fail: a wrong expectation is reported (a test that has never failed proves little, docs/TESTING.md).
@@ -556,11 +557,11 @@ int main(int argc, char** argv)
         const auto q1 = at == std::string::npos ? at : pkg.find('"', pkg.find(':', at));
         const auto q2 = q1 == std::string::npos ? q1 : pkg.find('"', q1 + 1);
         const Version npm = q2 == std::string::npos ? Version{} : parseVersion(pkg.substr(q1 + 1, q2 - q1 - 1));
-        if (!(lib == npm)) { std::fprintf(stderr, "CMakeLists.txt says %s, package.json says another version\n", MOCK_SQUAD_LIBRARY_VERSION); CHECK(false); }
+        if (!(lib == npm)) { std::println(stderr, "CMakeLists.txt says {}, package.json says another version", MOCK_SQUAD_LIBRARY_VERSION); CHECK(false); }
         const std::string tag = MOCK_SQUAD_LATEST_TAG;
         if (!tag.empty()) {
             const Version released = parseVersion(tag);
-            if (released.major >= 0 && lib < released) { std::fprintf(stderr, "the library says %s but %s is already tagged\n", MOCK_SQUAD_LIBRARY_VERSION, tag.c_str()); CHECK(false); }
+            if (released.major >= 0 && lib < released) { std::println(stderr, "the library says {} but {} is already tagged", MOCK_SQUAD_LIBRARY_VERSION, tag); CHECK(false); }
         }
     }
     return finish();

@@ -10,6 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MOCK_SQUAD_REPO ${CMAKE_CURRENT_LIST_DIR}/../..)
 include(${MOCK_SQUAD_REPO}/cmake/get_cpm.cmake)
+include(${MOCK_SQUAD_REPO}/cmake/print_link.cmake)   # std::println links on every toolchain (the mock squad tools print)
 
 # Without the override (CPM_Sub0Canvas_SOURCE) this fetches the released tag: a deliberate pin, not the checkout.
 CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.4.0)

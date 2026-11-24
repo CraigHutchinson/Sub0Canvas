@@ -8,11 +8,13 @@
 #include "sub0canvas/revision_index.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <functional>
 #include <map>
 #include <memory>
 #include <optional>
+#include <print>
 #include <set>
 #include <string>
 #include <vector>
@@ -130,7 +132,7 @@ struct History200
         spec.seed = 1;
         spec.targetLines = 20'000;
         auto made = bench::generateCorpus(spec);
-        if (!made) { std::fprintf(stderr, "corpus: %s\n", made.error().c_str()); std::exit(2); }
+        if (!made) { std::println(stderr, "corpus: {}", made.error()); std::exit(2); }
         corpus = std::move(*made);
         source = std::make_unique<StreamSource>(corpus, kCommits, 11);
     }

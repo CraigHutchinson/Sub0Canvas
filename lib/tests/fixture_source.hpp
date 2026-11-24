@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <print>
 #include <set>
 #include <sstream>
 #include <string>
@@ -30,7 +31,7 @@ using namespace sub0canvas;
 inline std::string slurp(const std::filesystem::path& p)
 {
     std::ifstream in(p, std::ios::binary);
-    if (!in) { std::fprintf(stderr, "cannot read %s\n", p.string().c_str()); std::exit(2); }
+    if (!in) { std::println(stderr, "cannot read {}", p.string()); std::exit(2); }
     std::ostringstream ss;
     ss << in.rdbuf();
     return ss.str();
@@ -75,13 +76,13 @@ public:
     {
         const std::string prefix = shallow ? "shallow-" : "";
         auto log = gitplumbing::parseLog(slurp(dir / (prefix + "log.z")));
-        if (!log) { std::fprintf(stderr, "log: %s\n", log.error().c_str()); std::exit(2); }
+        if (!log) { std::println(stderr, "log: {}", log.error()); std::exit(2); }
         commits_ = std::move(*log);
         for (std::size_t i = 0; i < commits_.size(); ++i) byId_[commits_[i].info.id] = i;
         head_ = commits_.front().info.id;
         const auto refs = lines(slurp(dir / (prefix + "blobs.refs")));
         auto texts = gitplumbing::parseCatFileBatch(slurp(dir / (prefix + "blobs.batch")), refs.size());
-        if (!texts) { std::fprintf(stderr, "blobs: %s\n", texts.error().c_str()); std::exit(2); }
+        if (!texts) { std::println(stderr, "blobs: {}", texts.error()); std::exit(2); }
         for (std::size_t i = 0; i < refs.size(); ++i) blobs_[refs[i]] = std::move((*texts)[i]);
         for (const auto& entry : std::filesystem::directory_iterator(dir)) {   // the trees captured for a window's base: tree-<name>.z, its base id in the manifest
             const std::string name = entry.path().filename().string();
@@ -94,7 +95,7 @@ public:
     void addTree(const std::string& revision, const std::string& treeFile)
     {
         auto entries = gitplumbing::parseTree(trees_.at(treeFile));
-        if (!entries) { std::fprintf(stderr, "tree: %s\n", entries.error().c_str()); std::exit(2); }
+        if (!entries) { std::println(stderr, "tree: {}", entries.error()); std::exit(2); }
         listings_[revision] = gitplumbing::documentPaths(*entries);
     }
 

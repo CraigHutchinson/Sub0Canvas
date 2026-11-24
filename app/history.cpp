@@ -8,6 +8,7 @@
 // that name at REV with their events, each event beside its revision and that commit's subject. `--blocks` lists the live blocks at REV.
 #include "git_source.hpp"
 
+#include <print>
 #include <sub0canvas/revision_index.hpp>
 
 #include "json_util.hpp"
@@ -25,9 +26,7 @@ namespace {
 
 template <class... A> void eprintln(std::format_string<A...> f, A&&... a)
 {
-    std::string line = std::format(f, std::forward<A>(a)...);
-    line.push_back('\n');
-    std::fputs(line.c_str(), stderr);
+    std::println(stderr, f, std::forward<A>(a)...);
 }
 
 [[noreturn]] void fail(const std::string& message)

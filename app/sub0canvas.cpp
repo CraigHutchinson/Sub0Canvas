@@ -8,6 +8,7 @@
 // default, each text once under its content id (`--texts inline` repeats every file's text in every turn, for a reader that predates `texts`); the whole event log
 // is the bundle's `events.ndjson`. Nothing is written to disk and nothing is copied out of the
 // repository beyond the bundle on stdout, whose size the limits bound (docs/AUTHORING.md section 2: a view is bounded by attention, not data).
+#include <print>
 #include <sub0canvas/content_id.hpp>
 #include <sub0canvas/doc_layers.hpp>
 
@@ -39,12 +40,10 @@ namespace {
 
 using namespace sub0canvas;
 
-/// One line to stderr. Not std::println: <print> is missing from GCC 13, which some machines carry first on PATH.
+/// One line to stderr.
 template <class... A> void eprintln(std::format_string<A...> f, A&&... a)
 {
-    std::string line = std::format(f, std::forward<A>(a)...);
-    line.push_back('\n');
-    std::fputs(line.c_str(), stderr);
+    std::println(stderr, f, std::forward<A>(a)...);
 }
 
 struct Options

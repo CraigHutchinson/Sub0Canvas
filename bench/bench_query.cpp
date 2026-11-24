@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <functional>
 #include <memory>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,7 @@ struct Served
         spec.seed = 1;
         spec.targetLines = 100'000;
         auto corpus = bench::generateCorpus(spec);
-        if (!corpus) { std::fprintf(stderr, "corpus: %s\n", corpus.error().c_str()); std::exit(2); }
+        if (!corpus) { std::println(stderr, "corpus: {}", corpus.error()); std::exit(2); }
         for (const auto& [path, text] : corpus->files) {
             const bool code = path.ends_with(".cpp") || path.ends_with(".hpp") || path.ends_with(".py");
             if (!doc.addRevision(path, 1, {}, text)) continue;

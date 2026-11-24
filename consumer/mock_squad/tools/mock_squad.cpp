@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <print>
 #include <set>
 #include <sstream>
 #include <string>
@@ -20,7 +21,7 @@ namespace fs = std::filesystem;
 int main(int argc, char** argv)
 {
     if (argc < 3) {
-        std::fprintf(stderr, "usage: mock_squad <scenarios dir> <fixtures/mock> [--update] [name...]\n");
+        std::println(stderr, "usage: mock_squad <scenarios dir> <fixtures/mock> [--update] [name...]");
         return 2;
     }
     bool update = false;
@@ -41,20 +42,20 @@ int main(int argc, char** argv)
         text << in.rdbuf();
         auto sc = mock_squad::parseScenario(text.str());
         if (!sc) {
-            std::fprintf(stderr, "%s: %s\n", f.filename().string().c_str(), sc.error().c_str());
+            std::println(stderr, "{}: {}", f.filename().string(), sc.error());
             ++bad;
             continue;
         }
         auto attempt = mock_squad::runScenario(*sc);
         if (!attempt) {
-            std::fprintf(stderr, "%s\n", attempt.error().c_str());
+            std::println(stderr, "{}", attempt.error());
             ++bad;
             continue;
         }
         std::string seq;
         for (const auto& o : attempt->outcomes) seq += (seq.empty() ? "" : " | ") + o.kind + (o.text.empty() ? "" : ":" + o.text.substr(0, 50));
-        std::printf("%s: %s\n", sc->name.c_str(), seq.c_str());
-        for (const auto& v : attempt->violations) std::printf("  VIOLATION %s\n", v.c_str());
+        std::println("{}: {}", sc->name, seq);
+        for (const auto& v : attempt->violations) std::println("  VIOLATION {}", v);
         if (update) mock_squad::writeTree(fs::path(argv[2]) / sc->name, attempt->record);
     }
     return bad == 0 ? 0 : 1;

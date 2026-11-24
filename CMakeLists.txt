@@ -15,6 +15,7 @@ if(SUB0CANVAS_TOP_LEVEL)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  include(${CMAKE_CURRENT_LIST_DIR}/cmake/print_link.cmake)   # std::println links on every toolchain
 endif()
 
 # simdjson (the JSON writer behind the interchange files; kept out of public headers). A consumer that already has it (Sub0Squad) is not given a second.
