@@ -3,14 +3,18 @@
 #include "mock_squad/gate.hpp"
 #include "mock_squad/record.hpp"
 #include "sub0canvas/canvas.hpp"
+#include "sub0canvas/claims.hpp"
 #include "sub0canvas/doc_layers.hpp"
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/outline.hpp"
 #include "sub0canvas/store.hpp"
+#include "sub0canvas/view.hpp"
 
 #include <algorithm>
 #include <cstdlib>
+#include <format>
+#include <memory>
 #include <sstream>
 
 namespace mock_squad {
@@ -36,6 +40,11 @@ std::expected<void, std::string> applyPolicy(LoopPolicy& p, const std::string& k
     if (key == "narrowScope") return flag(p.narrowScope);
     if (key == "textsById") return flag(p.textsById);
     if (key == "useStore") return flag(p.useStore);
+    if (key == "claims") {
+        if (value != "off" && value != "on" && value != "enforce") return std::unexpected("policy claims is off, on or enforce, not '" + value + "'");
+        p.claims = value == "off" ? ClaimsMode::off : value == "on" ? ClaimsMode::on : ClaimsMode::enforce;
+        return {};
+    }
     if (key == "repairTurns") return number(p.repairTurns);
     if (key == "freeRejects") return number(p.freeRejects);
     if (key == "freeAborts") return number(p.freeAborts);
@@ -68,11 +77,19 @@ public:
 
     std::expected<Attempt, std::string> run()
     {
+        if (p_.claims == ClaimsMode::enforce && !p_.scratch) return std::unexpected("claims=enforce needs scratch=yes: the refusal is judged on the copy, before anything is committed");
+        if (claimsEnabled()) {
+            for (const auto& actor : s_.actors)
+                if (actor == "loop") return std::unexpected("'loop' is the loop's own claim replica: it cannot be an actor");
+            for (const auto& actor : s_.actors) replicas_.emplace(actor, makeReplica(actor));
+            replicas_.emplace("loop", makeReplica("loop"));
+        }
         for (const auto& [path, text] : s_.base) {
             canvas_.addFile(path, text);
             required_.push_back(path);
         }
         persist();
+        if (claimsEnabled()) syncIndex();   // the blocks a claim names exist from the start
         startingVerdict();
         // The steps in order. A reply stops once the gate has passed or the turns are spent; a control step (docs/MOCK_SQUAD.md section 4) spends no turn and still runs,
         // so a scenario can expire or settle claims after the last reply.
@@ -83,11 +100,13 @@ public:
                 continue;
             }
             if (auto err = r.op.empty() ? step(r) : control(r); !err.empty()) return std::unexpected(err);
+            if (claimsEnabled()) claimsAfter(next, r.at);
         }
         out_.files = canvas_.files();
         for (const auto& path : canvas_.paths()) out_.revisions[path] = canvas_.revision(path);
         persist();
         if (p_.useStore) persistStore();
+        if (claimsEnabled()) persistClaims();
         if (p_.issueMode != 0) {
             lib("BlockIndex::eventLogNdjson");
             out_.record["events.ndjson"] = index_.eventLogNdjson(s_.name);   // the cumulative log: every snapshot's events are a slice of it (`eventsFrom` is a position in it)
@@ -124,6 +143,11 @@ private:
     Store store_{storeOptions()};
     Checkpoint midCheckpoint_;               // the store after its first verdict, to prove a reader can start there
     bool haveCheckpoint_ = false;
+    ClaimPolicy claimPolicy_ = ClaimPolicy::standard();
+    std::map<std::string, std::unique_ptr<Store>> replicas_;   // `claims` on: one replica per actor (writer {"mock", actor}) and the loop's own, which observes and writes carries
+    std::vector<std::string> claimIds_;                        // every claim any replica took, in order: the rows `expect-claims` reads
+    std::map<std::string, std::string> claimLabel_;            // claim id to what it was taken on (`path:leaf`, or the file's path)
+    std::size_t carried_ = 0;                                  // the block events already carried into the claim store
 
     StoreOptions storeOptions()
     {
@@ -231,6 +255,225 @@ private:
     }
 
     void lib(const char* name) { calls_.insert(name); }
+
+    // ---- MS4: claims (docs/MOCK_SQUAD.md section 4, BACKBONE.md section 3.5) ----------------------------------------------------------------------------------
+
+    bool claimsEnabled() const { return p_.claims != ClaimsMode::off; }
+
+    std::unique_ptr<Store> makeReplica(const std::string& who)
+    {
+        StoreOptions o;
+        o.writer = {"mock", who};
+        (void)registerClaimReducers(o.registry, claimPolicy_);   // the same policy the writers check against: the fold is what enforces it
+        return std::make_unique<Store>(std::move(o));
+    }
+
+    Store& replica(const std::string& name) { return *replicas_.at(name); }
+
+    /// `into` merges every other replica's events: what it learns when it looks (an offline step skips this).
+    void pull(const std::string& into)
+    {
+        lib("Store::merge");
+        for (const auto& [name, other] : replicas_)
+            if (name != into) replica(into).merge(other->events());
+    }
+
+    /// The index follows the canvas, and what became of its blocks is written down as carries (a claim on a merged block covers the survivor).
+    void syncIndex()
+    {
+        index_.setTurn(turns_);
+        for (const auto& [path, textNow] : canvas_.files()) index_.update(path, textNow);
+        lib("BlockIndex::update");
+        pull("loop");
+        lib("emitBlockCarries");
+        (void)emitBlockCarries(replica("loop"), index_.events(), carried_);
+        carried_ = index_.events().size();
+    }
+
+    /// `block=<path>:<leaf>[@turn]` or `file=<path>` as a claim request, and the label a person would give it. Empty string on success, else what is wrong.
+    std::string targetOf(const ScriptedReply& r, ClaimRequest& req, std::string& label)
+    {
+        if (const auto f = r.attrs.find("file"); f != r.attrs.end()) {
+            req.kind = TargetKind::file;
+            req.target = label = f->second;
+            return {};
+        }
+        const auto b = r.attrs.find("block");
+        if (b == r.attrs.end()) return "a '" + r.op + "' step names no block= or file=";
+        std::string spec = b->second;
+        int turn = -1;
+        if (const auto at = spec.rfind('@'); at != std::string::npos) {
+            turn = std::atoi(spec.c_str() + at + 1);
+            spec.erase(at);
+        }
+        const auto colon = spec.rfind(':');
+        if (colon == std::string::npos) return "block=" + b->second + " is not <path>:<leaf>[@turn]";
+        const std::string path = spec.substr(0, colon), leaf = spec.substr(colon + 1);
+        req.kind = TargetKind::block;
+        req.path = path;
+        label = path + ":" + leaf;
+        if (turn >= 0) {   // the id the block had when the files stood as after that many replies: a stale author naming a block that has since been merged away
+            const auto layer = out_.layers.find(turn);
+            if (layer == out_.layers.end()) return "block=" + b->second + ": there is no layer file for turn " + std::to_string(turn);
+            for (const IdAt& x : layer->second.blocks)
+                if (x.path == path && x.leaf == leaf) { req.target = x.id; return {}; }
+            return "block=" + b->second + ": no such block at that turn";
+        }
+        for (const Block* x : index_.blocks(path))
+            if (leafOf(std::string{x->name}) == leaf) { req.target = x->id; return {}; }
+        return "block=" + b->second + ": no such block now";
+    }
+
+    std::string controlName(const ScriptedReply& r) const { return r.actor.empty() ? s_.actors.front() : r.actor; }
+
+    /// One control step. It spends no turn and writes no reply file; it records an outcome of its own kind. Returns an error only when the scenario itself is wrong.
+    std::string control(const ScriptedReply& r)
+    {
+        if (r.op == "since" || r.op == "advance" || r.op == "refresh") return "the control step '" + r.op + "' belongs to MS5 and is not built yet";
+        if (!claimsEnabled()) return "the control step '" + r.op + "' needs # policy: claims=on (or enforce)";
+        const std::string actor = controlName(r);
+        const bool byActor = r.op == "claim" || r.op == "release";
+        if (byActor && std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return "'" + r.op + "': '" + actor + "' is not one of the actors";
+        const WriterId self{"mock", actor};
+        if (r.op == "claim" || r.op == "release") {
+            if (!r.offline) pull(actor);
+            ClaimRequest req;
+            std::string label;
+            if (auto bad = targetOf(r, req, label); !bad.empty()) return bad;
+            if (r.op == "claim") {
+                if (const auto t = r.attrs.find("ttl"); t != r.attrs.end()) req.ttl = std::atoll(t->second.c_str());
+                lib("takeClaim");
+                auto taken = takeClaim(replica(actor), claimPolicy_, self, req, r.at);
+                if (!taken) {
+                    record(actor, "claim-refused", taken.error().message, "Your claim was REFUSED, nothing was written: " + taken.error().message);
+                    return {};
+                }
+                claimIds_.push_back(taken->id);
+                claimLabel_[taken->id] = label;
+                record(actor, "claimed", std::format("{} on {} until {}", taken->id, label, taken->expires), "Claim " + taken->id + " taken on " + label + " until " + std::to_string(taken->expires) + ".");
+                return {};
+            }
+            std::string held;   // the claim of this actor on the target (a block id is resolved first: the claim may sit on what it became)
+            for (const Claim& c : claimsOn(replica(actor), req.kind, req.target, r.at))
+                if (c.holder == self && c.mode == req.mode) held = c.id;
+            if (held.empty()) return "release: " + actor + " holds no live claim on " + label + " at " + std::to_string(r.at);
+            lib("releaseClaim");
+            if (auto ended = releaseClaim(replica(actor), self, held, r.at, "released"); !ended) return "release: " + ended.error();
+            record(actor, "released", held, "Claim " + held + " on " + label + " released.");
+            return {};
+        }
+        if (r.op == "expire") {   // the daemon's job: any writer may write down that a claim ran out; the loop replica does, after looking at everyone
+            pull("loop");
+            lib("expireDue");
+            const std::size_t n = expireDue(replica("loop"), r.at);
+            record("loop", "expired", std::format("{} claim(s) expired at {}", n, r.at), "Expired claims written down: " + std::to_string(n) + ".");
+            return {};
+        }
+        // sync: every replica merges every other, in the order of the actors (then the loop's): by merge order the result is the same in any order, which is the point
+        for (const auto& actor2 : s_.actors) pull(actor2);
+        pull("loop");
+        std::string settled;
+        for (const std::string& id : claimIds_) {
+            const Claim* c = findClaim(replica("loop"), id);
+            if (c != nullptr && c->status == ClaimStatus::refused) settled += (settled.empty() ? "" : "; ") + id + " refused by " + c->reason;
+        }
+        record("loop", "settled", settled.empty() ? std::string{"no claim was refused by the merge"} : settled, "Replicas merged: " + (settled.empty() ? std::string{"every claim stands."} : settled + "."));
+        return {};
+    }
+
+    /// The claims as the loop's replica holds them after step `index`: persisted as `claims/step-N.json` and kept for `expect-claims`.
+    void claimsAfter(std::size_t index, std::int64_t at)
+    {
+        pull("loop");
+        Store& merged = replica("loop");
+        lib("claimsJson");
+        out_.record["claims/step-" + std::to_string(index) + ".json"] = claimsJson(merged, at) + "\n";
+        ClaimStep step;
+        step.step = static_cast<int>(index);
+        step.at = at;
+        for (const std::string& id : claimIds_) {
+            lib("findClaim");
+            const Claim* c = findClaim(merged, id);
+            if (c == nullptr) continue;
+            ClaimRow row;
+            row.id = id;
+            row.holder = c->holder.ns + "/" + c->holder.writer;
+            row.label = claimLabel_[id];
+            row.status = std::string{claimStatusName(c->status)};
+            row.expires = c->expires;
+            row.liveAt = c->status == ClaimStatus::live && at >= c->taken && at < c->expires;
+            for (const std::string& key : c->covers) {
+                const Block* b = key.rfind("block:", 0) == 0 ? index_.resolve(key.substr(6)) : nullptr;
+                row.covers.push_back(b != nullptr ? std::string{b->path} + ":" + leafOf(std::string{b->name}) : key);
+            }
+            step.claims.push_back(std::move(row));
+        }
+        out_.claimStates.push_back(std::move(step));
+    }
+
+    /// The merged event log of the claims (`claims/events.ndjson`, the `canvas-events-1` form of the store's), and the proof a consumer relies on: replaying it gives the live claims.
+    void persistClaims()
+    {
+        pull("loop");
+        Store& merged = replica("loop");
+        lib("eventJson");
+        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        std::vector<Event> back;
+        for (const Event& e : merged.events()) {
+            lines += eventJson(e) + "\n";
+            lib("parseEvent");
+            auto parsed = parseEvent(eventJson(e));
+            if (!parsed) { out_.violations.push_back("a claim event does not parse back: " + parsed.error()); continue; }
+            back.push_back(std::move(*parsed));
+        }
+        out_.record["claims/events.ndjson"] = lines;
+        Store replayed(makeReplicaOptions("replay"));
+        replayed.merge(back);
+        const std::int64_t at = s_.replies.empty() ? 0 : s_.replies.back().at;
+        if (claimsJson(replayed, at) != claimsJson(merged, at)) out_.violations.push_back("replaying the persisted claim events does not give the live claims");
+    }
+
+    StoreOptions makeReplicaOptions(const std::string& who)
+    {
+        StoreOptions o;
+        o.writer = {"mock", who};
+        (void)registerClaimReducers(o.registry, claimPolicy_);
+        return o;
+    }
+
+    /// `enforce`: the name of the first block this reply changes that another actor holds, as the library's refusal says it; empty when none. The reply is judged on the copy
+    /// (`after`), against the index of the canvas as it stands (`before`): each changed old line maps to its block; an insertion counts for the block it lies inside.
+    std::string claimConflict(const std::string& actor, std::int64_t at, const Canvas& after, const std::map<std::string, std::string>& before)
+    {
+        const WriterId self{"mock", actor};
+        std::set<std::string> asked;
+        for (const std::string& path : after.paths()) {
+            const auto was = before.find(path);
+            if (was == before.end() || after.text(path) == was->second) continue;
+            lib("diffLines");
+            const std::vector<LineHunk> hunks = diffLines(was->second, after.text(path));
+            for (const LineHunk& h : hunks) {
+                std::vector<const Block*> touched;
+                if (h.baseTo >= h.baseFrom) {
+                    for (int line = h.baseFrom; line <= h.baseTo; ++line) if (const Block* b = index_.at(path, line)) touched.push_back(b);
+                } else {
+                    const Block* above = index_.at(path, h.baseFrom - 1);
+                    const Block* below = index_.at(path, h.baseFrom);
+                    if (above != nullptr && below != nullptr && above->id == below->id) touched.push_back(above);
+                }
+                for (const Block* b : touched) {
+                    if (!asked.insert(b->id).second) continue;
+                    ClaimRequest req;
+                    req.kind = TargetKind::block;
+                    req.target = b->id;
+                    req.path = path;
+                    lib("checkClaim");
+                    if (auto ok = checkClaim(replica(actor), claimPolicy_, self, req, at); !ok) return ok.error().message;
+                }
+            }
+        }
+        return {};
+    }
 
     /// `persistCanvas`: the revision log, and every revision's text kept under a flat name, so earlier ones stay beside later ones.
     void persist()
@@ -370,18 +613,12 @@ private:
         out_.outcomes.push_back({turns_ - 1, actor, std::move(kind), std::move(text), std::move(verdict), std::move(focus)});
     }
 
-    /// One control step (`claim`, `release`, `expire`, `sync`, `since`, `advance`, `refresh`): it spends no turn, writes no reply file and adds no layer turn; it records
-    /// an outcome of its own kind. Returns an error only when the scenario itself is wrong.
-    std::string control(const ScriptedReply& r)
-    {
-        return "the control step '" + r.op + "' is not available: this loop runs replies only";
-    }
-
     /// One reply, from its stream to its verdict. Returns an error only when the scenario itself is wrong.
     std::string step(const ScriptedReply& reply)
     {
         const std::string actor = reply.actor.empty() ? s_.actors.front() : reply.actor;
         if (std::find(s_.actors.begin(), s_.actors.end(), actor) == s_.actors.end()) return "reply " + std::to_string(turns_) + ": '" + actor + "' is not one of the actors";
+        if (claimsEnabled() && !reply.offline) pull(actor);   // what the actor knows of the others' claims when it works (an `offline` reply works from what it already had)
         const auto filesBefore = canvas_.files();
         std::map<std::string, int> revisionsBefore;
         for (const auto& path : canvas_.paths()) revisionsBefore[path] = canvas_.revision(path);
@@ -529,6 +766,7 @@ private:
         if (!skippedNote.empty()) skippedNote = "These parts of your reply did not apply (the rest did):\n" + skippedNote;
         if (refusal.empty() && target.files() == filesBefore)
             refusal = skipped.empty() ? "the transaction changes nothing: the files are exactly as before" : "no part of it applied:\n" + skippedList;
+        if (refusal.empty() && p_.claims == ClaimsMode::enforce) refusal = claimConflict(actor, reply.at, target, filesBefore);   // before commit: the canvas proves it unchanged below
         if (!refusal.empty()) {
             ++rejects_;
             ++out_.refused;
@@ -542,6 +780,7 @@ private:
             return {};
         }
         if (p_.scratch) canvas_ = std::move(scratch);
+        if (claimsEnabled()) syncIndex();
         std::string focus;
         const std::string bad = compileCheck(gate_, canvas_.files());
         persist();
@@ -575,6 +814,7 @@ private:
         if (bestFailing_ >= 0 && failing > bestFailing_) {
             const std::string broke = layeredVerdict(lastGate_.text, true, 1200, focus);   // what the worse revision broke, before it is undone
             const std::string undone = restoreBest();
+            if (claimsEnabled()) syncIndex();
             ++out_.reverted;
             lastGate_ = runTests(gate_, canvas_.files(), gateRun_ - 1);   // gate.txt describes what the canvas holds now (the same run: a revert is not another test run)
             record(actor, "reverted", countText + ", best " + std::to_string(bestFailing_),
