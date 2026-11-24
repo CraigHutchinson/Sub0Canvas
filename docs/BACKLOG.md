@@ -15,6 +15,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 
 ## Now: phase 1, groundwork in parallel ([PLAN.md](PLAN.md) section 4)
 
+The ordered next wave, with the gate and release housekeeping, is the brief [sessions/backbone-next-wave.md](sessions/backbone-next-wave.md); the test and gate audit is [TEST_AUDIT.md](TEST_AUDIT.md).
+
 * **Release v0.3.0** (O1: pushing the tag needs the owner's go-ahead), then **Sub0Squad adopts `applyReply`, turn control and the moved checks**: a
   Sub0Squad PR replaces its `applyCanvasReply` and `turn_control`, drops the copied tests and cases (block 4, the skeleton block,
   `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).

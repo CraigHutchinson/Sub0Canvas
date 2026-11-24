@@ -1,9 +1,11 @@
-# Where Sub0Canvas stands (2026-11-18, evening)
+# Where Sub0Canvas stands (2026-11-24)
 
-Status: living (2026-11-18, evening). Rewritten at the end of each working session.
+Status: living (2026-11-24). Rewritten at the end of each working session.
 
 Read this first when resuming. The plan, in phases, and the one sheet of decisions waiting on the owner are [PLAN.md](PLAN.md); what is next,
 in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
+
+**Next session: start at [sessions/backbone-next-wave.md](sessions/backbone-next-wave.md)** (what is pushed and what is not, the order of the remaining backbone work, the test and gate audit in [TEST_AUDIT.md](TEST_AUDIT.md)). The tables below say what is built; the rows saying "on its branch" are merged to `main` since, and not yet released.
 
 ## Released
 

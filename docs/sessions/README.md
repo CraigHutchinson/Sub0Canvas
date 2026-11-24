@@ -39,6 +39,7 @@ Status: open (written <date>). Backlog: <item>. Design: <BACKBONE.md section and
 
 | Brief | Task | Written |
 |---|---|---|
+| [backbone-next-wave.md](backbone-next-wave.md) | The backbone's next wave: push and release housekeeping, issue #4, MS4/MS5, views limits, Fabric W3/W4 (HTTP seam), test audit | 2026-11-24 |
 | [s0-scale-harness.md](s0-scale-harness.md) | S0: a synthetic corpus at any size and benchmarks of today's index against the scale budgets | 2026-11-18 |
 | [canvas-test-coverage.md](canvas-test-coverage.md) | Later U8: per-test coverage in source and scoped assertion evidence | 2026-11-19 |
 | [canvas-prose-verification.md](canvas-prose-verification.md) | Backlogged: verify prose against the code and tests that support it, with revision-bound evidence | 2026-11-20 |
