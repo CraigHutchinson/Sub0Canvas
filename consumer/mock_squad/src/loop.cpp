@@ -824,7 +824,10 @@ private:
             return {};
         }
         if (bestFailing_ < 0 || failing <= bestFailing_) markBest(failing);
-        record(actor, "failed", countText, skippedNote + "Your files were checked by running the tests and failed:\n" + layeredVerdict(lastGate_.text, true, 1500, focus), focus);
+        // The verdict first: it fills `focus`, which the record then carries (as the staged and reverted records do). Written as one call, the order of the two
+        // arguments was unspecified: gcc copied `focus` before it was filled (every stored "failed" outcome had an empty focus), clang after (issue 4).
+        const std::string failedVerdict = layeredVerdict(lastGate_.text, true, 1500, focus);
+        record(actor, "failed", countText, skippedNote + "Your files were checked by running the tests and failed:\n" + failedVerdict, focus);
         return {};
     }
 

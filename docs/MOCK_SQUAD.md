@@ -135,3 +135,12 @@ are there); `flap=<seed>` in the gate; the folded view the next message carries.
 5. **HTTP**: reconcile the squad's decision on Boost.Beast with the review's D10 (lift the portal's server and the engine client onto Platform `net`).
 6. **Portal step 1**: Sub0Canvas will define a URL or view-spec scheme for deep links; the optional Node viewer reads the single projection definition (D11).
 7. **Sub0Platform**: Canvas `app/` and `serve` become its second C++ consumer (proc, file, net).
+
+## 8. Determinism across compilers (issue 4, 2026-11-24)
+
+Two unspecified-order expressions made output depend on the compiler (gcc and the Windows toolchains evaluate call arguments right to left, Linux clang left to right); both are fixed so that every platform produces the same bytes:
+
+* **The corpus generator** (`bench/corpus.cpp`): `std::format(..., r.below(4), ..., r.below(5), c.num())` and chained `operator+` with several generator draws. Every draw is now its own statement in the order the output always had, so no fixture or metric moved.
+* **The loop's `failed` record** (`consumer/mock_squad/src/loop.cpp`): `layeredVerdict(..., focus)` and the `focus` argument were in one call, so gcc recorded an empty `focus` and clang the filled one. The verdict is now computed first (as the `staged` and `reverted` records already did), so a `failed` outcome carries its focus. The seven attempts with a `failed` outcome were regenerated; the diff is those `focus` values only (14 values in 7 files, checked mechanically). Sub0Squad's own copy of the loop should sequence the same way.
+
+Rule for new code: never put two calls that draw from a generator, or that read and write the same variable, in one argument list or one operator chain.
