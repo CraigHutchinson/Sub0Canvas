@@ -138,14 +138,21 @@ if(SUB0CANVAS_BUILD_TESTING)
     if(SUB0CANVAS_BUILD_APP)
       set_tests_properties(test_viewer PROPERTIES ENVIRONMENT "SUB0CANVAS_EXE=$<TARGET_FILE:sub0canvas_app>")   # test/snapshot.test.js runs it
     endif()
+    # K0, the viewer's interactivity timing (docs/K0.md): headless Edge or Chrome over DevTools, local only, label timing (set below, so quick and full exclude
+    # it). It prints a line beginning "SKIP timing" and exits 0 on battery, on a busy machine or without a browser; ctest then reports it skipped.
+    add_test(NAME Sub0Canvas_K0_timing COMMAND ${SUB0CANVAS_NODE} tools/k0/run.mjs WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    set_tests_properties(Sub0Canvas_K0_timing PROPERTIES TIMEOUT 3600 RUN_SERIAL TRUE SKIP_REGULAR_EXPRESSION "^SKIP timing")
   else()
     message(STATUS "Sub0Canvas: node not found; the viewer's tests (test_viewer) are not registered")
   endif()
   # Test tiers (CraigHutchinson/.github docs/ci-strategy.md): every test is fast, so all are smoke; `ctest --preset quick` excludes the labels
   # full and timing (the timing test is local only). A long suite added later is labelled full.
   get_property(sub0canvasTests DIRECTORY PROPERTY TESTS)
-  list(REMOVE_ITEM sub0canvasTests Sub0Canvas_Bench_timing)   # its own label, timing, set above
+  list(REMOVE_ITEM sub0canvasTests Sub0Canvas_Bench_timing Sub0Canvas_K0_timing)   # their own label, timing, set below and above
   set_tests_properties(${sub0canvasTests} PROPERTIES LABELS smoke)
+  if(TEST Sub0Canvas_K0_timing)
+    set_tests_properties(Sub0Canvas_K0_timing PROPERTIES LABELS timing)
+  endif()
 
   # The consumer rung (docs/MOCK_SQUAD.md, docs/TESTING.md): consumer/mock_squad is a separate CMake project that fetches this checkout through CPM, exactly as
   # Sub0Squad does, and links only the public target. `ctest --build-and-test` configures, builds and runs it; CPM_Sub0Canvas_SOURCE points it at this source tree,
