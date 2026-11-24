@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 # Sub0Canvas: the layered document's C++ library (lib/) beside its static viewer (index.html, src/*.js). The viewer has no build step; this file builds
 # only the library and its tests. Sub0Squad consumes the library through CPM (CPMAddPackage NAME Sub0Canvas), pinned to a tag.
-project(sub0canvas VERSION 0.3.0 LANGUAGES CXX)
+project(sub0canvas VERSION 0.4.0 LANGUAGES CXX)
 
 set(SUB0CANVAS_TOP_LEVEL OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)

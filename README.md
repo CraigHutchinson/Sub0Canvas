@@ -140,7 +140,7 @@ ctest --preset quick
 To consume the library from another CMake project, pin it to a tag:
 
 ```cmake
-CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.3.0)
+CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.4.0)
 target_link_libraries(my_target PRIVATE sub0canvas::sub0canvas)
 ```
 
