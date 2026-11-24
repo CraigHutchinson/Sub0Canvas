@@ -25,6 +25,29 @@ public:
     Writer& endArray() { buffer_.append(']'); first_.pop_back(); return *this; }
     Writer& key(std::string_view k) { sep(); quoted(k); buffer_.append(':'); pendingKey_ = true; return *this; }
     Writer& str(std::string_view v) { sep(); quoted(v); return *this; }
+    /// A key that is a string literal: written pre-quoted in one copy, with no escaping (a literal key never needs it; a key that is not a literal takes `key(string_view)`).
+    template <std::size_t N>
+    Writer& key(const char (&literal)[N])
+    {
+        sep();
+        char buf[N + 2];
+        buf[0] = '"';
+        for (std::size_t i = 0; i + 1 < N; ++i) buf[1 + i] = literal[i];
+        buf[N] = '"';
+        buf[N + 1] = ':';
+        buffer_.append_raw(buf, N + 2);
+        pendingKey_ = true;
+        return *this;
+    }
+    /// A string known to need no escaping (an id's hex digits, a carry's name): quotes and one copy. The caller guarantees no quote, backslash or control character.
+    Writer& strPlain(std::string_view v)
+    {
+        sep();
+        buffer_.append('"');
+        buffer_.append_raw(v);
+        buffer_.append('"');
+        return *this;
+    }
     Writer& num(std::int64_t v) { sep(); buffer_.append(v); return *this; }
     Writer& num(double v) { sep(); buffer_.append(v); return *this; }
     Writer& boolean(bool v) { sep(); buffer_.append(v); return *this; }
@@ -45,25 +68,7 @@ public:
     void clear() { buffer_.clear(); first_.clear(); pendingKey_ = false; }
 
 private:
-    /// `v` as a JSON string. Most strings a snapshot writes (keys, ids, paths, names, signatures) are short and need no escaping: a plain scan then copies them in one
-    /// piece, which costs less than the SIMD escaper's setup per call. Anything longer, or with a character to escape, goes to the builder's escaper (same bytes).
-    void quoted(std::string_view v)
-    {
-        if (v.size() <= 96) {
-            bool plain = true;
-            for (const char ch : v) {
-                const auto c = static_cast<unsigned char>(ch);
-                if (c < 0x20 || c == '"' || c == '\\') { plain = false; break; }
-            }
-            if (plain) {
-                buffer_.append('"');
-                buffer_.append_raw(v);
-                buffer_.append('"');
-                return;
-            }
-        }
-        buffer_.escape_and_append_with_quotes(v);
-    }
+    void quoted(std::string_view v) { buffer_.escape_and_append_with_quotes(v); }
     void sep()
     {
         if (pendingKey_) { pendingKey_ = false; return; }

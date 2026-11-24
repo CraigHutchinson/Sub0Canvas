@@ -966,7 +966,7 @@ void BlockIndex::writeRetired(json::Writer& w) const
     char id[13], into[13];
     for (const auto& [key, r] : s_->retired) {
         idChars(key, id);
-        w.beginObject().kv("id", std::string_view{id, 13}).kv("path", r.path).kv("name", r.name);
+        w.beginObject().key("id").strPlain(std::string_view{id, 13}).key("path").str(r.path).key("name").str(r.name);
         if (r.mergedInto == 0) w.kv("mergedInto", std::string_view{});
         else { idChars(r.mergedInto, into); w.kv("mergedInto", std::string_view{into, 13}); }
         w.endObject();
@@ -1448,14 +1448,18 @@ namespace projection {
 
 void writeBlock(json::Writer& w, const Block& b)
 {
-    w.beginObject().kv("id", b.id).kv("path", b.path).kv("name", b.name).kv("signature", b.signature).kv("first", b.first).kv("last", b.last).endObject();
+    // The id is hex by construction (idChars): written without the escaper. The three strings are interned text and may hold anything.
+    w.beginObject().key("id").strPlain(b.id).key("path").str(b.path).key("name").str(b.name).key("signature").str(b.signature).key("first").num(static_cast<std::int64_t>(b.first))
+        .key("last").num(static_cast<std::int64_t>(b.last)).endObject();
 }
 
 void writeBlockEvent(json::Writer& w, const BlockEvent& e) { writeBlockEventParts(w, e.turn, carryName(e.carry), e.id, e.path, e.name, e.detail); }
 
 void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail)
 {
-    w.beginObject().kv("turn", turn).kv("carry", carry).kv("id", id).kv("path", path).kv("name", name).kv("detail", detail).endObject();
+    // carry names and ids are plain ASCII by construction; a detail may be an interned string (any text) or an id.
+    w.beginObject().key("turn").num(static_cast<std::int64_t>(turn)).key("carry").strPlain(carry).key("id").strPlain(id).key("path").str(path).key("name").str(name)
+        .key("detail").str(detail).endObject();
 }
 
 void writeLayerItemMembers(json::Writer& w, const LayerItem& it, int number)
