@@ -193,6 +193,17 @@ struct Claim {
   and testable; the consumer's daemon decides when to look.
 * A block claim covers what it **resolves to**: after a merge, the survivor; after a retire, nothing (the claim is released with reason `retired`).
 * Taking a write claim on an item sets it `held`; releasing it returns it to `open` unless it moved to `done`.
+* **As built (B3, 2026-11-24)**, [claims.hpp](../lib/include/sub0canvas/claims.hpp): the surface above changed shape to keep the fold pure. Time is a number (`Instant`, whole seconds from an epoch
+  the client picks), carried in the event (`at`, `ttl`), never parsed from the envelope's display `time`; a claim is live until `at + ttl`, exclusive. Kinds: `claim.take@1`, `claim.renew@1`,
+  `claim.release@1`, `claim.expire@1`, `block.carry@1` (what became of a block id: one survivor for a merge, several for a split, none for a retirement; `emitBlockCarries` reads a `BlockIndex`'s
+  events) and `note@1`, all registered through `registerClaimReducers(registry, policy)`; `store.cpp` is unchanged. The rules are data (`ClaimPolicy`, JSON through `parseClaimPolicy`): per mode
+  exclusive or shared, whether it holds the item, default and maximum ttl, and whether a file claim covers the file's block claims; the same policy goes to the registry (the fold enforces it) and to
+  the writers (they check before writing). The holder is the event's writer (A6). **Concurrent takes** settle by merge order: the earlier `(lamport, writer)` wins and the later take stays in the log
+  as a `refused` claim naming the blocker, identically on every replica; a refusal before writing (`checkClaim`) costs no event. A claim by the same holder never conflicts with its own. A block
+  claim covers what its id resolves to; a split's claim covers every part, a merge's covers the survivor, a retirement ends it `retired`; two claims that sat on the two halves of a merge both stay
+  on the survivor (the fold ends neither). Notes follow a block the same way. Taking a write claim on an open item sets it `held` in the fold and the end of its last such claim sets it open; the
+  store's `setState(held)` still has no claim requirement (a policy hook in `store.cpp` was not needed and is left to the consumer that wants it). Lookups are hash lookups on the target (O(1), measured
+  at 1e3 and 1e5 claims, SCALE.md-style); `expireDue` is a sweep over all claims, run by the consumer's daemon, not by a query.
 
 ### 3.6 Views
 

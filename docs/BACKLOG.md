@@ -63,7 +63,8 @@ parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIRE
 * **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.
 * **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
   coverage. Checked also on the owner's private reference topic, numbers only.
-* **B3 claims and notes, B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
+* **B3 claims and notes: built** (2026-11-24, `claims.hpp`; BACKBONE 3.5 as built). Left for MS4: the two-actor mock scenarios (B8, B14) as claim tests, and Sub0Squad's fork executor taking write claims per section.
+* **B4 source anchors and the resolver** (V3 pulls B4's quote re-anchoring forward).
 
 ## Any time
 
