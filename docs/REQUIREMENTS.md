@@ -202,16 +202,16 @@ its slice is built.
 
 | id | requirement | serves | slice |
 |---|---|---|---|
-| R-BB-1 | Every change is an event; replaying the log gives the same store, byte for byte in its snapshot. | U2-U6 | B1 |
-| R-BB-2 | A re-derived layer reconciles by key: a new key is open, a vanished key is done by its source, and nothing is deleted. | U2, U3 | B1 |
-| R-BB-3 | An item's lifecycle is open, held, done, verified, dropped; orphaned is derived, never stored; a transition names its actor. | U2, U6 | B1 |
+| R-BB-1 | Every change is an event; replaying the log gives the same store, byte for byte in its snapshot. | U2-U6 | B1, built: `test_store` (replay, JSON-line messages and any arrival order give the live snapshot bytes), `Sub0Canvas_Bench_metrics` (1e5 events) |
+| R-BB-2 | A re-derived layer reconciles by key: a new key is open, a vanished key is done by its source, and nothing is deleted. | U2, U3 | B1, built: `test_store` (a 5-turn layer, hand-written states and event counts; reopen, never duplicate) |
+| R-BB-3 | An item's lifecycle is open, held, done, verified, dropped; orphaned is derived, never stored; a transition names its actor. | U2, U6 | B1, built: `test_store` (lifecycle, actor required, `orphaned` only through `isOrphaned`) |
 | R-BB-4 | An inbox delivers what matched since the reader's cursor, summary first; the cursor moves only on acknowledgement. | U2, U3, U6 | B2 |
 | R-BB-5 | Sub0Squad's verdict rebuilt as an inbox is byte-identical to today's. | U1, U2 | B2 |
 | R-BB-6 | At most one write claim per target; a refusal names the holder and expiry; claims expire against a clock passed in; a block claim follows merges. | U2, U6 | B3 |
-| R-BB-7 | The core reads no clock, environment, network or file: time, logs and sources come in through interfaces. | all | all |
-| R-BB-8 | Every mutation and every read is expressible as a serialisable message, so one process can own a store and others talk to it. | U5, U6 | B1 (A10) |
-| R-BB-9 | Unknown event kinds and fields survive a replay untouched. | all | B1 (A7) |
-| R-BB-10 | Exports and snapshots take a query, so what is not asked for (a private note) never leaves by default. | U3, U6, U8 | B1 (A11) |
+| R-BB-7 | The core reads no clock, environment, network or file: time, logs and sources come in through interfaces. | all | all; B1 built: `test_store` (no clock supplied gives no time, identical calls give identical bytes, merged events not written back); the library has no I/O includes |
+| R-BB-8 | Every mutation and every read is expressible as a serialisable message, so one process can own a store and others talk to it. | U5, U6 | B1 (A10), built at the event level: `test_store` (every mutation is an event that round-trips through `eventJson`/`parseEvent`); the stdio protocol is V1 |
+| R-BB-9 | Unknown event kinds and fields survive a replay untouched. | all | B1 (A7), built: `test_store` (unknown kind, envelope member and payload field survive byte for byte) |
+| R-BB-10 | Exports and snapshots take a query, so what is not asked for (a private note) never leaves by default. | U3, U6, U8 | B1 (A11), built: `test_store` (a `private/` item leaves only when its tag is asked for; scoped exports keep READ numbers) |
 
 ### Sources, history and anchors (R-SRC; BACKBONE.md sections 5 and 6)
 
@@ -261,9 +261,9 @@ its slice is built.
 | R-ED-1 | An editor's margin shows the layers of what is open, and they follow a function moved by an edit. | U5 | E1 |
 | R-ED-2 | Nested blocks and their kinds are available for an editor's outline. | U5 | D0 |
 | R-COL-1 | Every comment survives the author's later edits on the right block; a reviewer's inbox lists exactly the unaddressed ones. | U6 | C1 |
-| R-COL-2 | Replies to a comment are items linked to it (a thread), with no mechanism of their own. | U3, U6 | B1 (A5) |
+| R-COL-2 | Replies to a comment are items linked to it (a thread), with no mechanism of their own. | U3, U6 | B1 (A5), built: `test_store` (a thread is `repliesTo` links and the reverse index) |
 | R-EXP-1 | The issues layer exports as SARIF with every location and a fingerprint equal to the item's key. | U8 | later |
-| R-EXP-2 | Numeric per-block data (coverage, churn, durations) rides on items without a mechanism per metric. | U8 | B1 (A4) |
+| R-EXP-2 | Numeric per-block data (coverage, churn, durations) rides on items without a mechanism per metric. | U8 | B1 (A4), built: `test_store` (item `data` kept verbatim, a change of it is a change of the item) |
 
 ### The authoring tool (R-AUTH; AUTHORING.md, U7)
 

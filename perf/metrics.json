@@ -65,7 +65,22 @@
     "history sparse scope: texts read, the root's excluded": {"kind": "exact", "expected": 70, "unit": "n"},
     "history sparse scope: events": {"kind": "exact", "expected": 157, "unit": "n"},
     "history at 125: commits replayed from the checkpoint": {"kind": "exact", "expected": 26, "unit": "n"},
-    "history at 125: ordinal of the state": {"kind": "exact", "expected": 126, "unit": "n"}
+    "history at 125: ordinal of the state": {"kind": "exact", "expected": 126, "unit": "n"},
+    "store replay 1e5: events": {"kind": "exact", "expected": 100000, "unit": "n"},
+    "store replay 1e5: items": {"kind": "exact", "expected": 10000, "unit": "n"},
+    "store replay 1e5: replays agree": {"kind": "exact", "expected": 1, "unit": "bool"},
+    "store replay 1e5: allocations": {"kind": "max", "limit": 587559, "unit": "n"},
+    "store replay 1e5: live heap bytes": {"kind": "max", "limit": 52656000, "unit": "B"},
+    "store replay 1e5: live heap bytes per item": {"kind": "max", "limit": 5266, "unit": "B/item"},
+    "store putLayer 1e4 items, none changed: events": {"kind": "exact", "expected": 0, "unit": "n"},
+    "store putLayer 1e4 items, none changed: items changed": {"kind": "exact", "expected": 0, "unit": "n"},
+    "store putLayer 1e4 items, none changed: allocations": {"kind": "max", "limit": 0, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: events": {"kind": "exact", "expected": 10, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: items changed": {"kind": "exact", "expected": 10, "unit": "n"},
+    "store putLayer 1e4 items, 10 changed: allocations": {"kind": "max", "limit": 213, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: events": {"kind": "exact", "expected": 1000, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: items changed": {"kind": "exact", "expected": 1000, "unit": "n"},
+    "store putLayer 1e4 items, 1000 changed: allocations": {"kind": "max", "limit": 23505, "unit": "n"}
   },
   "accepted": []
 }
