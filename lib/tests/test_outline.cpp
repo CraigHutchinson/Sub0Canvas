@@ -1,4 +1,4 @@
-// Block discovery behind the provider seam (docs/BLOCK_DISCOVERY.md, sessions/d0-block-discovery-seam.md; docs/REQUIREMENTS.md, R-BLK): every provider is total,
+// Block discovery behind the provider seam (docs/BLOCK_DISCOVERY.md section 2.1; docs/REQUIREMENTS.md, R-BLK): every provider is total,
 // deterministic and returns well-formed nesting; the language is detected from the path, filename and first line; folding is a policy over the outline, so the
 // outline never depends on the view asked for; and the faults of BLOCK_DISCOVERY.md section 2 are pinned one by one (each case written first and seen failing).
 #include "sub0platform/testing/check.hpp"

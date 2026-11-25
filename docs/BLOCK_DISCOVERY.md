@@ -1,6 +1,7 @@
 # Block discovery: finding the blocks of any language
 
-Status: **design, for the owner to read** (2026-11-18); **D0 built** 2026-11-23 (the seam, `braces@3` and `indent@2`, the block-comment, name and decorator fixes; section 2 is the "today" it measured, the session brief's Outcome says what no longer holds). Sections 4.3 to 4.6 (declarative and data providers, tree-sitter, the snapshot record) are not built. It answers the owner's note that folding needs language-aware
+Status: **D0 built** (2026-11-23: the seam, `braces@3` and `indent@2`, the block-comment, name and decorator fixes); D1-D3 are design (2026-11-25). Section 2 is the limits measured against v0.2.1, and
+section 2.1 says what D0 changed and what is left. Sections 4.3 to 4.6 (declarative and data providers, tree-sitter, the snapshot record) are not built. It answers the owner's note that folding needs language-aware
 processing (YAML, XML, JSON, Rust, Python, C++, JavaScript, TypeScript and more), that Notepad++ has an extensible mechanism, and that existing tools
 should be drawn on rather than reinvented. It extends [BACKBONE.md](BACKBONE.md) (section 14, amendment A8) and [SCALE.md](SCALE.md) (section 4, "block discovery") and
 states its requirements in [REQUIREMENTS.md](REQUIREMENTS.md) (R-BLK).
@@ -30,6 +31,32 @@ API). A probe against the v0.2.1 library (2026-11-18, `foldRegions(text, python,
 | Python `@staticmethod` then `def term` | `term`, from the `def` line | the decorator is left outside its block |
 | YAML, JSON | nothing | data formats have no `(`, so nothing is function-like |
 | (by reading the code) Python classes, nested functions, C++ classes and namespaces | not blocks | by design today: only outermost functions are blocks |
+
+### 2.1 As built (D0, 2026-11-23)
+
+Built: `lib/include/sub0canvas/blocks.hpp`, `lib/src/blocks.cpp` (`OutlineNode`, `Outline`, `OutlineProvider`, `Languages` with detection by file name, extension, then the `#!` interpreter; the providers `braces` and `indent`; `defaultLanguages()`),
+`lib/src/scan.hpp` (shared line helpers), `foldRegionsOf` and `foldRegionsFor(path, ...)` in `outline.hpp`, `lib/tests/test_outline.cpp`. `foldRegions(text, python, all)` is a wrapper over the seam (Sub0Squad's calls build unchanged); canvas SYMBOL, the block index
+and test localisation pass a path.
+
+**The seam was byte-identical.** A dump of `foldRegions` (both `all` values), `sectionView` and `foldedView` over every source, doc and fixture file of the repository (about 3 MB) was unchanged against the previous library; `test_golden_replay`, the mock fixtures,
+the viewer outputs and the benchmark metrics were untouched. The faults, one commit each, every case written first and seen failing:
+
+| fault | provider | what changed |
+|---|---|---|
+| a brace or signature inside `/* */` (R-BLK-5) | `braces@2` | block comments blanked before the scan, across lines. The section 2 probe (a `{` in a comment, then two functions) did **not** reproduce: depth is relative, so a stray `{` before a function is tolerated. The fault that does reproduce is a `{` or `}` inside a comment within a function: the function never closes, so it and every later function vanish (four such cases failed before the fix). No file of the repository had it, so no output changed |
+| names (R-BLK-4) | `braces@3` | generics (Rust, TypeScript), functions bound to a name (arrow functions, function expressions, typed bindings, assigned C++ lambdas), Go receivers (`Parser::Term`, so a method and a free function of one name stay two blocks) and Go type parameters, C++ `operator<` and friends. Over the repository the only output changes are about 19 distinct blocks that had an empty name and now have one; no block appears or disappears, no span moves |
+| decorators (R-BLK-6) | `indent@2` | the `@name` lines directly above a `def` are inside the node (`first`); `FoldRegion::first` stays the signature line (views and SYMBOL unchanged) and `spanFirst` is the whole span, which the block index uses. No Python file of the repository carries a decorator, so no output changed |
+
+**Cost, and the lesson.** The first pre-push performance gate blocked the push: against the committed baseline the D0 commits made `foldRegions C++ 1e5 lines` +90%, Python +15% and `index cold build 1e5 lines` +12.5% (an interleaved `compare` against the build before D0 reproduced it). The
+cost was in how the seam was written, not in what it computes: whole-vector copies and a character walk in the block-comment pass, a `std::string` copy and an `istringstream` split per text, a `std::string` per character of a signature line. The fix was one change: the providers read
+`string_view` lines (`scan::splitViews`, one `memchr` per line), the comment pass runs only on a text that contains `/*` and works on one copy of the buffer with every offset kept, the name helpers take views and the fold regions take names by move. Output stayed byte-identical (9.2 MB, the repository
+and two sibling sources); against the build before D0 C++ is -34% and Python -57%. What the correctness fixes still cost is **not measured**: the generated corpus has no `/*`, so the blanking copy is never paid there (a text with a block comment pays one extra copy and one linear pass). A probe of
+that case belongs in the next benchmark revision.
+
+**Left (D0's faults and gaps):** a Rust lifetime on a signature line (`fn f<'a>(x: &'a str) {`) opens a "character literal" that never closes, so that function is not found; CRLF text keeps a `
+` on every line, which defeats the Allman rule (a signature line followed by a lone `{`);
+multi-line decorators and the doc comments and attributes of C-like text are not yet inside the span; nested functions and classes are not nodes (outlines are flat); unnamed nodes still carry an identity (skipping them is an identity-policy change: check it against the golden replay first);
+R-BLK-4 is asserted for the probe cases, not for arbitrary text; `index.outliners` is not in the snapshot (it is additive, R-FMT-2, but changes `layeredJson` and so every snapshot fixture and the exact byte metrics: one reviewed batch with the format change).
 
 A block with no name breaks two rules at once: identity's second rule (same name, new signature) and `SYMBOL name` editing. A file whose blocks
 vanish orphans every item anchored to it. These are the failure modes the design below must make impossible to ship unnoticed (section 6).
@@ -187,7 +214,7 @@ and no view request changes the document or its history.
 1. **D0, the seam** (no new dependency): `OutlineNode`, `Outline`, `OutlineProvider`, `Languages`; today's heuristics as `braces@1` and `indent@1`;
    every internal caller passes a path; `foldRegions` becomes a wrapper; byte-identical output on every existing test and on the golden replay. Then
    fix the measured faults of section 2 inside the heuristic providers (block comments, generic names, arrow functions, Go receivers, decorators),
-   each with a conformance case. Brief: [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md).
+   each with a conformance case. Built: section 2.1.
 2. **D1, the conformance corpus**: `fixtures/languages/<language>/*.{ext}` with a hand-checked `outline.json` each (R-BLK-7), for C++, C, Python,
    JavaScript, TypeScript, Rust, Go, Java, C#, JSON, YAML, XML, Markdown, CMake. Any provider runs against it; a provider is adopted for a language
    only when it scores at least as well as the one it replaces.

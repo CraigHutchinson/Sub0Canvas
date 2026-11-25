@@ -1,8 +1,7 @@
 # Working in Sub0Canvas
 
-Instructions for agents and people continuing this project. Start with [docs/RESUME.md](docs/RESUME.md) (where it stands),
-[docs/PLAN.md](docs/PLAN.md) (the phases and what waits on the owner) and [docs/BACKLOG.md](docs/BACKLOG.md) (what is next). A task with its own brief is in [docs/sessions/](docs/sessions/README.md): start a session with
-"Read `docs/sessions/<file>.md` and do it."
+Instructions for agents and people continuing this project. Start with [docs/RESUME.md](docs/RESUME.md) (where it stands), then [docs/BACKLOG.md](docs/BACKLOG.md) (what is next, in order); [docs/DECISIONS.md](docs/DECISIONS.md)
+says why things are as they are. A task with its own brief is in [docs/sessions/](docs/sessions/README.md): start a session with "Read `docs/sessions/<file>.md` and do it."
 
 ## What this is
 
@@ -14,18 +13,18 @@ hold up on codebases of billions of lines.
 | read | for |
 |---|---|
 | [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
-| [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | block identity, layers, the issues layer, formats, prior art (built: slices 1 and 2) |
+| [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | block identity, layers, the issues layer, formats, prior art (built) |
 | [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
 | [docs/BACKBONE.md](docs/BACKBONE.md) | the design ahead: state, events, subscriptions, claims, adapters, history, scale, the ordered slices; section 14: the later use cases, amendments, the register of open decisions, policies as data |
 | [docs/AUTHORING.md](docs/AUTHORING.md) | the viewer becoming an authoring tool (the first use case to invest in): concise views, the server, comments and inboxes, scenarios, slices V0-V5 |
 | [docs/QUERY.md](docs/QUERY.md) | the live-views query protocol `query-1` (V1a-q, built): operations, bounds, cursors, the policy as data, one projection with the bundle |
 | [docs/SCALE.md](docs/SCALE.md) | scale, its one home: two target profiles (billions of lines; a work-dominated private monorepo, measured), requirements, design, indexes, budgets |
 | [docs/MIRROR.md](docs/MIRROR.md) | the synthetic mirror: a seeded invented project with real-world shape and edge cases, its modes and fixture |
-| [docs/VIEWS.md](docs/VIEWS.md) | pinned and unpinned views (design, 2026-11-24): a pinned view is at a base revision for consistent editing, an unpinned one follows the tip with brief, elided, compacted or full refresh deltas and a live event channel; R-PIN-1..9 proposed |
+| [docs/VIEWS.md](docs/VIEWS.md) | pinned and unpinned views (design, 2026-11-24): a pinned view is at a base revision for consistent editing, an unpinned one follows the tip with brief, elided, compacted or full refresh deltas and a live event channel; R-PIN-1..13; built except the channel and presence |
 | [docs/CHANGE_VIEWS.md](docs/CHANGE_VIEWS.md) | pull requests, spikes and local branches as layers: topics, lineage, block-level overlap, landing coverage, slices P0-P5 |
 | [docs/BLOCK_DISCOVERY.md](docs/BLOCK_DISCOVERY.md) | finding blocks in any language: measured faults, prior art, providers, who decides structure and folding, slices D0-D3 |
-| [docs/PLAN.md](docs/PLAN.md) | the consolidated plan: phases and gates across every track, the review that reconciled the design, the one sheet of decisions for the owner |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | the open questions worked through: options, pros and cons, recommendations; where data lives (git refs), the Sub0 libraries to adopt, Sub0Fabric kept open |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | the decision record: each decision, its reason and the seam that keeps it revisable (where data lives, block ids, transport, Sub0Fabric, the Sub0 libraries); what is still open |
+| [docs/BACKLOG.md](docs/BACKLOG.md) | what is left, in one ordered list |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | what consumers rely on, independent of implementation, each with the test that checks it; Sub0Squad's use mapped |
 | [docs/USE_CASES.md](docs/USE_CASES.md) | who it is for and what each use case demands |
 | [docs/TESTING.md](docs/TESTING.md) | the proving ladder (unit, golden, use case, scale, consumer) and testing requirements rather than implementations |
@@ -48,7 +47,7 @@ hold up on codebases of billions of lines.
 * `consumer/mock_squad/`: the mock squad ([docs/MOCK_SQUAD.md](docs/MOCK_SQUAD.md)): a separate CMake project that fetches this checkout through CPM as Sub0Squad
   does and links only the public target; its scenario reader, gate, reference loop and record writer, and `test_consumer_contract`. The top-level build runs it as
   `test_consumer_mock_squad` (label `full`).
-* `bench/`: the scale harness (S0, [docs/sessions/s0-scale-harness.md](docs/sessions/s0-scale-harness.md)): `corpus.hpp`/`corpus.cpp`, the seeded synthetic corpus and edit stream
+* `bench/`: the scale harness (S0, [docs/SCALE.md](docs/SCALE.md) section 6.0 and [docs/TESTING.md](docs/TESTING.md), "The synthetic corpus"): `corpus.hpp`/`corpus.cpp`, the seeded synthetic corpus and edit stream
   (library target `sub0canvas_bench_corpus`, option `SUB0CANVAS_BUILD_BENCHMARKS`; tested by `lib/tests/test_corpus.cpp`), and `bench_canvas.cpp`, the benchmarks
   (`Sub0Canvas_Bench`, run through the family's sub0perf tooling; [docs/TESTING.md](docs/TESTING.md), "Performance").
 * `perf/`: `metrics.json`, the deterministic metrics `Sub0Canvas_Bench` reports (judged by the ctest tests `Sub0Canvas_Bench_metrics` and `_smoke`, label `smoke`, in every tier);
@@ -113,10 +112,11 @@ assistant's local memory, a chat, a session card). When the owner gives a new st
   changes and dispatch once. **Timing is measured locally only; deterministic metrics gate in every tier; the improve loop is Sub0Perf docs/PERF_LOOP.md** (one verdict
   line per step; the family's performance tooling, fetched for its tooling only).
 * **Follow-up work** that belongs in its own session is written as a brief in [docs/sessions/](docs/sessions/README.md) (its workflow: write, pick
-  up, close with an `## Outcome`, move to *Done*), listed there and pointed at from the backlog. Not left in a chat or a session card, which other
-  devices cannot open.
+  up, on close move the evidence to its design doc and delete the brief in the same change), listed there and pointed at from the backlog. Not left in a chat or a session card, which other
+  devices cannot open. Status lives only in RESUME and BACKLOG, never in a brief.
 * **The name**: the project is **Sub0Canvas** in prose, docs, commit messages and URLs (`https://github.com/CraigHutchinson/Sub0Canvas.git`). Code and
   build identifiers stay lower-case: namespace `sub0canvas`, target `sub0canvas::sub0canvas`, headers `sub0canvas/*.hpp`, the CMake project name
   `sub0canvas`, `SUB0CANVAS_*` options, the npm package name. Do not rename those without the owner.
 * **Changes the squad consumes** go here first, are tagged, then reach Sub0Squad through a pull request there ([docs/INTEGRATION.md](docs/INTEGRATION.md)).
 * **Docs**: each piece of evidence has one home; a brief links to it rather than copying it. Retire a document once its content is integrated.
+* **Work in your own full clone**, never a linked worktree and never a checkout another session holds.

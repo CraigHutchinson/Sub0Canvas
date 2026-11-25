@@ -1,6 +1,6 @@
 # The authoring tool: the viewer becomes where people and agents work on a document
 
-Status: **design, for the owner to read** (2026-11-18). Nothing here is built. It answers the owner's direction of 2026-11-18 ([DIRECTION.md](DIRECTION.md)
+Status: **design** (2026-11-18); built so far: `sub0canvas snapshot` and `tools/serve.mjs` (V0 in part), the pure query layer ([QUERY.md](QUERY.md), V1a-q), views and sessions ([VIEWS.md](VIEWS.md)) and the interactivity benchmark ([K0.md](K0.md)); the server process, the page's windowing and everything from V1 on are not. It answers the owner's direction of 2026-11-18 ([DIRECTION.md](DIRECTION.md)
 section 4): the interactive viewer is the **first use case to invest in**, extended into a Markdown, code and GitHub-like authoring tool in which a
 person can test, validate, push and respond on a document that later becomes multi-user, with scripted scenarios as its tests; and **Sub0Canvas's own
 design work is its first document**. Use case U7 ([USE_CASES.md](USE_CASES.md)); requirements R-AUTH ([REQUIREMENTS.md](REQUIREMENTS.md)); the
@@ -136,7 +136,7 @@ describes the first small-context consumer.
 | actors | `person/<name>`, `agent/<name>`; every event names one. One person now; more later with no new mechanism (claims give presence, BACKBONE.md 3.5) |
 
 **Where the review log lives**: through the store's `Log` interface, so the answer changes a backend, not the tool. Recommended
-([DECISIONS.md](DECISIONS.md) section 3, A17; for the owner to confirm, [PLAN.md](PLAN.md) O2): one append-only segment per writer, shared
+([DECISIONS.md](DECISIONS.md) section 2, A17; decided 2026-11-23): one append-only segment per writer, shared
 through git refs of its own (`refs/sub0canvas/...`, synced by fetch and push, never in branches or the working tree), private items under a
 namespace that is never pushed. V1 writes that segment format locally; V2 adds the git-ref backend. The tool's configuration (identity policy,
 command allowlist) is committed under `.sub0canvas/`, like any project configuration.

@@ -1,4 +1,4 @@
-// The one deterministic generator of the benchmark corpus and the tests (A1, docs/sessions/cxx23-adoption.md): SplitMix64 and the integer-only picks built on it.
+// The one deterministic generator of the benchmark corpus and the tests (AGENTS.md "Code style", docs/MOCK_SQUAD.md section 8): SplitMix64 and the integer-only picks built on it.
 // Header-only and never part of lib/ (the library is pure: it draws nothing). No `<random>` distribution is used anywhere on purpose: their mapping from bits to values
 // is implementation-defined, so the same seed would give different bytes on libstdc++ and libc++. Here the same seed gives the same values everywhere.
 #pragma once

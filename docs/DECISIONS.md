@@ -1,235 +1,106 @@
-# Decisions: the open questions, worked through
+# Decisions
 
-Status: **proposed, for the owner to confirm** (2026-11-18), except where marked **done**. Written for the owner's direction of 2026-11-18
-([DIRECTION.md](DIRECTION.md) section 5): prefer a forward-looking design, the most capable solution first time where viable; brainstorm options and
-weigh them for each question; move the proving grounds and the code they need from Sub0Squad (go-ahead given); for where data lives, consider existing
-tooling such as `.git`, the Sub0 glue libraries and other prior art; keep a shared orchestration layer ("Sub0Fabric") open if the review finds that
-shape. It answers [BACKBONE.md](BACKBONE.md) section 11 (questions 1-11); its recommendations are the defaults in section 14.3's register of open decisions, and its amendments are rows of 14.2.
+Status: the record of what is decided and why (2026-11-25). Each row is a decision, its one-line reason, and the seam that keeps it revisable; options and their pros and cons appear only where an arm is still open (section 9). A decision
+changes by a new row here with its date, never by an edit that hides the old one. The reasoning that produced them is in git history (tags v0.3.0 and v0.4.0 hold the documents as they were); the design each decision serves is in
+[BACKBONE.md](BACKBONE.md) (amendments A1-A22 in section 14.2, the register of open arms in 14.3), [SCALE.md](SCALE.md), [VIEWS.md](VIEWS.md) and [CHANGE_VIEWS.md](CHANGE_VIEWS.md).
 
-Prior art here is from knowledge, not a fresh search; the facts about the Sub0 libraries are from their READMEs in local checkouts (2026-11-18).
+**The yardstick** (owner, 2026-11-23, also in AGENTS.md): every decision is judged on three axes together: **data-driven** (behaviour in policies and formats a client may supply, not hard-coded), **extensible** (a seam with more than one
+implementation proved, even if the extra ones are proofs of concept run only as build or release gates) and **performance at the core** (scale is a design input; the budgets of SCALE.md apply to every new module). Beside them: one truth
+(one implementation of each rule, one home for each fact), offline and local first (nothing leaves the machine unless a person sends it), reproducible (the same inputs give the same outputs on any machine), reuse before invention.
 
-## 0. In one table
+## 1. Release and format
 
-| # | question | recommendation | status |
-|---|---|---|---|
-| 9 | apply a parsed reply in the library | moved, atomic by construction; turn control and the 30 recorded-reply cases moved with it | **done** (section 2) |
-| 10 | where the data lives | by kind, in layers: git for truth and shared annotations (own refs, the Gerrit NoteDb / git-bug pattern), `.git/` for per-clone caches, the user's state directory for per-reader state; a working-tree export only on demand | proposed (section 3) |
-| 3, 7 | the block identity scheme | **deterministic birth ids**: a hash of where and when a block was born, so every clone replaying the same history derives the same ids with no counter and no coordination | proposed (section 4) |
-| 1 | where the store lives for Sub0Squad | per project (the repository), with each attempt a writer of its own segment; per-attempt use first, behind an option, already in the final format | proposed (section 5) |
-| 2 | events in a snapshot | per turn, with `eventsFrom`; the log is cumulative | proposed (section 5) |
-| 6 | revision ids | opaque strings in the format from B0; numbers still read | proposed (section 5) |
-| 4 | the GitHub adapter and the network | a separate, read-only target with captured fixtures in tests; write-back only through confirmation; Sub0Squad never links it | proposed (section 5) |
-| 5 | the C++ standard | stay on C++23, as the Sub0 family does | proposed (section 5) |
-| 8 | tree-sitter | approve as an optional target; grammars pinned, adopted per language by measurement | proposed (section 6) |
-| 11 | the authoring server's stack | **revised 2026-11-23** ([review](reviews/2026-11-23-fabric-portal-store.md) D7, owner): one transport-independent protocol; **native HTTP the local default** (HTTP/2 where tooling supports it, HTTP/1.1 the baseline) on Platform's `net`; stdio JSON lines as the second transport; the Node bridge optional | revised (section 7) |
-| - | the Sub0 glue libraries | adopt Sub0Platform in the tools (not the core), Sub0Log for diagnostics, Sub0Pipeline for check runs and parallel indexing, Sub0MemPage and Sub0TieredCache at scale, Sub0Math's performance tooling for benchmarks | proposed (section 8) |
-| - | Sub0Fabric | **decided 2026-11-23 (owner): build it now** as its own repository; the trigger below was already met. Scope, modules and first consumers: [review](reviews/2026-11-23-fabric-portal-store.md) D1-D4 | **decided** (section 9) |
-
-## 1. How the options were weighed
-
-Every question was scored against the same forward-looking criteria, taken from the use cases ([USE_CASES.md](USE_CASES.md)) and requirements
-([REQUIREMENTS.md](REQUIREMENTS.md)):
-
-* **Capability at the far end**: does it still work for U3 (a repository's history and its PRs), U4 (billions of lines), U6 (many people and agents)
-  and U7 (the authoring tool) without being replaced?
-* **One truth**: one implementation of each rule, one home for each fact.
-* **Offline and local first**: works with no network and no server; nothing leaves the machine unless a person sends it (AGENTS.md).
-* **Reproducible**: the same inputs give the same outputs on any machine (tests, A/Bs, two clones agreeing).
-* **Reuse before invention**: existing tools and the Sub0 libraries first.
-* **Cost now**: build effort, dependencies, the risk of getting it wrong.
-
-## 2. Moving the proving grounds and their code (question 9): done
-
-| moved from Sub0Squad | to | notes |
+| decision | reason | seam that keeps it revisable |
 |---|---|---|
-| `applyCanvasReply` (`src/canvas_agent.cpp`) | `applyReply` and `applyReplyText` in `canvas.hpp` | **improved**: all or nothing is now atomic by construction (the canvas is worked on as a copy and committed only on success); before, whole files were written before a later edit could fail, and every caller had to apply to a scratch copy. `std::expected` per the code style. |
-| turn control (`turn_control.hpp`, `.cpp`: joining cut-off replies, runaway and overrun detection, the continuation prompt) | `sub0canvas/turn_control.hpp` | pure text over the reply format, unchanged but for the namespace; every model-driven consumer of the reply format needs it |
-| the recorded-reply corpus (`tests/data/replies`, 30 cases) | `fixtures/replies/`, run by `test_replies` | the runner restated from the case format; it now also checks the canvas itself is unchanged after a refusal (not a scratch copy) |
-| turn control's tests (`test_blocks` block 1, rows 34-36) | `test_turn_control` | every check as it was |
-| earlier today: block 4, the skeleton block, the canvas model check | `test_views`, `test_canvas_model` | |
+| v0.3.0 (moved proving grounds) and v0.4.0 (B0 format, store, inbox, claims, history, resolver, query layer, views and sessions, mock squad to MS5) are tagged; the next tag is breaking for Sub0Squad ([INTEGRATION.md](INTEGRATION.md)) | unreleased work and Sub0Squad's copies piled up; a tag runs the full tier | the tag is the release check; the pin is Sub0Squad's PR |
+| One format revision: per-turn `events` with `eventsFrom`, revision ids as opaque strings, texts by content id, item `id`, anchor column and range, `layerMeta`, `policies` (O5, A1, A3, A13) | the viewer, Sub0Squad and the live server need one shape; per-turn events keep a bundle at 2.5 times one turn, not eight | `layered-doc-1` is additive; a field that changes meaning gets a new schema name |
+| The C++ standard is C++23 (O8) | the family is C++23; `std::expected` and `std::print` are used; lowering it buys reuse no consumer needs | the toolchain floor in [TESTING.md](TESTING.md) |
+| `std::expected` replaces `std::optional` only where the caller loses a reason, one public function per change, each tagged for [INTEGRATION.md](INTEGRATION.md) | a signature change is breaking; `applyEdits` was the first | the owner picks the next function |
+| Fixture regeneration (ids, `index.outliners`, a format change) is one deliberate batch per change: a hand-reviewed diff of every changed line, a mechanical "identical modulo what changed" check, the changed deterministic metrics accepted through the metrics tooling with a reason, nothing regenerated silently | the golden replay and the mock attempts are the check on the library; a regenerated fixture proves only the writer | the check script is one-off and not committed |
 
-Checked: `ctest --preset quick` passes (8 suites); a tampered copy of two cases fails `test_replies` with each case named.
+## 2. Where the data lives (O2, O3)
 
-**What stays in Sub0Squad** (its own, not the library's): the fork harness and the throughput model (block 6), the runaway policy's use in the
-streaming loop, `applySectionSignature` and `compileFindings` (harness assembly), the platform tests. **What Sub0Squad must do** (a PR there, after a
-tag here): replace its `applyCanvasReply` and `turn_control` with forwarding headers to these, drop the copied tests, and keep
-`run-v11-test-app-reply.txt` (its platform test reads it).
+The data is not one thing; each kind has its own home:
 
-## 3. Where the data lives (question 10)
-
-The data is not one thing. Each kind has different needs, so the answer is a layering, each layer using existing tooling:
-
-| kind of data | examples | needs |
+| kind of data | home | reason |
 |---|---|---|
-| the document | files and their history | already in git |
-| shared annotations | review comments, threads, states, decisions, plan items, claims | durable, shared across devices and people, mergeable without a server, attributable, append-only |
-| derived caches | block index checkpoints, sketches, snapshots for the viewer | rebuildable, per clone, large, never the truth |
-| per-reader state | inbox cursors, folds and view preferences, the server token | private, per user, small |
-| exports | a review rendered for a PR, SARIF, a snapshot to share | deliberate, scoped by a query (A11) |
-| configuration | the identity policy, the command allowlist, policy files a client supplies | part of the project: reviewed, versioned, shared |
+| the document | the working tree and its git history (`DocumentSource` "local/worktree", the git adapter) | already in git |
+| shared annotations (comments, threads, states, claims) | events in git under `refs/sub0canvas/<document>/<writer>`, one append-only ref per writer, merged by Lamport clock with the writer as tie-break; **private items go to `refs/sub0canvas-local/...`, never pushed** | the Gerrit NoteDb, git-bug and Radicle pattern: offline, replicated, content-addressed, no noise in branches or diffs, no write conflicts. Pushing to a public remote makes annotations public, so nothing is pushed until the owner asks |
+| derived caches | per user, keyed by object id, shared by every clone and worktree of a repository (A19); only what differs stays under the git common directory | a work-dominated monorepo is several clones of hundreds of gigabytes; deleting a cache costs time, never data |
+| per-reader state (inbox cursors, folds, the server token) | the user's state directory (`dirs.state("sub0canvas")`), keyed by repository | private and small |
+| exports | on demand, scoped by a query (A11): `sub0canvas export review --query ...`; a view, never the truth | deliberate |
+| configuration | committed under `.sub0canvas/` (identity policy, command allowlist, policy files) like `.editorconfig` | part of the project, reviewed like code; annotations never go there |
 
-### 3.1 Options for the shared annotations (the hard part)
+Consequences adopted: one writer per **segment** (per ref), the store reads many; every event carries its writer and a Lamport clock (A15); the log is never rewritten per writer; the log is a module of its own (A18); the `Log` interface gains a
+`GitRefLog` in the tool, not the core. **The seam is proved by more than one backend** (owner amendment 2026-11-23): the directory store (committed files and local-only are one implementation with two roots) and git refs are real; **git notes (C) and SQLite (E)
+are proofs of concept**, each just enough to pass the one store contract suite (append, `since(cursor)`, atomic batch), run only as optional build and release gates, off by default, linked by no consumer, promoted to a real backend only if one proves good on
+the budgets of section 5.
 
-| option | how | for | against |
-|---|---|---|---|
-| **A. files committed in the working tree** (`.sub0canvas/events.ndjson`) | ordinary commits | simplest; visible and reviewable in PRs; everything is in git | every comment is a commit on the branch, or batched; merge conflicts on one file when two devices append; review data mixed into code history and diffs; follows branches, so a comment made on a branch disappears when switching |
-| **B. git refs of their own** (`refs/sub0canvas/...`), the **Gerrit NoteDb / git-bug / Radicle** pattern | events are written as git objects (a commit per batch, its tree holding the event segment) on refs outside branches; synced by `git push` / `fetch` with a refspec; merged by union | in git, so offline, replicated, content-addressed and signed like code; **no noise** in branches, diffs or the working tree; independent of the checked-out branch; proven at scale (Gerrit keeps all review metadata this way); a writer per ref means no write conflicts | invisible to people who only use GitHub's web pages; needs a refspec to sync (a one-time `git config`); refs pushed to a public remote are public (so private notes go to a local-only namespace); git plumbing to write (the library stays pure: the tool does the I/O) |
-| **C. git notes** (`refs/notes/sub0canvas`), the **git-appraise** pattern | notes attached to commits | built into git; `cat_sort_uniq` merge for line-based data | anchored to commits, not to blocks or documents; one notes tree per ref merges awkwardly at volume; a weaker fit than B for an event log |
-| **D. local only** (`.git/sub0canvas/`) | files inside the git directory | private; no sync to configure | lost with the clone; not shared across devices or with an agent elsewhere |
-| **E. a database file** (SQLite, as Fossil keeps tickets and wiki) | one file | queries, transactions | a binary file in git merges badly; outside git it is option D; a second storage engine to depend on |
-| **F. a server or GitHub itself** | the forge holds it | shared with everyone on the web | needs a network and an account; the opposite of local first; GitHub stores review comments server-side, which is what G2 reads, not where our own truth should live |
+## 3. Identity and writers
 
-### 3.2 Recommendation
-
-1. **The document**: the working tree and its git history (as now; `DocumentSource` "local/worktree" and G1's git adapter).
-2. **Shared annotations: option B**, events in git under `refs/sub0canvas/<document>/<writer>`, one ref per writer (a person's device, an agent),
-   each an append-only chain of commits whose trees hold event segments in the log format (`canvas-events-1`). Readers merge all writers' refs,
-   ordered by a Lamport clock with the writer as tie-break. This is the shape Sub0Log already uses for processes (each writes its own segment; readers
-   merge), lifted onto git for replication, which is the strongest sign for Sub0Fabric (section 9). Sync is `git fetch` and `git push` with a refspec
-   the tool configures on first use (with the owner's confirmation); **private items go to `refs/sub0canvas-local/...`, which is never pushed**.
-3. **Derived caches: option D**, under the git common directory (`git rev-parse --git-common-dir`, so all worktrees of a clone share them):
-   `.git/sub0canvas/cache/`. Rebuildable from the document and the log; deleting them costs time, never data. **Amended (A19, SCALE.md)**: per-blob
-   tables keyed by object id move to a per-user cache shared by every clone of the repository, because a work-dominated monorepo is held as several
-   clones of hundreds of gigabytes each; only per-clone state stays under the git directory.
-4. **Per-reader state**: the user's state directory, via Sub0Platform's `dirs.state("sub0canvas")`, keyed by repository (inbox cursors, folds, the
-   server's session token).
-5. **Configuration: committed** under `.sub0canvas/` (`config.json`, `commands.json`, policy files), like `.editorconfig`: it is part of the
-   project, changes rarely, and is reviewed like code. Annotations never go there.
-6. **Exports: option A only as an export**: `sub0canvas export review --query ...` writes a readable Markdown or JSON file a person may commit or attach
-   to a PR. It is a view, never the truth.
-
-**What this changes in the design.** BACKBONE.md section 4's rule "single writer per document" becomes **single writer per segment** (per ref); the
-store reads many segments. Every event carries its writer and a Lamport clock (amendment A15). Rule 4 ("the log is never rewritten") holds per writer.
-The `Log` interface gains a `GitRefLog` implementation in the tool (not the core), beside `MemoryLog` and `FileLog`.
-
-**Pushing annotations to this public repository** makes them public. The owner decides per namespace, and the default is to push nothing until asked.
-
-## 4. Block identity (questions 3 and 7)
-
-Identity must be stable through edits (the whole point), unique without a global counter (shards, per-path replay: A2), and, newly important with
-section 3, **the same on every clone**: a comment anchored to a block on the owner's laptop must resolve on another device that replayed the same
-history.
-
-| option | for | against |
+| decision | reason | seam |
 |---|---|---|
-| a counter per index (today: `b7`) | short, readable | depends on processing order: two clones, or a sharded and an unsharded replay, give different ids; needs coordination across shards |
-| a counter per replay root, named in the file (the earlier proposal) | stable within a root | still order-dependent; ids from two roots cannot be compared, so a comment made against one root is lost against another |
-| random ids at birth (128-bit, UUIDv7-like) | no coordination; unique | two clones replaying the same history get different ids, so annotations synced through git (section 3) would not resolve on the other clone |
-| content-addressed (Unison: a hash of the body) | the same everywhere | a body edit is a new identity: layers would fall off the code on every edit, the opposite of the requirement |
-| **deterministic birth ids** (recommended) | an id is a hash of **where and when the block was born**: the revision it first appeared in, its path there, its signature there, and an ordinal among identical births; carried thereafter by the usual rules. Every replay of the same history derives the same ids (no counter, no coordination, shard-safe), yet a body edit or a rename never changes it | ids are opaque hashes (shown shortened, with the block's name beside them); a block born in a working-tree edit gets its birth revision from the canvas or the worktree revision (A1), so live ids are deterministic only given the same edit sequence, which is true for the log replayed |
+| Block ids are **deterministic birth ids** (O4, A16): a hash of the revision a block first appeared in, its path and signature there, and an ordinal among identical births, carried thereafter by the usual rules | no counter and no coordination, shard-safe, and every clone replaying the same history derives the same id, so an annotation synced through git resolves on another device; a body edit or a rename never changes it (content-addressed ids would orphan every layer on each edit; random ids differ per clone) | tests never spell an id (R-ID-11) |
+| A record's writer is a composite `{namespace, writer}` (project, source home, source-local id) (D6) | two homes both mint `w-000001`; browser-facing keys are opaque | the envelope |
+| The event envelope is frozen with no `seq` and no `type` (A22) | Sub0Squad's `journal-1` line is `{seq, ts, type, d}` and Canvas's is `{kind, writer, lamport, subject, time, payload}`: no shared field name, so a reader tells them apart by shape and a merged stream never carries two meanings of `seq` | `EventSource::since(position)` carries the position |
+| Ordering is data (D4): the order rule is a header field of the stream (`seq`, `lamport` with writer tie-break, `aligned-time`), one streaming merge for all | three projects order three ways | the stream header |
+| Spikes are marked by the topic policy; `lineage@1` only reads the mark (O13) | one owner for the definition | `lineage@1` |
+| Scale profile B and change views are requirements (O12): R-SCALE-5 to 9, A19-A21, U12, R-CHG | measured on a private monorepo, numbers only | SCALE.md, CHANGE_VIEWS.md |
 
-With A1 (revision ids are strings) this is cheap: the birth revision is already known when a block is added. Tests are already independent of the
-spelling (R-ID-11; the golden replay maps ids one to one), so switching costs no test changes. **Amendment A16** records it.
+## 4. Sources and the network
 
-## 5. The remaining questions
+* **GitHub (O7)**: read-only through the user's `gh`, in a separate target that Sub0Squad never links, so "nothing leaves the machine" holds there; tests read captured files only (R-SRC-8); write-back only through `WriteSink` behind a person's confirmation. git-bug's
+  bridges are the prior art for mirroring GitHub items into the git refs of section 2 so they can be read offline. Seam: `ItemSource`, `WriteSink`.
+* **tree-sitter (O9)**: an optional target, grammars pinned at exact CPM commits, each grammar's download approved on its own, adopted per language only where the conformance corpus (D1) shows it at least as good as the provider it replaces; the core never depends
+  on it. Seam: `OutlineProvider` ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)).
+* **The store in Sub0Squad (O10, D5)**: physical per writer (a segment per attempt, in the per-project format, behind an option off by default), logical per project by a read-time merge across homes, never a move of data; Sub0Squad's work registry is the merge's source list.
 
-**Question 1, where the store lives for Sub0Squad.**
+## 5. Transport, portal and Sub0Fabric
 
-| option | for | against |
+| decision | reason | seam |
 |---|---|---|
-| per attempt, in the canvas loop | simplest; B2's byte-identical check is local | issues, notes and claims die with the attempt; nothing spans workers |
-| per workflow, in the daemon | spans workers; the orchestration layer can live there | one more process owning state; still forgets across workflows |
-| **per project (the repository), each attempt a writer of its own segment** (recommended) | the same store a person sees in the authoring tool: a squad's issues and notes are reviewable by the owner and survive; a later attempt can read what an earlier one learnt (U11); sharding and merging come from section 3 for free | the most to build; must stay behind an option until proved |
+| **Protocol first** (D7, O6): one versioned query and event protocol (`query-1`, [QUERY.md](QUERY.md)) with golden contract tests, independent of transport; the transport only calls `QueryServer::handle` | the server question was mis-framed as Node against C++ | the transport seam |
+| **Native HTTP is the local default** (owner 2026-11-23); HTTP/1.1 the required baseline, HTTP/2 the target where tooling supports it; **stdio JSON lines** the second transport; the Node bridge an optional delivery process, not the default | Platform's `net` has landed (`SocketListener`, `SocketStream`) and Sub0Squad's portal already serves HTTP on it; the viewer avoids the six-connection limit with one cursor-addressed event stream per page, so HTTP/2 is an optimisation, not a prerequisite | one `IHttpFront` / `IHttpClient` seam in Fabric `transport` |
+| HTTP implementation A first: Sub0Squad's hand-rolled HTTP/1.1 server and client lifted onto Platform `net` (loopback, per-run token, `Origin` and `Host` checks against DNS rebinding, path-escape check, response caps) plus server-sent events, no TLS; implementation B is Boost.Beast (already built in Sub0LlmEngine behind the same interfaces), adopted if hostile-input exposure or HTTP/2 matters; one contract suite both pass (agreed with the owner 2026-11-24) | three hand-rolled HTTP surfaces collapse into one `http` module (D10), homed in Fabric `transport`; Platform stays mechanism-only | the seam; [Sub0LlmEngine issue 1](https://github.com/CraigHutchinson/Sub0LlmEngine/issues/1) tracks its adoption |
+| Projections are policy (D11): the remote viewer's field allowlist, opt-in project list and opaque ids are **one** projection definition read by the native portal and any Node viewer; `layeredJson` and the query layer share one writer | no second hand-written projection | `projection.hpp` |
+| Portal integration (D8): within at the data layer, integrated at the shell, beside as step one, in that order of delivery: deep links from a portal row to its canvas view, then an integrated shell, then work items, campaigns and executions as Canvas items with links through Fabric's merged reader | Sub0Squad's portal must extend the canvas views, not become a second app; the viewer's `centre` is already any layer key | view definitions are data |
+| **Sub0Fabric is built now** (O11, owner 2026-11-23, D1-D3), as its own repository: F0 lifts Sub0Squad's journal (segment, torn-tail recovery, `journal-1` codec, tests), behaviour-preserving; Canvas's events are the second user; modules `segment`, `record`, `order`, `cursor`, `store`, `transport`, `projection`; no dependency on Canvas, Squad or Log. The Canvas core never links Fabric; `app/` wires a Fabric store to the core's `Log`; Fabric proves the Canvas envelope as a second record shape in its own tests | the extraction trigger (a second consumer of the same mechanics) was already met by `journal-1`, the designed event log and Sub0Log's segment merge; the risk (designing for consumers that have not used it) is met by lifting what already runs | `Log` / `EventSource` in `event.hpp` |
+| Sub0Log is not extended: its contract is lossy by design (it counts drops; a domain log must never drop). It gets a **read-only codec adapter** in Fabric, so the portal shows diagnostics beside work; Log itself is unchanged | a second proved codec for the record seam | the codec seam |
 
-Start per attempt (B2, behind an option, off by default, as every new capability in Sub0Squad), but write the per-project format from day one, so the
-step to per project is configuration, not migration.
+**Fabric's budgets** (binding on every module, each a benchmark from F0): append O(1), one writer per segment, no lock, durability a policy (per record, per batch, per interval; default batch); `since(cursor)` O(records returned) through a sparse offset index, never a
+rescan; merge streaming k-way with memory bounded in the number of segments; parse with simdjson on-demand and zero-copy views; the git-ref backend writes one commit per batch, never per event; live fan-out through one in-memory ring shared by every subscriber;
+projection computed once per refresh and shared across clients; indexes and caches per user keyed by object id.
 
-**Question 2, events in a snapshot**: per turn with `eventsFrom` (BACKBONE.md 14.5 has the comparison). Settle at B0.
+## 6. Views
 
-**Question 6, revision ids as strings**: yes, at B0. A canvas revision is written `"r3"` or `"src/calc.cpp@3"`, a commit as its id, a worktree state
-as its content hash; readers accept numbers in old files.
+Decided in [VIEWS.md](VIEWS.md) section 6: sessions and server-side containment of many users are the foundation (section 7); presence and peer patches are planned, not built. The extension points stay open and are named there with their requirement rows
+(R-PIN-8, R-PIN-13): `ViewStore`, `ScratchLayer`, `SessionPolicy`, `PresenceProvider`, `ConflictView`, `Compactor`, and `Session::openChannel` (which answers `not-supported` until the channel exists).
 
-**Question 4, the GitHub adapter and the network.**
+## 7. The Sub0 libraries
 
-| option | for | against |
+| library | decision |
+|---|---|
+| **Sub0Platform** | adopt in the tools (`app/`, `serve`, the CLI: files, locks, processes, per-user directories, `net`), **not in the core**, which stays pure. Sub0Canvas is its second C++ consumer (its test helper `check.hpp` already comes from it) |
+| **Sub0Log** | diagnostics of `serve` and the CLI; its segment and merged-reader design is the model for the event log, and Fabric's seed |
+| **Sub0Pub** | optional, if `serve` grows several in-process listeners; durable subscriptions stay inboxes with cursors (BACKBONE.md 3.4) |
+| **Sub0Pipeline** | the tools only, at V4's check runs and S3's parallel indexing |
+| **Sub0MemPage**, **Sub0TieredCache** | at S2 and S4 only if S0's numbers show the index outgrowing memory (mapped, paged index segments and logs; frozen per-blob block tables) |
+| **Sub0Perf** | the performance tooling (benchmarks, the gate, the metrics check), in its own repository, fetched through CPM for its tooling only at a pinned commit |
+| **Sub0LlmModelRegistry** | the pattern (immutable versioned folders with a manifest) for the policy registry (BACKBONE.md 14.4), not the code |
+
+## 8. Moved from Sub0Squad, and what stays
+
+Moved (done): `applyCanvasReply` became `applyReply` (atomic by construction: the canvas is worked on as a copy and committed only on success; before, whole files were written before a later edit could fail); turn control (`turn_control.hpp`: joining cut-off
+replies, runaway and overrun detection, the continuation prompt); the recorded-reply corpus (30 cases, `fixtures/replies`, `test_replies`, which also checks the canvas itself is unchanged after a refusal); turn control's tests; block 4, the skeleton block and the
+canvas model check (`test_views`, `test_canvas_model`). **Stays in Sub0Squad**: the fork harness and throughput model, the runaway policy's use in the streaming loop, `applySectionSignature` and `compileFindings`, the platform tests, and `run-v11-test-app-reply.txt`
+(its platform test reads it). What Sub0Squad does is a pull request after a tag here ([INTEGRATION.md](INTEGRATION.md)).
+
+## 9. Still open
+
+| question | arms | when it is decided |
 |---|---|---|
-| live reads with the user's `gh` login, read-only, in a separate target (recommended) | real data for U3; `gh` handles authentication; Sub0Squad never links it, so its "nothing leaves the machine" holds | network access from a library target (only when a person runs it) |
-| an offline mirror only (`gh api` exported to files, then read) | no network in the library at all | a manual step every time; stale data |
-| no GitHub support | nothing to secure | U3 is lost |
-
-Tests read captured files only (R-SRC-8); write-back (G5) only through `WriteSink` behind a person's confirmation. **git-bug's bridges** (GitHub, GitLab,
-Jira imported into git-stored issues) are prior art for importing items into the section 3 log, so GitHub data can also be mirrored into git refs
-and read offline.
-
-**Question 5, the C++ standard**: stay on C++23. The family is C++23 (Sub0Pub, Sub0Pipeline, Sub0Log, Sub0Platform's C++ layer); `std::expected` and
-`std::print` are used; lowering it buys reuse no current consumer needs.
-
-## 6. tree-sitter (question 8)
-
-| option | for | against |
-|---|---|---|
-| never | no dependency | every language is hand work forever; names, nesting and error recovery stay approximate (BLOCK_DISCOVERY.md section 2) |
-| **an optional target, grammars pinned, adopted per language by measurement** (recommended) | real syntax trees, error recovery, incremental parsing (E1, scale), upstream `tags.scm` / `outline.scm` queries; the core never depends on it; the conformance corpus (D1) decides each language | a download per grammar (the owner approves each); generated C, larger builds; spans move between grammar versions (handled by BLOCK_DISCOVERY.md 4.6) |
-| tree-sitter in the core, for every language | one path | the core is no longer dependency-free; every consumer pays the build |
-
-The runtime is a small C library with no dependencies (MIT). Grammars come through CPM at exact pins, so a build is reproducible, and the cache is
-shared (`CPM_SOURCE_CACHE`).
-
-## 7. The authoring server's stack (question 11)
-
-> **Revised 2026-11-23.** The recommendation below assumed Platform's `net` module had not landed; it has (`SocketListener`, `SocketStream`), and
-> Sub0Squad's portal already serves HTTP on it. The owner decided native HTTP is the local default, with HTTP/2 where tooling supports it and
-> HTTP/1.1 as the baseline, stdio as the second transport and the Node bridge optional. The reasoning, the TLS constraint on HTTP/2 and the shared
-> `http` module are in [reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D7 and D10. The text below is kept as
-> the original analysis.
-
-BACKBONE.md 14.5 compares a JavaScript store, a C++ HTTP server, and a C++ process over stdio with a bridge. The survey adds one fact: **Sub0Platform's
-C++ layer** (processes, files and atomic writes, locks, local IPC, sockets, per-user directories; today Sub0Squad's layer 0, to be moved to Sub0Platform)
-is exactly what the `serve` executable and the CLI need, so the tools do not reinvent it.
-
-Recommendation: `sub0canvas serve`, C++, JSON lines over stdio (LSP-like), built on Sub0Platform's C++ layer for files, locks, processes (running
-allowlisted checks) and later local IPC; the core library stays pure and does not depend on Sub0Platform. A small Node bridge serves the page and
-turns HTTP and server-sent events into stdio messages, because a browser needs HTTP. When Sub0Platform's `net` module lands, the bridge can be
-replaced by the process serving HTTP itself; the protocol (A10) does not change.
-
-## 8. The Sub0 glue libraries: what to adopt, iterate or leave
-
-| library | what it offers (from its README) | overlap with Sub0Canvas | recommendation |
-|---|---|---|---|
-| **Sub0Platform** (MIT) | the OS layer: paths and WSL, per-user directories (config roaming, cache and state local), processes, atomic files, cross-process locks (a crashed owner's lock set aside); later sockets, local IPC, mapping. Python now; C++ moving from Sub0Squad | the `serve` process, the CLI, `GitRefLog`, running checks, per-reader state (section 3), the single-writer lock | **adopt in the tools, not the core**; Sub0Canvas becomes the second C++ consumer, which is a reason to finish the C++ move (Sub0Platform issue 1). Iterate: a `git` plumbing helper may belong there if a second project wants it |
-| **Sub0Log** (MIT) | a structured diagnostic stream: typed records, call-site descriptors, crash-safe memory-mapped segments, one segment per process merged at read time, `sub0log-cat` to text or JSON lines | diagnostics of `serve` and the CLI; **its segment and merged-reader design is the shape section 3 needs for the event log** | adopt for diagnostics; use its design as the model for the log; the shared part is Sub0Fabric's seed (section 9) |
-| **Sub0Pub** (MIT) | typed publish-subscribe, direct wiring or a bounded broker, synchronous, no heap in the core | in-process change notification inside `serve` (the store notifies views, views notify the bridge) | optional; adopt if `serve` grows several in-process listeners. Durable subscriptions stay inboxes with cursors (BACKBONE.md 3.4), which Sub0Pub does not replace |
-| **Sub0Pipeline** (MIT) | a DAG job scheduler: dependencies, executors, cancellation, timeouts, deferred completion, remote sub-graphs over a transport, observer events | V4's check runs (configure, build, test as a DAG with cancellation); S1-S3's parallel indexing of many files; remote sub-graphs for distributed indexing at U4 | adopt in the tools at V4 and S3; not in the core |
-| **Sub0MemPage** (MIT) | paging orchestration over memory-mapped regions | index segments and logs too large for memory (S2, S4): sketches and checkpoints mapped and paged by use | adopt at S2/S4 if S0's numbers show the index outgrowing memory; part of Sub0Fabric's shape (owner, 2026-11-18) |
-| **Sub0TieredCache** (MIT) | a bounded cache for huge frozen sparse-lookup tables, sharded over immutable sources, with a versioned remote chunk mirror | frozen per-blob block tables and sketch indexes at scale (blocks computed once per blob, BACKBONE.md section 12) | adopt at S2/S4 for frozen tables; evaluate against S0's numbers |
-| **Sub0Math** (MIT) | the shared math vocabulary; **hosts the family performance tooling** | no math overlap; its performance tooling fits L3 benchmarks (S0) | use its performance tooling for `bench_index` if it fits; nothing else |
-| **Sub0LlmModelRegistry** | immutable versioned folders with a manifest, aliases, a generated index | the pattern for the policy registry (14.4) and checkpoint layout | borrow the pattern, not the code |
-| Sub0Squad's `journal-1` and job store | NDJSON with a torn final line discarded; job state | the same problem as the event log | converge on one log format (section 9) |
-| CraigHutchinson/.github CI tools | CI standard, local gates, private-name guard | already used | keep |
-
-## 9. Sub0Fabric: a shared orchestration layer, kept open
-
-> **Decided 2026-11-23.** The owner chose to build Sub0Fabric now. The extraction trigger below was already met (Sub0Squad's `journal-1`, this
-> project's designed event log and Sub0Log's segment merge each exist or are specified), so the "kept open" recommendation is superseded. The
-> review ([reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md) D1-D4) sets the scope: lift Squad's journal first,
-> Canvas's events second, Sub0Log through a read-only adapter. The table and options below stay as the analysis.
-
-The owner's concept (2026-11-18): extend Sub0Log's architecture into **Sub0Fabric**, a shared orchestration layer; Sub0MemPage may fit it too. The
-review did find this shape. Three projects solve parts of one problem:
-
-| part | Sub0Log | Sub0Canvas (designed) | Sub0Squad |
-|---|---|---|---|
-| append-only records with typed schemas | records with call-site descriptors | events with versioned kinds (A7) | `journal-1` entries |
-| one writer per segment, merged at read time | per process | per writer ref (section 3) | one journal per daemon |
-| crash safety | memory-mapped segments survive a hard kill | a torn final line discarded | a torn final line discarded |
-| cursors and subscriptions | a live tailer | inboxes with cursors (3.4) | the daemon's polling |
-| transport and replication | files | git refs (section 3) | files; Sub0Pipeline's remote sub-graphs for jobs |
-| paging large data | | logs and indexes at U4 | |
-
-**The shape of Sub0Fabric, if it is extracted**: segments per writer (Sub0Log's design), records with versioned schemas, merged readers ordered by
-Lamport clock and writer, durable cursors (inboxes) and live notification (Sub0Pub), replication backends (files, git refs), paging of large segments
-(Sub0MemPage), transports for remote readers (Sub0Pipeline's `ITransport`, Sub0Platform's IPC).
-
-| option | for | against |
-|---|---|---|
-| build it as Sub0Fabric now | one design from the start; three consumers benefit | designed for consumers that have not used it; a new repository and its upkeep before the first use proves the shape |
-| **build it in Sub0Canvas behind a liftable boundary, extract on the second consumer** (recommended) | proved first on a real use (V1-V2); the boundary (a `log` module with its own format spec and no dependency on the rest of the library) makes extraction mechanical; the trigger is concrete | some rework at extraction (namespaces, packaging) |
-| extend Sub0Log itself | the segment code exists and is tested | Sub0Log's contract is diagnostics (bounded, lossy under pressure by design, no producer formatting); a domain log must never drop a record, so the contracts differ |
-
-**The trigger to extract**: the second consumer that needs the same mechanics, most likely Sub0Squad moving its journal onto the log format, or
-Sub0Log wanting git replication. It stays in BACKBONE.md 14.3's register until then.
-
-## 10. Amendments this adds
-
-A15-A18 (writers and Lamport clocks, deterministic birth ids, storage layered by kind, the log as a module of its own) are rows of the one
-amendment register, [BACKBONE.md](BACKBONE.md#142-amendments) section 14.2.
+| HTTP/2 route (W4) | browsers speak HTTP/2 only over TLS, and Platform's `net` has no TLS or HTTP/2 framing: a local certificate plus either a vetted library (nghttp2; each dependency approved on its own) or own framing; on plain loopback the viewer runs HTTP/1.1 | at Fabric W4, by K0's budgets measured on both versions |
+| Which store proof of concept (git notes or SQLite) is promoted, if either | by the budgets of section 5 | after both pass the contract suite |
+| The remaining `std::optional` to `std::expected` conversions (`parseTargetKind`, `parseState`, `parseDeltaForm`, `holderOf`, `conflictSince`, `textAtPin`, `DocumentSource::changes`/`resolve`, `RevisionIndex::carry`) | each has one failure cause today and callers that already hold the reason; converting breaks a signature | the owner, one function per change |
+| Whether the mock-squad consumer test moves from `full` to `smoke` | about 32 s the first run, 1.3 s after | the owner |
+| Block-list shape in the viewer, event-log window, policy registry | the register in BACKBONE.md 14.3 | by K0's numbers and the first policy that needs a second arm |

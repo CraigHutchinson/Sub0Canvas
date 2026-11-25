@@ -1,6 +1,6 @@
 # Change views: pull requests, spikes and their dependencies as layers
 
-Status: **design, for the owner to read** (2026-11-18). Nothing here is built. Use case U12 ([USE_CASES.md](USE_CASES.md)); requirements R-CHG
+Status: **design** (2026-11-18, nothing built but its proving ground, the synthetic mirror: [MIRROR.md](MIRROR.md)). Use case U12 ([USE_CASES.md](USE_CASES.md)); requirements R-CHG
 ([REQUIREMENTS.md](REQUIREMENTS.md)); scale in [SCALE.md](SCALE.md). It extends the GitHub project view (U3, [BACKBONE.md](BACKBONE.md) section 9.3),
 which treats a pull request as one item with a pending revision line, to **sets of changes that serve one goal**: an exploratory spike, the focused
 changes carved out of it, the stacks they form, what supersedes what, and what still has to land.
@@ -113,7 +113,7 @@ checks are one query away, not a separate tool.
 | a tracker | items | topics (an issue and its key), their links (implements, ports, duplicates), status | a separate adapter per tracker; the topic policy maps its keys into titles and branches |
 
 Private data stays private: interchange files and caches of a private repository are private (DIRECTION.md section 2, rule 5), they live under
-the git directory or the user's state directory ([DECISIONS.md](DECISIONS.md) section 3), and nothing from them is written into a public
+the git directory or the user's state directory ([DECISIONS.md](DECISIONS.md) section 2), and nothing from them is written into a public
 repository. A change view of a private monorepo runs entirely on the owner's machine.
 
 ## 6. Agents in a change view

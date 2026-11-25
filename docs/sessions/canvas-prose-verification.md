@@ -1,6 +1,6 @@
 # Follow-up session for verifying prose attached to code blocks
 
-Status is backlogged as of 2026-11-20. This brief sketches the receiving slice for the backbone's event log, claims and revision-aware source anchors. [Backbone](../BACKBONE.md) · [Runtime evidence](canvas-runtime-evidence.md) · [Coverage and assertions](canvas-test-coverage.md)
+Backlog: item 15. This brief sketches the receiving slice for the backbone's event log, claims and revision-aware source anchors. [Backbone](../BACKBONE.md) · [Runtime evidence](canvas-runtime-evidence.md) · [Coverage and assertions](canvas-test-coverage.md)
 
 ## User view
 

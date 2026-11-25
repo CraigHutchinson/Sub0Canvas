@@ -1,4 +1,4 @@
-// The shared deterministic generator (bench/rng.hpp, A1 of docs/sessions/cxx23-adoption.md). The pinned values were captured from the generator as it stood in
+// The shared deterministic generator (bench/rng.hpp, docs/MOCK_SQUAD.md section 8). The pinned values were captured from the generator as it stood in
 // bench/corpus.cpp before it moved there, so a change to them moves the corpus bytes (fixtures, perf/metrics.json): that is what this test is for.
 #include "sub0platform/testing/check.hpp"
 #include "bench/rng.hpp"

@@ -60,7 +60,7 @@ if(SUB0CANVAS_TOP_LEVEL)
   target_link_libraries(sub0canvas_app PRIVATE sub0canvas sub0canvas_io simdjson::simdjson)
 endif()
 
-# The scale harness (bench/, docs/sessions/s0-scale-harness.md): the corpus generator is pure and links nothing; the tests use it as the truth for block identity.
+# The scale harness (bench/, docs/TESTING.md "The synthetic corpus"): the corpus generator is pure and links nothing; the tests use it as the truth for block identity.
 if(SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_BENCHMARKS)
   add_library(sub0canvas_bench_corpus STATIC bench/corpus.cpp)
   target_compile_features(sub0canvas_bench_corpus PUBLIC cxx_std_23)

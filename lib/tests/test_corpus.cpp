@@ -1,4 +1,4 @@
-// The synthetic corpus of the scale harness (bench/corpus.hpp, docs/sessions/s0-scale-harness.md step 1): same seed, same bytes; the sizes it promises; the
+// The synthetic corpus of the scale harness (bench/corpus.hpp, docs/TESTING.md "The synthetic corpus"): same seed, same bytes; the sizes it promises; the
 // blocks the library finds in what it generates are the blocks the generator built; the profile B mix; the streamed form; the edit stream is reproducible and
 // keeps its model in step with the text. Nothing here times anything (the benchmarks are a separate, local-only executable).
 #include "sub0platform/testing/check.hpp"

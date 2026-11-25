@@ -1,4 +1,4 @@
-// The G1 git fixture (docs/sessions/g1-git-history.md, docs/TESTING.md rule 2): an INVENTED small C++ project, "tinycalc", built as a real local git repository of
+// The G1 git fixture (docs/TESTING.md rule 2 and "The git fixture"): an INVENTED small C++ project, "tinycalc", built as a real local git repository of
 // 200 first-parent commits with scripted lives for five functions (edits, a rename, signature changes, a move between files, file renames, a deletion and a
 // revival, a merge of a side branch, a helper folded into another function), and the plumbing output captured from it, so that tests read files and never run git
 // or touch the network (R-SRC-8). Nothing here is read from any real project.

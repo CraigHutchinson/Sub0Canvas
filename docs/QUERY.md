@@ -2,7 +2,7 @@
 
 Status: **built** (2026-11-24, slice V1a-q): `lib/include/sub0canvas/query.hpp`, `lib/src/query.cpp`, `lib/tests/test_query.cpp`, `bench/bench_query.cpp`. This is the one
 home of the request and response schema. Design: [AUTHORING.md](AUTHORING.md) section 3.1 (live views), decision D7 (protocol first, independent of transport) and D11
-(one projection definition) of [reviews/2026-11-23-fabric-portal-store.md](reviews/2026-11-23-fabric-portal-store.md); requirements R-AUTH-1, R-AUTH-13, R-AUTH-14,
+(one projection definition) of [DECISIONS.md](DECISIONS.md) section 5; requirements R-AUTH-1, R-AUTH-13, R-AUTH-14,
 R-AUTH-16, R-AUTH-17 ([REQUIREMENTS.md](REQUIREMENTS.md)).
 
 The query layer is **pure**: a JSON request in, a JSON response out, over a `QueryDocument` (files at revisions, borrowing a `BlockIndex` and a `Store`). No transport and

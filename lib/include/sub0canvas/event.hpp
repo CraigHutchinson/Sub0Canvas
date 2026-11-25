@@ -1,5 +1,5 @@
 #pragma once
-// The event envelope and the log seam of the backbone (docs/BACKBONE.md section 3.3 and 4; docs/reviews/2026-11-23-fabric-portal-store.md D2, D6; amendments A7,
+// The event envelope and the log seam of the backbone (docs/BACKBONE.md section 3.3 and 4; docs/DECISIONS.md sections 3 and 5; amendments A7,
 // A15, A18). This header depends on nothing else in the library so that it can be lifted into Sub0Fabric as the second user of its record module (A18): an event
 // is `{kind@ver, writer, lamport, subject, time, payload}` and a log is an append-only sequence of them. Pure: no I/O, no clock, no threads (R-BB-7).
 #include <compare>
