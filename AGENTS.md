@@ -72,6 +72,22 @@ loses), and consumers on this machine build against the local checkout: `CPM_Sub
 user-level variables, so local sources are the default unless a pin is wanted on purpose. Activate the pre-push gate once per clone: `git config core.hooksPath .githooks`,
 and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --repo .`.
 
+## Dependencies
+
+Every dependency ref is explicit and lives in one place. Third-party dependencies use a readable tag (`simdjson` `v5.1.1`). The family's (Sub0Platform, Sub0Perf, and Sub0Canvas for the consumer rung) are in
+`cmake/sub0_deps_pinned.cmake`: a tag where the repository has one, a raw 40-hex SHA only there and only with a comment naming the commit and date (`check_deps_policy`, quick tier, fails on a 40-hex
+`GIT_TAG` anywhere else). CI uses the pins. To verify against the latest local checkout, set `CPM_<Name>_SOURCE` to it (a CMake `-D` or an environment variable): the override beats the pin.
+
+```bash
+export CPM_Sub0Platform_SOURCE=/d/Craig/GitHub/Sub0Platform CPM_Sub0Perf_SOURCE=/d/Craig/GitHub/Sub0Perf CPM_Sub0Canvas_SOURCE=/d/Craig/GitHub/Sub0Canvas
+```
+```powershell
+$env:CPM_Sub0Platform_SOURCE='D:\Craig\GitHub\Sub0Platform'; $env:CPM_Sub0Perf_SOURCE='D:\Craig\GitHub\Sub0Perf'; $env:CPM_Sub0Canvas_SOURCE='D:\Craig\GitHub\Sub0Canvas'
+```
+
+Reconfigure after setting them. `test_consumer_mock_squad` always passes `CPM_Sub0Canvas_SOURCE` (this checkout) and the Sub0Platform source the build resolved. Bump a pin deliberately, in that file only.
+The same table and rule are to be shared through the Sub0Perf / Sub0Platform tooling for Sub0Fabric and Sub0Squad (not done).
+
 ## Code style
 
 * C++23, `-Wall -Wextra -Werror` (GCC-style flags; there is no MSVC leg).

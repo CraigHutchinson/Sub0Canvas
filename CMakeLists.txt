@@ -23,7 +23,7 @@ if(NOT TARGET simdjson::simdjson)
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
   CPMAddPackage(NAME simdjson
     GIT_REPOSITORY https://github.com/simdjson/simdjson.git
-    GIT_TAG 40a686ab89dc5ee58ec10d0514dd5c99abbc472b   # 5.1.1, the pin Sub0Squad uses
+    GIT_TAG v5.1.1   # third party: a readable tag (the version Sub0Squad uses)
     OPTIONS "SIMDJSON_DEVELOPER_MODE OFF")
 endif()
 
@@ -81,9 +81,10 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     enable_testing()   # before the first add_test below (the testing block calls it again, harmlessly)
   endif()
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
+  include(${CMAKE_CURRENT_LIST_DIR}/cmake/sub0_deps_pinned.cmake)
   CPMAddPackage(NAME Sub0Perf
     GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Perf.git
-    GIT_TAG 3518ede774aacd0b42e8669bbddb222e2b9d319b
+    GIT_TAG ${SUB0_PIN_Sub0Perf}
     DOWNLOAD_ONLY YES)
   # No benchmark run after every build (run the targets deliberately). The pre-push gate follows Sub0Perf's default (SUB0PERF_GIT_HOOKS=AUTO, set -DSUB0PERF_GIT_HOOKS=OFF to skip it): installed
   # only from the main checkout, where this machine has a committed baseline (perf/baselines/<host>.json; SUB0PERF_HOST names another host), never on CI.
@@ -110,12 +111,13 @@ endif()
 if(SUB0CANVAS_BUILD_TESTING)
   enable_testing()
   # The test helper (sub0platform/testing/check.hpp) comes from Sub0Platform. Only the tests link it: the library and the viewer gain no dependency.
-  # The pin is main's commit until Sub0Platform is tagged; then it moves to the tag.
+  # The ref is in cmake/sub0_deps_pinned.cmake; CPM_Sub0Platform_SOURCE (a local checkout) overrides it.
   if(NOT TARGET Sub0Platform::sub0platform)
     include(${CMAKE_CURRENT_LIST_DIR}/cmake/get_cpm.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/sub0_deps_pinned.cmake)
     CPMAddPackage(NAME Sub0Platform
       GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Platform.git
-      GIT_TAG 5feccdf226046cc790214bc30793832a1888ce4b
+      GIT_TAG ${SUB0_PIN_Sub0Platform}
       SOURCE_SUBDIR cpp)
   endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
@@ -166,6 +168,8 @@ if(SUB0CANVAS_BUILD_TESTING)
   # The determinism rules on the C++ text (tools/check_cxx_rules.cmake; AGENTS.md Code style): no <random> outside app/, no std::hash in lib/src, no new snprintf, one
   # generator draw per statement. A script run by cmake itself: no dependency, quick tier.
   add_test(NAME check_cxx_rules COMMAND ${CMAKE_COMMAND} -DREPO=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_cxx_rules.cmake)
+  # The dependency-reference rule (tools/check_deps_policy.cmake; AGENTS.md "Dependencies"): no raw 40-hex GIT_TAG outside cmake/sub0_deps_pinned.cmake. Quick tier.
+  add_test(NAME check_deps_policy COMMAND ${CMAKE_COMMAND} -DREPO=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_deps_policy.cmake)
   # The viewer's tests (test/*.test.js: the model and the demo fixtures) run under node when it is installed, so CI covers both halves.
   find_program(SUB0CANVAS_NODE node)
   if(SUB0CANVAS_NODE)
@@ -198,7 +202,7 @@ if(SUB0CANVAS_BUILD_TESTING)
   # so what it proves is this checkout as a consumer sees it. Labelled full: it builds the library a second time (see the measured cost in docs/MOCK_SQUAD.md).
   set(consumerOptions -DCPM_Sub0Canvas_SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release)
   if(DEFINED Sub0Platform_SOURCE_DIR)
-    list(APPEND consumerOptions -DCPM_Sub0Platform_SOURCE=${Sub0Platform_SOURCE_DIR})   # the pin this build already resolved
+    list(APPEND consumerOptions -DCPM_Sub0Platform_SOURCE=${Sub0Platform_SOURCE_DIR})   # the ref this build already resolved
   endif()
   if(DEFINED CPM_SOURCE_CACHE AND NOT "${CPM_SOURCE_CACHE}" STREQUAL "")
     list(APPEND consumerOptions -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE})                # the global cache, never one under out/ or build/
