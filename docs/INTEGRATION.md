@@ -24,6 +24,17 @@ the ladder in [TESTING.md](TESTING.md), and only then integrated, one iteration 
   and is now `std::expected<std::map<std::string, std::string>, std::string> applyEdits(const std::string& reply, std::map<std::string, std::string> files, const std::set<std::string>& allowed)`:
   the refusal reason (the same text `error` held) is `result.error()`; drop the `std::string err;` argument and read `.error()` instead of `err`. The success value is unchanged. Nothing else changed: the
   name parsers (`parseState`, `parseTargetKind`, `parseDeltaForm`) and the lookups stay `std::optional` (absence is their only answer).
+* **v0.5.0 breaking (cleanup slice 2, no replacement: nothing in the squad calls these; remove any use)**:
+  * `Workspace::liveSessions()`.
+  * `LineRange` and `ReadResult::marks` (`ReadResult::overlaid` and `labelled` say the same; the line numbers are in `labelled`).
+  * `outlinersOf(paths)` (blocks.hpp).
+  * `BlockIndex::textSource()` and `BlockIndex::indexedTextId(path)` (`setTextSource` stays).
+  * `BlockIndex::json()`, `BlockIndex::json(eventsFrom)` and `BlockIndex::jsonFrom`: write a snapshot with `layeredJson(SnapshotSpec, index)`, which always carries `eventsFrom`.
+  * `BlockIndex::writeJsonMembers`, `jsonSizeHint` and `writeEventJson` are private (`layeredJson` and the query's projection are the only callers).
+  * `splitLines(const std::string&)` in view.hpp (a private helper now; the library's own copy is `scan::splitLines`, lib/src/scan.hpp).
+  * The viewer's `src/model.js` no longer exports `resolveAnchor`, `blockText`, `jaccard` or `CARRIES`.
+  * CMake options `SUB0CANVAS_BUILD_APP` (the command line builds when this is the top-level project), `SUB0CANVAS_PERF_GATE` (use Sub0Perf's `-DSUB0PERF_GIT_HOOKS=OFF`) and
+    `SUB0CANVAS_BUILD_CONSUMER_TESTS` (`test_consumer_mock_squad` is always registered when `SUB0CANVAS_BUILD_TESTING` is on; label `full`).
 
 ## One iteration
 

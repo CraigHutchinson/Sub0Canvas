@@ -7,9 +7,9 @@
 /// Identity (an actor and its capabilities) is supplied by the caller on every request: the library authenticates no one. Pure: no I/O, no threads, no clock
 /// reads (R-BB-7).
 ///
-/// First version (VIEWS.md section 7): no presence and no peer patches (the extension points are `PresenceProvider` and `ConflictView` in view.hpp) and no live
-/// channel (`openChannel` refuses a pinned view naming the pin, and an unpinned one as not yet supported). Not thread-safe: the process that owns the workspace
-/// serialises requests.
+/// Two seams are documented but have only their default implementation (VIEWS.md R-PIN-8 and R-PIN-13): presence and peer patches (`PresenceProvider` and
+/// `ConflictView` in view.hpp, whose defaults report no peers and no overlaps) and the live channel (`openChannel` refuses a pinned view naming the pin, and an
+/// unpinned one as `not-supported`). Not thread-safe: the process that owns the workspace serialises requests.
 
 #include "sub0canvas/resolver.hpp"
 #include "sub0canvas/view.hpp"
@@ -55,7 +55,7 @@ public:
     [[nodiscard]] virtual Instant touchGranularity() const = 0;
 };
 
-/// The first `SessionPolicy`: values from data. JSON: `{"limits":{"views":16,"pendingBytes":1048576,"subscriptions":32,"idleTtl":3600},
+/// The data-driven `SessionPolicy`: values from data. JSON: `{"limits":{"views":16,"pendingBytes":1048576,"subscriptions":32,"idleTtl":3600},
 /// "actors":{"ns/writer":{...same members...}},"require":{"edit":"edit"},"touchGranularity":60}`; every member optional.
 class DataSessionPolicy final : public SessionPolicy
 {
@@ -88,18 +88,13 @@ struct ReadOptions
 {
     bool overlay = true;   ///< false: the pure base (`overlay=off`)
 };
-struct LineRange
-{
-    int from = 0, to = 0;
-};
-/// A file as a view reads it. `text` is bytes only; `marks` and `labelled` say which lines are the session's own pending edits.
+/// A file as a view reads it. `text` is bytes only; `overlaid` and `labelled` say whether the session's own pending edits are in it.
 struct ReadResult
 {
     std::string path;
     int revision = 0;
     std::string text;
     bool overlaid = false;
-    std::vector<LineRange> marks;   ///< the overlaid lines of `text`
     std::string labelled;           ///< `[pending: lines 3-5, 9]` then `text`, when overlaid; else `text`
 };
 
@@ -233,7 +228,7 @@ public:
     [[nodiscard]] Result<RenderedDelta> refresh(const std::string& view, const RefreshOptions& options = {});
     /// With `notify = flag`: whether anything in scope changed since the position (no content).
     [[nodiscard]] Result<bool> isStale(const std::string& view) const;
-    /// Refused for a pinned view naming the pin; the live channel is not built in the first version.
+    /// Refused for a pinned view naming the pin, and for an unpinned one as `not-supported`: the live channel is a seam with no transport behind it (VIEWS.md R-PIN-8).
     [[nodiscard]] Result<void> openChannel(const std::string& view) const;
 
     // held anchors and their authority
@@ -298,8 +293,6 @@ public:
     [[nodiscard]] Result<void> close(std::string_view id, const Identity& who, Instant now);
     /// Expires every session idle past its limit at `now`; returns how many.
     [[nodiscard]] std::size_t sweep(Instant now);
-    /// Sessions with a live object in this process.
-    [[nodiscard]] std::size_t liveSessions() const { return sessions_.size(); }
 
 private:
     friend class Session;

@@ -207,10 +207,9 @@ Result<ReadResult> Session::read(const std::string& view, const std::string& pat
         std::string label;
         for (const LineHunk& h : hunks) {
             if (h.newTo < h.newFrom) continue;
-            out.marks.push_back({h.newFrom, h.newTo});
             label += (label.empty() ? "" : ", ") + (h.newFrom == h.newTo ? std::to_string(h.newFrom) : std::format("{}-{}", h.newFrom, h.newTo));
         }
-        out.overlaid = !out.marks.empty();
+        out.overlaid = !label.empty();
         if (out.overlaid) out.labelled = std::format("[pending: lines {}]\n{}", label, out.text);
     }
     if (!out.overlaid) out.labelled = out.text;
@@ -632,7 +631,7 @@ Result<void> Session::openChannel(const std::string& view) const
     if (!rec) return std::unexpected(rec.error());
     if ((*rec)->state == PinState::pinned)
         return fail("pinned", std::format("view '{}' is pinned at generation {}: a pinned view receives no channel", view, (*rec)->position.generation));
-    return fail("not-supported", "the live channel is not built in the first version");
+    return fail("not-supported", "this workspace has no live channel transport (VIEWS.md R-PIN-8)");
 }
 
 // ---- held anchors -----------------------------------------------------------------------------------------------------------------------------------------

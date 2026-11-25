@@ -630,18 +630,10 @@ void BlockIndex::setTextSource(const TextSource* source)
     if (source != nullptr) for (auto& f : s_->files) { f.retainedText.clear(); f.retainedText.shrink_to_fit(); }
 }
 
-const TextSource* BlockIndex::textSource() const { return s_->source; }
-
 void BlockIndex::setAnalysisCacheLimit(std::size_t files)
 {
     s_->cacheLimit = files;
     while (s_->cacheOrder.size() > files) { s_->cache.erase(s_->cacheOrder.front()); s_->cacheOrder.pop_front(); }
-}
-
-std::uint64_t BlockIndex::indexedTextId(const std::string& path) const
-{
-    const auto it = s_->byPath.find(std::string_view{path});
-    return it == s_->byPath.end() || !s_->files[it->second].indexed ? 0 : s_->files[it->second].textId;
 }
 
 BlockIndexStats BlockIndex::stats() const { return s_->stats; }
@@ -989,28 +981,15 @@ void writeEv(json::Writer& w, const Ev& e, const Pool& pool)
 
 void BlockIndex::writeEventJson(json::Writer& w, std::size_t i) const { writeEv(w, s_->events[i], *s_->pool); }
 
-std::string BlockIndex::json() const { return jsonFrom(0, false); }
+void projection::writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i) { index.writeEventJson(w, i); }
 
-std::string BlockIndex::json(std::size_t eventsFrom) const { return jsonFrom(eventsFrom, true); }
-
-std::string BlockIndex::jsonFrom(std::size_t eventsFrom, bool say) const
-{
-    json::Writer w{jsonSizeHint(eventsFrom) + 64};
-    w.beginObject();
-    writeMembers(w, eventsFrom, say);
-    w.endObject();
-    return std::string{w.view()};
-}
-
-void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const { writeMembers(w, eventsFrom, true); }
-
-void BlockIndex::writeMembers(json::Writer& w, std::size_t eventsFrom, bool say) const
+void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const
 {
     w.key("blocks").beginArray();
     for (const auto& [p, fileIndex] : s_->byPath) for (const Block& b : s_->files[fileIndex].blocks) projection::writeBlock(w, b);
     w.endArray().key("retired");
     writeRetired(w);
-    if (say) w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
+    w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
     w.key("events").beginArray();
     for (std::size_t i = std::min(eventsFrom, s_->events.size()); i < s_->events.size(); ++i) writeEv(w, s_->events[i], *s_->pool);
     w.endArray();

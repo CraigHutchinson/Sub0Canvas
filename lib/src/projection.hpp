@@ -14,6 +14,8 @@ namespace sub0canvas::projection {
 void writeBlock(json::Writer& w, const Block& b);
 /// One line of the index's history: `{turn, carry, id, path, name, detail}`.
 void writeBlockEvent(json::Writer& w, const BlockEvent& e);
+/// Event `i` of a block index as the projection's object, without building a BlockEvent (a friend of BlockIndex; the query's `events` operation).
+void writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i);
 /// The same from its parts (views, so a compact log writes without building a `BlockEvent` per line); `carry` is the carry's name.
 void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail);
 /// The members of a layer item, into the caller's open object: `id` (the key), `number` (its place in its layer), `kind`, `title`, `detail`, `anchors[]`. A caller may append its own (state, tags).

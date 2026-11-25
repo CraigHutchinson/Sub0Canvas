@@ -178,9 +178,6 @@ int main()
         const auto mineRead = A->read(va, "a.cpp");
         CHECK(mineRead->overlaid);
         CHECK_STR(mineRead->text, kT2);
-        CHECK_EQ(mineRead->marks.size(), std::size_t{1});
-        CHECK_EQ(mineRead->marks[0].from, 2);
-        CHECK_EQ(mineRead->marks[0].to, 2);
         CHECK_STR(mineRead->labelled, "[pending: lines 2]\n" + kT2);
         const auto pure = A->read(va, "a.cpp", {.overlay = false});            // overlay=off: the pure base
         CHECK_STR(pure->text, kT1);
@@ -549,6 +546,34 @@ int main()
         CHECK(N->closeView(f).has_value());
         CHECK_EQ(N->closeView(f).error().code, std::string{"unknown-view"});
         (void)flagged;
+    }
+
+    {   // parseSessionPolicy: the data-driven policy. Members override the defaults; an actor entry inherits the defaults it does not name; absent members keep them.
+        const auto parsed = parseSessionPolicy(R"({"limits":{"views":3,"pendingBytes":100,"subscriptions":2,"idleTtl":50},)"
+                                               R"("actors":{"t/alice":{"views":9}},"require":{"edit":"writer"},"touchGranularity":7})");
+        CHECK(parsed.has_value());
+        const DataSessionPolicy& dp = *parsed;
+        const SessionLimits fallback = dp.limitsFor(who("nobody"));
+        CHECK_EQ(fallback.maxViews, std::uint64_t{3});
+        CHECK_EQ(fallback.maxPendingBytes, std::uint64_t{100});
+        CHECK_EQ(fallback.maxSubscriptions, std::uint64_t{2});
+        CHECK_EQ(fallback.idleTtl, Instant{50});
+        const SessionLimits alice = dp.limitsFor(who("alice"));
+        CHECK_EQ(alice.maxViews, std::uint64_t{9});
+        CHECK_EQ(alice.maxPendingBytes, std::uint64_t{100});   // inherited from "limits"
+        CHECK_EQ(dp.requiredCapability("edit"), std::string{"writer"});
+        CHECK_EQ(dp.requiredCapability("view.read"), std::string{});
+        CHECK_EQ(dp.touchGranularity(), Instant{7});
+
+        const auto empty = parseSessionPolicy("{}");   // every member optional: the defaults of a default-constructed policy
+        CHECK(empty.has_value());
+        const DataSessionPolicy none;
+        CHECK_EQ(empty->limitsFor(who("alice")).maxViews, none.limitsFor(who("alice")).maxViews);
+        CHECK_EQ(empty->touchGranularity(), none.touchGranularity());
+
+        const auto bad = parseSessionPolicy("{\"limits\":");   // malformed JSON is an error naming the policy, not an exception
+        CHECK(!bad.has_value());
+        CHECK(bad.error().starts_with("session policy:"));
     }
 
     return finish();

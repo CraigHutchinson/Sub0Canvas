@@ -395,6 +395,8 @@ std::vector<const SessionRecord*> LogViewStore::sessions() const
 
 // ---- line diffs -------------------------------------------------------------------------------------------------------------------------------------------
 
+namespace {
+
 std::vector<std::string> splitLines(const std::string& text)
 {
     std::vector<std::string> v;
@@ -402,8 +404,6 @@ std::vector<std::string> splitLines(const std::string& text)
     for (std::string l; std::getline(in, l);) v.push_back(l);
     return v;
 }
-
-namespace {
 
 std::string joinLines(const std::vector<std::string>& v)
 {

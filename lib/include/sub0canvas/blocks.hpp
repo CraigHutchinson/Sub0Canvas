@@ -80,8 +80,4 @@ private:
 /// The library's own registry: python on `indent@2`, everything else on `braces@3`. Built once; immutable.
 [[nodiscard]] const Languages& defaultLanguages();
 
-/// The providers' name for each language the library has outlined, as the snapshot records it (`index.outliners`, section 4.6): language -> provider name.
-/// Covers the languages of `paths`; a path of no known language is recorded under "".
-[[nodiscard]] std::vector<std::pair<std::string, std::string>> outlinersOf(const std::vector<std::string>& paths);
-
 }  // namespace sub0canvas
