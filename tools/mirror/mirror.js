@@ -11,6 +11,7 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const { gitObjectId } = require('../format/layered_doc.js');
 const zlib = require('node:zlib');
 
 const STATE_SCHEMA = 'mirror-state-1';
@@ -123,13 +124,9 @@ function render(f) {
         const eol = f.eol === 'crlf' ? '\r\n' : '\n';
         bytes = Buffer.from((f.bom ? '\uFEFF' : '') + L.join(eol) + eol, 'utf8');
     }
-    r = { bytes, spans, blob: gitHash('blob', bytes) };
+    r = { bytes, spans, blob: gitObjectId('blob', bytes) };
     renderCache.set(f, r);
     return r;
-}
-
-function gitHash(type, bytes) {
-    return crypto.createHash('sha1').update(`${type} ${bytes.length}\0`).update(bytes).digest('hex');
 }
 
 /** The git tree id of a whole tree (Map path -> file), with nested directories, sorted as git sorts (a directory compares as "name/"). */
@@ -145,7 +142,7 @@ function treeId(tree) {
         const entries = [...dir.entries()].map(([k, v]) => (k.endsWith('/') ? { sortKey: k, name: k.slice(0, -1), mode: '40000', id: write(v) } : { sortKey: k, name: k, mode: '100644', id: v }));
         entries.sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
         const buf = Buffer.concat(entries.map((e) => Buffer.concat([Buffer.from(`${e.mode} ${e.name}\0`, 'utf8'), Buffer.from(e.id, 'hex')])));
-        return gitHash('tree', buf);
+        return gitObjectId('tree', buf);
     };
     return write(root);
 }
@@ -360,7 +357,7 @@ function generateMirror({ seed = 1 } = {}) {
     const makeCommit = ({ branch, parents, tree, author, committer, time, message, kind = 'trunk', change = null }) => {
         const tid = treeId(tree);
         const c = { branch, parents, author, committer: committer ?? author, time, message: message.endsWith('\n') ? message : message + '\n', tree, treeId: tid, kind, change };
-        c.sha = gitHash('commit', Buffer.from(commitText(c, parents, tid), 'utf8'));
+        c.sha = gitObjectId('commit', Buffer.from(commitText(c, parents, tid), 'utf8'));
         commits.push(c); bySha.set(c.sha, c); branches.set(branch, c.sha);
         return c;
     };

@@ -6,24 +6,16 @@
 // only the viewer's side can: that the files it is given are the format it reads.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const M = require('../src/model.js');
+const { readEntries } = require('./support.js');
+const { blobId } = require('../tools/format/layered_doc.js');
 
 const root = path.join(__dirname, '..', 'fixtures', 'mock');
 
-function entriesOf(dir, prefix) {
-    const out = [];
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const rel = `${prefix}/${e.name}`;
-        if (e.isDirectory()) out.push(...entriesOf(path.join(dir, e.name), rel));
-        else out.push({ path: rel, text: fs.readFileSync(path.join(dir, e.name), 'utf8') });
-    }
-    return out;
-}
 const names = fs.readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
-const entries = (name) => entriesOf(path.join(root, name), name);
+const entries = (name) => readEntries(path.join(root, name), name);
 const load = (name, es = entries(name)) => {
     const { docs, problems } = M.loadEntries(es);
     return { doc: docs[0], docs, problems };
@@ -31,7 +23,6 @@ const load = (name, es = entries(name)) => {
 const rawTurns = (name) => fs.readdirSync(path.join(root, name, 'layers')).filter((f) => /^turn-\d+\.json$/.test(f))
     .sort((a, b) => parseInt(a.slice(5), 10) - parseInt(b.slice(5), 10))
     .map((f) => ({ file: f, text: fs.readFileSync(path.join(root, name, 'layers', f), 'utf8') }));
-const blobId = (text) => crypto.createHash('sha1').update(`blob ${Buffer.byteLength(text)}\0`).update(text).digest('hex');
 
 test('the mock attempts are present', () => {
     for (const n of ['g1-symbol-fix', 'g3-two-files-one-reply', 'g4-rename-resign-move', 'g5-fix-away-from-diagnostic', 'g7-eight-turns-texts-by-id', 'b10-search-not-found-or-ambiguous', 'b11-write-to-disallowed-path'])

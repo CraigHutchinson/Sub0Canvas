@@ -83,7 +83,7 @@ and prove it with `python ../CraigHutchinson.github/tools/ci/hook_check.py --rep
 * `[[nodiscard]]` on functions whose result matters; `std::format` and `std::print`; `std::expected` for fallible operations in new code.
 * Line length about 160; comments explain why, and cite the doc section a rule comes from.
 * JavaScript, no dependencies, Node 20+, `node:test`; the module kind follows the directory: `src/*.js` are classic scripts that also export
-  CommonJS (the page runs from `file://` and tests `require` them); `tools/*.mjs` are ES-module entry points; `tools/mirror/*.js` are CommonJS,
+  CommonJS (the page runs from `file://` and tests `require` them); `tools/*.mjs` are ES-module entry points; `tools/mirror/*.js` and `tools/format/*.js` (the format's content ids) are CommonJS,
   because tests `require` them. Do not mix kinds within a directory.
 
 ## Rules (the owner's standing rules)

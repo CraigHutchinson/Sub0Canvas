@@ -5,18 +5,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const M = require('../src/model.js');
+const { readEntries } = require('./support.js');
 
 const root = path.join(__dirname, '..', 'fixtures', 'golden');
-
-function entriesOf(dir, prefix) {
-    const out = [];
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const rel = `${prefix}/${e.name}`;
-        if (e.isDirectory()) out.push(...entriesOf(path.join(dir, e.name), rel));
-        else out.push({ path: rel, text: fs.readFileSync(path.join(dir, e.name), 'utf8') });
-    }
-    return out;
-}
 
 const attempts = fs.readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
 
@@ -26,7 +17,7 @@ test('the golden set is present', () => {
 
 for (const name of attempts) {
     test(`golden ${name} loads as one document with no problems`, () => {
-        const { docs, problems } = M.loadEntries(entriesOf(path.join(root, name), name));
+        const { docs, problems } = M.loadEntries(readEntries(path.join(root, name), name));
         assert.deepEqual(problems, []);
         assert.equal(docs.length, 1);
         assert.ok(docs[0].turns.length >= 1);

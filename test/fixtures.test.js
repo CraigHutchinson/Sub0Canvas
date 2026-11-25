@@ -7,17 +7,9 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { execFileSync } = require('node:child_process');
 
-const root = path.join(__dirname, '..');
+const { readTree: tree } = require('./support.js');
 
-function tree(dir, prefix = '') {
-    const out = {};
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const rel = prefix ? `${prefix}/${e.name}` : e.name;
-        if (e.isDirectory()) Object.assign(out, tree(path.join(dir, e.name), rel));
-        else out[rel] = fs.readFileSync(path.join(dir, e.name), 'utf8');
-    }
-    return out;
-}
+const root = path.join(__dirname, '..');
 
 test('fixtures are up to date with tools/gen-fixtures.mjs', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sub0canvas-'));

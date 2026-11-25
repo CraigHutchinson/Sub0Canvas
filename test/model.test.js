@@ -4,20 +4,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const M = require('../src/model.js');
+const { readEntries } = require('./support.js');
 
 const root = path.join(__dirname, '..', 'fixtures', 'demo');
 
-function readTree(dir, prefix = '') {
-    const out = [];
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const rel = prefix ? `${prefix}/${e.name}` : e.name;
-        if (e.isDirectory()) out.push(...readTree(path.join(dir, e.name), rel));
-        else out.push({ path: rel, text: fs.readFileSync(path.join(dir, e.name), 'utf8') });
-    }
-    return out;
-}
-
-const entries = readTree(root);
+const entries = readEntries(root);
 const { docs, problems } = M.loadEntries(entries);
 const doc = docs[0];
 const turn = (n) => M.turnOf(doc, n);

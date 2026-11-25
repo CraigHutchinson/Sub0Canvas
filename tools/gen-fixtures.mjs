@@ -12,8 +12,10 @@
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const { splitLines: lines } = createRequire(import.meta.url)('../src/model.js');
 const outDir = process.argv[2] ?? join(root, 'fixtures', 'demo', 'attempt-1');
 
 // ---- the source texts -------------------------------------------------------------------------------------------------------------------------------
@@ -210,12 +212,6 @@ function commit(path, text, by) {
     while (tail < a.length - head && tail < b.length - head && a[a.length - 1 - tail] === b[b.length - 1 - tail]) ++tail;
     revs.push(text);
     log.push({ path, by, revision, base: revision - 1, from: head + 1, to: a.length - tail, delta: b.length - a.length });
-}
-
-function lines(text) {
-    const l = text.split('\n');
-    if (l.length && l[l.length - 1] === '') l.pop();
-    return l;
 }
 
 // ---- blocks -------------------------------------------------------------------------------------------------------------------------------------------
