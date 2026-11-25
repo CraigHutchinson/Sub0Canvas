@@ -1012,7 +1012,7 @@ private:
         if (refusal.empty() && viaSession) {
             refusal = landThroughSession(actor, text, reply.at, skipped);
         } else if (refusal.empty()) {
-            lib("applyReply");   // a stale author is the same call with `baseRevision`: it was a second path here (applyStale) until ApplyOptions grew the field
+            lib("applyReply");   // a stale author is the same call with `baseRevision`
             if (auto applied = applyReply(target, parsed, {allowed_, actor, p_.partial, reply.baseRevision})) skipped = std::move(applied->skipped);
             else refusal = applied.error();
         }

@@ -208,7 +208,6 @@ int main()
         CHECK_EQ(x.stats().parses, parses);
         CHECK_EQ(x.stats().analysisHits, std::size_t{1});
         CHECK_EQ(x.liveCount(), std::size_t{1});
-        CHECK_EQ(x.indexedTextId("p.cpp"), BlockIndex::textId(a));
     }
 
     // Literals are read back from the text, per block, in file order.

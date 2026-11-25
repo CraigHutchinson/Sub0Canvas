@@ -44,16 +44,15 @@ target_compile_options(sub0canvas PRIVATE ${SUB0CANVAS_STRICT})
 target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 
 # The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
-option(SUB0CANVAS_BUILD_APP "Build the sub0canvas command line" ${SUB0CANVAS_TOP_LEVEL})
 # The file log (app/file_log.*, B1b): the I/O half of the log seam, a library of its own so the tests can drive it without the command line.
-if(SUB0CANVAS_BUILD_APP OR SUB0CANVAS_BUILD_TESTING)
+if(SUB0CANVAS_TOP_LEVEL OR SUB0CANVAS_BUILD_TESTING)
   add_library(sub0canvas_io STATIC app/file_log.cpp)
   target_compile_features(sub0canvas_io PUBLIC cxx_std_23)
   target_include_directories(sub0canvas_io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app PRIVATE lib/src)   # lib/src: json_util.hpp
   target_compile_options(sub0canvas_io PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(sub0canvas_io PUBLIC sub0canvas PRIVATE simdjson::simdjson)
 endif()
-if(SUB0CANVAS_BUILD_APP)
+if(SUB0CANVAS_TOP_LEVEL)
   add_executable(sub0canvas_app app/sub0canvas.cpp app/git_source.cpp app/history.cpp)
   set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
   target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
@@ -86,13 +85,9 @@ if(SUB0CANVAS_BUILD_BENCHMARKS)
     GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Perf.git
     GIT_TAG 3518ede774aacd0b42e8669bbddb222e2b9d319b
     DOWNLOAD_ONLY YES)
-  # No benchmark run after every build (run the targets deliberately). The pre-push gate follows Sub0Perf's default (SUB0PERF_GIT_HOOKS=AUTO): installed
+  # No benchmark run after every build (run the targets deliberately). The pre-push gate follows Sub0Perf's default (SUB0PERF_GIT_HOOKS=AUTO, set -DSUB0PERF_GIT_HOOKS=OFF to skip it): installed
   # only from the main checkout, where this machine has a committed baseline (perf/baselines/<host>.json; SUB0PERF_HOST names another host), never on CI.
   set(SUB0PERF_ON_BUILD "OFF" CACHE STRING "")
-  option(SUB0CANVAS_PERF_GATE "Install the pre-push performance gate where this machine has a committed baseline" ON)
-  if(NOT SUB0CANVAS_PERF_GATE)
-    set(SUB0PERF_GIT_HOOKS OFF)
-  endif()
   include("${Sub0Perf_SOURCE_DIR}/cmake/Sub0Perf.cmake")
 
   sub0perf_add_benchmark(Sub0Canvas_Bench bench/bench_canvas.cpp bench/bench_history.cpp bench/bench_store.cpp bench/bench_claims.cpp bench/bench_inbox.cpp bench/bench_resolver.cpp bench/bench_query.cpp bench/bench_session.cpp METRICS perf/metrics.json SMOKE_TEST)
@@ -179,7 +174,7 @@ if(SUB0CANVAS_BUILD_TESTING)
     # The tests build temporary git repositories. A git hook (the pre-push gate) runs with GIT_DIR and friends set, which in a linked worktree point at the
     # worktree's own git directory and break every `git -C <temp>` below; the tests must not inherit them.
     set_tests_properties(test_viewer PROPERTIES ENVIRONMENT_MODIFICATION "GIT_DIR=unset:;GIT_WORK_TREE=unset:;GIT_INDEX_FILE=unset:;GIT_PREFIX=unset:;GIT_COMMON_DIR=unset:")
-    if(SUB0CANVAS_BUILD_APP)
+    if(SUB0CANVAS_TOP_LEVEL)
       set_tests_properties(test_viewer PROPERTIES ENVIRONMENT "SUB0CANVAS_EXE=$<TARGET_FILE:sub0canvas_app>")   # test/snapshot.test.js runs it
     endif()
     # K0, the viewer's interactivity timing (docs/K0.md): headless Edge or Chrome over DevTools, local only, label timing (set below, so quick and full exclude
@@ -201,20 +196,17 @@ if(SUB0CANVAS_BUILD_TESTING)
   # The consumer rung (docs/MOCK_SQUAD.md, docs/TESTING.md): consumer/mock_squad is a separate CMake project that fetches this checkout through CPM, exactly as
   # Sub0Squad does, and links only the public target. `ctest --build-and-test` configures, builds and runs it; CPM_Sub0Canvas_SOURCE points it at this source tree,
   # so what it proves is this checkout as a consumer sees it. Labelled full: it builds the library a second time (see the measured cost in docs/MOCK_SQUAD.md).
-  option(SUB0CANVAS_BUILD_CONSUMER_TESTS "Register the mock squad consumer project as a test (test_consumer_mock_squad)" ${SUB0CANVAS_TOP_LEVEL})
-  if(SUB0CANVAS_BUILD_CONSUMER_TESTS)
-    set(consumerOptions -DCPM_Sub0Canvas_SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release)
-    if(DEFINED Sub0Platform_SOURCE_DIR)
-      list(APPEND consumerOptions -DCPM_Sub0Platform_SOURCE=${Sub0Platform_SOURCE_DIR})   # the pin this build already resolved
-    endif()
-    if(DEFINED CPM_SOURCE_CACHE AND NOT "${CPM_SOURCE_CACHE}" STREQUAL "")
-      list(APPEND consumerOptions -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE})                # the global cache, never one under out/ or build/
-    endif()
-    add_test(NAME test_consumer_mock_squad
-      COMMAND ${CMAKE_CTEST_COMMAND} --build-and-test ${CMAKE_CURRENT_SOURCE_DIR}/consumer/mock_squad ${CMAKE_CURRENT_BINARY_DIR}/consumer_mock_squad
-              --build-generator ${CMAKE_GENERATOR} --build-makeprogram ${CMAKE_MAKE_PROGRAM} --build-noclean
-              --build-options ${consumerOptions}
-              --test-command ${CMAKE_CTEST_COMMAND} --output-on-failure)
-    set_tests_properties(test_consumer_mock_squad PROPERTIES LABELS full TIMEOUT 900)
+  set(consumerOptions -DCPM_Sub0Canvas_SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release)
+  if(DEFINED Sub0Platform_SOURCE_DIR)
+    list(APPEND consumerOptions -DCPM_Sub0Platform_SOURCE=${Sub0Platform_SOURCE_DIR})   # the pin this build already resolved
   endif()
+  if(DEFINED CPM_SOURCE_CACHE AND NOT "${CPM_SOURCE_CACHE}" STREQUAL "")
+    list(APPEND consumerOptions -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE})                # the global cache, never one under out/ or build/
+  endif()
+  add_test(NAME test_consumer_mock_squad
+    COMMAND ${CMAKE_CTEST_COMMAND} --build-and-test ${CMAKE_CURRENT_SOURCE_DIR}/consumer/mock_squad ${CMAKE_CURRENT_BINARY_DIR}/consumer_mock_squad
+            --build-generator ${CMAKE_GENERATOR} --build-makeprogram ${CMAKE_MAKE_PROGRAM} --build-noclean
+            --build-options ${consumerOptions}
+            --test-command ${CMAKE_CTEST_COMMAND} --output-on-failure)
+  set_tests_properties(test_consumer_mock_squad PROPERTIES LABELS full TIMEOUT 900)
 endif()

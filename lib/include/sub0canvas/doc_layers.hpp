@@ -65,6 +65,9 @@ public:
 
 namespace json { class Writer; }   // lib/src/json_util.hpp: internal, only named here
 class BlockIndex;
+struct SnapshotSpec;
+[[nodiscard]] std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index);
+namespace projection { void writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i); }   // lib/src/projection.hpp
 
 /// The index's history as a read-only random-access range of `BlockEvent`s, held compactly inside the index and materialised on access (an event is built when read:
 /// the elements are values, so `const auto& e = log[i]` binds a temporary). Valid while its index lives and is not updated.
@@ -140,7 +143,7 @@ public:
     /// or else revives a RETIRED id of any file with the same signature or a near-identical body (a block deleted and written again, a move across files);
     /// or else gets a new id. An old block left unmatched is retired: when most of its body now lives in one block (token containment >= 0.6) it is
     /// recorded as MERGED into that block, whose id its layer items follow; otherwise its items are orphans.
-    /// The old text a rule needs is read through `textSource()`; one it cannot supply makes those blocks unknown to the similarity rules (they are retired, never merged
+    /// The old text a rule needs is read through the `TextSource` (`setTextSource`); one it cannot supply makes those blocks unknown to the similarity rules (they are retired, never merged
     /// or renamed), never an error.
     void update(const std::string& path, const std::string& text);
     /// The turn later events are stamped with.
@@ -152,12 +155,9 @@ public:
     /// Where old text is read back (see `TextSource`), or nullptr: the index then retains each path's current text itself. The source is not owned, must outlive the
     /// index and any copy, and must serve every text the index was given until the update that replaces it has finished. Set it before the first `update`.
     void setTextSource(const TextSource* source);
-    [[nodiscard]] const TextSource* textSource() const;
     /// The content id of a text: a 64-bit hash that is the same on every machine and run (never `std::hash`), what `TextSource` is asked for and what a file's blocks are
     /// keyed by.
     [[nodiscard]] static std::uint64_t textId(std::string_view text);
-    /// The content id of the text `path` was last indexed at; 0 when never indexed.
-    [[nodiscard]] std::uint64_t indexedTextId(const std::string& path) const;
     /// Keep the analysis (the folded blocks, their spans, hashes and filters) of up to `files` distinct (path, content id) pairs, so a text indexed again (a revert, a
     /// branch or clone that holds the same blob) is not folded again. 0 (the default) keeps none; each kept entry is about the size of its blocks.
     void setAnalysisCacheLimit(std::size_t files);
@@ -178,30 +178,23 @@ public:
     [[nodiscard]] std::vector<std::set<std::string>> literals(const std::string& path) const;
     /// What happened to ids, in order.
     [[nodiscard]] EventLog events() const { return EventLog{this}; }
-    /// The index as JSON (`{"blocks":[{id,path,name,first,last}],"retired":[{id,name,mergedInto}],"events":[...]}`), kept beside the canvas for a later reader.
-    /// `events` is the whole log.
-    [[nodiscard]] std::string json() const;
-    /// The same, but `events` holds only the log from position `eventsFrom` on, and `eventsFrom` says where it starts: a snapshot carries what happened since the
-    /// previous one (docs/BACKBONE.md 3.3; the owner confirmed per-turn events, 2026-11-23). A position past the end gives an empty list.
-    [[nodiscard]] std::string json(std::size_t eventsFrom) const;
     /// The whole log as the cumulative record, schema `canvas-events-1` (docs/BACKBONE.md section 7): a header line naming `document`, then one line per event,
     /// `{"seq":n,"kind":"block","source":"canvas/index","subject":id,"data":{turn,carry,path,name,detail}}`, `seq` being the position in `events()` (the cursor
     /// a snapshot's `eventsFrom` names). A provisional subset of the design's Event: the actor and time are not recorded here, and B1's store owns the final writer.
     [[nodiscard]] std::string eventLogNdjson(const std::string& document) const;
     [[nodiscard]] BlockIndexStats stats() const;
-    /// Event `i` written as the projection's JSON object (what `events()[i]` would be, without building it): for the library's own writers.
-    void writeEventJson(json::Writer& w, std::size_t i) const;
-    /// The members `json(eventsFrom)` writes (`blocks`, `retired`, `eventsFrom`, `events`), into the caller's open object, with no intermediate string; and a
-    /// byte count near what they take, to size the caller's buffer.
-    void writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const;
-    [[nodiscard]] std::size_t jsonSizeHint(std::size_t eventsFrom) const;
-
 private:
     friend class EventLog;
+    friend std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index);       // the one writer of the index's members
+    friend void projection::writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i);   // the query's `events` operation
     struct State;
+    /// Event `i` written as the projection's JSON object (what `events()[i]` would be, without building it).
+    void writeEventJson(json::Writer& w, std::size_t i) const;
+    /// The members of the index (`blocks`, `retired`, `eventsFrom`, `events` from that position on) into the caller's open object, with no intermediate string,
+    /// and a byte count near what they take, to size the caller's buffer.
+    void writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const;
+    [[nodiscard]] std::size_t jsonSizeHint(std::size_t eventsFrom) const;
     void writeRetired(json::Writer& w) const;
-    void writeMembers(json::Writer& w, std::size_t eventsFrom, bool say) const;
-    [[nodiscard]] std::string jsonFrom(std::size_t eventsFrom, bool say) const;
     [[nodiscard]] BlockEvent eventAt(std::size_t i) const;
     [[nodiscard]] std::size_t eventCount() const;
     int turn_ = 0;

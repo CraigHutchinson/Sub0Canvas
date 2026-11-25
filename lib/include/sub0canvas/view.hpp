@@ -206,8 +206,6 @@ struct LineHunk
 [[nodiscard]] std::vector<LineHunk> diffLines(const std::string& oldText, const std::string& newText);
 /// `oldText` with only the hunks `chosen` applied (each must come from `diffLines(oldText, ...)`); lines end with a newline.
 [[nodiscard]] std::string applyHunks(const std::string& oldText, const std::vector<LineHunk>& chosen);
-/// The lines of a text as the canvas counts them.
-[[nodiscard]] std::vector<std::string> splitLines(const std::string& text);
 
 // ---- scratch ----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -378,9 +376,9 @@ struct Conflict
 };
 [[nodiscard]] std::optional<Conflict> conflictSince(const Canvas& canvas, const std::string& path, int baseRevision, int from, int to);
 
-// ---- declared, empty (the extension points of the first version) -----------------------------------------------------------------------------------------
+// ---- presence and conflict display: documented seams with default no-op implementations (VIEWS.md R-PIN-13) ------------------------------------------------
 
-/// Another actor's live edit cursor over a region (presence; planned, not in the first version).
+/// Another actor's live edit cursor over a region (presence, VIEWS.md R-PIN-13). A `PresenceProvider` supplies them; the default, `NoPresence`, reports none.
 struct Peer
 {
     WriterId actor;
@@ -393,7 +391,7 @@ public:
     virtual ~PresenceProvider() = default;
     [[nodiscard]] virtual std::vector<Peer> peers(const ViewRecord& view) const = 0;
 };
-/// Two pending patches over the same lines, before either commits (planned).
+/// Two pending patches over the same lines, before either commits (VIEWS.md R-PIN-13). A `ConflictView` renders them; the default, `NoConflictView`, renders nothing.
 struct PatchOverlap
 {
     std::string path;
@@ -406,7 +404,7 @@ public:
     virtual ~ConflictView() = default;
     [[nodiscard]] virtual std::string render(const std::vector<PatchOverlap>& overlaps) const = 0;
 };
-/// The first-version providers: no peers, nothing to render.
+/// The default providers: no peers, nothing to render.
 class NoPresence final : public PresenceProvider
 {
 public:

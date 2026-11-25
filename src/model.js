@@ -314,7 +314,6 @@
 
     const turnOf = (doc, turn) => entryOf(doc, turn).turn;
     const resolveId = (doc, turn, id) => resolveIdIn(entryOf(doc, turn), id);
-    const resolveAnchor = (doc, turn, anchor) => resolveAnchorIn(entryOf(doc, turn), anchor);
     const blockAt = (doc, turn, path, line) => blockAtIn(entryOf(doc, turn), path, line);
     const blocksOf = (doc, turn, path) => entryOf(doc, turn).byPath.get(path) || [];
 
@@ -555,10 +554,10 @@
     }
 
     return {
-        SCHEMA, CARRIES,
+        SCHEMA,
         validateTurn, loadEntries, splitLines,
-        layerNames, turnOf, resolveId, resolveAnchor, blockAt, blocksOf, fileLines, blockText,
+        layerNames, turnOf, resolveId, blockAt, blocksOf, fileLines,
         attachedTo, orphans, lineAnchored, attachmentCounts, fanOut, itemKey, itemTrace, blockHistory, findBlocks,
-        duplicateGroups, unify, previewFix, jaccard,
+        duplicateGroups, unify, previewFix,
     };
 });

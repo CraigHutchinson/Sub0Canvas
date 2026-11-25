@@ -403,18 +403,4 @@ const Languages& defaultLanguages()
     return languages;
 }
 
-std::vector<std::pair<std::string, std::string>> outlinersOf(const std::vector<std::string>& paths)
-{
-    std::vector<std::pair<std::string, std::string>> out;
-    for (const auto& path : paths) {
-        const std::string language = defaultLanguages().detect(path);
-        const OutlineProvider* p = defaultLanguages().provider(language);
-        if (!p) continue;
-        std::pair<std::string, std::string> row{language, p->name()};
-        if (std::ranges::find(out, row) == out.end()) out.push_back(row);
-    }
-    std::ranges::sort(out);
-    return out;
-}
-
 }  // namespace sub0canvas
