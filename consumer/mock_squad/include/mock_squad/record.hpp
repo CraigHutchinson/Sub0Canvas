@@ -1,6 +1,6 @@
 #pragma once
 /// @file record.hpp
-/// The mock squad's record writer (docs/MOCK_SQUAD.md section 1): the persisted attempt in the squad's production format (`canvas.json`, `canvas/<flat>.rN`,
+/// The mock squad's record writer (docs/MOCK_SQUAD.md section 1): the persisted attempt in the squad's production format (`canvas.json`, `canvas/<revisionFileName>`,
 /// `layers/turn-N.json`, `reply-N.txt`, `gate.txt`, `agent.json` as a subset) plus `mock-trace.json` (the outcome of each reply and the library calls made).
 /// The loop fills `Attempt::record` as the squad's `persistCanvas` and verdicts would; `seal` adds the two summary files. `writeTree` and `readTree` move a
 /// record to and from `fixtures/mock/<name>/`. Today's format only: B0 (MS1) changes it and regenerates the fixtures.

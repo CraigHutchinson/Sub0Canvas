@@ -78,7 +78,7 @@ The library's producer (`layeredJson`, `sub0canvas snapshot`) writes the rows ma
 | `column` | anchor | *Written* when the compiler names it. Keeps several sites on one line apart (three `peek()` calls in one `while`). |
 | `endLine`, `endColumn` | anchor | *Written* when the diagnostic gives a range (`col-endcol`, or a `^~~~` underline): the end, the column just past the last character. |
 | `revisionId` | file | *Written.* The revision as an opaque string (`r<n>` unless the producer names another; `sub0canvas snapshot` writes the commit). `revision` (the number) is still written; a file with only the id is numbered by the order its ids first appear. |
-| `textId`, `texts` | file, turn | *Written.* `textId` is the text's git blob id. By default `text` stays inline; with texts by id (`SnapshotSpec::textsById`, `sub0canvas snapshot` default, `--texts inline` to turn off) `text` is omitted and the turn's `texts` table holds each text the earlier turns did not. |
+| `textId`, `texts` | file, turn | *Written.* `textId` is the text's git blob id. Texts are never inline: the turn's `texts` table holds each text the earlier turns did not carry. |
 | `eventsFrom` | turn | *Written.* The position in the whole log where this turn's `events` start: `events` are per turn. A cumulative list (no `eventsFrom`, or `eventsFrom` 0 in every turn) is read as per turn too. The whole log is `events.ndjson` (`canvas-events-1`). |
 | `policies` | turn | *Written* when the producer names them: `{role: name@version}` of what made the turn. |
 | `layerMeta` | turn | *Written.* `{layer: {label, description, producer}}`; the library describes `issues`, the caller any other. |

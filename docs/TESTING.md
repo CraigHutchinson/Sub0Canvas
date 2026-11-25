@@ -114,7 +114,7 @@ on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two han
 
 | kind | what | where it runs |
 |---|---|---|
-| **deterministic metrics** | counts and sizes: blocks found against the generator's truth, events, bytes `layeredJson` writes (per turn against cumulative, texts by id on and off), live heap bytes and allocations (a counting `operator new` in the executable), regions found | every tier, as the ctest tests `Sub0Canvas_Bench_metrics` (judged against `perf/metrics.json`) and `Sub0Canvas_Bench_smoke` (every workload once), label `smoke`; about 11 s |
+| **deterministic metrics** | counts and sizes: blocks found against the generator's truth, events, bytes `layeredJson` writes (one turn, and eight turns with per-turn events and texts by id), live heap bytes and allocations (a counting `operator new` in the executable), regions found | every tier, as the ctest tests `Sub0Canvas_Bench_metrics` (judged against `perf/metrics.json`) and `Sub0Canvas_Bench_smoke` (every workload once), label `smoke`; about 11 s |
 | **timing** | the benchmarks' wall-clock times, interleaved and calibrated, against `perf/baselines/<host>.json` | local only: the pre-push gate, the full level of `.ci/local.json` (a `perf` step marked `timing`, untimed on battery), and a developer's own runs |
 
 The viewer's interactivity is timed separately by K0 (`node tools/k0/run.mjs`, test `Sub0Canvas_K0_timing`, label `timing`, local only, skipped on battery, a busy machine or

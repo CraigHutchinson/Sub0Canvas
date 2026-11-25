@@ -1,7 +1,7 @@
 # Mock squad attempts
 
 One directory per scenario of [../scenarios/squad](../scenarios/README.md): the attempt the reference loop persists, in today's Sub0Squad format
-(`canvas.json`, `canvas/<flat>.rN`, `layers/turn-N.json`, `reply-N.txt`, `gate.txt`, `failures.txt` while tests fail, `agent.json` as a subset) plus
+(`canvas.json`, `canvas/<revisionFileName>` (`src%2Fcalc.cpp.r1`), `layers/turn-N.json`, `reply-N.txt`, `gate.txt`, `failures.txt` while tests fail, `agent.json` as a subset) plus
 `mock-trace.json` (the outcome and the next message for each reply, the focus text, the library functions called). Generated, never edited by hand:
 
 ```

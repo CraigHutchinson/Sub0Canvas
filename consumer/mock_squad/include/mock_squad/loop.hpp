@@ -39,7 +39,6 @@ struct LoopPolicy
     int freeContinuations = 3;     ///< replies cut off at the token limit that are continued
     bool partial = true;           ///< `applyReply` partial (the squad's choice: one bad edit never costs the good ones beside it)
     bool scratch = true;           ///< apply to a copy and keep it only on success, as the squad does; false applies to the canvas itself (what an atomic library must survive)
-    bool textsById = false;        ///< turn files carry each text once, by content id (`SnapshotSpec::textsById`); false: every file's text inline, as the squad writes today
     bool useStore = false;         ///< MS3: every verdict also goes through a `Store` over a `MemoryLog` (`putLayer` reconciles the issues layer by key), the verdict is built from what the
                                    ///< store holds, and the persisted attempt gains `store/events.ndjson` and `store/snapshot.json`. Off by default, so existing attempts are unchanged
     bool narrowScope = true;       ///< a FILE over a file that exists and is not a stub is refused (edits first, `scopeRefusalFor`)

@@ -65,7 +65,7 @@ The next tag is a breaking one for Sub0Squad. Every removed or changed public sy
   name parsers (`parseState`, `parseTargetKind`, `parseDeltaForm`) and the lookups stay `std::optional` (absence is their only answer).
 * **Item keys changed (C++23 adoption A0)**: `issues/<kind>/<hex>` item keys are now derived with the file's own fixed hash instead of `std::hash<std::string>`, so they are the same on every platform; a consumer that stored a key from an earlier build sees a different one.
 * **Toolchain**: gcc 14 is the floor. `std::println` needs `<print>`, and MinGW gcc 16 links `stdc++exp` through `cmake/print_link.cmake` (included by the top-level and the consumer project).
-* **Format**: Sub0Squad still calls the first-version `layeredJson` (cumulative events with `eventsFrom` 0, inline texts, `_` in revision file names). It moves to `SnapshotSpec` (per-turn events, texts by id, `%2F` names, a field-named spec) in its PR; the cleanup sequence in [BACKLOG.md](BACKLOG.md) removes the first-version call and the inline shape from the library, and the viewer reads one shape only.
+* **Format (cleanup slice 5, writer side)**: Sub0Squad still calls the first-version `layeredJson` (cumulative events with `eventsFrom` 0, inline texts, `_` in revision file names); that call is gone, so Sub0Squad cannot build against the library until its PR lands. It moves to `SnapshotSpec` (per-turn events, texts by id, `%2F` names, a field-named spec) in its PR. The viewer still reads both shapes until slice 6.
 * **v0.5.0 breaking (cleanup slice 2, no replacement: nothing in the squad calls these; remove any use)**:
   * `Workspace::liveSessions()`.
   * `LineRange` and `ReadResult::marks` (`ReadResult::overlaid` and `labelled` say the same; the line numbers are in `labelled`).
@@ -73,6 +73,10 @@ The next tag is a breaking one for Sub0Squad. Every removed or changed public sy
   * `BlockIndex::textSource()` and `BlockIndex::indexedTextId(path)` (`setTextSource` stays).
   * `BlockIndex::json()`, `BlockIndex::json(eventsFrom)` and `BlockIndex::jsonFrom`: write a snapshot with `layeredJson(SnapshotSpec, index)`, which always carries `eventsFrom`.
   * `BlockIndex::writeJsonMembers`, `jsonSizeHint` and `writeEventJson` are private (`layeredJson` and the query's projection are the only callers).
+  * `layeredJson(int turn, files, revisions, index, layers)` (the first-version overload: cumulative events, inline texts): write a `SnapshotSpec` (`turn`, `files`, `revisions`, `layers`) and call `layeredJson(spec, index)`; the spec writes per-turn events from `eventsFrom` and the texts once by content id.
+  * `SnapshotSpec::textsById` (by id is the only form; `textsCarried` still says which texts earlier snapshots of the document carried), the `sub0canvas snapshot --texts` option, and the mock squad's `textsById` policy.
+  * The hidden "issues" `layerMeta` default: a caller that wants the issues layer described sets `spec.layerMeta["issues"] = issuesLayerMeta()` (new, public); without it no `layerMeta` is written for the layer.
+  * New: `revisionFileName(path, revision)`, `<path>.r<N>` with `%` as `%25` and `/` as `%2F`; Sub0Squad's `persistCanvas` replaces its `/` to `_` mapping with it (the `_` names collided: `src/a_b.cpp` and `src_a/b.cpp`).
   * `splitLines(const std::string&)` in view.hpp (a private helper now; the library's own copy is `scan::splitLines`, lib/src/scan.hpp).
   * The viewer's `src/model.js` no longer exports `resolveAnchor`, `blockText`, `jaccard` or `CARRIES`.
   * CMake options `SUB0CANVAS_BUILD_APP` (the command line builds when this is the top-level project), `SUB0CANVAS_PERF_GATE` (use Sub0Perf's `-DSUB0PERF_GIT_HOOKS=OFF`) and

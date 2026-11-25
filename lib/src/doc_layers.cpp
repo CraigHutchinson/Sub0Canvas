@@ -1329,22 +1329,29 @@ std::vector<int> parseIssueReads(const std::string& reply)
     return out;
 }
 
-namespace {
-
-/// The library's own description of a layer it produces; none for a layer only the caller knows.
-const LayerMeta* defaultMeta(const std::string& layer)
+const LayerMeta& issuesLayerMeta()
 {
     static const LayerMeta issues{"Issues", "Compiler errors and failing tests from a gate's verdict, each bound to the blocks it names.", "sub0canvas parseIssues"};
-    return layer == "issues" ? &issues : nullptr;
+    return issues;
 }
 
-}  // namespace
+std::string revisionFileName(const std::string& path, int revision)
+{
+    std::string name;
+    name.reserve(path.size() + 16);
+    for (const char c : path) {
+        if (c == '%') name += "%25";
+        else if (c == '/') name += "%2F";
+        else name += c;
+    }
+    return name + ".r" + std::to_string(revision);
+}
 
 std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
 {
     // The buffer is sized up front (a snapshot is mostly the texts and the blocks): growing by doubling copies the megabyte-sized document several times.
     std::size_t hint = 4096 + index.jsonSizeHint(spec.eventsFrom);
-    for (const auto& [path, text] : spec.files) hint += path.size() + 160 + (spec.textsById && spec.textsCarried ? 0 : text.size() + text.size() / 16);
+    for (const auto& [path, text] : spec.files) hint += path.size() + 160 + (spec.textsCarried ? 0 : text.size() + text.size() / 16);
     json::Writer w{hint};
     w.beginObject().kv("schema", "layered-doc-1").kv("turn", spec.turn).key("files").beginObject();
     std::map<std::string, std::string> ids;   // path -> content id
@@ -1355,20 +1362,33 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
         const auto opaque = spec.revisionIds.find(path);
         w.key(path).beginObject();
         projection::writeFileRef(w, rev, opaque != spec.revisionIds.end() ? opaque->second : "r" + std::to_string(rev), ids[path]);
-        if (!spec.textsById) w.kv("text", text);
         w.endObject();
     }
     w.endObject();
-    if (spec.textsById) {   // each text once: those an earlier snapshot of the document carried are not repeated
+    {   // each text once: those an earlier snapshot of the document carried are not repeated
         w.key("texts").beginObject();
-        std::set<std::string> here;
+        // The distinct ids not carried yet, sorted: a text is written at its first file, and the dedupe costs three allocations, not one per text.
+        std::vector<std::string_view> fresh;
+        fresh.reserve(spec.files.size());
         for (const auto& [path, text] : spec.files) {
             const std::string& id = ids[path];
-            if ((spec.textsCarried && spec.textsCarried->count(id)) || !here.insert(id).second) continue;
+            if (!spec.textsCarried || !spec.textsCarried->contains(id)) fresh.push_back(id);
+        }
+        std::ranges::sort(fresh);
+        const auto [dupBegin, dupEnd] = std::ranges::unique(fresh);
+        fresh.erase(dupBegin, dupEnd);
+        std::vector<bool> written(fresh.size(), false);
+        for (const auto& [path, text] : spec.files) {
+            const std::string& id = ids[path];
+            const auto at = std::ranges::lower_bound(fresh, std::string_view{id});
+            if (at == fresh.end() || *at != id) continue;   // carried by an earlier snapshot
+            const auto slot = written.begin() + (at - fresh.begin());
+            if (*slot) continue;
+            *slot = true;
             w.kv(id, text);
         }
         w.endObject();
-        if (spec.textsCarried) spec.textsCarried->insert(here.begin(), here.end());
+        if (spec.textsCarried) for (const std::string_view id : fresh) spec.textsCarried->emplace(id);
     }
     // The index's own JSON holds blocks, retired and events: spliced in whole, so there is one writer of that shape.
     index.writeJsonMembers(w, spec.eventsFrom);
@@ -1380,7 +1400,6 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
     std::map<std::string, LayerMeta> meta;
     for (const auto& [name, items] : spec.layers) {
         if (const auto given = spec.layerMeta.find(name); given != spec.layerMeta.end()) meta[name] = given->second;
-        else if (const LayerMeta* d = defaultMeta(name)) meta[name] = *d;
     }
     if (!meta.empty()) {
         w.key("layerMeta").beginObject();
@@ -1402,17 +1421,6 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
     if (spec.store != nullptr) w.kvRaw("store", spec.store->snapshotJson(spec.storeQuery != nullptr ? *spec.storeQuery : Query{}));
     w.endObject();
     return std::string{w.view()};
-}
-
-std::string layeredJson(int turn, const std::map<std::string, std::string>& files, const std::map<std::string, int>& revisions, const BlockIndex& index,
-                        const std::map<std::string, std::vector<LayerItem>>& layers)
-{
-    SnapshotSpec spec;
-    spec.turn = turn;
-    spec.files = files;
-    spec.revisions = revisions;
-    spec.layers = layers;
-    return layeredJson(spec, index);
 }
 
 namespace projection {

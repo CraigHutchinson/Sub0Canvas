@@ -128,15 +128,6 @@
       "cv": 0.0047,
       "rounds": 5
     },
-    "layeredJson 8 turns 2e4 lines, cumulative events and inline texts": {
-      "median_ns": 19869281.744,
-      "cv": 0.0268,
-      "rounds": 5,
-      "modes": [
-        19760964.716,
-        21743213.047
-      ]
-    },
     "layeredJson 8 turns 2e4 lines, per-turn events and texts by id": {
       "median_ns": 16841739.649,
       "cv": 0.0201,

@@ -247,37 +247,37 @@ class Store;    // store.hpp: only a pointer is held here, so this header does n
 struct Query;
 
 /// Everything a snapshot is made of, by field name, so that a new field never breaks a caller (docs/MOCK_SQUAD.md section 6, question 3). The defaults write
-/// what the first version of the format held, plus the additive fields that need no input.
+/// the minimum: texts by content id, every event from `eventsFrom`, and no `layerMeta` unless the caller gives one (`issuesLayerMeta()` for the issues layer).
 struct SnapshotSpec
 {
     int turn = 0;
     std::map<std::string, std::string> files;                       ///< the text of every file now
-    std::map<std::string, int> revisions;                           ///< each path's revision number (the old field `revision`)
+    std::map<std::string, int> revisions;                           ///< each path's revision number (`revision`)
     std::map<std::string, std::string> revisionIds;                 ///< each path's revision as an OPAQUE string (A1); a path without one gets "r<number>"
     std::map<std::string, std::vector<LayerItem>> layers;
-    std::map<std::string, LayerMeta> layerMeta;                     ///< a layer without an entry gets the library's own for "issues", none for another
+    std::map<std::string, LayerMeta> layerMeta;                     ///< what each layer says about itself; a layer without an entry has none (the issues layer's is `issuesLayerMeta()`)
     std::map<std::string, std::string> policies;                    ///< the policies that made this snapshot, by role: {"loop":"mock-loop@1"} (A13)
     std::map<std::string, std::string> textIds;                     ///< a path's content id when the caller already has it (saves hashing a text that has not changed)
     std::size_t eventsFrom = 0;                                     ///< the position in `index.events()` this snapshot's events start at: what earlier snapshots carried
-    bool textsById = false;                                         ///< false: every file's `text` is written (what old readers need). true: only `textId`, and the texts a
-                                                                    ///< reader has not been given are in `texts`
     const Store* store = nullptr;                                   ///< when set, the document also carries the store's `store-snapshot-1` under `store` (B1b): item state, tags,
-                                                                    ///< links and authorship beside the flat layers. Null (the default): nothing is added, and the bytes are those of
-                                                                    ///< a document written before the store existed
+                                                                    ///< links and authorship beside the flat layers. Null (the default): nothing is added
     const Query* storeQuery = nullptr;                              ///< with `store`: what the snapshot selects (A11, a private item stays out by default); null: the default query
-    std::set<std::string>* textsCarried = nullptr;                  ///< textsById: the content ids earlier snapshots of this document carried, updated with this one's
-                                                                    ///< (null: this snapshot carries every text it refers to, so it stands alone)
+    std::set<std::string>* textsCarried = nullptr;                  ///< the content ids earlier snapshots of this document carried, updated with this one's: a text is written once
+                                                                    ///< per document (null: this snapshot carries every text it refers to, so it stands alone)
 };
 
-/// The interchange form (schema `layered-doc-1`, docs/LAYERED_DOCUMENT.md, BACKBONE.md section 7): the files at their revisions, the index, its history and every
-/// layer, one JSON object a viewer reads without the program (sub0canvas). Beyond the first version it writes, all additive: per file `revisionId` and `textId`
-/// (and `text`, unless `textsById`); a top-level `texts` (`textsById`), `eventsFrom` with only the events from there on, `policies`, `layerMeta`; per item `id` (its
-/// key); per anchor `column`, `endLine` and `endColumn` where known.
-[[nodiscard]] std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index);
+/// The library's own description of the issues layer (`parseIssues`), for `SnapshotSpec::layerMeta`.
+[[nodiscard]] const LayerMeta& issuesLayerMeta();
 
-/// The first version's call: every event from the start (`eventsFrom` 0), every text inline, revision ids "r<number>". `revisions` gives each path's revision number.
-[[nodiscard]] std::string layeredJson(int turn, const std::map<std::string, std::string>& files, const std::map<std::string, int>& revisions, const BlockIndex& index,
-                                      const std::map<std::string, std::vector<LayerItem>>& layers);
+/// The file name a revision's text is kept under, `<path>.r<revision>`, with `%` written `%25` and `/` written `%2F` so that the name is flat, reversible
+/// (a viewer decodes it with `decodeURIComponent`) and cannot collide the way `/` to `_` did.
+[[nodiscard]] std::string revisionFileName(const std::string& path, int revision);
+
+/// The interchange form (schema `layered-doc-1`, docs/LAYERED_DOCUMENT.md, BACKBONE.md section 7): the files at their revisions, the index, its history and every
+/// layer, one JSON object a viewer reads without the program (sub0canvas). Per file `revision`, `revisionId` and `textId`; a top-level `texts` holding each text
+/// once per document (`textsCarried`); `eventsFrom` with only the events from there on; `policies`, `layerMeta`; per item `id` (its key); per anchor `column`,
+/// `endLine` and `endColumn` where known.
+[[nodiscard]] std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index);
 
 /// A layer's summary, one line per item, each at most `lineChars`: "3 issues ...:\n 1. test modulo: ... - in term() (lines 40-52)". "" for no items.
 [[nodiscard]] std::string layerSummary(const std::vector<LayerItem>& items, const BlockIndex& index, std::size_t lineChars = 170);

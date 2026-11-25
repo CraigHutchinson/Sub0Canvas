@@ -276,7 +276,10 @@ int main()
         d.turn(4);
         d.write(path, kCalc);
         const auto issues = d.issues("FAIL 6 - modulo: CHECK_NEAR failed: ev(\"10%3\") is 3.33333 but 1 is 1\n");
-        const std::string j = d.snapshot({{"issues", issues}}, {{path, 2}});
+        sub0canvas::SnapshotSpec issuesSpec;
+        issuesSpec.layers = {{"issues", issues}};
+        issuesSpec.revisions = {{path, 2}};
+        const std::string j = d.snapshot(issuesSpec);
         simdjson::dom::parser parser;
         simdjson::dom::element doc;
         CHECK(!parser.parse(j).get(doc));
@@ -310,12 +313,13 @@ int main()
         const auto elsewhere = d.issues("src/calc.cpp:12:20: error: x\n   12 |         double v = unary();\n      |  ^~~~~\n");
         CHECK(elsewhere.size() == 1 && elsewhere[0].anchors[0].endColumn == 0);
     }
-    {   // R-FMT-3: the snapshot writes the item id, the anchor's column and range, and a layerMeta entry for the issues; every old field is still there.
+    {   // R-FMT-3: the snapshot writes the item id, the anchor's column and range, and a layerMeta entry for the issues; the item and anchor fields are all there.
         Doc d;
         d.write(path, kCalc);
         const auto items = d.issues("src/calc.cpp:12:20: error: 'unary' was not declared in this scope\n   12 |         double v = unary();\n      |                    ^~~~~\n");
         sub0canvas::SnapshotSpec spec;
         spec.layers = {{"issues", items}};
+        spec.layerMeta = {{"issues", sub0canvas::issuesLayerMeta()}};
         spec.revisions = {{path, 3}};
         simdjson::dom::parser parser;
         simdjson::dom::element doc;
@@ -323,12 +327,15 @@ int main()
         CHECK(!parser.parse(text).get(doc));
         const auto item = doc["layers"]["issues"].at(0);
         CHECK(std::string_view{item["id"]}.starts_with("issues/error/"));
-        CHECK(std::string_view{item["title"]}.contains("unary") && std::string_view{item["detail"]}.contains("^~~~~"));   // old fields
+        CHECK(std::string_view{item["title"]}.contains("unary") && std::string_view{item["detail"]}.contains("^~~~~"));   // the item fields
         const auto anchor = item["anchors"].at(0);
         CHECK(int64_t{anchor["line"]} == 12 && int64_t{anchor["column"]} == 20 && int64_t{anchor["endLine"]} == 12 && int64_t{anchor["endColumn"]} == 25);
         CHECK(std::string_view{anchor["confidence"]} == "exact" && std::string_view{anchor["blockId"]} == d.id(path, "expr"));
         CHECK(std::string_view{doc["layerMeta"]["issues"]["label"]} == "Issues" && std::string_view{doc["layerMeta"]["issues"]["producer"]}.size() > 0);
-        // A layer the caller alone knows has no meta unless given.
+        // A layer has no meta unless the caller gives one (`issuesLayerMeta()` for the issues).
+        sub0canvas::SnapshotSpec bare;
+        bare.layers = {{"issues", items}};
+        CHECK(!parser.parse(d.snapshot(bare)).get(doc) && doc["layerMeta"].error() != simdjson::SUCCESS);
         sub0canvas::SnapshotSpec other;
         other.layers = {{"notes", {makeItem({"notes", "note", "a note", "", "notes/1", {}})}}};
         CHECK(!parser.parse(d.snapshot(other)).get(doc));
@@ -349,7 +356,8 @@ int main()
         CHECK(!parser.parse(d.snapshot(spec)).get(doc));
         const auto f = doc["files"][path];
         CHECK(int64_t{f["revision"]} == 3 && std::string_view{f["revisionId"]} == "9f2c-7");
-        CHECK(std::string_view{f["textId"]} == sub0canvas::contentId(kCalc) && std::string_view{f["text"]} == kCalc);
+        CHECK(std::string_view{f["textId"]} == sub0canvas::contentId(kCalc) && f["text"].error() != simdjson::SUCCESS);
+        CHECK(std::string_view{doc["texts"][sub0canvas::contentId(kCalc)]} == kCalc);
         CHECK(std::string_view{doc["policies"]["loop"]} == "mock-loop@1" && std::string_view{doc["policies"]["reconcile"]} == "reconcile@1");
         sub0canvas::SnapshotSpec plain;
         plain.revisions = {{path, 3}};
@@ -392,7 +400,6 @@ int main()
         d.write("b.cpp", "int b() { return 2; }\n");
         std::set<std::string> carried;
         sub0canvas::SnapshotSpec spec;
-        spec.textsById = true;
         spec.textsCarried = &carried;
         simdjson::dom::parser parser;
         simdjson::dom::element doc;
@@ -404,10 +411,15 @@ int main()
         CHECK(!parser.parse(d.snapshot(spec)).get(doc));
         CHECK(doc["texts"].get_object().size() == 1 && carried.size() == 3);   // only the changed file's new text
         sub0canvas::SnapshotSpec alone;
-        alone.textsById = true;
         CHECK(!parser.parse(d.snapshot(alone)).get(doc) && doc["texts"].get_object().size() == 2);
         d.write("c.cpp", "int a() { return 1; }\n");   // the same bytes under another path are one text
         CHECK(!parser.parse(d.snapshot(alone)).get(doc) && doc["texts"].get_object().size() == 2 && doc["files"].get_object().size() == 3);
+    }
+    {   // The revision file name: a flat, reversible name (`/` is %2F, `%` is %25) that a viewer decodes with decodeURIComponent.
+        CHECK(sub0canvas::revisionFileName("src/calc.cpp", 3) == "src%2Fcalc.cpp.r3");
+        CHECK(sub0canvas::revisionFileName("a_b/c.h", 12) == "a_b%2Fc.h.r12");
+        CHECK(sub0canvas::revisionFileName("100%/x", 1) == "100%25%2Fx.r1");
+        CHECK(sub0canvas::revisionFileName("top.txt", 0) == "top.txt.r0");
     }
     return finish();
 }

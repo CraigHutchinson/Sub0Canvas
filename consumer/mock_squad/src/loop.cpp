@@ -39,7 +39,6 @@ std::expected<void, std::string> applyPolicy(LoopPolicy& p, const std::string& k
     if (key == "partial") return flag(p.partial);
     if (key == "scratch") return flag(p.scratch);
     if (key == "narrowScope") return flag(p.narrowScope);
-    if (key == "textsById") return flag(p.textsById);
     if (key == "useStore") return flag(p.useStore);
     if (key == "claims") {
         if (value != "off" && value != "on" && value != "enforce") return std::unexpected("policy claims is off, on or enforce, not '" + value + "'");
@@ -150,7 +149,7 @@ private:
     int loopStreak_ = 0, turns_ = 0, spent_ = 0, rejects_ = 0, readReplies_ = 0, continuations_ = 0, bestFailing_ = -1;
     std::map<std::string, int> bestRevision_;
     std::size_t eventsCarried_ = 0;          // the events earlier snapshots of this attempt carried: the next one starts there (`eventsFrom`)
-    std::set<std::string> textsCarried_;     // the content ids earlier snapshots carried (`texts`, when the policy sends texts by id)
+    std::set<std::string> textsCarried_;     // the content ids earlier snapshots carried (`texts`)
     int gateRun_ = 0;                        // test runs so far: a flapping test reads it
     MemoryLog storeLog_;                     // `useStore`: where the store's events go, as a squad's per-attempt segment would
     Store store_{storeOptions()};
@@ -732,15 +731,13 @@ private:
         return {};
     }
 
-    /// `persistCanvas`: the revision log, and every revision's text kept under a flat name, so earlier ones stay beside later ones.
+    /// `persistCanvas`: the revision log, and every revision's text kept under a flat name (`revisionFileName`), so earlier ones stay beside later ones.
     void persist()
     {
         lib("Canvas::logJson");
         out_.record["canvas.json"] = canvas_.logJson() + "\n";
         for (const auto& path : canvas_.paths()) {
-            std::string flat = path;
-            for (char& c : flat) if (c == '/') c = '_';
-            out_.record["canvas/" + flat + ".r" + std::to_string(canvas_.revision(path))] = canvas_.text(path);
+            out_.record["canvas/" + revisionFileName(path, canvas_.revision(path))] = canvas_.text(path);
         }
     }
 
@@ -781,9 +778,9 @@ private:
         spec.files = canvas_.files();
         for (const auto& path : canvas_.paths()) spec.revisions[path] = canvas_.revision(path);
         spec.layers = {{"issues", issues_}};
+        spec.layerMeta = {{"issues", issuesLayerMeta()}};
         spec.policies = {{"loop", "mock-loop@1"}, {"reconcile", "reconcile@1"}, {"localise", "localise@1"}};   // named as BACKBONE.md 14.4 does, A13
         spec.eventsFrom = eventsCarried_;
-        spec.textsById = p_.textsById;
         spec.textsCarried = &textsCarried_;
         lib("layeredJson");
         out_.record["layers/turn-" + std::to_string(turns_) + ".json"] = layeredJson(spec, index_) + "\n";

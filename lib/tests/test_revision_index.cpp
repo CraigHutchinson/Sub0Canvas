@@ -473,9 +473,9 @@ int main(int argc, char** argv)
         // second file. Rebuilt here from its persisted texts, in the order its turn files record (turn 3 holds calc r4 and geometry r1 together).
         const fs::path attempt = fixtures / "mock" / "g4-rename-resign-move" / "canvas";
         Canvas canvas;
-        canvas.addFile("src/calc.cpp", fixture::slurp(attempt / "src_calc.cpp.r1"));
-        for (int r = 2; r <= 5; ++r) CHECK(canvas.replaceText("src/calc.cpp", fixture::slurp(attempt / std::format("src_calc.cpp.r{}", r)), "attempt").ok);
-        canvas.addFile("src/geometry.cpp", fixture::slurp(attempt / "src_geometry.cpp.r1"));
+        canvas.addFile("src/calc.cpp", fixture::slurp(attempt / sub0canvas::revisionFileName("src/calc.cpp", 1)));
+        for (int r = 2; r <= 5; ++r) CHECK(canvas.replaceText("src/calc.cpp", fixture::slurp(attempt / sub0canvas::revisionFileName("src/calc.cpp", r)), "attempt").ok);
+        canvas.addFile("src/geometry.cpp", fixture::slurp(attempt / sub0canvas::revisionFileName("src/geometry.cpp", 1)));
         fixture::CanvasSource source(canvas, {{{"src/calc.cpp", 1}}, {{"src/calc.cpp", 2}}, {{"src/calc.cpp", 3}}, {{"src/calc.cpp", 4}, {"src/geometry.cpp", 1}}, {{"src/calc.cpp", 5}}});
         RevisionIndex index(source);
         const Scope scope{"src/"};

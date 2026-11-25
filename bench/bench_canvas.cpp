@@ -202,7 +202,6 @@ struct Turns
 {
     std::vector<BlockIndex> indexes;
     std::vector<SnapshotSpec> specs;      ///< per-turn events (`eventsFrom`), texts by content id
-    std::vector<SnapshotSpec> inlineSpecs;   ///< the same turns, cumulative: every event from the start, every text inline
     std::size_t filesChanged = 0;
 };
 
@@ -258,29 +257,25 @@ Turns buildTurns(const Fixture& f, int turns)
             items.push_back(std::move(item));
         }
         spec.layers["issues"] = std::move(items);
-        SnapshotSpec cumulative = spec;
-        cumulative.eventsFrom = 0;
-        cumulative.textsById = false;
+        spec.layerMeta["issues"] = issuesLayerMeta();
         spec.eventsFrom = eventsFrom;
-        spec.textsById = true;
         eventsFrom = index.events().size();
         t.indexes.push_back(index);
         t.specs.push_back(std::move(spec));
-        t.inlineSpecs.push_back(std::move(cumulative));
     }
     return t;
 }
 
 Turns& turns2e4() { static Turns t = buildTurns(fixture2e4(), 8); return t; }
 
-std::size_t allTurnsBytes(Turns& t, bool perTurn)
+std::size_t allTurnsBytes(Turns& t)
 {
     std::set<std::string> carried;
     std::size_t bytes = 0;
     for (std::size_t k = 0; k < t.indexes.size(); ++k)
     {
-        SnapshotSpec& spec = perTurn ? t.specs[k] : t.inlineSpecs[k];
-        spec.textsCarried = perTurn ? &carried : nullptr;
+        SnapshotSpec& spec = t.specs[k];
+        spec.textsCarried = &carried;
         bytes += layeredJson(spec, t.indexes[k]).size();
         spec.textsCarried = nullptr;
     }
@@ -556,7 +551,7 @@ int main(int argc, char** argv)
         });
     }
 
-    // layeredJson: one turn, and eight turns written per-turn (events from the previous snapshot on, texts by content id) or cumulatively (all events, every text).
+    // layeredJson: one turn, and eight turns written per-turn (events from the previous snapshot on, each text once by content id).
     {
         heavy(7);
         Once once;
@@ -564,53 +559,27 @@ int main(int argc, char** argv)
             Turns& t = turns2e4();
             once([&] {
                 const std::size_t a0 = gAllocations;
-                SnapshotSpec spec = t.inlineSpecs[0];
+                SnapshotSpec spec = t.specs[0];
                 const std::string out = layeredJson(spec, t.indexes[0]);
                 metricsOf(runner, "layeredJson 1 turn 2e4", gAllocations - a0);
                 runner.metric("layeredJson 1 turn 2e4: output bytes", static_cast<double>(out.size()), "B");
-                runner.metric("layeredJson 1 turn 2e4: files", static_cast<double>(t.inlineSpecs[0].files.size()), "files");
+                runner.metric("layeredJson 1 turn 2e4: files", static_cast<double>(t.specs[0].files.size()), "files");
                 runner.metric("layeredJson 1 turn 2e4: blocks", static_cast<double>(t.indexes[0].all().size()), "blocks");
             });
-            auto out = layeredJson(t.inlineSpecs[0], t.indexes[0]);
+            auto out = layeredJson(t.specs[0], t.indexes[0]);
             ankerl::nanobench::doNotOptimizeAway(out);
         });
-        Once once8a, once8b;
+        Once once8a;
         runner.run("layeredJson 8 turns 2e4 lines, per-turn events and texts by id", [&] {
             Turns& t = turns2e4();
             once8a([&] {
                 const std::size_t a0 = gAllocations;
-                const std::size_t bytes = allTurnsBytes(t, true);
+                const std::size_t bytes = allTurnsBytes(t);
                 metricsOf(runner, "layeredJson 8 turns 2e4 per-turn", gAllocations - a0);
                 runner.metric("layeredJson 8 turns 2e4: bytes, per-turn events, texts by id", static_cast<double>(bytes), "B");
                 runner.metric("layeredJson 8 turns 2e4: files changed over the turns", static_cast<double>(t.filesChanged), "files");
             });
-            auto bytes = allTurnsBytes(t, true);
-            ankerl::nanobench::doNotOptimizeAway(bytes);
-        });
-        runner.run("layeredJson 8 turns 2e4 lines, cumulative events and inline texts", [&] {
-            Turns& t = turns2e4();
-            once8b([&] {
-                const std::size_t a0 = gAllocations;
-                const std::size_t bytes = allTurnsBytes(t, false);
-                metricsOf(runner, "layeredJson 8 turns 2e4 cumulative", gAllocations - a0);
-                runner.metric("layeredJson 8 turns 2e4: bytes, cumulative events, inline texts", static_cast<double>(bytes), "B");
-                // The two intermediate forms: per-turn events with inline texts, and cumulative events with texts by id.
-                std::size_t perTurnInline = 0, cumulativeById = 0;
-                std::set<std::string> carried;
-                for (std::size_t k = 0; k < t.indexes.size(); ++k)
-                {
-                    SnapshotSpec a = t.inlineSpecs[k];
-                    a.eventsFrom = t.specs[k].eventsFrom;
-                    perTurnInline += layeredJson(a, t.indexes[k]).size();
-                    SnapshotSpec b = t.specs[k];
-                    b.eventsFrom = 0;
-                    b.textsCarried = &carried;
-                    cumulativeById += layeredJson(b, t.indexes[k]).size();
-                }
-                runner.metric("layeredJson 8 turns 2e4: bytes, per-turn events, inline texts", static_cast<double>(perTurnInline), "B");
-                runner.metric("layeredJson 8 turns 2e4: bytes, cumulative events, texts by id", static_cast<double>(cumulativeById), "B");
-            });
-            auto bytes = allTurnsBytes(t, false);
+            auto bytes = allTurnsBytes(t);
             ankerl::nanobench::doNotOptimizeAway(bytes);
         });
     }

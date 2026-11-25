@@ -29,16 +29,12 @@
     "applyReply 50 ops: applied": {"kind": "exact", "expected": 1, "unit": "bool"},
     "applyReply 50 ops: log entries": {"kind": "exact", "expected": 5, "unit": "n"},
     "layeredJson 1 turn 2e4: allocations": {"kind": "max", "limit": 721, "unit": "n"},
-    "layeredJson 1 turn 2e4: output bytes": {"kind": "exact", "expected": 795317, "unit": "B"},
+    "layeredJson 1 turn 2e4: output bytes": {"kind": "exact", "expected": 797415, "unit": "B"},
     "layeredJson 1 turn 2e4: files": {"kind": "exact", "expected": 58, "unit": "files"},
     "layeredJson 1 turn 2e4: blocks": {"kind": "exact", "expected": 988, "unit": "blocks"},
     "layeredJson 8 turns 2e4 per-turn: allocations": {"kind": "max", "limit": 2851, "unit": "n"},
     "layeredJson 8 turns 2e4: bytes, per-turn events, texts by id": {"kind": "exact", "expected": 2212791, "unit": "B"},
     "layeredJson 8 turns 2e4: files changed over the turns": {"kind": "exact", "expected": 22, "unit": "files"},
-    "layeredJson 8 turns 2e4 cumulative: allocations": {"kind": "max", "limit": 2518, "unit": "n"},
-    "layeredJson 8 turns 2e4: bytes, cumulative events, inline texts": {"kind": "exact", "expected": 6377890, "unit": "B"},
-    "layeredJson 8 turns 2e4: bytes, per-turn events, inline texts": {"kind": "exact", "expected": 5570170, "unit": "B"},
-    "layeredJson 8 turns 2e4: bytes, cumulative events, texts by id": {"kind": "exact", "expected": 3020511, "unit": "B"},
     "revive scan 1e4: retired blocks": {"kind": "exact", "expected": 486, "unit": "blocks"},
     "revive scan 1e4: novel blocks indexed": {"kind": "exact", "expected": 22, "unit": "blocks"},
     "revive scan 1e4: events from the update": {"kind": "exact", "expected": 22, "unit": "n"},
@@ -433,6 +429,18 @@
         "session refresh compacted: bytes (20 edits, 100 events)": {
           "from": 10259,
           "to": 10468,
+          "kind": "exact"
+        }
+      }
+    },
+    {
+      "date": "2026-11-25",
+      "commit": "bef8aa12d88cde62aeda674f1ae65a223ac1bed5",
+      "reason": "cleanup slice 5: the cumulative and inline layeredJson arms are removed with SnapshotSpec::textsById (one format: texts by id, per-turn events); the 1-turn row now writes the one format, so its output bytes move. Rows removed by hand (the tooling has no removal): 'layeredJson 8 turns 2e4 cumulative: allocations' (max 2518), 'bytes, cumulative events, inline texts' (6377890), 'bytes, per-turn events, inline texts' (5570170), 'bytes, cumulative events, texts by id' (3020511); and from perf/baselines/croglegion.json the timing row 'layeredJson 8 turns 2e4 lines, cumulative events and inline texts'",
+      "metrics": {
+        "layeredJson 1 turn 2e4: output bytes": {
+          "from": 795317,
+          "to": 797415,
           "kind": "exact"
         }
       }

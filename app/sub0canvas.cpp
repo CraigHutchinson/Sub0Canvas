@@ -1,11 +1,11 @@
 // sub0canvas: the library's command line. It does the I/O the pure library may not (running git, reading files, writing stdout).
 //
-//   sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--texts by-id|inline] [--] PATHSPEC...
+//   sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--] PATHSPEC...
 //
 // Writes a viewer bundle to stdout: a JSON array of {path, text} holding layers/turn-N.json (layered-doc-1) and canvas.json. One turn per commit
 // that touched the pathspec, oldest first: the last N on REV's first-parent line. Block identities are the library's (BlockIndex), carried across
-// the commits, and a `commits` layer anchors each commit to the blocks it changed. Each turn carries only the events since the one before (`eventsFrom`) and, by
-// default, each text once under its content id (`--texts inline` repeats every file's text in every turn, for a reader that predates `texts`); the whole event log
+// the commits, and a `commits` layer anchors each commit to the blocks it changed. Each turn carries only the events since the one before (`eventsFrom`) and each
+// text once under its content id (`texts`); the whole event log
 // is the bundle's `events.ndjson`. Nothing is written to disk and nothing is copied out of the
 // repository beyond the bundle on stdout, whose size the limits bound (docs/AUTHORING.md section 2: a view is bounded by attention, not data).
 #include <print>
@@ -53,7 +53,6 @@ struct Options
     std::string repo, rev = "HEAD";
     int history = 8;
     std::size_t maxFiles = 150, maxFileBytes = 200000;
-    bool textsById = true;
     std::vector<std::string> pathspecs;
 };
 
@@ -223,7 +222,6 @@ int snapshot(const Options& o)
         spec.layerMeta = {{"commits", {"Commits", "The commits of the view, each anchored to the blocks it added or changed.", "sub0canvas snapshot"}}};
         spec.policies = {{"snapshot", "sub0canvas-snapshot@1"}, {"reconcile", "reconcile@1"}};
         spec.eventsFrom = eventsCarried;
-        spec.textsById = o.textsById;
         spec.textsCarried = &textsCarried;
         const std::string turn = layeredJson(spec, index);
         eventsCarried = index.events().size();
@@ -258,7 +256,6 @@ Options parse(int argc, char** argv)
         else if (a == "--history") o.history = std::stoi(next());
         else if (a == "--max-files") o.maxFiles = std::stoul(next());
         else if (a == "--max-file-bytes") o.maxFileBytes = std::stoul(next());
-        else if (a == "--texts") { const std::string v = next(); if (v != "by-id" && v != "inline") fail("--texts is by-id or inline"); o.textsById = v == "by-id"; }
         else fail("unknown option " + a);
     }
     if (o.repo.empty()) fail("snapshot needs --repo DIR");
@@ -276,7 +273,7 @@ int main(int argc, char** argv)
 {
     const std::string command = argc < 2 ? std::string{} : argv[1];
     if (command != "snapshot" && command != "history") {
-        eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--texts by-id|inline] [--] PATHSPEC...");
+        eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--] PATHSPEC...");
         eprintln("       sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks] [--] PATH...");
         return 2;
     }

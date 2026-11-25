@@ -113,8 +113,8 @@ The loop is about 370 lines (`consumer/mock_squad/src/loop.cpp`), 14 policy fiel
    bookkeeping (`markBest`, `restoreBest`); the outcome vocabulary itself (read, cancelled, continued, refused, staged, failed, reverted, passed), which every consumer
    would otherwise invent. The policy struct they need is `LoopPolicy` as it stands. Not mirrored, so not yet a question the mock can answer: the prefill continuation,
    which is the squad's first choice when the context allows; `joinContinuation` is only its fallback and the path after a loop's rollback, so it sees less real traffic than R-TURN suggests.
-2. **The attempt record.** The squad names a revision file by turning `/` into `_` (`src_calc.cpp.r1`; the design sketch said `%2F`): `src/a_b.cpp` and `src_a/b.cpp` give one name.
-   A library-owned `attemptRecord` would fix that once. `persistCanvas` itself is ten lines; the record is thin only because the per-turn layer file and the revision log
+2. **The attempt record.** The squad names a revision file by turning `/` into `_` (`src_calc.cpp.r1`): `src/a_b.cpp` and `src_a/b.cpp` give one name. The library's `revisionFileName(path, revision)` writes `%2F` for `/` and `%25` for `%` (`src%2Fcalc.cpp.r1`), the mock record uses it, and the squad takes it in its pull request.
+   A library-owned `attemptRecord` would fix the rest once. `persistCanvas` itself is ten lines; the record is thin only because the per-turn layer file and the revision log
    already come from the library (`layeredJson`, `logJson`).
 3. **`layeredJson`.** The caller builds `int turn`, a `map<string,int>` of revisions and a `map<string,vector<LayerItem>>` on every verdict. And the baseline is not wholly "before
    B0": the issue items already carry `id` (the key), so MS1's diff shows `id` unchanged and the real additions are the rest (`column`, ranges, `layerMeta`, `policies`, string

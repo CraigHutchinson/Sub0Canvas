@@ -161,13 +161,8 @@ public:
     }
     /// The focus text a folded view reads, so anchored blocks stay open.
     [[nodiscard]] std::string focus(const Items& items) const { return sub0canvas::layerFocus(items, index_); }
-    /// The interchange snapshot (`layered-doc-1`) of the document with these layers, at this turn.
-    [[nodiscard]] std::string snapshot(const std::map<std::string, Items>& layers, const std::map<std::string, int>& revisions) const
-    {
-        return sub0canvas::layeredJson(turn_, files_, revisions, index_, layers);
-    }
-
-    /// The same, written from a spec of the new fields (revision ids, policies, `eventsFrom`, texts by id): the turn and the files are the document's.
+    /// The interchange snapshot (`layered-doc-1`) of the document, written from a spec by field name (layers, revisions, revision ids, policies, `eventsFrom`,
+    /// the texts already carried): the turn and the files are the document's.
     [[nodiscard]] std::string snapshot(sub0canvas::SnapshotSpec spec) const
     {
         spec.turn = turn_;

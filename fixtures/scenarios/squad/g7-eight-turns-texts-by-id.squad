@@ -1,6 +1,5 @@
 # name: g7-eight-turns-texts-by-id
-# cites: SCALE.md 6.1 (8 turns of a many-file subtree, nearly all repeats) and PLAN.md phase 1: eight failing items fixed one reply at a time, so every turn file lists eight files and changes one; the policy sends texts by content id, so the attempt costs a few times one turn and not eight (R-AUTH-14, R-SRC-5)
-# policy: textsById=yes
+# cites: SCALE.md 6.1 (8 turns of a many-file subtree, nearly all repeats) and docs/BACKLOG.md phase 1: eight failing items fixed one reply at a time, so every turn file lists eight files and changes one; turn files carry each text once by content id, so the attempt costs a few times one turn and not eight (R-AUTH-14, R-SRC-5)
 # expect: failed | failed | failed | failed | failed | failed | failed | passed
 --- base src/f1.cpp
 double scale1(double x)

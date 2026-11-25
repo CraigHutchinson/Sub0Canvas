@@ -395,7 +395,7 @@ void checkInvariants(const std::map<std::string, std::string>& files, const Reso
 
 // ---- the mock squad's attempts -----------------------------------------------------------------------------------------------------------------------------
 
-/// One persisted attempt: every revision of every file (fixtures/mock/<scenario>/canvas/<path with / as _>.r<N>).
+/// One persisted attempt: every revision of every file (fixtures/mock/<scenario>/canvas/<revisionFileName: / as %2F, % as %25>.r<N>).
 struct Attempt
 {
     std::map<std::string, std::map<int, std::string>> texts;   // path -> revision -> text
@@ -409,8 +409,12 @@ Attempt loadAttempt(const fs::path& dir)
         const std::string name = entry.path().filename().string();
         const std::size_t dot = name.rfind(".r");
         if (dot == std::string::npos) continue;
-        std::string path = name.substr(0, dot);
-        path[path.find('_')] = '/';
+        std::string path;   // the name's percent escapes undone: %2F is '/', %25 is '%'
+        for (std::size_t i = 0; i < dot; ++i) {
+            if (name[i] == '%' && name.compare(i, 3, "%2F") == 0) { path += '/'; i += 2; }
+            else if (name[i] == '%' && name.compare(i, 3, "%25") == 0) { path += '%'; i += 2; }
+            else path += name[i];
+        }
         const int rev = std::atoi(name.c_str() + dot + 2);
         at.texts[path][rev] = fixture::slurp(entry.path());
         at.maxRevision = std::max(at.maxRevision, rev);
