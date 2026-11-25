@@ -1,110 +1,56 @@
 # Backlog
 
-Status: living (2026-11-18). Updated whenever work starts, lands or is reordered.
+Status: living (2026-11-25). One ordered list of what is left; an item that is done leaves the list (git history and the tags keep it, [RESUME.md](RESUME.md) says what exists). Each item names its slice
+([BACKBONE.md](BACKBONE.md) section 10, [AUTHORING.md](AUTHORING.md) section 7, [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) section 5, [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 8) and the requirements it must meet are in
+[REQUIREMENTS.md](REQUIREMENTS.md). Why each choice was made: [DECISIONS.md](DECISIONS.md).
 
-What is next, in order, by the phases of [PLAN.md](PLAN.md) (which holds the gates and the reasons). Each item names its slice ([BACKBONE.md](BACKBONE.md) section 10, [AUTHORING.md](AUTHORING.md) section 7,
-[BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) section 5) and, when it has one, its brief in [sessions/](sessions/README.md). Items in *Now* can run in
-parallel. The requirements each slice must meet are in [REQUIREMENTS.md](REQUIREMENTS.md).
+```
+ now: cleanup to one format ─▶ v0.5.0 ─▶ Sub0Squad PR            phase 2: the authoring tool           phase 3: history and scale        phase 4: widening
+ gate and test audit (parallel)                                  V1a page ─▶ V1 comments ─▶ V2         S2 ─▶ P0 ─▶ P1, P2                V3-V5, G2-G5, P3-P5
+ Fabric W3 ─▶ W4 ─▶ W5, W6 ─▶ W7  (other repositories)           inbox and sync = acceptance round     S3 real repositories, S4 shards   D2, D3, E1, C1
+ mock-squad and views leftovers (parallel)                       D1 conformance corpus
+```
 
-## Waiting on the owner
+Phase 2 is sequential (each slice is used before the next is built). The rest of phase 1 runs in parallel.
 
-* **One sheet of decisions**, [PLAN.md](PLAN.md) section 3 (O1-O13): the release, where data lives, writers and clocks, block ids, the format
-  revision, the server, GitHub, C++23, tree-sitter, the store in Sub0Squad, Sub0Fabric, the scale profile and change views, spikes. Each has a
-  recommendation and links to its reasoning ([DECISIONS.md](DECISIONS.md), [SCALE.md](SCALE.md), [CHANGE_VIEWS.md](CHANGE_VIEWS.md)). Phase 1
-  needs none of them except O1.
+## Ordered list
 
-## Now: phase 1, groundwork in parallel ([PLAN.md](PLAN.md) section 4)
-
-The ordered next wave, with the gate and release housekeeping, is the brief [sessions/backbone-next-wave.md](sessions/backbone-next-wave.md); the test and gate audit is [TEST_AUDIT.md](TEST_AUDIT.md).
-
-* **Release v0.3.0** (O1: pushing the tag needs the owner's go-ahead), then **Sub0Squad adopts `applyReply`, turn control and the moved checks**: a
-  Sub0Squad PR replaces its `applyCanvasReply` and `turn_control`, drops the copied tests and cases (block 4, the skeleton block,
-  `canvasModelCheck`, block 1's reply corpus and turn checks), keeps `run-v11-test-app-reply.txt` (its platform test).
-* **B1b and MS3: done** (2026-11-24): `FileLog` (canvas-events-1, torn tail cut), checkpoints (restore plus tail replay equals full replay at every split), `retainEvents=false` (heap per item after replay 4787 B to 1501 B; SCALE.md's ~200 B needs a columnar item layout, not built), `SnapshotSpec::store` (opt-in); the mock loop through a store (`useStore`), B15 and G4 hand-checked. Open: compact the item itself (interned writers, sources and layers; an out-of-line transition), ext-state checkpoints for B2/B3 reducers, a lamport-keyed tail for a merged multi-writer log.
-* **MS1 (B0 through the mock): done** (2026-11-23): `fixtures/mock` regenerated in the B0 format, G3, G5, G7 (8 turns by id, 2.5x one turn), B10, B11 added (15 scenarios), `test/mock.test.js`, a stale author through `applyReply` (`ApplyOptions::baseRevision`). **Next, MS2.**
-* **MS0: the mock squad: done** (2026-11-23, [MOCK_SQUAD.md](MOCK_SQUAD.md); outcome in [sessions/ms0-mock-squad-baseline.md](sessions/ms0-mock-squad-baseline.md)): `consumer/mock_squad/` runs ten scenarios in today's format, frozen in `fixtures/mock`, as `test_consumer_mock_squad` (label `full`). **Next, MS1 = B0**: regenerate `fixtures/mock` with B0's fields and trace an item through G4 in the viewer; then MS2 (the producer API proposal, MOCK_SQUAD.md section 6 now holds what the baseline taught).
-* **D0: the block discovery seam: done** (2026-11-23): outline result, providers `braces@3` and `indent@2`, detection, and the block-comment, name and decorator faults fixed, each test-first
-  ([sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md), Outcome). **Left**: `index.outliners` in the snapshot (regenerates the snapshot fixtures: needs the owner's go-ahead),
-  the policy that skips unnamed nodes, Rust lifetimes and CRLF Allman files, then D1 (the conformance corpus). S1, G1 and V0's Markdown can build on the seam now.
-* **S0: the scale harness. Generator and benchmarks at 10^5 lines done** (2026-11-23: `bench/corpus.hpp`, `Sub0Canvas_Bench` on the family's sub0perf tooling, `perf/metrics.json`, the first
-  baseline; numbers in [SCALE.md](SCALE.md) section 6.0). **Left**: 10^7 and streamed 10^9 lines, profile B, the change sets, the index-against-truth comparison, S1's choices stated.
-  Brief: [sessions/s0-scale-harness.md](sessions/s0-scale-harness.md).
-* **B0: one format revision. Steps 1-3 done here** (MS1, 2026-11-23; the mock squad drives it): item `id`, `column` and ranges, `layerMeta`, policies (A13), revision ids as strings (A1), per-turn events with
-  `eventsFrom` (O5 confirmed), texts by content id, additive, read by the viewer in both shapes. **Left**: re-capture one real attempt with compiler diagnostics
-  (R-U1-4), the release (v0.4.0) and the Sub0Squad PR (`SnapshotSpec`, `%2F` naming). Brief: [sessions/b0-format-catch-up.md](sessions/b0-format-catch-up.md).
-* **K0: the viewer's interactivity benchmark, done** (2026-11-24, [K0.md](K0.md), `node tools/k0/run.mjs`, [AUTHORING.md](AUTHORING.md) section 3.2, R-AUTH-15): the mirror is inside
-  every budget; on the 1,590-file subtree eight of ten interactions breach by 2.3x to 11.6x (one full re-render per click), which orders V1a. **Left**: `--repo` for a real
-  repository, the shared sub0perf samples import (proposal in K0.md, Sub0Math S-M9). Brief: [sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md).
-* **The change-view gaps the mirror exposes** ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10), design only: reverted state, stale stacks, evil
-  merges, file footprints, guards, column units, case-only paths, regenerated files; each checkable on `fixtures/mirror/`. Before P0.
-
-## Next: phase 2, the authoring tool on this repository
-
-* **V0, finished**: Markdown blocks (through D0's seam), Markdown rendered, the worktree's uncommitted state, merge commits titled by the change they
-  merge. The snapshot itself is built (`app/`, `tools/serve.mjs`). Brief: [sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md).
-* **Views and sessions foundation: done** (2026-11-24, [VIEWS.md](VIEWS.md) `As built`, `view.hpp`, `session.hpp`, `test_views_sessions`, 16 `session` metrics, R-PIN rows in REQUIREMENTS.md): pinned and unpinned views, four refresh forms, advance/fork/unpin, sessions with isolation, quotas, expiry and resume. **Left**: the live channel (R-PIN-8), presence and peer patches (R-PIN-13), a canvas undo so atomic landing does not copy the canvas, paging inside a refresh form, MS5 (mock-squad scenarios for pinned and tip workers), the serve transport.
-* **V1a-q (the pure query layer): done** (2026-11-24, [QUERY.md](QUERY.md), `query.hpp`, `test_query`, 32 `query` metrics): `tree`, `file`, `blocks`, `layer(s)`, `events`, `revisions` as JSON in and out, bounded and scoped, the bundle proved to be the queries answered at once. **Left**: the `serve` process and transports (stdio, HTTP+SSE, W4), a store-side index so a selective layer filter costs its matches, a text backing from git, and V1a-page (the JS windowing and keyed patches, K0 to PASS).
-* **V1a: live views** ([AUTHORING.md](AUTHORING.md) section 3.1; measured need in [SCALE.md](SCALE.md) section 6.1): the `serve` process and the
-  bridge; scoped queries; texts by content id (B0); turns as deltas; per-pane keyed patches, windowed lists. Its steps:
-  * **the file tree on demand**: only open folders rendered, windowed; a toggle patches its rows; children listed when opened (streamed for very
-    large folders). Budget: 50 ms to expand a 1,588-file folder;
-  * **file content on demand**: texts by content id, fetched when opened, likely next files prefetched; the bundle form keeps working offline;
-  * **the block list in its chosen shape** (register row in BACKBONE.md 14.3: today one global list is 92% of the page at 20,000 blocks), scoped
-    and windowed.
-* **V1: comments**: the store's core (B1), the log as its own module (A18) with writers and Lamport clocks (A15), written locally in the per-writer
-  segment format; comment, reply and resolve from the viewer; scenarios as tests.
-* **V2: the agent's inbox and sync**: B2's inbox over the review layer, the CLI, views with budgets; the git-ref log backend (A17). **The acceptance
-  test is a real review round on this repository's docs** (AUTHORING.md section 1).
-
-* **Pinned and unpinned views** ([VIEWS.md](VIEWS.md), design only; the owner's idea 2026-11-24): a view as an observer that is pinned at a base revision (consistent editing, no pushed changes, `since` on request) or unpinned at the tip (refresh deltas as brief, elided, compacted or full; a live events channel for the viewport viewer). Builds on B1-B4 and the query layer; six open questions for the owner at the end of the doc. Its R-PIN requirements are proposed, not yet in REQUIREMENTS.md.
-
-## Then: phase 3, history and scale
-
-* **G1: the git document adapter and per-path history: done** (2026-11-24; A20, A21; outcome in [sessions/g1-git-history.md](sessions/g1-git-history.md)): `DocumentSource`, `RevisionIndex`, `GitSource`, `sub0canvas history`,
-  checked on an invented 200-commit repository against hand-checked truth. **Left**: the truth on real histories (S3: the brief's five functions of a sibling project, the Linux kernel; the owner approves
-  each download), persisted checkpoints (B1: `BlockIndex` has no reader), a stopping revision on `history` so extending a line does not re-read it, branch-to-main `carry` (P0, with `mergeBase`).
-* **S1: the compact, lazy index: done** (2026-11-24; SCALE.md 6.3): birth ids (A16), an id table, interned strings, no texts or token sets held (`TextSource`), an indexed revive, a compact event log. 319 bytes a block (target 200, the metric stays an xfail), cold build 2.6 times faster, resolve 29 times, revive 28 times. **Left**: the last 120 bytes (the event log behind a cursor in the log module; the public `Block`'s id and signature strings), the merge pass over live blocks (S2), the per-user cache shared across clones (A19), expiry of retired blocks, `layeredJson` and the query `events` page a few percent slower (output grew by the id width), the 10^7 and 10^9 runs.
-* **D1: the conformance corpus** per language, hand-checked outlines.
-* **S2** the sketch index and per-path checkpoints.
-* **P0: changes from local git** (after G1 and B4): footprints at block level, hunk fingerprints, stacks; S0's change sets as truth.
-* **P1, P2: overlap, conflict and lineage** (with S2): block-level relations; carved-from, supersedes, integrates, depends-on, ports; spike
-  coverage. Checked also on the owner's private reference topic, numbers only.
-* **B3 claims and notes: built** (2026-11-24, `claims.hpp`; BACKBONE 3.5 as built). Left for MS4: the two-actor mock scenarios (B8, B14) as claim tests, and Sub0Squad's fork executor taking write claims per section.
-* **B2 inboxes: library half done** (2026-11-24, `inbox.hpp`; BACKBONE.md 3.4 "As built"). **Left**: Sub0Squad's verdict through the store (the A/B over recorded replies, 0 changed bytes, R-BB-5's squad half), per-writer cursors when writers merge (V1), a stable item order across layer moves.
-* **B4 source anchors and the resolver: built** (2026-11-24, `anchor.hpp`, `resolver.hpp`; BACKBONE.md 5.1 "As built (B4)"). **Left**: name anchors (a block not yet written), the production edit protocol that binds an `editable` result to its base revision, SARIF and GitHub range conversion (G2), real Sub0Squad diagnostics as the anchor corpus (the receiving slice of [sessions/canvas-source-addressing.md](sessions/canvas-source-addressing.md)), a block-level content hash beside the context pair.
-
-## Any time
-
-* **Runtime evidence on canvas**: prototype an on-demand trace read in Sub0Squad using the existing issues and layers. Verify historical reads and
-  bounded detail on a real repair before routing any required interchange fields through B0 and the viewer read through V1a.
-  Brief: [sessions/canvas-runtime-evidence.md](sessions/canvas-runtime-evidence.md).
-
-* **Sub0Squad: measure the layer where it acts**: off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the
-  summary alone. A Sub0Squad PR with no library change ([INTEGRATION.md](INTEGRATION.md)).
-* **Sub0Platform: finish moving the C++ layer out of Sub0Squad**, so `app/` and `serve` adopt it (DECISIONS.md section 8). Before or during V1a.
-
-## Later: phase 4, widening (ordered after phase 2's acceptance round)
-
-* **Test coverage and assertion evidence (U8)**: after the C++ runtime-evidence slice, prove per-test import and a revision-bound source overlay.
-  Scope assertion observations and behavioral sensitivity separately. [Brief](sessions/canvas-test-coverage.md).
-
-* **Revision-bound prose verification**: attach a claim and its verification to one code block and a linked test. Record a new check
-  when the code, prose or supporting test changes, with historical evidence still readable in both directions. Receive it after the
-  runtime evidence slice through the backbone's claims and revision-aware anchors. [Brief](sessions/canvas-prose-verification.md) · [Issue #3](https://github.com/CraigHutchinson/Sub0Canvas/issues/3).
-
-* **Shared source addressing**: use revision-aware anchors for edits, diagnostics and linked evidence. Distinguish historical display
-  from a uniquely resolved edit target, and verify relocation, ambiguity and stale edits with one C++ receiving case.
-  [Brief](sessions/canvas-source-addressing.md) · [Failure and stack trace issue #2](https://github.com/CraigHutchinson/Sub0Canvas/issues/2).
-
-* **Revision-pinned viewpoint clones**: fork a saved actor viewpoint into an isolated session for Squad retries, with a verified checkpoint fingerprint and branch lineage. [Requirement](sessions/canvas-source-addressing.md#clone-a-viewpoint-at-a-pinned-revision) · [Issue #1](https://github.com/CraigHutchinson/Sub0Canvas/issues/1).
-
-* **V3-V5**: edits and suggestions, checks and push, a second actor.
-* **D2** data formats and declarative definitions; **D3** tree-sitter (the owner's answer to question 8, languages chosen by S3's numbers).
-* **S3** large public repositories cloned locally (each download approved); **S4** the sharded store.
-* **G2-G5**: GitHub items, issues and project items, events and subscriptions, write-back.
-* **P3-P5**: change views in the authoring tool; forge (configurable host) and tracker sources; topic inboxes and carve-out proposals.
-* **M1: a live sandbox for the mirror** (parked by the owner, 2026-11-18): a local forge (Gitea or Forgejo, a download to approve), a forge-CLI
-  stand-in over a bare remote, or a live test repository through `github --execute` ([MIRROR.md](MIRROR.md), "Parked").
-* **S3-private**: the budgets on the measured work-dominated monorepo, on the owner's machine, numbers only (SCALE.md section 7).
-* **E1**: an editor served by the same `serve` process. **C1**: collaborative review.
-* A SARIF export of the issues layer (R-EXP-1); the policy registry and loader (BACKBONE.md 14.4) when the first policy needs a second arm.
+1. **Cleanup to one current account (in progress).** One `layered-doc-1` shape in every writer, fixture and reader (no compatibility readers or options); one copy of each helper; dead code, stubs and unused CMake options removed; the interim event-log writer
+   (`eventLogNdjson`) retired; a quick-tier guard so none of it comes back. Every removed public symbol is listed under "v0.5.0 breaking" in [INTEGRATION.md](INTEGRATION.md). Golden fixtures stop being verbatim until the re-capture below (their README says so).
+2. **v0.5.0, then the Sub0Squad PR** (the tag needs the owner's go-ahead; one hosted full-tier run first, and once before a release the MSVC, macOS and sanitizer legs, which have never run). The PR: pin bump; `SnapshotSpec` (per-turn events, texts by id), `revisionFileName`
+   (`%2F` names), `issuesLayerMeta`, `applyEdits` returning `std::expected`, the changed item keys; the first `layeredJson` call and the inline shape are gone. Owner-run, not for an agent: a real attempt with compiler diagnostics at several places, re-captured through the
+   new writer to replace `fixtures/golden` (R-U1-4); the T0 comparison on the new pin (`half-written`, `undeclared-member`; needs the shared engine); Sub0Squad's adoption items ([MOCK_SQUAD.md](MOCK_SQUAD.md) section 7 is the feed-back list).
+3. **The gate and the test audit** ([TESTING.md](TESTING.md), "What a push waits for"): measure the runtime of each ctest test and benchmark row on a quiet machine (`ctest --preset quick --output-junit`, one quick `auto --report-only`); add the small variant rows and the
+   `test_gate_rows` tier test; re-baseline them only in one deliberate full steady run with an `accepted` log entry; raise the Sub0Perf items (per-row tier, corpus cache, confirmation cap, parallel rows) there; move the heavy rows to the full tier when the tier declaration exists.
+   Re-baseline the S1, `query` and `session` rows at the same time (the gate cannot judge them today). File the Sub0Platform issue for the `strerror` clang failure.
+4. **Mock-squad leftovers** ([MOCK_SQUAD.md](MOCK_SQUAD.md) section 4.1): a pinned actor's reads show the pin; an `advance` that lands edits through the loop; views with claims; fork; atomic land over two base revisions; `advance` with a moved held block; the inbox half of B2.
+   Regenerate `fixtures/mock` only for an intended byte change, with an "identical modulo" check.
+5. **Views and sessions, the limits** ([VIEWS.md](VIEWS.md) section 8): the quick ones as tests or `SessionPolicy` data, one at a time; the ones that need design (a per-scope change index, a canvas undo, paging inside a form) after. The channel (R-PIN-8, with Fabric W4), presence
+   and peer patches (R-PIN-13) stay planned; the seams are in place.
+6. **Sub0Fabric** (its own repository; F0 is lifted and CI is green): W2's rest (the read-only Sub0Log codec adapter, the budgets as benchmarks), **W3** the `query-1` protocol and the projection shared with `layeredJson`, with transport-independent contract tests;
+   **W4** the transports: the `IHttpFront` / `IHttpClient` seam, implementation A (Sub0Squad's HTTP/1.1 lifted onto Platform `net`, plus SSE), implementation B (Boost.Beast), the HTTP/2 route ([DECISIONS.md](DECISIONS.md) section 9); Canvas itself stays free of I/O (R-BB-7);
+   **W5** Sub0Squad's journal onto Fabric behind an option off by default (frames against lines: `lines` is the journal-1 file unchanged, `frames` is checksummed), the work overview reading through the merged reader, a deep link from a portal row to its canvas view;
+   **W6** Canvas events on Fabric, the git-ref store and the git-notes and SQLite proofs of concept beside the directory store (one store contract suite for all); **W7** the viewer shell integration (view definitions as data, work items as items, the optional Node viewer from the shared projection).
+7. **V1a, the live views** ([AUTHORING.md](AUTHORING.md) section 3.1; K0 shows 8 of 10 interactions breach their budget on 1,590 files): the `serve` process and its transports over the built query layer; the page's JS windowing and keyed patches (the file tree on demand, file content
+   on demand, the block list in its chosen shape, scoped and windowed), until `node tools/k0/run.mjs` reports PASS and its baseline is re-recorded; a store-side index so a selective layer filter costs its matches; a text backing from git. Then **V1 comments** (comment, reply and resolve from the page,
+   the log in the per-writer segment format) and **V2 the agent's inbox and sync** (the git-ref log backend); acceptance is a real review round on this repository's docs, recorded as a scenario.
+8. **V0, finished** ([sessions/v0-worktree-snapshot.md](sessions/v0-worktree-snapshot.md)): Markdown blocks through the provider seam, Markdown rendered in the viewer, the worktree's uncommitted state as a last turn, merge commits titled by the change they merge.
+9. **Block discovery D1, D2** ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 2.1 lists the open D0 faults): the conformance corpus per language with hand-checked outlines; data formats (YAML, JSON, XML, Markdown); the policy that skips unnamed nodes; `index.outliners` in the snapshot, one reviewed batch
+   with the format change.
+10. **S1's last 120 bytes and S2** ([SCALE.md](SCALE.md) 6.3): 319 B per block against the 200 B target (an expected failure in `perf/metrics.json`): the event log behind a cursor, the public `Block`'s id and signature strings; the merge pass over live blocks; sketches and per-path checkpoints; the per-user
+    cache shared across clones (A19); expiry of retired blocks; `layeredJson` and the query `events` page are a few percent slower since the id width grew. **S0's rest**: 10^7 and streamed 10^9 lines, profile B in the benchmarks, change sets with known lineage, the index's identities against the truth.
+    B1's rest: compact the item itself (interned writers, sources and layers; an out-of-line transition; ~200 B needs a columnar layout), extension-state checkpoints for the B2/B3 reducers, a lamport-keyed tail for a merged multi-writer log.
+11. **G1's rest and P0-P2**: the truth on real histories (S3: sibling projects and the Linux kernel; the owner approves each download); persisted checkpoints (needs a `BlockIndex` reader); a stopping revision on `history`; branch-to-main `carry` with `mergeBase`. Then **P0** changes from local git
+    (footprints at block level, hunk fingerprints, stacks; S0's change sets as truth), **P1, P2** overlap, conflict and lineage (carved-from, supersedes, integrates, depends-on, ports; spike coverage), checked also on the owner's private reference topic, numbers only. First the change-view gaps the mirror
+    exposes ([CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10: reverted state, stale stacks, evil merges, file footprints, guards, column units, case-only paths, regenerated files).
+12. **B2, B3, B4 on the consumer side**: Sub0Squad's verdict through the store (the A/B over recorded replies, 0 changed bytes, R-BB-5's squad half), per-writer cursors when writers merge, a stable item order across layer moves; Sub0Squad's fork executor taking write claims per section; name anchors, the production
+    edit protocol that binds an `editable` result to its base revision, SARIF and GitHub range conversion (G2), real Sub0Squad diagnostics as the anchor corpus ([sessions/canvas-source-addressing.md](sessions/canvas-source-addressing.md)), a block-level content hash beside the context pair.
+13. **C++23 adoption, the rest**: a `std::ranges` pass over the gated hot files (store, query, claims, view, session, resolver, inbox, `BlockIndex`), only with an interleaved A/B per file on a quiet machine, keeping only what the gate shows is not slower; the raw index loops that remain (mostly in those files);
+    `std::to_string` chains of three or more integer parts (never `std::to_string(double)`: it is `%f` and `std::format` prints the shortest form; `views::enumerate`'s index is `ptrdiff_t`, a `-Wsign-compare` error against `size_t`, so leave such loops; views can defeat vectorisation); the owner's picks of `std::expected` conversions ([DECISIONS.md](DECISIONS.md) section 9).
+14. **Any time, no library change**: Sub0Squad measures the issues layer where it acts (off against adaptive on bugs-10 and other clipped cases, 10 runs per arm; inline detail against the summary alone); runtime evidence from Sub0Squad on canvas ([sessions/canvas-runtime-evidence.md](sessions/canvas-runtime-evidence.md));
+    Sub0Platform finishes moving the C++ layer out of Sub0Squad so `app/` and `serve` adopt it ([sessions/platform-migration.md](sessions/platform-migration.md)).
+15. **Phase 4, widening** (ordered after phase 2's acceptance round, by what the owner's use showed): test coverage and assertion evidence ([sessions/canvas-test-coverage.md](sessions/canvas-test-coverage.md)); revision-bound prose verification ([sessions/canvas-prose-verification.md](sessions/canvas-prose-verification.md),
+    [issue #3](https://github.com/CraigHutchinson/Sub0Canvas/issues/3)); shared source addressing ([issue #2](https://github.com/CraigHutchinson/Sub0Canvas/issues/2)); revision-pinned viewpoint clones ([issue #1](https://github.com/CraigHutchinson/Sub0Canvas/issues/1),
+    [requirement](sessions/canvas-source-addressing.md#clone-a-viewpoint-at-a-pinned-revision)); V3-V5 (edits and suggestions, checks and push, a second actor); D3 tree-sitter (languages chosen by S3's numbers); S3 large public repositories, S3-private (the budgets on the measured work-dominated monorepo, numbers only); S4 the sharded
+    store; G2-G5 (GitHub items, issues and project items, events and subscriptions, write-back); P3-P5 (change views in the authoring tool, forge and tracker sources, topic inboxes and carve-out proposals); M1, a live sandbox for the mirror (parked: a local forge, a forge-CLI stand-in, or a live test repository
+    through `github --execute`, [MIRROR.md](MIRROR.md)); E1 an editor served by the same `serve`; C1 collaborative review; a SARIF export of the issues layer (R-EXP-1); the policy registry and loader (BACKBONE.md 14.4) when the first policy needs a second arm.

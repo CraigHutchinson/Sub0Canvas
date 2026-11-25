@@ -1,6 +1,6 @@
 # The layered document: one canvas, many views, bound by stable block identities
 
-Status: **slices 1 and 2 built** in this library (`lib/include/sub0canvas/doc_layers.hpp`, `lib/src/doc_layers.cpp`, `test_doc_layers`): the block index,
+Status: **built** in this library (slices 1 and 2, then the compact index of S1) (`lib/include/sub0canvas/doc_layers.hpp`, `lib/src/doc_layers.cpp`, `test_doc_layers`): the block index,
 the issues layer, its summary, detail, inline detail and the `layered-doc-1` writer. The review and prose layers, and everything in
 [BACKBONE.md](BACKBONE.md), are design. This document moved here from Sub0Squad's `docs/LAYERED_DOCUMENT.md` on 2026-11-18; Sub0Squad keeps only the
 squad's integration and its tier 0 measurements (summarised at the end and linked).

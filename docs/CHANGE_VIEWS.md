@@ -113,7 +113,7 @@ checks are one query away, not a separate tool.
 | a tracker | items | topics (an issue and its key), their links (implements, ports, duplicates), status | a separate adapter per tracker; the topic policy maps its keys into titles and branches |
 
 Private data stays private: interchange files and caches of a private repository are private (DIRECTION.md section 2, rule 5), they live under
-the git directory or the user's state directory ([DECISIONS.md](DECISIONS.md) section 3), and nothing from them is written into a public
+the git directory or the user's state directory ([DECISIONS.md](DECISIONS.md) section 2), and nothing from them is written into a public
 repository. A change view of a private monorepo runs entirely on the owner's machine.
 
 ## 6. Agents in a change view

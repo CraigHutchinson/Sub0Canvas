@@ -92,5 +92,5 @@ Deferred by the owner (2026-11-18). The state needed is already captured, so it 
 * **A `gh` stand-in.** An in-process or on-`PATH` stand-in for the forge CLI that records the plan's steps into a local store over a bare
   remote. It would test the `github` mode end to end without any forge.
 * **Git-native review.** git-appraise (reviews in git notes) and Radicle (patches as collaborative objects in git) are prior art for pull
-  requests kept in git itself. They fit DECISIONS.md section 3 (annotations in git refs).
+  requests kept in git itself. They fit DECISIONS.md section 2 (annotations in git refs).
 * **A live public repository** (`--execute`, for example `sub0canvas_test1234`) for G2 and P4's forge adapter against real data.

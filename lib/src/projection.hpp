@@ -1,5 +1,5 @@
 #pragma once
-// The projection of the document's data into JSON: ONE definition (docs/reviews/2026-11-23-fabric-portal-store.md D11, docs/QUERY.md section 7). The snapshot
+// The projection of the document's data into JSON: ONE definition (docs/DECISIONS.md section 5, docs/QUERY.md section 7). The snapshot
 // (`layeredJson`, the bundle, `layered-doc-1`) and the live query answers (`query.hpp`, `query-1`) both write a block, a block event, an anchor, a layer item and
 // a file's revision reference through these functions, so the bundle is "every query answered at once" by construction and a field added here reaches both.
 // Internal: simdjson stays out of public headers.

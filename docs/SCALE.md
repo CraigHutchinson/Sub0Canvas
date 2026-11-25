@@ -90,7 +90,7 @@ Added from profile B (2026-11-18):
 | reverse links | item key, items linking to it | lineage, threads, "what implements this" | `item.link` |
 
 Each index is a **cache**: rebuildable from the document source and the log, never the truth (BACKBONE.md section 4). Each lives in the cache
-layer of [DECISIONS.md](DECISIONS.md) section 3, sharded like the store.
+layer of [DECISIONS.md](DECISIONS.md) section 2, sharded like the store.
 
 ## 6. Budgets
 

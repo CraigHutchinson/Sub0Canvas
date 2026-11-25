@@ -136,7 +136,7 @@ describes the first small-context consumer.
 | actors | `person/<name>`, `agent/<name>`; every event names one. One person now; more later with no new mechanism (claims give presence, BACKBONE.md 3.5) |
 
 **Where the review log lives**: through the store's `Log` interface, so the answer changes a backend, not the tool. Recommended
-([DECISIONS.md](DECISIONS.md) section 3, A17; for the owner to confirm, [PLAN.md](PLAN.md) O2): one append-only segment per writer, shared
+([DECISIONS.md](DECISIONS.md) section 2, A17; decided 2026-11-23): one append-only segment per writer, shared
 through git refs of its own (`refs/sub0canvas/...`, synced by fetch and push, never in branches or the working tree), private items under a
 namespace that is never pushed. V1 writes that segment format locally; V2 adds the git-ref backend. The tool's configuration (identity policy,
 command allowlist) is committed under `.sub0canvas/`, like any project configuration.

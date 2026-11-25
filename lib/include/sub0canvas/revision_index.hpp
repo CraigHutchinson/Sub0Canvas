@@ -5,7 +5,7 @@
 /// revision's changes to a `BlockIndex`, and keeps a checkpoint (a copy of the whole index state) every N revisions, so a question about any revision
 /// replays at most N-1 revisions from the nearest checkpoint.
 ///
-/// Mapping rules, each a decision (docs/DECISIONS.md):
+/// Mapping rules, each a decision (docs/BACKBONE.md section 6, "As built (G1)"):
 ///   * `BlockEvent.turn` is an int, so a replay numbers its revisions: ordinal 0 is the BASELINE (the state before the first replayed revision: empty at a
 ///     root, the listing at the parent when a `maxRevisions` window starts mid-history), ordinal k the k-th revision of the line. `history` gives the
 ///     revision id beside every event; the ordinal never leaves this class's answers except as `HistoryStep::ordinal` and `Replayed::ordinal`.

@@ -145,7 +145,7 @@ public:
     void update(const std::string& path, const std::string& text);
     /// The turn later events are stamped with.
     void setTurn(int turn) { turn_ = turn; }
-    /// The revision a block born now is born in, for its birth id (A16, DECISIONS.md section 4): an id is a hash of (this, path, signature, ordinal among identical
+    /// The revision a block born now is born in, for its birth id (A16, DECISIONS.md section 3): an id is a hash of (this, path, signature, ordinal among identical
     /// births), so every replay of the same history derives the same ids with no counter. Empty (the default): the turn number stands in.
     void setBirthRevision(std::string_view revision);
 

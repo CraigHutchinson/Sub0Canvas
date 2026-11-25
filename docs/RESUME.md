@@ -1,101 +1,40 @@
-# Where Sub0Canvas stands (2026-11-24)
+# Where Sub0Canvas stands (2026-11-25)
 
-Status: living (2026-11-24). Rewritten at the end of each working session.
+Status: living. Rewritten at the end of each working session. What is next is [BACKLOG.md](BACKLOG.md); why things are as they are is [DECISIONS.md](DECISIONS.md); a task with its own brief is in [sessions/](sessions/README.md).
 
-Read this first when resuming. The plan, in phases, and the one sheet of decisions waiting on the owner are [PLAN.md](PLAN.md); what is next,
-in order, is [BACKLOG.md](BACKLOG.md); a task with a brief is in [sessions/](sessions/README.md).
+## What exists
 
-**Next session: start at [sessions/backbone-next-wave.md](sessions/backbone-next-wave.md)** (what is pushed and what is not, the order of the remaining backbone work, the test and gate audit in [TEST_AUDIT.md](TEST_AUDIT.md)). The tables below say what is built; the rows saying "on its branch" are merged to `main` since, and not yet released.
+Released: **v0.4.0** (the full tier green); Sub0Squad pins v0.3.0 and takes the next tag through a pull request ([INTEGRATION.md](INTEGRATION.md)). `main` is v0.4.0 plus the C++23 adoption (A0-D2) and the cleanup in progress.
 
-## Released
+| area | design doc |
+|---|---|
+| canvas: revisions, transactions, rebase, revert, tolerant edits, atomic `applyReply`, turn control, folded views | [CANVAS.md](CANVAS.md) |
+| block index (compact and lazy, deterministic birth ids), identity rules, the issues layer, `layered-doc-1` | [LAYERED_DOCUMENT.md](LAYERED_DOCUMENT.md), [SCALE.md](SCALE.md) 6.3 |
+| block discovery behind a provider seam (`braces@3`, `indent@2`) | [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 2.1 |
+| store core, event log (`FileLog`), inboxes, claims and notes, source anchors and the resolver | [BACKBONE.md](BACKBONE.md) (the "As built" paragraphs of sections 3 to 5) |
+| git document source, per-scope `RevisionIndex`, `sub0canvas history`, `sub0canvas snapshot` | [BACKBONE.md](BACKBONE.md) section 6, [SCALE.md](SCALE.md) 6.2 |
+| the query layer `query-1` (pure, no transport) | [QUERY.md](QUERY.md) |
+| views and sessions: pinned and tip workers, four refresh forms, containment | [VIEWS.md](VIEWS.md) section 8 |
+| the viewer (static page, `npm test`) and its interactivity benchmark | [README.md](../README.md), [K0.md](K0.md) |
+| the mock squad: a consumer project over the public API, 22 scenarios, the consumer contract | [MOCK_SQUAD.md](MOCK_SQUAD.md) |
+| the scale harness (seeded corpus, `Sub0Canvas_Bench`, deterministic metrics in every tier, timing local) | [TESTING.md](TESTING.md), [SCALE.md](SCALE.md) 6.0 |
+| the synthetic mirror (an invented project, its truth and edge cases) | [MIRROR.md](MIRROR.md) |
+| requirements and the proving ladder | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
 
-**v0.3.0** (tag on 8bf7024, full CI tier green): Sub0Squad pins it (2026-11-23). Adds `applyReply` (atomic) and turn control, moved from Sub0Squad, with `Runaway::detail` and `endsInsideBlock`.
+Designed, not built: the authoring tool beyond the snapshot ([AUTHORING.md](AUTHORING.md)), change views ([CHANGE_VIEWS.md](CHANGE_VIEWS.md)), GitHub and the other adapters, the channel and presence ([VIEWS.md](VIEWS.md)), Sub0Fabric's transports.
 
-| part | state | evidence |
-|---|---|---|
-| canvas: revisions, transactions, rebase, revert, the reply parser | built, tested (`test_edits`) | [CANVAS.md](CANVAS.md); proved on real models in Sub0Squad |
-| folded views and reads (`outline`) | built, tested | [CANVAS.md](CANVAS.md) |
-| tolerant search/replace (`edits`), indentation-preserving | built, tested | [CANVAS.md](CANVAS.md) |
-| block index: stable ids through edits, rewrites, renames, splits, merges, moves | built, tested (`test_doc_layers`) | [LAYERED_DOCUMENT.md](LAYERED_DOCUMENT.md) |
-| issues layer: `parseIssues`, `layerSummary`, `layerDetail`, `layerInline` (slice 2), `layerFocus`, READ ISSUE, `layered-doc-1` | built, tested | [LAYERED_DOCUMENT.md](LAYERED_DOCUMENT.md); measured on Sub0Squad tier 0 (slice 1, slice 2) |
-| the viewer | built, tested (`npm test`, `test_viewer` under ctest) | [README.md](../README.md) |
-| CI (family standard), test presets, `.ci/local.json`, pre-push gate | built | [AGENTS.md](../AGENTS.md) |
-| `applyReply` (atomic), turn control, the 30 recorded-reply cases, moved from Sub0Squad | built, released in v0.3.0 | `test_replies`, `test_turn_control`; [DECISIONS.md](DECISIONS.md) section 2 |
-| the compact, lazy block index (S1): `BlockIndex` holds no text or token sets, ids are deterministic birth ids (A16, 13 characters), `TextSource` is the seam for text, `events()` is an `EventLog`; `fixtures/mock` regenerated (ids only changed); `test_block_index` |
-| the scale harness (S0, in part): the seeded corpus generator and `Sub0Canvas_Bench` (timing local only; 47 deterministic metrics in every tier), a first baseline, the numbers in SCALE.md section 6.0 | built, not yet released | `test_corpus`, `Sub0Canvas_Bench_metrics`, [TESTING.md](TESTING.md) "Performance" |
-| the mock squad (MS0): a consumer project fetching the library through CPM, a reference loop and gate, ten hand-written scenarios frozen in `fixtures/mock`, the consumer contract (R-CONS); the version bumped to 0.3.0 | built, not yet released (the next tag carries it) | `test_consumer_mock_squad` (label `full`), [MOCK_SQUAD.md](MOCK_SQUAD.md) |
-| G1: the document source seam (`source.hpp`), pure git plumbing parsers, the per-scope `RevisionIndex` (first-parent replay, checkpoints, rename chase, carry), the git source and `sub0canvas history` (`app/`), proved on an invented 200-commit repository against hand-checked truth, live git included | built on its branch (2026-11-24), not yet released | `test_revision_index`, `test/history.test.js`, [sessions/g1-git-history.md](sessions/g1-git-history.md) Outcome |
-| claims and notes (B3): numeric-time leases on items, blocks and files (`claims.hpp`), rules as a `ClaimPolicy` the client may supply, concurrent takes settled by merge order, block claims and notes that follow merges and splits, `note` events; pure, `store.cpp` unchanged | built, not yet released; not yet used by a consumer | `test_claims`, 14 claim metrics in `perf/metrics.json` |
-| B2 inboxes: `SubscriptionQuery`, `Subscription`, subscribe/unsubscribe/acknowledge as events with their reducers (`registerSubscriptionReducers`), `InboxReader` (index by layer, path, block, kind; cost = events returned), the verdict through an inbox byte-identical to `Store::items` + `layerSummary` on a 5-turn scenario (R-BB-5, library half) | built on its branch (2026-11-24), not yet released; the Sub0Squad A/B over recorded replies not run | `test_inbox`, 10 `inbox` metrics in `perf/metrics.json`, BACKBONE.md section 3.4 "As built (B2)" |
-| B4 source anchors and the resolver: `SourceAnchor` (quote, context pair, block identity, revision), `AnchorResolver` over a `CanvasDocument` or a `HistoryDocument` (the `RevisionIndex` through the `DocumentSource` seam); `resolved` only for the exact quote once in its unchanged block, everything else `moved` with a confidence and a reason or `orphaned`; policy as data | built on its branch (2026-11-24), not yet released; no consumer yet | `test_resolver` (31 mock-attempt and 24 edit-stream anchors, adversarial cases), 11 `resolver` metrics in `perf/metrics.json`, BACKBONE.md 5.1 "As built (B4)" |
-| the store core (B1): event envelope and log seam (`event.hpp`), `Store` with a reducer registry, `putLayer` reconcile, state, tags, links, item data, a query-scoped snapshot; pure; envelope frozen with no `seq`/`type` (BACKBONE A22) | built, not yet released; B1b (2026-11-24) adds `FileLog` (`app/file_log.*`), `Store::checkpoint`/`restore`, `StoreOptions::retainEvents`, the store snapshot in `layeredJson` (opt-in); MS3 runs the mock loop through a store; claims and inboxes: above | `test_store`, `test_file_log`, `test_consumer_contract` (B15, G4), 21 store metrics in `perf/metrics.json` |
-| V1a-q, the pure query layer of the live views: `QueryServer::handle(json) -> json` over files at revisions, the index and the store; `tree`, `file` (by content id, `have`), `revisions`, `blocks`, `layers`, `layer` (query, cursor, scan bound), `events`, `info`; bounds and unknown-member handling as policy data; written through one projection shared with `layeredJson` (D11); no transport | built on its branch (2026-11-24), not yet released; the server, transports and the page's windowing are not built | `test_query` (the mock turns read back through the queries equal their snapshots), 32 `query` metrics, [QUERY.md](QUERY.md) |
-| views and sessions (VIEWS.md): `Pin`, `View` records as events (`registerViewReducers`, `LogViewStore`), `ScratchLayer` overlay, `since`/`advance`/`fork`/`unpin`/`refresh` in four forms, `Workspace` of `Session`s with isolation, data quotas, numeric-clock expiry, resume | built on its branch (2026-11-24), not yet released; no channel, no presence, no consumer yet | `test_views_sessions`, 16 `session` metrics, VIEWS.md `As built` |
-| requirements catalogue; tests through a driver; the library's contract tested here (views, skeletons, a 1,200-sequence canvas model check, golden replay) | built, released in v0.3.0 | [REQUIREMENTS.md](REQUIREMENTS.md), [TESTING.md](TESTING.md) |
+## Next
 
-## The last measured result
+The cleanup to one current account is in progress (backlog item 1); then v0.5.0 and the Sub0Squad PR (item 2). Start the next session at [BACKLOG.md](BACKLOG.md).
 
-Slice 2 on Sub0Squad's tier 0 (80 runs, all passed; Sub0Squad `docs/LAYERED_DOCUMENT.md`, "Slice 2 on tier 0"): the issues layer pays only where
-the gate's own text clips (more than 6 failures); shown by default with inline detail it regressed three of four cases. Sub0Squad's default is now
-adaptive with a threshold of 6. The noise between identical arms reached 67% on one case.
+## Known gaps
 
-## Designed, not built
-
-**The direction of 2026-11-18** ([DIRECTION.md](DIRECTION.md) sections 3 and 4): the viewer becomes an **authoring tool** and is the first use case to
-invest in, proved on this project's own design work ([AUTHORING.md](AUTHORING.md), V0-V5); block discovery becomes language-aware behind a provider
-seam, drawing on prior art ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md), D0-D3); what is not clear-cut stays an open A/B decision, with policies as data
-that a client may supply ([BACKBONE.md](BACKBONE.md) sections 14.3-14.5). **[DECISIONS.md](DECISIONS.md)** (direction section 5) works through
-every open question with options, pros and cons: storage layered by kind with shared annotations in git refs per writer, deterministic birth ids,
-the Sub0 glue libraries to adopt, Sub0Fabric kept open.
-
-[BACKBONE.md](BACKBONE.md): items with state, tags and links; an event log; subscriptions as inboxes; claims; views; the store; source adapters
-(local git, GitHub); a revision-aware index replayed over history; scale ([SCALE.md](SCALE.md)); slices B0-B4, G1-G5, S0-S4,
-E1, C1.
-
-**Scale and change views (2026-11-18, later).** Scale has one home, [SCALE.md](SCALE.md), with a second target profile measured on a private
-monorepo (440,000 files, most not code; 430 GB of git; about 1,700 pull requests a week): R-SCALE-5 to 9 and amendments A19-A21 follow from it.
-[CHANGE_VIEWS.md](CHANGE_VIEWS.md) designs pull requests, spikes and their dependencies as layers (U12, R-CHG, P0-P5), checked against the shape
-of a private 25-change reference topic. This public repository never names its private references; a
-local-only guard in the owner's clone enforces it (AGENTS.md).
-
-**The synthetic mirror (2026-11-18, built).** `tools/mirror/` generates an invented project with a work-dominated repository's shape, a 31-change
-topic and its exact truth, plus an edge-case register of what the canvas does not handle yet ([MIRROR.md](MIRROR.md)); `fixtures/mirror/seed-1/`
-is checked by `npm test`. Its gaps are [CHANGE_VIEWS.md](CHANGE_VIEWS.md) section 10. A live forge sandbox is parked (M1).
-
-**Real-repository scale and the viewer's interactivity (2026-11-18, later).** `sub0canvas snapshot` (`app/`) and `tools/serve.mjs` view a local
-repository's subtree straight from git. Measured up to 19,000 files ([SCALE.md](SCALE.md) section 6.1): snapshots take seconds, whole bundles grow
-as files times turns, and the page breaks first (about 1 s per click at 20,000 blocks). The answer is designed, not built: live views patched by
-events ([AUTHORING.md](AUTHORING.md) section 3.1, V1a), interactivity budgets with baselines (section 3.2), and in the backlog K0 (a brief:
-[sessions/k0-ui-kpis.md](sessions/k0-ui-kpis.md)), the file tree and content on demand, and a scoped block list.
-
-**Consolidated (2026-11-18, night).** [PLAN.md](PLAN.md) reconciles all of the above: a review that found and fixed ten disagreements between
-the day's documents (the review log's location, A2 against A16, section 11, spike ownership, one format revision for B0 and V1a, and others), four
-phases with their gates, and **one sheet of thirteen decisions for the owner** (O1-O13).
-
-**Decided (2026-11-23).** The owner answered the sheet ([PLAN.md](PLAN.md) section 3.1): O1-O5, O7-O9, O12, O13 confirmed; O2 amended (the storage
-seam is proved by the directory store plus git notes and SQLite proofs of concept, gated at build and release); **Sub0Fabric is built now**; the
-server, Squad's store and the portal were settled by [the architecture review](reviews/2026-11-23-fabric-portal-store.md) (native HTTP default,
-HTTP/2 where tooling supports it; physical per writer, logical per project; the portal joined to the views in three steps). Plan: that review's
-waves W0-W7; W0 (documents) is done, W1 (v0.3.0 and the Squad adoption) is next.
-
-## Known gaps and debts
-
-* Issue #4 (the full tier red on Linux clang) is **closed** (2026-11-24): two unspecified-evaluation-order expressions, fixed; the full tier is green. Rule: [MOCK_SQUAD.md](MOCK_SQUAD.md) section 8. MS4 and MS5 (claims, pinned and tip workers) are built into the mock squad.
-* No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4; B0 re-captures).
-* Block discovery (D0, 2026-11-23): the seam is built (`blocks.hpp`, providers `braces@3`, `indent@2`) and the faults of block comments, names (generics, arrow functions, Go receivers, operators)
-  and Python decorators are fixed. Still open: Rust lifetimes on a signature line, CRLF text in Allman style (a `\r` on every line), nested functions and classes as nodes, unnamed nodes still carry an
-  identity, `index.outliners` not in the snapshot (it regenerates the fixtures), and YAML, JSON, XML and Markdown have no blocks (D1-D2; [sessions/d0-block-discovery-seam.md](sessions/d0-block-discovery-seam.md)).
-
-* **B0 steps 1-3 are done here** (MS1, 2026-11-23): the library writes item `id`, anchor `column` and range, `layerMeta`, `revisionId`, `textId`, `policies`, per-turn `events` with `eventsFrom` and texts by id (`SnapshotSpec`), and the viewer reads both shapes. Not done: a real Sub0Squad attempt through it (R-U1-4), the release and the Sub0Squad PR (`%2F` naming included).
-* `BlockIndex` keeps every file's text and two string sets per block, and scans every retired block on revive: fine for one task, not for history or
-  scale (SCALE.md, slices S0-S2). S1 is built (SCALE.md 6.3): the compact, lazy `BlockIndex` (birth ids, no held text, an indexed revive): 319 bytes per block against the 200 target (from 2,613; the metric stays an xfail), the revive probe no longer scans the retired set. S2 is next (sketches, the merge pass).
-* The benchmarks run through the family's performance tooling fetched from a Sub0Math commit that is **not pushed yet** (`CMakeLists.txt` pins it with a TODO): until it is, a build needs
-  `CPM_Sub0Math_SOURCE`, and the workflows (pinned to a shared-workflows commit that is not pushed either) must not be pushed first.
-* Sub0Squad still calls the first-version `layeredJson`, which writes every event from 0 (cumulative, with `eventsFrom` 0) and inline texts; it moves to `SnapshotSpec` in its PR.
+* No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4); the owner-run re-capture replaces the golden fixtures.
+* Heap per block is 319 B against the 200 B target (an expected failure in `perf/metrics.json`); `BlockIndex` has no reader, so checkpoints are not persisted.
+* Block discovery: the open faults are listed in [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 2.1; YAML, JSON, XML and Markdown have no blocks.
+* The gate cannot judge the rows added since the last re-record, and a confirmed regression makes a push slow ([TESTING.md](TESTING.md), "What a push waits for").
+* The hosted full tier has not run on MSVC, macOS or the sanitizers.
 
 ## Where things are
 
-* Repository: [github.com/CraigHutchinson/Sub0Canvas](https://github.com/CraigHutchinson/Sub0Canvas) (public; the old lower-case URL redirects).
-* The consumer: [Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad) (public); its canvas loop is `src/canvas_agent.cpp`, its measurements
-  `docs/LAYERED_DOCUMENT.md`, the A/B data `out/runs/layers-*` in a local checkout (not in git).
-* The family CI standard: CraigHutchinson/.github `docs/ci-strategy.md` (a sibling clone `../CraigHutchinson.github` holds its tools).
+Repository: [github.com/CraigHutchinson/Sub0Canvas](https://github.com/CraigHutchinson/Sub0Canvas) (public). Consumer: [Sub0Squad](https://github.com/CraigHutchinson/Sub0Squad), whose canvas loop is `src/canvas_agent.cpp` and whose measurements are its `docs/LAYERED_DOCUMENT.md`. Family CI standard: CraigHutchinson/.github `docs/ci-strategy.md`.
