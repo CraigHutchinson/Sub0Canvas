@@ -9,6 +9,7 @@ the ladder in [TESTING.md](TESTING.md), and only then integrated, one iteration 
 ## How Sub0Squad consumes the library
 
 * `cmake/dependencies.cmake` pins a tag: `CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.2.x)`.
+* **Pinning the library.** Release builds pin a tag (`GIT_TAG v0.x.y`), never a branch or a bare SHA. During development, track the latest by pointing `CPM_Sub0Canvas_SOURCE` at a sibling checkout (above); the override beats the pin, so configure once without it before pushing a pin. This repository's own dependencies follow the same rule (AGENTS.md "Dependencies"); the helper is to move to the shared Sub0Perf / Sub0Platform tooling for Sub0Fabric and Sub0Squad.
 * `include/sub0squad/{outline,edits,canvas,doc_layers}.hpp` are forwarding headers (`using namespace sub0canvas`), so squad code is unchanged.
 * What stays in Sub0Squad: the canvas loop (`src/canvas_agent.cpp`: `layeredVerdict`, READ ISSUE, the `SUB0SQUAD_ISSUE_LAYER` and
   `SUB0SQUAD_ISSUE_INLINE` switches, `layers/turn-N.json` per turn), the shim that passes those switches to jobs (`src/shim.cpp`), the gate's

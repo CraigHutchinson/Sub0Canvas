@@ -74,3 +74,10 @@ The T0 comparison on the new pin (`half-written`, `undeclared-member`; needs the
 Commit as you go with specific `git add` paths (never `commit -a`); confirm before pushing or tagging; never skip hooks or edit `.githooks/pre-push`; accept a metric
 change only through `bench_check.py accept` with a reason; record a decision where PLAN.md section 3.2 holds the others; tidy (worktrees, scratch files, branches) after
 each iteration; use the sub-agents the owner named (opus to plan, haiku to mine data, sonnet to implement) and resume them with `SendMessage` after a rate limit.
+
+## Outcome: Dependency refs (DEP-1)
+
+Dependency refs are explicit and in one table: `cmake/sub0_deps_pinned.cmake` (Sub0Platform `v0.2.0`, Sub0Perf `3518ede` as a SHA because it has no tag, Sub0Canvas `v0.4.0` for the consumer rung); simdjson is `v5.1.1` inline.
+The top level and `consumer/mock_squad` read the table; `CPM_<Name>_SOURCE` overrides a pin (AGENTS.md "Dependencies"). `check_deps_policy` (quick tier) fails on a 40-hex `GIT_TAG` outside the table. CI cache keys include the table.
+The first design (a `latest` mode resolving main through `git ls-remote`, a lock file, an offline fallback) was dropped on the owner's direction: the local override is the "latest" story.
+Remains: Sub0Fabric and Sub0Squad adopting the same table and rule, ideally from shared Sub0Perf / Sub0Platform tooling; Sub0Perf gets a tag so the table can drop its SHA.
