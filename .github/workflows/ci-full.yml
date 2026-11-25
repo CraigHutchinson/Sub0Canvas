@@ -36,7 +36,7 @@ jobs:
     if: needs.gate.outputs.run == 'true'
     uses: CraigHutchinson/.github/.github/workflows/cpp-full.yml@bc99324d190d98cd336bbebafcc2a98fd69ef9cb
     with:
-      cpm-cache-key-files: CMakeLists.txt cmake/get_cpm.cmake
+      cpm-cache-key-files: CMakeLists.txt cmake/get_cpm.cmake cmake/sub0_deps_pinned.cmake
       windows: true
       windows-toolchain: mingw-ucrt
       test-args: --timeout 600

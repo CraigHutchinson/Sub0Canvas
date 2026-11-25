@@ -41,6 +41,6 @@ jobs:
     uses: CraigHutchinson/.github/.github/workflows/cpp-smoke.yml@bc99324d190d98cd336bbebafcc2a98fd69ef9cb
     with:
       apt-packages: g++-14 ninja-build ccache
-      cpm-cache-key-files: CMakeLists.txt cmake/get_cpm.cmake
+      cpm-cache-key-files: CMakeLists.txt cmake/get_cpm.cmake cmake/sub0_deps_pinned.cmake
       timeout-minutes: 20
     permissions: { contents: read, statuses: write, actions: read, pull-requests: read, checks: read }

@@ -10,15 +10,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MOCK_SQUAD_REPO ${CMAKE_CURRENT_LIST_DIR}/../..)
 include(${MOCK_SQUAD_REPO}/cmake/get_cpm.cmake)
+include(${MOCK_SQUAD_REPO}/cmake/sub0_deps_pinned.cmake)   # the one table of refs, the same file by path (no copy)
 include(${MOCK_SQUAD_REPO}/cmake/print_link.cmake)   # std::println links on every toolchain (the mock squad tools print)
 
-# Without the override (CPM_Sub0Canvas_SOURCE) this fetches the released tag: a deliberate pin, not the checkout.
-CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG v0.4.0)
-# The test helper, as the library's own tests use it. The top level passes CPM_Sub0Platform_SOURCE, so its pin is the one used there; this one serves a standalone run.
+# Without the override (CPM_Sub0Canvas_SOURCE) this fetches the table's tag (cmake/sub0_deps_pinned.cmake): a deliberate pin, not the checkout.
+CPMAddPackage(NAME Sub0Canvas GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Canvas.git GIT_TAG ${SUB0_PIN_Sub0Canvas})
+# The test helper, as the library's own tests use it. The top level passes CPM_Sub0Platform_SOURCE, so its ref is the one used there; this one serves a standalone run.
 if(NOT TARGET Sub0Platform::sub0platform)
   CPMAddPackage(NAME Sub0Platform
     GIT_REPOSITORY https://github.com/CraigHutchinson/Sub0Platform.git
-    GIT_TAG 5feccdf226046cc790214bc30793832a1888ce4b
+    GIT_TAG ${SUB0_PIN_Sub0Platform}
     SOURCE_SUBDIR cpp)
 endif()
 
