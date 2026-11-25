@@ -1,4 +1,4 @@
-// G1's benchmarks of the revision index (docs/SCALE.md section 4; docs/sessions/g1-git-history.md), linked into Sub0Canvas_Bench and registered from its main
+// G1's benchmarks of the revision index (docs/SCALE.md sections 4 and 6.2), linked into Sub0Canvas_Bench and registered from its main
 // (`historyBenchmarks`). Library only: a synthetic DocumentSource over the seeded corpus and its edit stream, so the 200-commit history is the same on every machine
 // and no git runs. The deterministic metrics say that cost followed the changes (R-SCALE-1, R-SCALE-9): one `BlockIndex::update` per path a commit changed, a scope
 // replays only the commits that touched it, a checkpoint bounds a replay; the timing rows are measured locally only.

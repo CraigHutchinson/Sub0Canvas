@@ -110,7 +110,7 @@ profile B in the benchmarks, change sets with known lineage (spike, carve-outs, 
 
 The benchmarks are `bench/bench_canvas.cpp`, the executable `Sub0Canvas_Bench`, built with `SUB0CANVAS_BUILD_BENCHMARKS` (on at the top level) through the family's performance
 tooling (sub0perf, in the Sub0Perf repository, fetched by CPM for its tooling only at a pinned commit, `CPM_Sub0Perf_SOURCE` on the dev machine). Library only,
-on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two kinds of result, kept apart (the family rule):
+on the seeded corpus; the numbers are in [SCALE.md](SCALE.md) section 6. Two hand-written scans of the corpus text (a brace scan and a `def` scan) are the environment controls of the tooling and the pair references for `foldRegions`. Two kinds of result, kept apart (the family rule):
 
 | kind | what | where it runs |
 |---|---|---|

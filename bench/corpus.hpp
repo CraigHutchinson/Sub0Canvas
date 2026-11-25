@@ -1,6 +1,6 @@
 #pragma once
 /// @file corpus.hpp
-/// The deterministic synthetic corpus of the scale harness (docs/sessions/s0-scale-harness.md step 1, docs/SCALE.md sections 2 and 7): a seeded project of
+/// The deterministic synthetic corpus of the scale harness (docs/TESTING.md "The synthetic corpus", docs/SCALE.md sections 2 and 7): a seeded project of
 /// C++ and Python-like files whose functions have realistic sizes and token distributions, so `foldRegions` and `BlockIndex` find real blocks, plus, for
 /// profile B, the non-code mix (sidecars beside assets, binaries, serialised data, text, Markdown) and a commit-like edit stream with the identity truth of
 /// every edit. Pure in-memory generation: no I/O, no clock, no environment, no platform-dependent library distributions (an integer-only generator), so the

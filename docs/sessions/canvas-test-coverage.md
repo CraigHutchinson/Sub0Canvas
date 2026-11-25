@@ -1,6 +1,6 @@
 # Follow-up session for test coverage on canvas
 
-Status is backlogged as of 2026-11-19. [U8 quality signals](../USE_CASES.md#u8-u11-further-consumers-design-targets) · [Runtime evidence](canvas-runtime-evidence.md) · [Scoped viewer reads](../AUTHORING.md#31-live-views-scoped-queries-in-events-out-patches-on-the-page)
+Backlog: item 15. [U8 quality signals](../USE_CASES.md#u8-u11-further-consumers-design-targets) · [Runtime evidence](canvas-runtime-evidence.md) · [Scoped viewer reads](../AUTHORING.md#31-live-views-scoped-queries-in-events-out-patches-on-the-page)
 
 ## User view and entry points
 

@@ -1,6 +1,6 @@
 # Follow-up session for runtime evidence on canvas
 
-Status is open as of 2026-11-19. [Backlog](../BACKLOG.md#any-time) · [Layers](../LAYERED_DOCUMENT.md) · [B0 format work](b0-format-catch-up.md)
+[Backlog](../BACKLOG.md) item 14 · [Layers](../LAYERED_DOCUMENT.md) · [B0 format work](b0-format-catch-up.md)
 
 ## Goal
 

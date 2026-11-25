@@ -6,7 +6,7 @@
 // Pure: no I/O, no clock, no environment. node:crypto and node:zlib only compute bytes (git object ids, PNG chunks), so every output is a function of
 // the seed. Commit ids are real git SHA-1s, so `local` mode's repository must reproduce them exactly (tested).
 //
-// Outputs (docs/sessions/m0-synthetic-mirror.md): the project (commits with trees), `mirror-state-1` (forge and tracker state), `mirror-truth-1`
+// Outputs (docs/MIRROR.md): the project (commits with trees), `mirror-state-1` (forge and tracker state), `mirror-truth-1`
 // (what every derivation of CHANGE_VIEWS.md must find), and the DocumentSource / ItemSource shape of BACKBONE.md section 5 over them.
 'use strict';
 
@@ -862,7 +862,7 @@ function generateMirror({ seed = 1 } = {}) {
     return { seed, product: PRODUCT, commits, bySha, branches, state, truth, source, items, render, plan, changeState, windowStart: windowStart.sha };
 }
 
-/** Topic and repository statistics, to compare with the anonymised targets (docs/sessions/m0-synthetic-mirror.md). */
+/** Topic and repository statistics, to compare with the anonymised targets (docs/MIRROR.md). */
 function shape(m) {
     const { truth, state } = m;
     const main = m.bySha.get(m.branches.get('main')).tree;

@@ -1,4 +1,4 @@
-# The determinism rules for C++ output paths (AGENTS.md "Code style", docs/MOCK_SQUAD.md section 8, docs/sessions/cxx23-adoption.md A3), checked on the text of the sources.
+# The determinism rules for C++ output paths (AGENTS.md "Code style", docs/MOCK_SQUAD.md section 8, docs/TESTING.md "Traps"), checked on the text of the sources.
 # Run by the quick-tier ctest `check_cxx_rules`, or by hand:   cmake -DREPO=<repo root> -P tools/check_cxx_rules.cmake
 #
 #   1. no `std::mt19937`, `std::shuffle`, `std::random_device` or `<random>` outside app/ (their distributions and shuffle are implementation-defined: use bench/rng.hpp);

@@ -1,4 +1,4 @@
-// `sub0canvas history`: the identity history of blocks across a repository's commits (docs/sessions/g1-git-history.md), through the git DocumentSource and the
+// `sub0canvas history`: the identity history of blocks across a repository's commits (docs/BACKBONE.md section 6, "As built (G1)"), through the git DocumentSource and the
 // library's RevisionIndex. Read-only and local.
 //
 //   sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks] [--] SCOPE...

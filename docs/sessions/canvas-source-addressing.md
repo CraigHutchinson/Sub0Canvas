@@ -1,6 +1,6 @@
 # Follow-up session for shared canvas source addresses
 
-Status is backlogged as of 2026-11-20. The Sub0Squad model-free edit shootout supplies the starting evidence. [Backbone source anchors](../BACKBONE.md#5-sources-the-adapter-interfaces) · [Runtime evidence](canvas-runtime-evidence.md) · [Prose verification](canvas-prose-verification.md)
+Backlog: item 15 (the receiving cases of item 12). The Sub0Squad model-free edit shootout supplies the starting evidence. [Backbone source anchors](../BACKBONE.md#5-sources-the-adapter-interfaces) · [Runtime evidence](canvas-runtime-evidence.md) · [Prose verification](canvas-prose-verification.md)
 
 ## Goal
 
@@ -48,6 +48,6 @@ Use one Sub0Squad C++ repair. Produce a compiler diagnostic from a known revisio
 
 Compare reply tokens and resolver outcomes in the model-free fixture first. For every form, establish that it either changes the intended text or refuses with a recoverable reason. Verify that archived errors remain readable after each mutation. Carry only the smallest address and provenance contract that the receiving harness needs into the backbone. The production edit protocol and persistence schema stay open until the fixture distinguishes the alternatives.
 
-## Outcome (B4, 2026-11-24, partial)
+## Left
 
-The single-worker resolver contract is built: `SourceAnchor` and `AnchorResolver` ([BACKBONE.md](../BACKBONE.md) 5.1 "As built (B4)"). It covers the brief's base case, an unrelated insertion, a moved block, duplicate text and a changed target, on a canvas and on `RevisionIndex` history alike (`test_resolver`). The authority split is in the result: `editable` only for an exact, unique target in an unchanged block with its context intact; a historical display may show any `moved` location as probable, with its confidence and reason. Not done: the compiler-diagnostic and test-assertion round trip on a real Sub0Squad repair, the revision-guarded numeric range and short address, the block-scoped content hash, actor views and pending work, the clone-a-viewpoint case.
+The single-worker resolver contract is built (`SourceAnchor` and `AnchorResolver`, [BACKBONE.md](../BACKBONE.md) 5.1 "As built (B4)", `test_resolver`: the base case, an unrelated insertion, a moved block, duplicate text and a changed target, on a canvas and on `RevisionIndex` history alike); `editable` only for an exact, unique target in an unchanged block with its context intact, while a historical display may show any `moved` location as probable. Not done: the compiler-diagnostic and test-assertion round trip on a real Sub0Squad repair, the revision-guarded numeric range and short address, the block-scoped content hash, actor views and pending work, the clone-a-viewpoint case.
