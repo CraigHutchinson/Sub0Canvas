@@ -1,6 +1,6 @@
 # The authoring tool: the viewer becomes where people and agents work on a document
 
-Status: **design, for the owner to read** (2026-11-18). Nothing here is built. It answers the owner's direction of 2026-11-18 ([DIRECTION.md](DIRECTION.md)
+Status: **design** (2026-11-18); built so far: `sub0canvas snapshot` and `tools/serve.mjs` (V0 in part), the pure query layer ([QUERY.md](QUERY.md), V1a-q), views and sessions ([VIEWS.md](VIEWS.md)) and the interactivity benchmark ([K0.md](K0.md)); the server process, the page's windowing and everything from V1 on are not. It answers the owner's direction of 2026-11-18 ([DIRECTION.md](DIRECTION.md)
 section 4): the interactive viewer is the **first use case to invest in**, extended into a Markdown, code and GitHub-like authoring tool in which a
 person can test, validate, push and respond on a document that later becomes multi-user, with scripted scenarios as its tests; and **Sub0Canvas's own
 design work is its first document**. Use case U7 ([USE_CASES.md](USE_CASES.md)); requirements R-AUTH ([REQUIREMENTS.md](REQUIREMENTS.md)); the

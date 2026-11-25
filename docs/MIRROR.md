@@ -1,6 +1,6 @@
 # The synthetic mirror: an invented project with real-world shape, as a fixture
 
-Status: **built** (2026-11-18), `tools/mirror/`, tested by `test/mirror.test.js`. Brief: [sessions/m0-synthetic-mirror.md](sessions/m0-synthetic-mirror.md).
+Status: **built** (2026-11-18), `tools/mirror/`, tested by `test/mirror.test.js` (8 tests: determinism, the fixture, seven more seeds, the viewer loading the canvas output, the source, the truth's consistency, the forge plan, git rebuilding the same commit ids). The fixture `fixtures/mirror/seed-1/` is about 235 KB (the truth carries every footprint and hunk state).
 Design it serves: [CHANGE_VIEWS.md](CHANGE_VIEWS.md) (U12), [SCALE.md](SCALE.md) (profile B), [BACKBONE.md](BACKBONE.md) section 5 (sources).
 
 ## What it is

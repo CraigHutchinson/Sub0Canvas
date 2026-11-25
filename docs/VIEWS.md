@@ -1,6 +1,6 @@
 # Pinned and unpinned views: a tip workflow and a pinned workflow
 
-Status: **design, 2026-11-24; first version built (section 8).** The channel and presence are not built. This is the one home for the idea; the mechanisms it rests on are described where they are built
+Status: **design, 2026-11-24; built except the channel and presence (section 8).** The channel and presence are not built. This is the one home for the idea; the mechanisms it rests on are described where they are built
 and are linked, not copied.
 
 The owner's idea (2026-11-24, verbatim): "a canvas view/observer could be pinned or unpinned. A pinned view is at a base revision for consistent editing
@@ -160,7 +160,7 @@ Requirements this adds (to be numbered with R-PIN-1..9 when promoted into REQUIR
 session has the same views and positions it had; quotas refuse with a structured error naming the limit; presence never reaches the durable log.
 
 
-## 8. As built (first version, 2026-11-24)
+## 8. As built (2026-11-24)
 
 Files: `lib/include/sub0canvas/view.hpp` and `session.hpp`, `lib/src/view.cpp` and `session.cpp`, `lib/tests/test_views_sessions.cpp`, `bench/bench_session.cpp`; requirements R-PIN-1..13 in
 [REQUIREMENTS.md](REQUIREMENTS.md). Built on public APIs only (`Canvas`, `applyReply`, `Store`, `InboxReader`, the resolver); nothing in `doc_layers.cpp` or the block index was touched.
@@ -185,3 +185,4 @@ Files: `lib/include/sub0canvas/view.hpp` and `session.hpp`, `lib/src/view.cpp` a
 * **Costs and limits to know.** `currentPosition` and `makeDelta` scan the canvas's paths when the generation moved, so a whole-canvas scope should be narrowed by path prefixes at scale; `Canvas::textAt`
   returns copies; an atomic `land` over several base revisions copies the canvas (so does `applyReply`'s all-or-nothing); the caller keeps its `BlockIndex` fed, and `advance` resolves held anchors against
   the index as it stands (the session's own landed lines are not yet in it). The channel (R-PIN-8) and presence (R-PIN-13) are not built; `openChannel` refuses a pinned view naming the pin.
+* **Limits, in the order they should be taken.** Quick, tests or `SessionPolicy` data only: an atomic land over two base revisions rolls back fully; `advance` with the index unfed reports an anchor in the session's own landed lines as moved; a scope by path prefix gives the same delta as the whole canvas; `isStale` with `notify=flag`; the first refresh after `unpin` is the delta since the old pin (probably covered in `test_views_sessions`); quotas as `SessionPolicy` data (pending bytes per actor). Need design: the canvas-path scan in `currentPosition` and `makeDelta` (a per-scope change index), `Canvas::textAt` copies, the canvas copy on atomic land (a canvas undo), the workspace feeding the `BlockIndex`, paging inside a form, the channel (R-PIN-8, with Fabric W4), presence and peer patches (R-PIN-13), `Pin.overrides`.

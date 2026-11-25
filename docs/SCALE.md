@@ -1,8 +1,8 @@
 # Scale: very large repositories and the work around them
 
-Status: **design, for the owner to read** (2026-11-18). This is the one home for scale: the target profiles, the requirements they set, the design
+Status: **design; S0, S1 and G1 are built and measured** (sections 6.0 to 6.3; 2026-11-25). This is the one home for scale: the target profiles, the requirements they set, the design
 that answers them, and the budgets. It consolidates what was in USE_CASES.md (U4), BACKBONE.md section 12 and the scale rows of REQUIREMENTS.md,
-which now point here. S0 ([sessions/s0-scale-harness.md](sessions/s0-scale-harness.md)) replaced the guesses with measurements; S1 (the compact, lazy `BlockIndex`, section 6.3) is built. The rest of the design is not.
+which now point here. S0 (the harness, `bench/`) replaced the guesses with measurements; S1 (the compact, lazy `BlockIndex`, section 6.3) and G1's per-scope `RevisionIndex` (section 6.2) are built, and so are the store core, inboxes and the query layer. S2 onwards (sketches, the merge pass, the sharded store) is design.
 
 ## 1. The rule
 
@@ -46,8 +46,8 @@ From profile A (stated in U4 since 2026-11-17):
 | **Content-addressed reuse.** Blocks of a file are computed once per blob (its git object id) and shared across revisions, branches and clones. | most files are identical across most revisions | built (S1): a file is keyed by its content id (`BlockIndex::textId`), an unchanged text costs one hash, and an opt-in analysis cache (`setAnalysisCacheLimit`) serves a (path, content id) folded before. Not yet shared across clones (A19, with the per-user cache) |
 | **No full texts held.** The index keeps hashes, spans and sketches, and fetches text from the document source on demand. | 10^9 lines of text do not fit in memory | built (S1): no text and no token set is held when a `TextSource` is set; the rules read text back through it (section 6.3) |
 | **Sub-linear candidate search.** Revive, merge and hunk matching use a sketch index (MinHash with locality-sensitive hashing), not a scan. | a scan over every retired block is quadratic across history | built for revive (S1): a (signature, name) table and an exact prefix-filter posting index; the merge rule still scans live blocks, through a 128-bit filter per block (S2 removes it) |
-| **Per-path history.** Replay follows one path's revisions with rename detection and checkpoints, never every commit of the tree. | replaying 10^7 commits for one anchor is impossible | `RevisionIndex` is designed per tree; section 4 makes it per path |
-| **Sharded store and log.** Items, events and indexes are partitioned by path prefix; queries read only the shards of their area. | one log of a monorepo's events is too large to replay | the store is not built (B1): decide before building |
+| **Per-path history.** Replay follows one path's revisions with rename detection and checkpoints, never every commit of the tree. | replaying 10^7 commits for one anchor is impossible | built (G1): `RevisionIndex` replays per scope along first parents, with checkpoints (section 6.2) |
+| **Sharded store and log.** Items, events and indexes are partitioned by path prefix; queries read only the shards of their area. | one log of a monorepo's events is too large to replay | the store core is built (B1, one log); sharding by path prefix is not (S4) |
 | **Bounded output.** Snapshots and views are scoped by a query, never "everything". | `layeredJson` writes every file and block | fine for U1; scoped writers for U3, U4, U12 |
 | **Linear, correct parsing.** O(n) per file in every language. | the brace and indent heuristic is fast but language-blind | `foldRegions`; providers and tree-sitter ([BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md)) |
 
@@ -74,7 +74,7 @@ Added from profile B (2026-11-18):
 | reconciliation within a file | signature, then unique name, then Jaccard over token sets | the same order; similarity estimated from sketches; exact comparison only for the few candidates the sketch keeps |
 | revive, merge and hunk matching across files | every retired block is scanned | an **LSH index** over sketches (bands of the sketch as bucket keys): candidates in O(1) per block, then the exact rule on those few; retired blocks expire from the index after a horizon (a revival after 10^4 commits is a new block) |
 | history | one `BlockIndex` follows one line of texts; `RevisionIndex` (BACKBONE.md section 6) replays a tree | **per-path replay** along one branch's first parents, using git's rename and copy detection to hand cross-file moves to the LSH; checkpoints per path every N revisions; a whole-tree replay is never needed to resolve one anchor |
-| store and log | not built (B1) | **sharded** by path prefix (a directory subtree per shard, split when large); each shard has its own log segment, snapshot and indexes; a query names its area, and only those shards are read; an item anchored into many areas (a change touching many directories) is stored once and indexed in each shard it anchors into |
+| store and log | built as one log (B1) | **sharded** by path prefix (a directory subtree per shard, split when large); each shard has its own log segment, snapshot and indexes; a query names its area, and only those shards are read; an item anchored into many areas (a change touching many directories) is stored once and indexed in each shard it anchors into |
 | open changes | not built | a **block-to-open-changes index** per shard (section 5) |
 | output | `layeredJson` writes every file, block and event | scoped writers: a view or snapshot takes a query and writes only what it covers; the full form remains for U1 |
 

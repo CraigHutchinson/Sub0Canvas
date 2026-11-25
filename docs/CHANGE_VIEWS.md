@@ -1,6 +1,6 @@
 # Change views: pull requests, spikes and their dependencies as layers
 
-Status: **design, for the owner to read** (2026-11-18). Nothing here is built. Use case U12 ([USE_CASES.md](USE_CASES.md)); requirements R-CHG
+Status: **design** (2026-11-18, nothing built but its proving ground, the synthetic mirror: [MIRROR.md](MIRROR.md)). Use case U12 ([USE_CASES.md](USE_CASES.md)); requirements R-CHG
 ([REQUIREMENTS.md](REQUIREMENTS.md)); scale in [SCALE.md](SCALE.md). It extends the GitHub project view (U3, [BACKBONE.md](BACKBONE.md) section 9.3),
 which treats a pull request as one item with a pending revision line, to **sets of changes that serve one goal**: an exploratory spike, the focused
 changes carved out of it, the stacks they form, what supersedes what, and what still has to land.
