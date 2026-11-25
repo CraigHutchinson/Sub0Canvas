@@ -240,13 +240,16 @@ private:
         }
     }
 
+    /// The first line of every persisted `canvas-events-1` segment: the schema, this scenario's document and the producer.
+    std::string eventsHeader() const { return "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n"; }
+
     /// The store's events as the persisted segment (`canvas-events-1`: the header line, then one event per line) and its snapshot; then the proofs a consumer
     /// relies on: the persisted lines, read back and replayed, give the live snapshot byte for byte (R-BB-1), and so does a store restored from the checkpoint
     /// taken after the first verdict and caught up from the log's tail.
     void persistStore()
     {
         lib("eventJson");
-        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        std::string lines = eventsHeader();
         for (const Event& e : storeLog_.events()) lines += eventJson(e) + "\n";
         out_.record["store/events.ndjson"] = lines;
         const std::string live = store_.snapshotJson();
@@ -481,7 +484,7 @@ private:
     void persistSessions()
     {
         lib("eventJson");
-        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        std::string lines = eventsHeader();
         for (const Event& e : sessLog_.events()) lines += eventJson(e) + "\n";
         out_.record["sessions/events.ndjson"] = lines;
         std::vector<Event> back;
@@ -671,7 +674,7 @@ private:
         pull("loop");
         Store& merged = replica("loop");
         lib("eventJson");
-        std::string lines = "{\"schema\":\"canvas-events-1\",\"document\":" + jsonString(s_.name) + ",\"producers\":{\"mock-squad\":\"1\"}}\n";
+        std::string lines = eventsHeader();
         std::vector<Event> back;
         for (const Event& e : merged.events()) {
             lines += eventJson(e) + "\n";

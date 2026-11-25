@@ -5,6 +5,7 @@
 #include "file_log.hpp"
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/store.hpp"
+#include "test_support.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -20,12 +21,7 @@ using sub0canvas::app::FileLogHeader;
 namespace {
 
 namespace fs = std::filesystem;
-
-std::string slurp(const fs::path& p)
-{
-    std::ifstream in(p, std::ios::binary);
-    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
-}
+using testsupport::slurp;
 
 void spit(const fs::path& p, const std::string& text, std::ios::openmode mode = std::ios::trunc)
 {

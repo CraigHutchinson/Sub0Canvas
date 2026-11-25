@@ -10,6 +10,7 @@
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/git_plumbing.hpp"
 #include "sub0canvas/source.hpp"
+#include "test_support.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -27,21 +28,13 @@
 namespace fixture {
 
 using namespace sub0canvas;
+using testsupport::slurp;
 
-inline std::string slurp(const std::filesystem::path& p)
-{
-    std::ifstream in(p, std::ios::binary);
-    if (!in) { std::println(stderr, "cannot read {}", p.string()); std::exit(2); }
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return ss.str();
-}
-
-inline std::vector<std::string> lines(const std::string& text)
+/// The non-empty lines of `text` (blank lines dropped).
+inline std::vector<std::string> nonEmptyLines(const std::string& text)
 {
     std::vector<std::string> out;
-    std::istringstream in(text);
-    for (std::string l; std::getline(in, l);) if (!l.empty()) out.push_back(l);
+    for (auto& l : testsupport::splitLines(text)) if (!l.empty()) out.push_back(std::move(l));
     return out;
 }
 
@@ -80,7 +73,7 @@ public:
         commits_ = std::move(*log);
         for (std::size_t i = 0; i < commits_.size(); ++i) byId_[commits_[i].info.id] = i;
         head_ = commits_.front().info.id;
-        const auto refs = lines(slurp(dir / (prefix + "blobs.refs")));
+        const auto refs = nonEmptyLines(slurp(dir / (prefix + "blobs.refs")));
         auto texts = gitplumbing::parseCatFileBatch(slurp(dir / (prefix + "blobs.batch")), refs.size());
         if (!texts) { std::println(stderr, "blobs: {}", texts.error()); std::exit(2); }
         for (std::size_t i = 0; i < refs.size(); ++i) blobs_[refs[i]] = std::move((*texts)[i]);

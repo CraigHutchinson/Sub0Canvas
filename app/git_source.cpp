@@ -35,7 +35,10 @@ void setEnv(const char* name, const char* value)
 #endif
 }
 
-/// The pathspec arguments of a scope: ` -- "a" "b"`; empty for the whole tree. nullopt when an entry holds a character the shell cannot be trusted with.
+constexpr std::size_t kBatch = 2000;   ///< objects per `cat-file --batch` process
+
+}  // namespace
+
 std::optional<std::string> pathspecArgs(const Scope& scope)
 {
     if (scope.empty()) return std::string{};
@@ -47,21 +50,9 @@ std::optional<std::string> pathspecArgs(const Scope& scope)
     return out;
 }
 
-constexpr std::size_t kBatch = 2000;   ///< objects per `cat-file --batch` process
-
-}  // namespace
-
-GitSource::GitSource(std::string repo) : repo_(std::move(repo))
+std::optional<std::string> runGit(const std::string& repo, const std::string& args, const std::string& stdinFile)
 {
-    setEnv("GIT_NO_LAZY_FETCH", "1");        // a partial clone's missing object stays missing: unknown, never a download (A20)
-    setEnv("GIT_TERMINAL_PROMPT", "0");
-    setEnv("GIT_OPTIONAL_LOCKS", "0");       // read-only
-}
-
-std::optional<std::string> GitSource::run(const std::string& args, const std::string& stdinFile) const
-{
-    commands_.push_back(args);
-    std::string cmd = "git -C " + quote(repo_) + " --literal-pathspecs " + args;
+    std::string cmd = "git -C " + quote(repo) + " " + args;
     if (!stdinFile.empty()) cmd += " < " + quote(stdinFile);
 #ifdef _WIN32
     FILE* p = popen(cmd.c_str(), "rb");   // binary: no CRLF translation of blob bytes
@@ -74,6 +65,19 @@ std::optional<std::string> GitSource::run(const std::string& args, const std::st
     for (std::size_t n; (n = std::fread(buf, 1, sizeof buf, p)) > 0;) out.append(buf, n);
     if (pclose(p) != 0) return std::nullopt;
     return out;
+}
+
+GitSource::GitSource(std::string repo) : repo_(std::move(repo))
+{
+    setEnv("GIT_NO_LAZY_FETCH", "1");        // a partial clone's missing object stays missing: unknown, never a download (A20)
+    setEnv("GIT_TERMINAL_PROMPT", "0");
+    setEnv("GIT_OPTIONAL_LOCKS", "0");       // read-only
+}
+
+std::optional<std::string> GitSource::run(const std::string& args, const std::string& stdinFile) const
+{
+    commands_.push_back(args);
+    return runGit(repo_, "--literal-pathspecs " + args, stdinFile);
 }
 
 bool GitSource::shallow() const

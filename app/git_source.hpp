@@ -48,6 +48,13 @@ private:
     mutable std::set<std::string> boundary_;   ///< the commits a shallow clone cut off (its `shallow` file)
 };
 
+/// Runs `git -C repo <args>` through the shell (stdin from `stdinFile` when given): the output, or nullopt when git could not run or exited non-zero.
+/// The one process runner of the command line; `args` must already be shell-safe (`pathspecArgs`).
+[[nodiscard]] std::optional<std::string> runGit(const std::string& repo, const std::string& args, const std::string& stdinFile = {});
+
+/// The pathspec arguments of a scope: ` -- "a" "b"`; empty for the whole tree. nullopt when an entry holds a character the shell cannot be trusted with.
+[[nodiscard]] std::optional<std::string> pathspecArgs(const Scope& scope);
+
 /// `sub0canvas history`: the identity history of the blocks named in a scope (argv[1] is "history"). Returns the process exit code.
 int historyCommand(int argc, char** argv);
 

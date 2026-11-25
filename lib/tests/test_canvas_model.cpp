@@ -5,6 +5,8 @@
 #include "sub0platform/testing/check.hpp"
 #include "sub0canvas/canvas.hpp"
 #include "bench/rng.hpp"
+#include "scan.hpp"
+#include "test_support.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -12,22 +14,10 @@
 #include <vector>
 
 using namespace sub0canvas;
+using testsupport::joinLines;
+using testsupport::splitLines;
 
 namespace {
-
-std::vector<std::string> splitLines(const std::string& t)
-{
-    std::vector<std::string> v;
-    std::istringstream in(t);
-    for (std::string l; std::getline(in, l);) v.push_back(l);
-    return v;
-}
-std::string joinLines(const std::vector<std::string>& v)
-{
-    std::string s;
-    for (const auto& l : v) s += l + "\n";
-    return s;
-}
 
 struct ModelOp
 {
@@ -187,6 +177,18 @@ ModelCheck check(int cases, unsigned seed)
 
 int main()
 {
+    {   // scan::splitLines and joinLines agree with the getline reading on the edge texts: empty, one newline, a blank last line, no final newline, a CR
+        for (const std::string& text : {std::string{}, std::string{"\n"}, std::string{"a\n\n"}, std::string{"a\nb"}, std::string{"a\nb\n"}, std::string{"a\r\nb"}, std::string{"\n\n\nx"}}) {
+            const auto viaScan = sub0canvas::scan::splitLines(text);
+            const auto viaGetline = testsupport::splitLines(text);
+            CHECK(viaScan == viaGetline);
+            CHECK_EQ(sub0canvas::scan::joinLines(viaScan), testsupport::joinLines(viaGetline));
+        }
+        CHECK(sub0canvas::scan::splitLines("").empty());
+        CHECK_EQ(sub0canvas::scan::splitLines("\n").size(), std::size_t{1});
+        CHECK_EQ(sub0canvas::scan::splitLines("a\n\n").size(), std::size_t{2});
+        CHECK_EQ(sub0canvas::scan::joinLines({}), std::string{});
+    }
     for (const auto& [cases, seed] : {std::pair{1000, 20261112u}, std::pair{200, 7u}}) {
         const ModelCheck m = check(cases, seed);
         if (m.failures) std::fprintf(stderr, "canvas model: %s\n", m.firstFailure.c_str());

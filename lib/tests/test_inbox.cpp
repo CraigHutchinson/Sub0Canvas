@@ -6,6 +6,7 @@
 #include "sub0canvas/event.hpp"
 #include "sub0canvas/inbox.hpp"
 #include "sub0canvas/store.hpp"
+#include "test_support.hpp"
 #include "bench/rng.hpp"
 
 #include <algorithm>
@@ -64,7 +65,7 @@ std::vector<std::string> keysOf(const Inbox& in)
     return out;
 }
 
-using Strings = std::vector<std::string>;
+using testsupport::Strings;
 
 std::string lines(const std::vector<Event>& events)
 {

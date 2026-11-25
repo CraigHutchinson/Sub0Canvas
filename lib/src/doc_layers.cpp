@@ -3,6 +3,7 @@
 
 #include "json_util.hpp"
 #include "projection.hpp"
+#include "scan.hpp"
 #include "sub0canvas/content_id.hpp"
 #include "sub0canvas/outline.hpp"
 #include "sub0canvas/store.hpp"
@@ -23,18 +24,12 @@ namespace sub0canvas {
 
 namespace {
 
+using scan::splitLines;
+
 constexpr double kRenameJaccard = 0.5;    ///< body similarity at which an unmatched block is the same block renamed
 constexpr double kReviveJaccard = 0.8;    ///< body similarity at which a new block brings back a retired id (a block written again)
 constexpr double kMergeContainment = 0.6; ///< share of a retired block's tokens found in one live block for it to count as merged into that block
 constexpr std::size_t kMinTokensToCompare = 3;   ///< below this a body is too small for similarity to mean anything
-
-std::vector<std::string> splitLines(const std::string& text)
-{
-    std::vector<std::string> lines;
-    std::istringstream in(text);
-    for (std::string l; std::getline(in, l);) lines.push_back(l);
-    return lines;
-}
 
 std::string leaf(std::string_view name)
 {

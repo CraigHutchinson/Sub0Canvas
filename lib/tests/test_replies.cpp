@@ -6,6 +6,7 @@
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/turn_control.hpp"
+#include "test_support.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -19,6 +20,8 @@
 
 namespace fs = std::filesystem;
 using namespace sub0canvas;
+using testsupport::slurpLf;
+using testsupport::splitLines;
 
 namespace {
 
@@ -32,24 +35,6 @@ struct ReplyCase
     bool classic = false;             // the classic applier (`applyEdits`) must agree
     std::vector<std::string> allowed; // default: the paths of base and want
 };
-
-std::string slurp(const fs::path& p)
-{
-    std::ifstream in(p, std::ios::binary);
-    std::stringstream s;
-    s << in.rdbuf();
-    std::string t = s.str();
-    std::erase(t, '\r');   // a checkout with CRLF line endings reads as the case was written
-    return t;
-}
-
-std::vector<std::string> splitLines(const std::string& t)
-{
-    std::vector<std::string> v;
-    std::istringstream in(t);
-    for (std::string l; std::getline(in, l);) v.push_back(l);
-    return v;
-}
 
 bool parseReplyCase(const std::string& text, ReplyCase& c, std::string& error)
 {
@@ -165,7 +150,7 @@ int main(int argc, char** argv)
         for (const auto& f : files) {
             ReplyCase c;
             std::string error;
-            if (!parseReplyCase(slurp(f), c, error)) { std::fprintf(stderr, "%s: unreadable case: %s\n", f.filename().string().c_str(), error.c_str()); CHECK(false); continue; }
+            if (!parseReplyCase(slurpLf(f), c, error)) { std::fprintf(stderr, "%s: unreadable case: %s\n", f.filename().string().c_str(), error.c_str()); CHECK(false); continue; }
             if (const std::string bad = runReplyCase(c); !bad.empty()) { std::fprintf(stderr, "%s: %s\n", f.filename().string().c_str(), bad.c_str()); CHECK(false); }
         }
         // The runner itself can fail: a case without an outcome is refused, and a wrong intended text is reported with its line.

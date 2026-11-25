@@ -59,8 +59,6 @@ std::string hex(Rng& r, std::size_t digits)
 
 std::size_t countLines(const std::string& text) { return static_cast<std::size_t>(std::ranges::count(text, '\n')); }
 
-bool startsWith(const std::string& s, std::string_view p) { return s.compare(0, p.size(), p) == 0; }
-
 std::string trimmed(const std::string& s)
 {
     const std::size_t a = s.find_first_not_of(' ');
@@ -142,7 +140,7 @@ void emitStatements(BodyCtx& c, std::vector<std::string>& out, std::size_t budge
         {
             std::string line = plainStatement(c, ind);
             // A block opens with a real statement: a comment-only body is not a valid Python body and makes a hollow block.
-            while (out.size() == start && startsWith(trimmed(line), c.py ? "#" : "//")) line = plainStatement(c, ind);
+            while (out.size() == start && trimmed(line).starts_with(c.py ? "#" : "//")) line = plainStatement(c, ind);
             out.push_back(std::move(line));
         }
     }
@@ -507,7 +505,7 @@ std::size_t indentOf(const std::string& s) { return std::min(s.find_first_not_of
 bool isPlain(const std::string& line, bool py)
 {
     const std::string t = trimmed(line);
-    if (t.empty() || startsWith(t, "return") || startsWith(t, "//") || startsWith(t, "#")) return false;
+    if (t.empty() || t.starts_with("return") || t.starts_with("//") || t.starts_with("#")) return false;
     return py ? t.back() != ':' : t.back() == ';';
 }
 
@@ -531,7 +529,7 @@ std::vector<std::string> identifiersOf(const Function& f)
             else ++i;
         }
     };
-    for (const std::string& l : f.body) if (!startsWith(trimmed(l), "//") && !startsWith(trimmed(l), "#")) scan(l);
+    for (const std::string& l : f.body) if (!trimmed(l).starts_with("//") && !trimmed(l).starts_with("#")) scan(l);
     return {found.begin(), found.end()};
 }
 

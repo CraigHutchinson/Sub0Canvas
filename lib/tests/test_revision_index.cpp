@@ -235,7 +235,7 @@ int main(int argc, char** argv)
             CHECK_EQ(tree->front().type, std::string("blob"));
         }
 
-        const auto refs = fixture::lines(fixture::slurp(dir / "blobs.refs"));
+        const auto refs = fixture::nonEmptyLines(fixture::slurp(dir / "blobs.refs"));
         const auto texts = gitplumbing::parseCatFileBatch(fixture::slurp(dir / "blobs.batch"), refs.size());
         CHECK(texts.has_value() && texts->size() == refs.size());
         if (texts) for (const FileText& t : *texts) CHECK(t.presence == Presence::present && !t.text.empty());

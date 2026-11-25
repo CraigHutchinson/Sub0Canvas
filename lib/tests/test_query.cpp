@@ -8,6 +8,7 @@
 #include "sub0canvas/doc_layers.hpp"
 #include "sub0canvas/query.hpp"
 #include "sub0canvas/store.hpp"
+#include "test_support.hpp"
 
 #include <simdjson.h>
 
@@ -30,7 +31,7 @@
 
 using namespace sub0canvas;
 namespace fs = std::filesystem;
-using Strings = std::vector<std::string>;
+using testsupport::Strings;
 
 namespace {
 
