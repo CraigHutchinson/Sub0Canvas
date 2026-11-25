@@ -63,6 +63,7 @@ std::string DataSessionPolicy::requiredCapability(std::string_view op) const
 std::expected<DataSessionPolicy, std::string> parseSessionPolicy(std::string_view text)
 {
     DataSessionPolicy p;
+    std::string unknown;   // the first member this reader does not know: reported after the loop, so every other member is still read
     try {
         json::withObject(text, [&](simdjson::ondemand::object& obj) {
             for (auto f : obj) {
@@ -80,12 +81,13 @@ std::expected<DataSessionPolicy, std::string> parseSessionPolicy(std::string_vie
                         p.require[op] = json::toString(rf.value());
                     }
                 else if (k == "touchGranularity") p.granularity = fv.get_int64();
-                else return;   // an unknown member is an error below
+                else if (unknown.empty()) unknown = std::string{k};
             }
         });
     } catch (const simdjson::simdjson_error& e) {
         return std::unexpected(std::format("session policy: {}", simdjson::error_message(e.error())));
     }
+    if (!unknown.empty()) return std::unexpected(std::format("session policy: unknown member {}", unknown));
     return p;
 }
 

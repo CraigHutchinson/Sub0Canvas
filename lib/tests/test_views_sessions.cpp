@@ -574,6 +574,10 @@ int main()
         const auto bad = parseSessionPolicy("{\"limits\":");   // malformed JSON is an error naming the policy, not an exception
         CHECK(!bad.has_value());
         CHECK(bad.error().starts_with("session policy:"));
+
+        const auto unknown = parseSessionPolicy(R"({"limits":{"views":3},"bogus":1,"touchGranularity":7})");   // an unknown member is an error naming it
+        CHECK(!unknown.has_value());
+        CHECK_EQ(unknown.error(), std::string{"session policy: unknown member bogus"});
     }
 
     return finish();
