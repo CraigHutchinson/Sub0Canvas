@@ -1,6 +1,7 @@
 #include "sub0canvas/view.hpp"
 
 #include "json_util.hpp"
+#include "scan.hpp"
 #include "sub0canvas/content_id.hpp"
 
 #include <algorithm>
@@ -397,20 +398,8 @@ std::vector<const SessionRecord*> LogViewStore::sessions() const
 
 namespace {
 
-std::vector<std::string> splitLines(const std::string& text)
-{
-    std::vector<std::string> v;
-    std::istringstream in(text);
-    for (std::string l; std::getline(in, l);) v.push_back(l);
-    return v;
-}
-
-std::string joinLines(const std::vector<std::string>& v)
-{
-    std::string s;
-    for (const auto& l : v) { s += l; s += '\n'; }
-    return s;
-}
+using scan::joinLines;
+using scan::splitLines;
 
 constexpr std::size_t kMaxLcsCells = 4'000'000;
 

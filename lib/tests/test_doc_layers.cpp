@@ -5,6 +5,7 @@
 // names. Renderings a model sees (R-REN) are pinned on their exact wording on purpose: a change there is measured in Sub0Squad (TESTING.md, L4).
 #include "sub0platform/testing/check.hpp"
 #include "doc_driver.hpp"
+#include "test_support.hpp"
 #include "sub0canvas/canvas.hpp"
 #include "sub0canvas/content_id.hpp"
 
@@ -18,56 +19,9 @@ using namespace req;
 using sub0canvas::Canvas;
 using sub0canvas::CanvasOp;
 using sub0canvas::Transaction;
+using testsupport::kCalc;
 
 namespace {
-
-/// A small calculator in the shape of the tier 0 one: methods of a class, each holding the literals of what it parses.
-const std::string kCalc = R"(#include <cmath>
-#include <string>
-
-class Parser
-{
-public:
-    double expr()
-    {
-        double v = term();
-        while (true) {
-            if (eat('+')) v += term();
-            else if (eat('-')) v -= term();
-            else return v;
-        }
-    }
-    double term()
-    {
-        double v = unary();
-        while (true) {
-            if (eat('*')) v *= unary();
-            else if (eat('%')) v = std::fmod(v, unary());
-            else return v;
-        }
-    }
-    static double factorial(double v)
-    {
-        double r = 1;
-        for (int i = 2; i <= static_cast<int>(v); ++i) r *= i;
-        return r;
-    }
-    double call(const std::string& f, double x)
-    {
-        if (f == "sin") return std::sin(x);
-        if (f == "log") return std::log10(x);
-        if (f == "fact") return factorial(x);
-        return x;
-    }
-};
-
-double evaluate(const std::string& s)
-{
-    Parser p;
-    (void)s;
-    return p.expr();
-}
-)";
 
 std::string replaceOnce(std::string text, const std::string& from, const std::string& to)
 {

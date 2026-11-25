@@ -1,6 +1,7 @@
 #include "sub0canvas/canvas.hpp"
 
 #include "json_util.hpp"
+#include "scan.hpp"
 #include "sub0canvas/edits.hpp"
 #include "sub0canvas/outline.hpp"
 
@@ -16,20 +17,8 @@ const std::string Canvas::empty_;
 
 namespace {
 
-std::vector<std::string> split(const std::string& t)
-{
-    std::vector<std::string> v;
-    std::istringstream in(t);
-    for (std::string l; std::getline(in, l);) v.push_back(l);
-    return v;
-}
-
-std::string join(const std::vector<std::string>& v)
-{
-    std::string s;
-    for (const auto& l : v) s += l + "\n";
-    return s;
-}
+using scan::joinLines;
+using scan::splitLines;
 
 struct Span { int from = 0, to = 0; std::vector<std::string> repl; bool insert = false; };   // 1-based inclusive; an insertion is to == from - 1
 
@@ -65,7 +54,7 @@ TxResult Canvas::apply(const Transaction& tx)
 
     // 1. Resolve every operation to a span in the numbering of the BASE revision.
     const std::string& baseText = file.revisions[static_cast<std::size_t>(tx.baseRevision) - 1];
-    const auto baseLines = split(baseText);
+    const auto baseLines = splitLines(baseText);
     const int baseCount = static_cast<int>(baseLines.size());
     std::vector<Span> spans;
     for (const auto& op : tx.ops) {
@@ -87,7 +76,7 @@ TxResult Canvas::apply(const Transaction& tx)
                         if (l.starts_with('}') && l.contains("namespace")) { at = i; break; }
                     }
                 s.from = at; s.to = at - 1; s.insert = true;
-                s.repl = split(op.text);
+                s.repl = splitLines(op.text);
                 const bool blankBefore = at > 1 && trimmedEmpty(baseLines[static_cast<std::size_t>(at) - 2]);
                 if (!blankBefore) s.repl.insert(s.repl.begin(), std::string{});
                 if (at <= baseCount) s.repl.push_back(std::string{});
@@ -101,7 +90,7 @@ TxResult Canvas::apply(const Transaction& tx)
             if (op.from < 1 || op.to < op.from || op.to > baseCount) { r.error = "lines " + std::to_string(op.from) + "-" + std::to_string(op.to) + ": the file has " + std::to_string(baseCount) + " lines"; return r; }
             s.from = op.from; s.to = op.to;
         }
-        s.repl = split(op.text);
+        s.repl = splitLines(op.text);
         if (op.kind == CanvasOp::Kind::replaceSymbol && !s.repl.empty()) {
             // A function written from column 0 keeps the place it replaces: it is shifted to the old one's indentation (tier 0b of 2026-11-17: a member
             // function sent unindented landed at column 0 inside its class). Indentation is meaning in Python, so this matters beyond looks.
@@ -141,7 +130,7 @@ TxResult Canvas::apply(const Transaction& tx)
     }
 
     // 3. Apply from the bottom up to the current text; all or nothing.
-    auto lines = split(file.revisions.back());
+    auto lines = splitLines(file.revisions.back());
     const int curCount = static_cast<int>(lines.size());
     int firstLine = curCount + 1, lastLine = 0, delta = 0;
     for (auto it = spans.rbegin(); it != spans.rend(); ++it) {
@@ -152,7 +141,7 @@ TxResult Canvas::apply(const Transaction& tx)
         lastLine = std::max(lastLine, it->to);
         delta += static_cast<int>(it->repl.size()) - (it->to - it->from + 1);
     }
-    file.revisions.push_back(join(lines));
+    file.revisions.push_back(joinLines(lines));
     log_.push_back({tx.path, tx.by, current + 1, tx.baseRevision, firstLine, lastLine, delta});
     r.ok = true;
     r.revision = current + 1;
@@ -165,8 +154,8 @@ TxResult Canvas::replaceText(const std::string& path, const std::string& text, c
     auto it = files_.find(path);
     if (it == files_.end()) { addFile(path, text); r.ok = true; r.revision = 1; return r; }
     const int current = static_cast<int>(it->second.revisions.size());
-    const int oldCount = static_cast<int>(split(it->second.revisions.back()).size()), newCount = static_cast<int>(split(text).size());
-    it->second.revisions.push_back(join(split(text)));
+    const int oldCount = static_cast<int>(splitLines(it->second.revisions.back()).size()), newCount = static_cast<int>(splitLines(text).size());
+    it->second.revisions.push_back(joinLines(splitLines(text)));
     log_.push_back({path, by, current + 1, current, 1, std::max(1, oldCount), newCount - oldCount});
     r.ok = true;
     r.revision = current + 1;
@@ -206,7 +195,7 @@ TxResult Canvas::revertTo(const std::string& path, int revision, const std::stri
     if (it == files_.end() || revision < 1 || revision > static_cast<int>(it->second.revisions.size())) { r.error = "no such revision"; return r; }
     const int current = static_cast<int>(it->second.revisions.size());
     const std::string old = it->second.revisions[static_cast<std::size_t>(revision) - 1];
-    const int oldCount = static_cast<int>(split(it->second.revisions.back()).size()), newCount = static_cast<int>(split(old).size());
+    const int oldCount = static_cast<int>(splitLines(it->second.revisions.back()).size()), newCount = static_cast<int>(splitLines(old).size());
     it->second.revisions.push_back(old);
     log_.push_back({path, by, current + 1, current, 1, std::max(1, oldCount), newCount - oldCount});
     r.ok = true;
@@ -217,7 +206,6 @@ TxResult Canvas::revertTo(const std::string& path, int revision, const std::stri
 // ---- replies as transactions -----------------------------------------------------------------------------------------------------------------------
 namespace {
 
-bool startsWith(const std::string& s, std::string_view p) { return s.starts_with(p); }
 
 /// `  12| code` -> `code` when EVERY non-blank line carries the number column of the view (a worker copied it); otherwise the text unchanged.
 std::string stripNumberColumn(const std::vector<std::string>& body)
@@ -233,10 +221,10 @@ std::string stripNumberColumn(const std::vector<std::string>& body)
     bool all = false;
     for (const auto& l : body) {
         if (l.find_first_not_of(" \t\r") == std::string::npos) continue;
-        if (column(l) == std::string::npos) return join(body);
+        if (column(l) == std::string::npos) return joinLines(body);
         all = true;
     }
-    if (!all) return join(body);
+    if (!all) return joinLines(body);
     std::string out;
     for (const auto& l : body) { const auto c = column(l); out += (c == std::string::npos ? l : l.substr(c)) + "\n"; }
     return out;
@@ -246,9 +234,9 @@ std::string stripNumberColumn(const std::vector<std::string>& body)
 std::string blockText(std::vector<std::string> body)
 {
     for (auto& l : body) if (!l.empty() && l.back() == '\r') l.pop_back();
-    if (!body.empty() && startsWith(body.front(), "```")) body.erase(body.begin());
+    if (!body.empty() && body.front().starts_with("```")) body.erase(body.begin());
     while (!body.empty() && body.back().find_first_not_of(" \t") == std::string::npos) body.pop_back();
-    if (!body.empty() && startsWith(body.back(), "```")) body.pop_back();
+    if (!body.empty() && body.back().starts_with("```")) body.pop_back();
     while (!body.empty() && body.back().find_first_not_of(" \t") == std::string::npos) body.pop_back();
     return stripNumberColumn(body);
 }
@@ -259,15 +247,15 @@ CanvasReply parseCanvasReply(const std::string& reply)
 {
     CanvasReply out;
     out.reads = parseReadRequests(reply);
-    const auto lines = split(reply);
-    const auto isHeader = [](const std::string& l) { return startsWith(l, "=== EDIT:") || startsWith(l, "=== FILE:") || startsWith(l, "=== READ:") || startsWith(l, "=== END "); };
+    const auto lines = splitLines(reply);
+    const auto isHeader = [](const std::string& l) { return l.starts_with("=== EDIT:") || l.starts_with("=== FILE:") || l.starts_with("=== READ:") || l.starts_with("=== END "); };
     const auto txFor = [&](const std::string& path) -> Transaction& {
         for (auto& t : out.transactions) if (t.path == path) return t;
         out.transactions.push_back({path, 0, {}, {}});
         return out.transactions.back();
     };
     for (std::size_t i = 0; i < lines.size(); ++i) {
-        const bool edit = startsWith(lines[i], "=== EDIT:"), file = startsWith(lines[i], "=== FILE:");
+        const bool edit = lines[i].starts_with("=== EDIT:"), file = lines[i].starts_with("=== FILE:");
         if (!edit && !file) continue;
         const std::string headerLine = lines[i];
         std::string head = lines[i].substr(9);
@@ -303,7 +291,7 @@ CanvasReply parseCanvasReply(const std::string& reply)
             continue;
         }
         CanvasOp op;
-        op.text = blockText(split(replacementOfMarkedBlock(join(body))));   // markers a worker wrapped the new text in are dropped, never written
+        op.text = blockText(splitLines(replacementOfMarkedBlock(joinLines(body))));   // markers a worker wrapped the new text in are dropped, never written
         if (kind == "SYMBOL") {
             if (spec.empty()) { out.error = "the EDIT of '" + path + "' says SYMBOL but names no function"; return out; }
             if (op.text.empty()) { out.error = "the SYMBOL edit of '" + spec + "' is empty: give the whole function, from its signature to its last line"; return out; }

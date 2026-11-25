@@ -14,6 +14,7 @@
 
 #include "git_source.hpp"
 #include "json_util.hpp"
+#include "scan.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -69,31 +70,20 @@ void requireSafe(const std::string& what, const std::string& value)
         fail(std::format("{} contains a character this tool does not pass to git: {}", what, value));
 }
 
-std::string quote(const std::string& s) { return "\"" + s + "\""; }
-
-std::string git(const Options& o, const std::string& args)
+std::string git(const Options& o, const std::string& args, const std::string& stdinFile = {})
 {
-    const std::string cmd = "git -C " + quote(o.repo) + " " + args;
-#ifdef _WIN32
-    FILE* p = popen(cmd.c_str(), "rb");   // binary: no CRLF translation of blob bytes
-#else
-    FILE* p = popen(cmd.c_str(), "r");    // glibc's popen refuses "rb" (EINVAL); POSIX streams do not translate anyway
-#endif
-    if (!p) fail("cannot run git");
-    std::string out;
-    char buf[65536];
-    for (std::size_t n; (n = std::fread(buf, 1, sizeof buf, p)) > 0;) out.append(buf, n);
-    if (pclose(p) != 0) fail("git failed: " + args);
-    return out;
+    auto out = app::runGit(o.repo, args, stdinFile);
+    if (!out) fail("git failed: " + args);
+    return std::move(*out);
 }
 
+/// The non-empty lines of git's output, without CRs.
 std::vector<std::string> lines(const std::string& text)
 {
     std::vector<std::string> out;
-    std::istringstream in(text);
-    for (std::string l; std::getline(in, l);) {
+    for (auto l : scan::splitLines(text)) {
         if (!l.empty() && l.back() == '\r') l.pop_back();
-        if (!l.empty()) out.push_back(l);
+        if (!l.empty()) out.push_back(std::move(l));
     }
     return out;
 }
@@ -118,7 +108,7 @@ std::map<std::string, std::string> readBlobs(const Options& o, const std::string
         std::ofstream f(list, std::ios::binary);
         for (const auto& p : paths) f << rev << ':' << p << '\n';
     }
-    const std::string raw = git(o, "cat-file --batch < " + quote(list.string()));
+    const std::string raw = git(o, "cat-file --batch", list.string());
     std::filesystem::remove(list);
     std::size_t at = 0;
     for (const auto& p : paths) {
@@ -137,12 +127,7 @@ std::map<std::string, std::string> readBlobs(const Options& o, const std::string
 
 struct Commit { std::string sha, author, date, subject; };
 
-std::string pathspecArgs(const Options& o)
-{
-    std::string s = " --";
-    for (const auto& p : o.pathspecs) s += " " + quote(p);
-    return s;
-}
+std::string pathspecArgs(const Options& o) { return app::pathspecArgs(o.pathspecs).value(); }   // every pathspec passed requireSafe at parse
 
 int snapshot(const Options& o)
 {

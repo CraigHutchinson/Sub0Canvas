@@ -35,6 +35,14 @@ inline std::vector<std::string> splitLines(const std::string& text)
     return lines;
 }
 
+/// `lines` each followed by '\n' (the inverse of `splitLines`; no line gives an empty text).
+inline std::string joinLines(const std::vector<std::string>& lines)
+{
+    std::string text;
+    for (const auto& l : lines) { text += l; text += '\n'; }
+    return text;
+}
+
 /// The identifier (with `::`, `~`, `$`) just before the first '(' of a line; "" when there is none.
 inline std::string nameBefore(std::string_view line)
 {

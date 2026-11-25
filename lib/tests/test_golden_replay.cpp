@@ -11,6 +11,7 @@
 // failures, which the check below asserts so that a future capture with multi-place diagnostics is noticed rather than half-checked.
 #include "sub0platform/testing/check.hpp"
 #include "doc_driver.hpp"
+#include "test_support.hpp"
 
 #include <simdjson.h>
 
@@ -25,16 +26,9 @@
 
 namespace fs = std::filesystem;
 using namespace req;
+using testsupport::slurp;
 
 namespace {
-
-std::string slurp(const fs::path& p)
-{
-    std::ifstream in(p, std::ios::binary);
-    std::stringstream s;
-    s << in.rdbuf();
-    return s.str();
-}
 
 std::string str(simdjson::dom::element e, std::string_view key)
 {

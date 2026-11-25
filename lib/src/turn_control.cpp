@@ -34,8 +34,6 @@ std::string trimmed(const std::string& l)
     return l.substr(a, l.find_last_not_of(" \t") - a + 1);
 }
 
-bool startsWith(const std::string& s, std::string_view p) { return s.starts_with(p); }
-
 /// The offset after a `  12| ` number column, or npos.
 std::size_t numberColumn(const std::string& line)
 {
@@ -65,8 +63,8 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
     if (lim.maxSearchLines > 0) {
         int inSearch = -1;
         for (const auto& l : lines) {
-            if (startsWith(l, "<<<<<<< SEARCH")) inSearch = 0;
-            else if (startsWith(l, "=======") || startsWith(l, ">>>>>>> REPLACE") || startsWith(l, "=== ")) inSearch = -1;
+            if (l.starts_with("<<<<<<< SEARCH")) inSearch = 0;
+            else if (l.starts_with("=======") || l.starts_with(">>>>>>> REPLACE") || l.starts_with("=== ")) inSearch = -1;
             else if (inSearch >= 0 && ++inSearch > lim.maxSearchLines)
                 return {"long-search", "Your reply was stopped: its SEARCH block copied more than " + std::to_string(lim.maxSearchLines) +
                                            " lines of the file. Do not copy the file. Name the lines to replace instead (the numbers are in the draft shown):\n"
@@ -116,11 +114,11 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
         bool inFile = false;
         for (std::size_t i = 0; i < lines.size(); ++i) {
             const std::string& l = lines[i];
-            if (startsWith(l, "=== ")) { heads.clear(); inFile = startsWith(l, "=== FILE:"); continue; }
+            if (l.starts_with("=== ")) { heads.clear(); inFile = l.starts_with("=== FILE:"); continue; }
             if (!inFile) continue;
             const std::string r = l.substr(0, l.find_last_not_of(" \t\r") + 1);
-            if (r.size() < 8 || std::isspace(static_cast<unsigned char>(r[0])) || startsWith(r, "namespace") || startsWith(r, "extern") || startsWith(r, "}")) continue;
-            const bool opens = r.back() == '{' || startsWith(r, "TEST(") || startsWith(r, "def ") || startsWith(r, "class ") || startsWith(r, "struct ");
+            if (r.size() < 8 || std::isspace(static_cast<unsigned char>(r[0])) || r.starts_with("namespace") || r.starts_with("extern") || r.starts_with("}")) continue;
+            const bool opens = r.back() == '{' || r.starts_with("TEST(") || r.starts_with("def ") || r.starts_with("class ") || r.starts_with("struct ");
             if (!opens) continue;
             auto& at = heads[r];
             at.push_back(i);
@@ -131,7 +129,7 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
     // 3. A whole-file block that reproduces the draft: a rewrite where an edit was asked for.
     if (lim.restateMinLines > 0 && !drafts.empty()) {
         for (std::size_t i = 0; i < lines.size(); ++i) {
-            if (!startsWith(lines[i], "=== FILE:")) continue;
+            if (!lines[i].starts_with("=== FILE:")) continue;
             std::string path = lines[i].substr(9);
             if (const auto close = path.rfind("==="); close != std::string::npos) path.erase(close);
             path = trimmed(path);
@@ -139,7 +137,7 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
             if (d == drafts.end()) continue;
             const auto draft = linesOf(d->second);
             int same = 0, total = 0;
-            for (std::size_t j = i + 1; j < lines.size() && !startsWith(lines[j], "=== "); ++j) {
+            for (std::size_t j = i + 1; j < lines.size() && !lines[j].starts_with("=== "); ++j) {
                 const std::size_t at = j - i - 1;
                 ++total;
                 if (at < draft.size() && lines[j] == draft[at]) ++same;
@@ -155,9 +153,9 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
         int run = 0;
         for (const auto& l : lines) {
             const std::string t = trimmed(l);
-            const bool comment = startsWith(t, "//") ||
-                                 (startsWith(t, "#") && !startsWith(t, "#include") && !startsWith(t, "#define") && !startsWith(t, "#pragma") && !startsWith(t, "#if") &&
-                                  !startsWith(t, "#endif") && !startsWith(t, "#else") && !startsWith(t, "#elif") && !startsWith(t, "#undef") && !startsWith(t, "#!"));
+            const bool comment = t.starts_with("//") ||
+                                 (t.starts_with("#") && !t.starts_with("#include") && !t.starts_with("#define") && !t.starts_with("#pragma") && !t.starts_with("#if") &&
+                                  !t.starts_with("#endif") && !t.starts_with("#else") && !t.starts_with("#elif") && !t.starts_with("#undef") && !t.starts_with("#!"));
             run = comment ? run + 1 : (t.empty() ? run : 0);
             if (run >= lim.maxCommentRun)
                 return {"comment-run", "Your reply was stopped: it was reasoning in comments (" + std::to_string(run) + " comment lines in a row). Decide first, then "
@@ -169,7 +167,7 @@ Runaway detectRunaway(std::string_view reply, const std::map<std::string, std::s
     if (lim.restateMinLines > 0) {
         int echoed = 0;
         for (const auto& l : lines) {
-            if (startsWith(l, "=== ")) { echoed = 0; continue; }   // counted per block: one block of that many numbered lines is a copy
+            if (l.starts_with("=== ")) { echoed = 0; continue; }   // counted per block: one block of that many numbered lines is a copy
             if (numberColumn(l) != std::string::npos) ++echoed;
             if (echoed >= lim.restateMinLines)
                 return {"view-echo", "Your reply was stopped: it was copying the numbered view back (the `N| ` numbers are not part of the file). Reply with only the lines that change, without the number column:\n"
@@ -185,7 +183,7 @@ Runaway detectEditOverrun(std::string_view reply, const std::map<std::string, st
     std::string path;
     int count = 0;
     for (const auto& l : completeLines(reply)) {
-        if (startsWith(l, "=== EDIT:")) {
+        if (l.starts_with("=== EDIT:")) {
             std::istringstream h(l.substr(9));
             std::string kind;
             h >> path >> kind;
@@ -194,11 +192,11 @@ Runaway detectEditOverrun(std::string_view reply, const std::map<std::string, st
             count = 0;
             continue;
         }
-        if (startsWith(l, "=== ")) { in = In::none; continue; }
+        if (l.starts_with("=== ")) { in = In::none; continue; }
         if (in == In::none) continue;
-        if (startsWith(l, "<<<<<<< SEARCH")) { in = In::search; count = 0; continue; }
-        if (in == In::search && startsWith(l, "=======")) { in = In::body; count = 0; continue; }
-        if (startsWith(l, ">>>>>>> REPLACE")) { in = In::wait; continue; }
+        if (l.starts_with("<<<<<<< SEARCH")) { in = In::search; count = 0; continue; }
+        if (in == In::search && l.starts_with("=======")) { in = In::body; count = 0; continue; }
+        if (l.starts_with(">>>>>>> REPLACE")) { in = In::wait; continue; }
         if (in == In::wait) continue;
         ++count;
         if (in == In::search) {
@@ -237,9 +235,9 @@ std::string continuationText(std::string_view partial, const std::string& reply)
     }
     // A header repeated at the very start (the model began the block again) and a fence around the text are not content.
     std::size_t first = 0;
-    while (first < lines.size() && (startsWith(lines[first], "```") || startsWith(lines[first], "=== FILE:") || startsWith(lines[first], "=== EDIT:"))) ++first;
+    while (first < lines.size() && (lines[first].starts_with("```") || lines[first].starts_with("=== FILE:") || lines[first].starts_with("=== EDIT:"))) ++first;
     std::size_t last = lines.size();
-    while (last > first && (trimmed(lines[last - 1]).empty() || startsWith(lines[last - 1], "```"))) --last;
+    while (last > first && (trimmed(lines[last - 1]).empty() || lines[last - 1].starts_with("```"))) --last;
     std::string body;
     for (std::size_t i = first; i < last; ++i) body += lines[i] + "\n";
     if (first == 0 && last == lines.size() && !reply.empty() && reply.back() != '\n' && !body.empty()) body.pop_back();   // nothing stripped: keep the reply's own ending
@@ -306,20 +304,20 @@ std::string joinContinuation(std::string_view partialView, const std::string& re
     std::size_t first = 0;
     for (; first < c.size(); ++first) {
         const std::string t = rtrimmed(c[first]);
-        if (startsWith(t, "```") || t == "===" || (first == 0 && t.empty())) continue;
-        if (startsWith(t, "=== READ:")) return reply;
-        if (startsWith(t, "=== FILE:") || startsWith(t, "=== EDIT:")) {
+        if (t.starts_with("```") || t == "===" || (first == 0 && t.empty())) continue;
+        if (t.starts_with("=== READ:")) return reply;
+        if (t.starts_with("=== FILE:") || t.starts_with("=== EDIT:")) {
             std::size_t next = first + 1;
-            while (next < c.size() && startsWith(c[next], "```")) ++next;
+            while (next < c.size() && c[next].starts_with("```")) ++next;
             if (t == openHeader && !openFirst.empty() && next < c.size() && rtrimmed(c[next]) == openFirst && ltrimmed(openFirst).size() >= 4) return reply;
             // A different block that is not a SEARCH of the tail (T0 write-engine, 2026-11-18: a FILE cut at `if (val < 0`, continued by a SYMBOL edit of
             // evaluate, which was glued onto the cut line): the open block ends at its last complete line, and the new block follows it, whole.
             // A SEARCH counts as a continuation only when it matches the open block's last lines (35B, 2026-11-18: after a loop rollback, an EDIT of the
             // file's enum was glued, header dropped, onto the cut FILE).
             const auto searchesTail = [&] {
-                if (!(next < c.size() && startsWith(c[next], "<<<<<<< SEARCH"))) return false;
+                if (!(next < c.size() && c[next].starts_with("<<<<<<< SEARCH"))) return false;
                 std::vector<std::string> search;
-                for (std::size_t i = next + 1; i < c.size() && !startsWith(c[i], "======="); ++i) search.push_back(ltrimmed(rtrimmed(c[i])));
+                for (std::size_t i = next + 1; i < c.size() && !c[i].starts_with("======="); ++i) search.push_back(ltrimmed(rtrimmed(c[i])));
                 auto tail = completeLines(partial);
                 if (const auto nl = partial.rfind('\n'); nl + 1 < partial.size()) tail.push_back(partial.substr(nl == std::string::npos ? 0 : nl + 1));
                 if (search.empty() || search.size() > tail.size()) return false;
@@ -329,7 +327,7 @@ std::string joinContinuation(std::string_view partialView, const std::string& re
             if (t != openHeader && !openHeader.empty() && !searchesTail()) {
                 const auto nl = partial.rfind('\n');
                 std::string closed = nl == std::string::npos ? std::string{} : partial.substr(0, nl + 1);
-                closed += startsWith(openHeader, "=== FILE:") ? "=== END FILE ===\n" : "=== END EDIT ===\n";
+                closed += openHeader.starts_with("=== FILE:") ? "=== END FILE ===\n" : "=== END EDIT ===\n";
                 std::string rest;
                 for (std::size_t i = first; i < c.size(); ++i) rest += c[i] + (i + 1 < c.size() || replyEndsLine ? "\n" : "");
                 return closed + rest;
@@ -340,7 +338,7 @@ std::string joinContinuation(std::string_view partialView, const std::string& re
     }
     std::size_t last = c.size();
     bool strippedEnd = false;
-    while (last > first && (trimmed(c[last - 1]).empty() || startsWith(c[last - 1], "```"))) { --last; strippedEnd = true; }
+    while (last > first && (trimmed(c[last - 1]).empty() || c[last - 1].starts_with("```"))) { --last; strippedEnd = true; }
     std::vector<std::string> body(c.begin() + static_cast<std::ptrdiff_t>(first), c.begin() + static_cast<std::ptrdiff_t>(last));
     const bool endsLine = replyEndsLine || strippedEnd;   // a continuation cut off again keeps its unfinished last line for the next join
     const auto joinLines = [&](const std::vector<std::string>& v, std::size_t from) {
@@ -356,18 +354,18 @@ std::string joinContinuation(std::string_view partialView, const std::string& re
     std::vector<std::string> baseLines = completeLines(base);
 
     // 2. The rest written as a SEARCH/REPLACE of the block's own tail (seen from the 35B: SEARCH the last lines, REPLACE them completed): spliced in place.
-    if (!body.empty() && startsWith(body[0], "<<<<<<< SEARCH")) {
+    if (!body.empty() && body[0].starts_with("<<<<<<< SEARCH")) {
         std::size_t i = 1;
         std::vector<std::string> search, replace;
-        for (; i < body.size() && !startsWith(body[i], "======="); ++i) search.push_back(ltrimmed(rtrimmed(body[i])));   // indentation may be lost (35B: the cut line)
-        for (++i; i < body.size() && !startsWith(body[i], ">>>>>>> REPLACE") && !startsWith(body[i], "=== END EDIT"); ++i) replace.push_back(body[i]);
+        for (; i < body.size() && !body[i].starts_with("======="); ++i) search.push_back(ltrimmed(rtrimmed(body[i])));   // indentation may be lost (35B: the cut line)
+        for (++i; i < body.size() && !body[i].starts_with(">>>>>>> REPLACE") && !body[i].starts_with("=== END EDIT"); ++i) replace.push_back(body[i]);
         std::vector<std::string> tail = baseLines;
         if (!fragment.empty()) tail.push_back(fragment);
         bool matches = !search.empty() && search.size() <= tail.size();
         for (std::size_t k = 0; matches && k < search.size(); ++k) matches = ltrimmed(rtrimmed(tail[tail.size() - search.size() + k])) == search[k];
         if (matches) {
             std::size_t after = i < body.size() ? i + 1 : i;
-            if (after < body.size() && startsWith(body[after], "=== END EDIT") && startsWith(openHeader, "=== FILE:")) ++after;   // closes the edit, not the file
+            if (after < body.size() && body[after].starts_with("=== END EDIT") && openHeader.starts_with("=== FILE:")) ++after;   // closes the edit, not the file
             tail.resize(tail.size() - search.size());
             std::string out;
             for (const auto& l : tail) out += l + "\n";
@@ -427,9 +425,9 @@ std::string completeCutFile(std::string_view cutView, const std::string& previou
         keepLines = lines.size();
         for (std::size_t i = lines.size(); i-- > 0;) {
             const std::string l = trimmed(lines[i]);
-            if (startsWith(l, "def ") || startsWith(l, "async def ") || startsWith(l, "class ")) { keepLines = i; break; }
+            if (l.starts_with("def ") || l.starts_with("async def ") || l.starts_with("class ")) { keepLines = i; break; }
         }
-        while (keepLines > 0 && startsWith(trimmed(lines[keepLines - 1]), "@")) --keepLines;
+        while (keepLines > 0 && trimmed(lines[keepLines - 1]).starts_with("@")) --keepLines;
     } else {
         int depth = 0;
         for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -444,7 +442,7 @@ std::string completeCutFile(std::string_view cutView, const std::string& previou
                 else if (ch == '}') --depth;
             }
             const std::string t = trimmed(lines[i]);
-            if (depth == 0 && ((before > 0 && !t.empty()) || (before == 0 && (t.ends_with(";") || startsWith(t, "#"))))) keepLines = i + 1;
+            if (depth == 0 && ((before > 0 && !t.empty()) || (before == 0 && (t.ends_with(";") || t.starts_with("#"))))) keepLines = i + 1;
         }
     }
     std::string out;

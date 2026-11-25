@@ -1,6 +1,7 @@
 #include "sub0canvas/session.hpp"
 
 #include "json_util.hpp"
+#include "scan.hpp"
 
 #include <algorithm>
 #include <format>
@@ -8,6 +9,8 @@
 namespace sub0canvas {
 
 namespace {
+
+using scan::joinLines;
 
 std::unexpected<SessionError> fail(std::string code, std::string message) { return std::unexpected(SessionError{std::move(code), {}, std::move(message), 0, 0}); }
 
@@ -17,13 +20,6 @@ std::unexpected<SessionError> quota(std::string limit, std::uint64_t current, st
 }
 
 std::string actorName(const WriterId& w) { return w.ns + "/" + w.writer; }
-
-std::string joinLines(const std::vector<std::string>& v)
-{
-    std::string s;
-    for (const auto& l : v) { s += l; s += '\n'; }
-    return s;
-}
 
 std::string spanText(int from, int to)
 {
