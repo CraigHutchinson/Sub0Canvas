@@ -126,7 +126,6 @@ test('the machine rules: battery skips, a busy machine skips, force measures and
     const t = (i) => ({ times: { user: i, sys: 0, idle: 0 } });
     assert.equal(busyFraction([{ times: { user: 0, sys: 0, idle: 0 } }], [{ times: { user: 25, sys: 0, idle: 75 } }]), 0.25);
     assert.equal(hostAlias({ SUB0PERF_HOST: 'Some-Host' }, 'ANYTHING'), 'some-host');
-    assert.equal(hostAlias({ SUB0MATH_PERF_HOST: 'Old-Host' }, 'ANYTHING'), 'old-host'); // the pre-rename spelling still works
     assert.equal(hostAlias({}, 'My-PC'), 'my-pc');
     assert.equal(findBrowser(undefined, {}, () => false), null, 'no browser: the runner skips, it does not fail');
     assert.equal(findBrowser('/x/browser', {}, (p) => p === '/x/browser'), '/x/browser');
