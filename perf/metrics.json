@@ -444,6 +444,19 @@
           "kind": "exact"
         }
       }
+    },
+    {
+      "date": "2026-11-25",
+      "commit": "d8944cfd0a15309819ddecaefe9a8c7c3ede7a56",
+      "reason": "Record libstdc++ for the Sub0Perf v0.4.0 metrics guard using the recording GCC toolchain",
+      "metrics": {
+        "corpus 1e5: lines": {
+          "from": 100145,
+          "to": 100145,
+          "kind": "exact"
+        }
+      }
     }
-  ]
+  ],
+  "stdlib": "libstdc++"
 }
