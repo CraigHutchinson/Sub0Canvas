@@ -65,8 +65,7 @@
         state.doc = state.docs[state.docIdx] || null;
         if (!state.doc) return;
         const turns = state.doc.turnNumbers;
-        const t = Number(p.get('turn'));
-        state.turn = turns.includes(t) ? t : turns[turns.length - 1];
+        state.turn = M.pickTurn(turns, p.get('turn'));
         state.centre = p.get('centre') || 'code';
         state.file = p.get('file') || '';
         state.block = p.get('block') || '';

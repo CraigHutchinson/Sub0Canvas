@@ -184,3 +184,7 @@ split is data and not a `--filter` in a hook; a corpus cache across rounds; a ca
 | the store, events, subscriptions, claims (B1-B3) | yes | yes | yes (a recorded workflow) | when sharding (S4) | tests, then the squad's use (BACKBONE.md section 8) |
 | an adapter (git, GitHub) | yes | no | **yes** (captured data, hand-checked truth) | for history replay | none until the squad consumes it |
 | the viewer | `npm test` | yes | no | no | no |
+
+## Scale-run minimums
+
+A scale run of the viewer is only evidence when the bundle is representative. `tools/scale-check.mjs BUNDLE` fails a bundle below one working week of a busy subtree: at least 20 turns, 1,000 files and 10,000 blocks at the last turn, one commits item per turn, and a viewer that opens on the latest turn (a missing `turn` parameter once opened every snapshot on its base commit). Run it on a locally made bundle before reading any timing from it (`sub0canvas snapshot --history 21 --max-files 1500 -- <subtrees>`); the unit test pins the gate on this repository's own history with smaller counts.
