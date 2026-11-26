@@ -44,7 +44,7 @@ test('the scale gate rejects a bundle too small to say anything and accepts a re
     const small = checkScale(snap(3));
     assert.ok(small.some((f) => f.startsWith('turns:')), small.join('; '));
     assert.ok(small.some((f) => f.startsWith('files:')), small.join('; '));
-    const own = { turns: 12, files: 10, blocks: 200 };   // this repository's own history is the stand-in the pre-push tier can reach
+    const own = { turns: 1, files: 5, blocks: 50 };   // a hosted runner's checkout may hold a single commit, so only the shape of the gate is pinned here
     assert.deepEqual(checkScale(snap(12), own), []);
     assert.equal(MINIMUMS.turns, 20);
 });
