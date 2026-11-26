@@ -553,8 +553,14 @@
         return out;
     }
 
+    // A missing parameter is not turn 0: snapshot bundles number their turns from 0, so Number(null) would open every bundle on its base commit.
+    const pickTurn = (turnNumbers, param) => {
+        const t = param === null || param === undefined || param === '' ? NaN : Number(param);
+        return turnNumbers.includes(t) ? t : turnNumbers[turnNumbers.length - 1];
+    };
+
     return {
-        SCHEMA,
+        SCHEMA, pickTurn,
         validateTurn, loadEntries, splitLines,
         layerNames, turnOf, resolveId, blockAt, blocksOf, fileLines,
         attachedTo, orphans, lineAnchored, attachmentCounts, fanOut, itemKey, itemTrace, blockHistory, findBlocks,

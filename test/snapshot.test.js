@@ -29,3 +29,22 @@ test('a snapshot refuses what it must not pass to git, and an unscoped request',
         assert.equal(r.status, 2, args.join(' '));
     }
 });
+
+test('a missing turn parameter opens the latest turn, not turn 0', () => {
+    assert.equal(M.pickTurn([0, 1, 2, 3], null), 3);
+    assert.equal(M.pickTurn([0, 1, 2, 3], ''), 3);
+    assert.equal(M.pickTurn([0, 1, 2, 3], '0'), 0);
+    assert.equal(M.pickTurn([0, 1, 2, 3], '9'), 3);
+    assert.equal(M.pickTurn([1, 2, 3, 4], null), 4);
+});
+
+test('the scale gate rejects a bundle too small to say anything and accepts a representative one', { skip: !exe && 'sub0canvas is not built' }, async () => {
+    const { checkScale, MINIMUMS } = await import('../tools/scale-check.mjs');
+    const snap = (history) => JSON.parse(spawnSync(exe, ['snapshot', '--repo', root, '--history', String(history), '--', 'lib/src'], { encoding: 'utf8', maxBuffer: 1 << 28 }).stdout);
+    const small = checkScale(snap(3));
+    assert.ok(small.some((f) => f.startsWith('turns:')), small.join('; '));
+    assert.ok(small.some((f) => f.startsWith('files:')), small.join('; '));
+    const own = { turns: 12, files: 10, blocks: 200 };   // this repository's own history is the stand-in the pre-push tier can reach
+    assert.deepEqual(checkScale(snap(12), own), []);
+    assert.equal(MINIMUMS.turns, 20);
+});
