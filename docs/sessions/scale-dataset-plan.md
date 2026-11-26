@@ -60,6 +60,8 @@ tools/replica/ (seed, --scale, --focus) --> out/replica/<seed>/ repository + for
 | G6 bundle and measure | det | G2 to G5 | gold.bundle.json, metrics.json (counts, histograms), K0 samples | scale-check passes the new minimums; the viewer opens on the latest turn |
 | G7 distil and leak check | det | metrics, histograms | profile candidate | every check in section 7 passes; the owner reviews the diff before it is copied to `fixtures/` |
 
+**Git settings.** Every git call in the gold stages and in `sub0canvas` runs with `diff.renameLimit=32767` (git's maximum), passed per command and never written to a user's config, because above 1,000 files git skips rename detection and a moved file reads as a delete plus an add. The census found commits large enough to trip it.
+
 **Agent contract.** Prompt templates are versioned files in `tools/gold/prompts/` and hold no private text; private text enters only as the record at run time. Cache key: sha256 of stage, template hash, record hash, model id and parameters, stored in `out/gold/cache/agent/`, so a rerun is byte-identical; a miss with `--no-agent` uses the deterministic fallback. Agent output reaches the profile only as counts (group sizes, anchor kinds, claim outcomes).
 
 ## 5. Replicator (`node tools/replica/cli.js --profile <f> --seed N [--scale s] [--focus area|change:<shape>|window:<days>|ticket:<shape>]`)

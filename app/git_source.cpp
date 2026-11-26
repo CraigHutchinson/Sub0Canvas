@@ -52,7 +52,9 @@ std::optional<std::string> pathspecArgs(const Scope& scope)
 
 std::optional<std::string> runGit(const std::string& repo, const std::string& args, const std::string& stdinFile)
 {
-    std::string cmd = "git -C " + quote(repo) + " " + args;
+    // The rename limit is git's maximum: above git's default of 1000 files a large commit silently skips rename detection and every moved file looks
+    // like a delete plus an add, which breaks block identity across the move.
+    std::string cmd = "git -C " + quote(repo) + " -c diff.renameLimit=32767 " + args;
     if (!stdinFile.empty()) cmd += " < " + quote(stdinFile);
 #ifdef _WIN32
     FILE* p = popen(cmd.c_str(), "rb");   // binary: no CRLF translation of blob bytes
