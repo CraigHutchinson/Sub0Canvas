@@ -41,3 +41,4 @@ Backlog: <item>. Design: <BACKBONE.md section and slice>.
 | [canvas-test-coverage.md](canvas-test-coverage.md) | Later U8: per-test coverage in source and scoped assertion evidence |
 | [canvas-prose-verification.md](canvas-prose-verification.md) | Verify prose against the code and tests that support it, with revision-bound evidence |
 | [canvas-source-addressing.md](canvas-source-addressing.md) | Shared source addressing for edits and diagnostics; viewpoint clones |
+| [scale-extraction.md](scale-extraction.md) | One unbounded extraction of an active area, with pull requests and reviews, and its anonymised mirror (low priority) |
