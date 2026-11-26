@@ -11,6 +11,7 @@
 #include <print>
 #include <sub0canvas/content_id.hpp>
 #include <sub0canvas/doc_layers.hpp>
+#include <sub0canvas/hunks.hpp>
 
 #include "git_source.hpp"
 #include "json_util.hpp"
@@ -178,6 +179,17 @@ int snapshot(const Options& o)
                 else ++skipped;
             }
         }
+        // The hunks of this turn: ONE `git diff -U0` between the two commits for the whole pathspec, mapped per file from the spans the blocks had before
+        // the update and have after it. Only files the view holds count, so the totals reconcile with what the view shows.
+        std::map<std::string, std::vector<DiffHunk>> hunks;
+        if (t > 0) hunks = parseHunks(git(o, std::format("-c core.quotepath=off diff -U0 --no-renames --no-color --no-ext-diff {} {}{}", revs[t - 1], revs[t], pathspecArgs(o))));
+        std::map<std::string, std::vector<BlockSpan>> spansBefore;
+        auto spansOf = [&](const std::string& p) {
+            std::vector<BlockSpan> spans;
+            for (const Block* b : index.blocks(p)) spans.push_back({b->id, b->first, b->last});
+            return spans;
+        };
+        if (t > 0) for (const auto& p : fetch) if (hunks.contains(p)) spansBefore[p] = spansOf(p);
         for (const auto& p : removed) { index.update(p, ""); files.erase(p); textIds.erase(p); revisionIds.erase(p); }
         for (auto& [p, text] : readBlobs(o, revs[t], fetch)) {
             index.update(p, text);
@@ -214,6 +226,18 @@ int snapshot(const Options& o)
 
         SnapshotSpec spec;
         spec.turn = static_cast<int>(t);
+        if (t > 0) {
+            std::size_t total = 0, outside = 0;
+            for (const auto& [p, list] : hunks) {
+                if (!isCode(p) || !(files.contains(p) || std::ranges::contains(removed, p))) continue;
+                const auto before = spansBefore.find(p);
+                const HunkMapping m = mapHunks(list, before == spansBefore.end() ? std::vector<BlockSpan>{} : before->second, spansOf(p));
+                total += m.total;
+                outside += m.outside;
+                for (const auto& [id, spans] : m.byBlock) spec.blockHunks[id] = spans;
+            }
+            spec.hunkCounts = {{total, outside}};
+        }
         spec.files = files;
         spec.revisions = revisions;
         spec.revisionIds = revisionIds;

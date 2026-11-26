@@ -962,14 +962,14 @@ void BlockIndex::writeRetired(json::Writer& w) const
 namespace {
 
 /// One logged event, written from its compact record without building a `BlockEvent`.
-void writeEv(json::Writer& w, const Ev& e, const Pool& pool)
+void writeEv(json::Writer& w, const Ev& e, const Pool& pool, const std::vector<HunkSpan>* hunks = nullptr)
 {
     char id[13], into[13];
     idChars(e.id, id);
     std::string_view detail;
     if (e.detailKind == 1) detail = pool.view(static_cast<std::uint32_t>(e.detail));
     else if (e.detailKind == 2) { idChars(e.detail, into); detail = std::string_view{into, 13}; }
-    projection::writeBlockEventParts(w, e.turn, carryName(e.carry), std::string_view{id, 13}, pool.view(e.path), pool.view(e.name), detail);
+    projection::writeBlockEventParts(w, e.turn, carryName(e.carry), std::string_view{id, 13}, pool.view(e.path), pool.view(e.name), detail, hunks);
 }
 
 }  // namespace
@@ -978,7 +978,7 @@ void BlockIndex::writeEventJson(json::Writer& w, std::size_t i) const { writeEv(
 
 void projection::writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i) { index.writeEventJson(w, i); }
 
-void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const
+void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom, const SnapshotSpec* hunks) const
 {
     w.key("blocks").beginArray();
     for (const auto& [p, fileIndex] : s_->byPath) for (const Block& b : s_->files[fileIndex].blocks) projection::writeBlock(w, b);
@@ -986,7 +986,16 @@ void BlockIndex::writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const
     writeRetired(w);
     w.kv("eventsFrom", static_cast<std::int64_t>(eventsFrom));
     w.key("events").beginArray();
-    for (std::size_t i = std::min(eventsFrom, s_->events.size()); i < s_->events.size(); ++i) writeEv(w, s_->events[i], *s_->pool);
+    for (std::size_t i = std::min(eventsFrom, s_->events.size()); i < s_->events.size(); ++i) {
+        const Ev& e = s_->events[i];
+        const std::vector<HunkSpan>* spans = nullptr;
+        if (hunks != nullptr && !hunks->blockHunks.empty() && e.turn == hunks->turn) {   // the spans belong to the turn being written, never to an earlier one's events
+            char id[13];
+            idChars(e.id, id);
+            if (const auto found = hunks->blockHunks.find(std::string{id, 13}); found != hunks->blockHunks.end()) spans = &found->second;
+        }
+        writeEv(w, e, *s_->pool, spans);
+    }
     w.endArray();
 }
 
@@ -1391,7 +1400,8 @@ std::string layeredJson(const SnapshotSpec& spec, const BlockIndex& index)
         if (spec.textsCarried) for (const std::string_view id : fresh) spec.textsCarried->emplace(id);
     }
     // The index's own JSON holds blocks, retired and events: spliced in whole, so there is one writer of that shape.
-    index.writeJsonMembers(w, spec.eventsFrom);
+    index.writeJsonMembers(w, spec.eventsFrom, &spec);
+    if (spec.hunkCounts) w.key("diffHunks").beginObject().kv("total", static_cast<std::int64_t>(spec.hunkCounts->first)).kv("outside", static_cast<std::int64_t>(spec.hunkCounts->second)).endObject();
     if (!spec.policies.empty()) {
         w.key("policies").beginObject();
         for (const auto& [role, id] : spec.policies) w.kv(role, id);
@@ -1434,11 +1444,20 @@ void writeBlock(json::Writer& w, const Block& b)
 
 void writeBlockEvent(json::Writer& w, const BlockEvent& e) { writeBlockEventParts(w, e.turn, carryName(e.carry), e.id, e.path, e.name, e.detail); }
 
-void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail)
+void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail,
+                          const std::vector<HunkSpan>* hunks)
 {
     // carry names and ids are plain ASCII by construction; a detail may be an interned string (any text) or an id.
     w.beginObject().key("turn").num(static_cast<std::int64_t>(turn)).key("carry").strPlain(carry).key("id").strPlain(id).key("path").str(path).key("name").str(name)
-        .key("detail").str(detail).endObject();
+        .key("detail").str(detail);
+    if (hunks != nullptr && !hunks->empty()) {
+        w.key("hunks").beginArray();
+        for (const HunkSpan& h : *hunks)
+            w.beginArray().num(static_cast<std::int64_t>(h.oldStart)).num(static_cast<std::int64_t>(h.oldLen)).num(static_cast<std::int64_t>(h.newStart))
+                .num(static_cast<std::int64_t>(h.newLen)).endArray();
+        w.endArray();
+    }
+    w.endObject();
 }
 
 void writeLayerItemMembers(json::Writer& w, const LayerItem& it, int number)

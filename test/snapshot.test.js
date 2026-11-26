@@ -48,3 +48,50 @@ test('the scale gate rejects a bundle too small to say anything and accepts a re
     assert.deepEqual(checkScale(snap(12), own), []);
     assert.equal(MINIMUMS.turns, 20);
 });
+
+test('edited events carry block-relative hunk ranges and the turn reconciles with the diff', { skip: (!exe && 'sub0canvas is not built') || (spawnSync('git', ['--version']).status !== 0 && 'git is not installed') }, async () => {
+    const os = require('node:os');
+    const { pathToFileURL } = require('node:url');
+    const { buildRepository } = await import(pathToFileURL(path.join(root, 'tools', 'git-fixture.mjs')).href);
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sub0canvas-hunks-'));
+    const repo = path.join(dir, 'tinycalc.git');
+    try {
+        buildRepository(repo);
+        const git = (...args) => spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 1 << 28 });
+        const r = spawnSync(exe, ['snapshot', '--repo', repo, '--rev', 'main', '--history', '40', '--', 'src/'], { encoding: 'utf8', maxBuffer: 1 << 28 });
+        assert.equal(r.status, 0, r.stderr);
+        const { docs, problems } = M.loadEntries(JSON.parse(r.stdout));
+        assert.deepEqual(problems, []);
+        const turns = docs[0].turns;
+        const shas = git('rev-list', '--first-parent', '--max-count=40', 'main', '--', 'src/').stdout.trim().split('\n').reverse();
+        assert.equal(shas.length, turns.length);
+        let placed = 0, partial = 0;
+        for (let i = 1; i < turns.length; ++i) {
+            // (c) the independent count: every `@@` of the -U0 diff of the code files the view holds.
+            const diff = git('diff', '-U0', '--no-renames', shas[i - 1], shas[i], '--', 'src/').stdout;
+            const hunks = diff.split('\n').filter((l) => l.startsWith('@@ ')).length;
+            const t = turns[i];
+            assert.equal(t.diffHunks.total, hunks, `turn ${i}`);
+            assert.ok(t.diffHunks.outside <= hunks);
+            const spans = t.events.flatMap((e) => e.hunks || []);
+            assert.ok(spans.length >= hunks - t.diffHunks.outside, `turn ${i}: every placed hunk has a span`);
+            if (hunks - t.diffHunks.outside > 0) ++placed;
+            for (const e of t.events) for (const h of e.hunks || []) {
+                const b = t.blocks.find((x) => x.id === e.id);
+                assert.ok(b, 'a span names a live block');
+                const len = b.last - b.first + 1;
+                assert.ok(h[2] >= 0 && h[2] + h[3] - 1 <= len, `new span within the block: ${h}`);
+            }
+            // (a, b) through the viewer: a block edited by one small hunk is partial, and the span is short of the block.
+            for (const b of t.blocks) {
+                const hist = M.blockHistory(docs[0], b.id).timeline.find((x) => x.turn === t.turn);
+                if (hist?.edit === 'partial') { ++partial; assert.ok(hist.hunks.every((h) => h[3] <= b.last - b.first + 1)); }
+            }
+        }
+        assert.ok(placed > 0, 'some commit edited a block');
+        assert.ok(partial > 0, 'the viewer tells a partial edit from a rewrite');
+        assert.deepEqual(M.validateTurn(turns[1]), []);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

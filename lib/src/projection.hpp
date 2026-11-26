@@ -7,6 +7,7 @@
 #include "sub0canvas/doc_layers.hpp"
 
 #include <string_view>
+#include <vector>
 
 namespace sub0canvas::projection {
 
@@ -16,8 +17,10 @@ void writeBlock(json::Writer& w, const Block& b);
 void writeBlockEvent(json::Writer& w, const BlockEvent& e);
 /// Event `i` of a block index as the projection's object, without building a BlockEvent (a friend of BlockIndex; the query's `events` operation).
 void writeIndexEvent(json::Writer& w, const BlockIndex& index, std::size_t i);
-/// The same from its parts (views, so a compact log writes without building a `BlockEvent` per line); `carry` is the carry's name.
-void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail);
+/// The same from its parts (views, so a compact log writes without building a `BlockEvent` per line); `carry` is the carry's name. `hunks`, when non-null and
+/// non-empty, is written as `hunks`: `[[oldStart, oldLen, newStart, newLen], ...]`, block-relative (hunks.hpp).
+void writeBlockEventParts(json::Writer& w, int turn, std::string_view carry, std::string_view id, std::string_view path, std::string_view name, std::string_view detail,
+                           const std::vector<HunkSpan>* hunks = nullptr);
 /// The members of a layer item, into the caller's open object: `id` (the key), `number` (its place in its layer), `kind`, `title`, `detail`, `anchors[]`. A caller may append its own (state, tags).
 void writeLayerItemMembers(json::Writer& w, const LayerItem& item, int number);
 /// The three members that name a file at a revision, written into the caller's open object: `revision`, `revisionId`, `textId`.

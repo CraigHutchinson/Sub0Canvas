@@ -16,11 +16,14 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
+#include "sub0canvas/hunks.hpp"
 
 namespace sub0canvas {
 
@@ -192,7 +195,7 @@ private:
     void writeEventJson(json::Writer& w, std::size_t i) const;
     /// The members of the index (`blocks`, `retired`, `eventsFrom`, `events` from that position on) into the caller's open object, with no intermediate string,
     /// and a byte count near what they take, to size the caller's buffer.
-    void writeJsonMembers(json::Writer& w, std::size_t eventsFrom) const;
+    void writeJsonMembers(json::Writer& w, std::size_t eventsFrom, const SnapshotSpec* hunks = nullptr) const;
     [[nodiscard]] std::size_t jsonSizeHint(std::size_t eventsFrom) const;
     void writeRetired(json::Writer& w) const;
     [[nodiscard]] BlockEvent eventAt(std::size_t i) const;
@@ -262,6 +265,8 @@ struct SnapshotSpec
     const Store* store = nullptr;                                   ///< when set, the document also carries the store's `store-snapshot-1` under `store` (B1b): item state, tags,
                                                                     ///< links and authorship beside the flat layers. Null (the default): nothing is added
     const Query* storeQuery = nullptr;                              ///< with `store`: what the snapshot selects (A11, a private item stays out by default); null: the default query
+    std::map<std::string, std::vector<HunkSpan>> blockHunks;        ///< the changed lines of each block, by block id, written on that block's events of `turn` as `hunks`
+    std::optional<std::pair<std::size_t, std::size_t>> hunkCounts;  ///< this turn's diff hunks (total, outside every carried block), written as the turn's `diffHunks`; nullopt: not measured
     std::set<std::string>* textsCarried = nullptr;                  ///< the content ids earlier snapshots of this document carried, updated with this one's: a text is written once
                                                                     ///< per document (null: this snapshot carries every text it refers to, so it stands alone)
 };
