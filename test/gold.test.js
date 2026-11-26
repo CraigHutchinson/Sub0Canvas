@@ -46,5 +46,16 @@ test('census, hunks and join over the fixture: batched git calls, manifests, and
     const direct = execFileSync('git', ['-C', repo, 'log', '--no-merges', '-M', '-p', '-U0', '--format=', '--', ...set], { encoding: 'utf8', maxBuffer: 1 << 28 })
         .split('\n').filter((l) => l.startsWith('@@')).length;
     assert.equal(m.hunks, direct, 'the join sees every hunk git reports');
+    const exe = [process.env.SUB0CANVAS_EXE, path.join(__dirname, '..', 'build', 'default', 'sub0canvas.exe'), path.join(__dirname, '..', 'build', 'default', 'sub0canvas')]
+        .find((p) => p && fs.existsSync(p));
+    if (exe) {
+        process.env.SUB0CANVAS_EXE = exe;
+        const { blocks } = await import('../tools/gold/run.mjs');
+        const b = await blocks(repo, dir, { history: 40 });
+        assert.ok(b.blocksEdited > 0 && b.editEvents > 0, 'the library placed hunks in blocks');
+        assert.ok(b.blocksEditedTwiceOrMore > 0, 'some block was edited by several commits');
+        assert.ok(b.hunksOutsideBlocks <= b.hunksInDiffs);
+        assert.ok(fs.existsSync(path.join(dir, 'blocks.manifest.json')));
+    }
     for (const stage of ['census', 'hunks', 'join']) assert.ok(fs.existsSync(path.join(dir, `${stage}.manifest.json`)), stage);
 });

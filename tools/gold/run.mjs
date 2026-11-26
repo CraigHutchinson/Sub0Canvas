@@ -7,6 +7,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -142,6 +143,73 @@ export function join(dir) {
     return metrics;
 }
 
+/** The snapshot executable: SUB0CANVAS_EXE, then the default build directory. */
+function snapshotExe() {
+    const found = [process.env.SUB0CANVAS_EXE, path.join(root, 'build', 'default', 'sub0canvas.exe'), path.join(root, 'build', 'default', 'sub0canvas')]
+        .find((p) => p && fs.existsSync(p));
+    if (!found) throw new Error('sub0canvas is not built (set SUB0CANVAS_EXE)');
+    return found;
+}
+
+/** Folds one snapshot bundle into per-block counts: commits per block, partial edits, and hunks the library could not place in a block. */
+export function blockMetrics(entries, M) {
+    const { docs } = M.loadEntries(entries);
+    const perBlock = new Map();
+    let edits = 0, partial = 0, outside = 0, hunkTotal = 0;
+    for (const d of docs) {
+        const spans = new Map(d.turns.map((t) => [t.turn ?? d.turns.indexOf(t), new Map(t.blocks.map((b) => [b.id, b.last - b.first + 1]))]));
+        for (const t of d.turns) {
+            if (t.diffHunks) { hunkTotal += t.diffHunks.total; outside += t.diffHunks.outside; }
+        }
+        for (const e of d.events) {
+            if (e.detail !== 'edited' || !e.hunks) continue;
+            const key = `${e.path}|${e.id}`;
+            const len = spans.get(e.turn)?.get(e.id);
+            const changed = e.hunks.reduce((n, h) => n + Math.max(h[1], h[3]), 0);
+            const rec = perBlock.get(key) ?? perBlock.set(key, { turns: new Set(), hunks: 0 }).get(key);
+            rec.turns.add(e.turn);
+            rec.hunks += e.hunks.length;
+            edits++;
+            if (len && changed < len) partial++;
+        }
+    }
+    return { perBlock, edits, partial, outside, hunkTotal };
+}
+
+/** G2: snapshots each command-line-sized slice of the set (`history` first-parent turns) and joins hunks to the library's blocks. */
+export async function blocks(repo, dir, { history = 150, maxFiles = 1500 }) {
+    const M = createRequire(import.meta.url)('../../src/model.js');
+    const paths = fs.readFileSync(path.join(dir, 'set.tsv'), 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0]);
+    const exe = snapshotExe();
+    const parts = chunkPaths(paths, 6000);   // popen-style commands are limited to about 8k on Windows
+    const all = new Map();
+    let edits = 0, partial = 0, outside = 0, hunkTotal = 0;
+    for (const [i, part] of parts.entries()) {
+        const f = path.join(dir, `blocks-${i}.json`);
+        await new Promise((resolve, reject) => {
+            const out = fs.createWriteStream(f);
+            const p = spawn(exe, ['snapshot', '--repo', repo, '--history', String(history), '--max-files', String(maxFiles), '--', ...part], { stdio: ['ignore', 'pipe', 'inherit'], windowsHide: true });
+            p.stdout.pipe(out);
+            p.on('error', reject);
+            p.on('close', (c) => out.end(() => (c === 0 ? resolve() : reject(new Error(`snapshot exited ${c}`)))));
+        });
+        const m = blockMetrics(JSON.parse(fs.readFileSync(f, 'utf8')), M);
+        for (const [k, v] of m.perBlock) all.set(k, v);
+        edits += m.edits; partial += m.partial; outside += m.outside; hunkTotal += m.hunkTotal;
+        fs.rmSync(f);   // bundles are large; only the counts are kept
+    }
+    const per = [...all.values()].map((r) => r.turns.size);
+    const metrics = {
+        history, slices: parts.length, files: paths.length, blocksEdited: all.size, commitsPerBlock: hist(per, [2, 3, 4, 6, 11, 21]),
+        blocksEditedTwiceOrMore: per.filter((x) => x >= 2).length, blocksEditedThreeOrMore: per.filter((x) => x >= 3).length,
+        maxCommitsPerBlock: per.length ? Math.max(...per) : 0, editEvents: edits, partialEdits: partial,
+        partialFraction: edits ? Number((partial / edits).toFixed(3)) : 0, hunksInDiffs: hunkTotal, hunksOutsideBlocks: outside,
+    };
+    fs.writeFileSync(path.join(dir, 'block-metrics.json'), JSON.stringify(metrics, null, 2) + '\n');
+    manifest(dir, 'blocks', { metrics: 'block-metrics.json', gitCalls: 'one diff per turn per slice, inside the library' });
+    return metrics;
+}
+
 /** The only place a run directory is made: under out/gold/ of this checkout, whatever the alias or run id says. */
 export function runDir(run, base = path.join(root, 'out', 'gold')) {
     const dir = path.resolve(base, run);
@@ -166,6 +234,9 @@ async function main() {
     if (want('census')) console.log(finished(dir, 'census', force) ? 'census: finished earlier (--force repeats it)' : `census ${JSON.stringify(await census(repo, dir, { since, minTouches }))}`);
     if (want('hunks')) console.log(finished(dir, 'hunks', force) ? 'hunks: finished earlier (--force repeats it)' : `hunks ${JSON.stringify(await hunks(repo, dir, { since }))}`);
     if (want('join')) console.log(`join ${JSON.stringify(join(dir))}`);
+    if (stage === 'blocks' || a.includes('--blocks')) {
+        console.log(finished(dir, 'blocks', force) ? 'blocks: finished earlier (--force repeats it)' : `blocks ${JSON.stringify(await blocks(repo, dir, { history: Number(get('history', 150)) }))}`);
+    }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch((e) => { console.error(e.message); process.exit(1); });
