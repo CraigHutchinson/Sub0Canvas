@@ -54,7 +54,12 @@
             need(!ids.has(r.id), `block ${r.id} is both live and retired`);
             need(r.mergedInto === undefined || typeof r.mergedInto === 'string', `retired ${r.id} has a non-string mergedInto`);
         }
-        for (const e of t.events || []) need(CARRIES.includes(e.carry), `event for ${e.id} has unknown carry "${e.carry}"`);
+        for (const e of t.events || []) {
+            need(CARRIES.includes(e.carry), `event for ${e.id} has unknown carry "${e.carry}"`);
+            need(e.hunks === undefined || (Array.isArray(e.hunks) && e.hunks.every((h) => Array.isArray(h) && h.length === 4 && h.every(Number.isInteger))),
+                `event for ${e.id} has malformed hunks (want [[oldStart, oldLen, newStart, newLen], ...])`);
+        }
+        need(t.diffHunks === undefined || (t.diffHunks && Number.isInteger(t.diffHunks.total) && Number.isInteger(t.diffHunks.outside)), 'diffHunks is not {total, outside}');
         need(t.layers === undefined || (t.layers && typeof t.layers === 'object' && !Array.isArray(t.layers)), 'layers is not an object');
         for (const [name, items] of Object.entries(t.layers || {})) {
             if (!Array.isArray(items)) { errors.push(`layer "${name}" is not an array`); continue; }
@@ -403,7 +408,8 @@
     /**
      * The history of one block id over every turn: what happened to its identity, the revisions that touched it, and which layers held information
      * attached to it. Built from the per-turn index, so it costs one pass over the turns.
-     *   {id, names, paths, mergedFrom:[ids], timeline:[{turn, status, block, name, events, revisions, changed, layers:{layer:[item]}, mergedInto}]}
+     *   {id, names, paths, mergedFrom:[ids], timeline:[{turn, status, block, name, events, revisions, changed, hunks, edit, layers:{layer:[item]}, mergedInto}]}
+     * `hunks` are the block-relative [oldStart, oldLen, newStart, newLen] spans the turn's events carry; `edit` is 'rewrite', 'partial' or null (hunks unknown).
      */
     function blockHistory(doc, id) {
         const info = doc.index.ids.get(id) || { names: new Set(), paths: new Set() };
@@ -420,6 +426,9 @@
             for (const from of entry.mergedInto.get(id) || []) mergedFrom.add(from);
             const status = block ? 'live' : retired ? (retired.mergedInto ? 'merged' : 'retired') : 'absent';
             const text = block ? blockText(doc, t.turn, block) : null;
+            const hunks = events.flatMap((e) => e.hunks || []);
+            // A hunk that covers every line of the block at both revisions is a rewrite; any other hunk is a partial edit. No hunks: not measured, or no lines changed.
+            const edit = !hunks.length || !block ? null : hunks.length === 1 && hunks[0][2] === 1 && hunks[0][3] === block.last - block.first + 1 ? 'rewrite' : 'partial';
             const changed = !!block && (!prev || prev.text !== text || prev.path !== block.path);
             // The canvas revisions of this block's file since the previous turn: what could have touched it.
             const path = block?.path || retired?.path || prev?.path || null;
@@ -428,7 +437,7 @@
             for (const h of attachedTo(doc, t.turn, id)) (layers[h.layer] ??= []).includes(h.item) || layers[h.layer].push(h.item);
             for (const h of entry.attached.get(`orphan:${id}`) || []) (layers[h.layer] ??= []).includes(h.item) || layers[h.layer].push(h.item);
             timeline.push({
-                turn: t.turn, status, block, name: block?.name || retired?.name || null, events, revisions, changed,
+                turn: t.turn, status, block, name: block?.name || retired?.name || null, events, revisions, changed, hunks, edit,
                 mergedInto: retired?.mergedInto || '', layers,
             });
             if (block) prev = { path: block.path, text };

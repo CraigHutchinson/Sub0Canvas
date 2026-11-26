@@ -94,7 +94,7 @@ tools/replica/ (seed, --scale, --focus) --> out/replica/<seed>/ repository + for
 | slice | what | size | depends on |
 |---|---|---|---|
 | X0 | merge `scale-gate-turn-default` (latest-turn fix, minimum gate) | S | push |
-| X1 hunk ranges | `edited` events carry block-relative `[oldStart, oldLen, newStart, newLen]`; a `layered-doc-1` field; the viewer reads it | M | the one-format cleanup (backlog item 1) |
+| X1 hunk ranges (built) | `edited` events carry block-relative `[oldStart, oldLen, newStart, newLen]`; a `layered-doc-1` field; the viewer reads it | M | the one-format cleanup (backlog item 1) |
 | X2 compact turns | snapshot writes per-turn `eventsFrom` and texts by content id end to end; the viewer folds runs of turns that did not touch the selection | M | none |
 | X3 block-to-commit trace | the inspector lists a block's commits in order with changed sub-ranges | S-M | X1 |
 | X4 scope growth | `--since`/`--until`, `--history` above 200, `snapshot --extend <bundle> --older N` appends older turns without re-reading | L | X2, the replay-root id problem (section 11) |

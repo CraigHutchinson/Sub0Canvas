@@ -241,6 +241,17 @@ model in bulk); **SARIF** for the issues layer (the standard static-analysis int
 matching results across revisions). Decision for now: JSON for tools, the line DSL for the model, and a SARIF export of the issues layer as a cheap later
 step for CI viewers.
 
+### Hunk ranges
+
+An event may carry `hunks`: `[[oldStart, oldLen, newStart, newLen], ...]`, the changed lines of its block in that turn, block-relative (line 1 is the block's
+first line at the old revision for the old pair and at the new revision for the new pair; a zero length is a pure insertion or deletion, and the start is
+the block line it follows, as in git's `-U0` headers). A hunk that crosses a block boundary is clipped to each block it touches. The span covering the whole
+block marks a rewrite; any shorter span is a partial edit. A turn that measured its diff also carries `diffHunks: {total, outside}`: the hunks of the
+turn's `git diff -U0` and those that touch no block present at both revisions (between blocks, inside an added block, in an added or deleted file), so
+`total - outside` hunks are placed in at least one block and the totals reconcile with the diff. The producer is `sub0canvas snapshot`, which runs one
+diff per turn for the whole scope; `hunks.hpp` maps them. Both fields are absent where a producer did not measure them, and the viewer's `blockHistory`
+reads them as `hunks` and `edit` (`'rewrite'`, `'partial'` or null) on each timeline entry.
+
 ## Prior art
 
 None of these was found by a fresh search for this document. They are known systems that solve parts of the same problem, listed so the design borrows
