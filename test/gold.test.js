@@ -19,6 +19,18 @@ test('chunkPaths keeps every path, in order, and each batch within the budget', 
     assert.deepEqual(chunkPaths([], 100), []);
 });
 
+test('hunkKind names the shapes that sit outside a function', async () => {
+    const { hunkKind, classifyHunks } = await import('../tools/gold/run.mjs');
+    assert.equal(hunkKind(['+#include <a>', '-#include <b>'], false), 'include or using');
+    assert.equal(hunkKind(['+// note', '+/* x */'], false), 'comment');
+    assert.equal(hunkKind(['+#if X', '+#endif'], false), 'preprocessor');
+    assert.equal(hunkKind(['+static int g = 0;'], false), 'global or member declaration');
+    assert.equal(hunkKind(['+  total += 1;'], true), 'statement or member');
+    assert.equal(hunkKind(['+', '-'], false), 'blank lines');
+    const patch = '@C\tx\ndiff --git a/a.h b/a.h\n+++ b/a.h\n@@ -1,0 +2 @@\n+#include <a>\n@@ -9 +9 @@ void f()\n+  y += 1;\n';
+    assert.deepEqual(classifyHunks(patch), { header: { 'include or using': 1, 'statement or member': 1 } });
+});
+
 test('a run directory cannot leave out/gold', async () => {
     const { runDir } = await import('../tools/gold/run.mjs');
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'gold-'));
