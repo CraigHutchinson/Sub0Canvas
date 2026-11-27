@@ -12,6 +12,7 @@ hold up on codebases of billions of lines.
 
 | read | for |
 |---|---|
+| [Agent summary](docs/Sub0Canvas-summary.md) | the compact API map for downstream consumers and new sessions |
 | [docs/CANVAS.md](docs/CANVAS.md) | the revisioned document, transactions, folded views and reads (built) |
 | [docs/LAYERED_DOCUMENT.md](docs/LAYERED_DOCUMENT.md) | block identity, layers, the issues layer, formats, prior art (built) |
 | [docs/DIRECTION.md](docs/DIRECTION.md) | the owner's direction (2026-11-17), verbatim, that BACKBONE.md answers |
