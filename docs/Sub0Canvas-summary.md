@@ -5,7 +5,7 @@ Sub0Canvas is a pure C++23 library and a static viewer for revisioned, layered d
 ## Build and consume
 
 - Add `Sub0Canvas` through CPM at a release tag, from the repository root. The static target is `sub0canvas::sub0canvas`, public headers live under `lib/include/sub0canvas/`, and symbols use `namespace sub0canvas`. The library reuses an existing `simdjson::simdjson` target.
-- Set `SUB0CANVAS_BUILD_TESTING`, `SUB0CANVAS_BUILD_BENCHMARKS`, and `SUB0CANVAS_BUILD_APP` off when embedding the library. `CPM_Sub0Canvas_SOURCE` selects a local checkout and can override the release pin. The project's Windows receiving toolchain is MinGW. {{source:CMakeLists.txt|add_library(sub0canvas::sub0canvas ALIAS sub0canvas)}}
+- `SUB0CANVAS_BUILD_TESTING` and `SUB0CANVAS_BUILD_BENCHMARKS` default off when embedding the library. `CPM_Sub0Canvas_SOURCE` selects a local checkout and can override the release pin. The project's Windows receiving toolchain is MinGW. {{source:CMakeLists.txt|add_library(sub0canvas::sub0canvas ALIAS sub0canvas)}}
 - `consumer/mock_squad/` models a downstream receiver. `lib/tests/test_canvas_model.cpp`, `lib/tests/test_doc_layers.cpp`, and `test/golden.test.js` cover revision behavior, issue layers, and recorded snapshots. See the [proving ladder](https://github.com/CraigHutchinson/Sub0Canvas/blob/main/docs/TESTING.md).
 
 ## APIs by task
