@@ -7,6 +7,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -142,6 +143,134 @@ export function join(dir) {
     return metrics;
 }
 
+const EXT_CLASS = [['header', /\.(h|hpp|hh|inl|cginc|hlsl)$/], ['native source', /\.(cpp|cc|c|mm)$/], ['script', /\.(cs|js|ts|py|java|kt|swift|rs|go|shader)$/]];
+
+/** What a hunk's changed lines are, judged from their text alone: the shapes that sit outside any function or type block. */
+export function hunkKind(lines, context) {
+    const body = lines.map((l) => l.slice(1).trim());
+    if (body.every((l) => l === '')) return 'blank lines';
+    const real = body.filter((l) => l !== '');
+    if (real.every((l) => /^(\/\/|\/\*|\*|\*\/|#\s*(pragma\s+region|pragma\s+endregion))/.test(l))) return 'comment';
+    if (real.every((l) => /^#\s*(include|import)\b|^using\s|^import\s|^from\s.+\simport\s/.test(l))) return 'include or using';
+    if (real.every((l) => /^#\s*(if|ifdef|ifndef|elif|else|endif|define|undef|pragma|error)\b/.test(l))) return 'preprocessor';
+    if (real.every((l) => /^(namespace|class|struct|enum|template|typedef|using)\b|^[{}];?$/.test(l))) return 'scope or type line';
+    if (real.every((l) => /;\s*(\/\/.*)?$/.test(l) && !/[{}]/.test(l) && !/\)\s*(const)?\s*;$/.test(l))) return context ? 'statement or member' : 'global or member declaration';
+    return context ? 'code after a named function' : 'other top-level code';
+}
+
+/** Groups the hunks of a `log -p -U0` stream by file kind and by what the hunk is (heuristic: it stands in for "outside every block"). */
+export function classifyHunks(text) {
+    const out = {};
+    let file = null, cur = null;
+    const flush = () => {
+        if (!cur) return;
+        const cls = EXT_CLASS.find(([, re]) => re.test(file))?.[0] ?? 'other';
+        const kind = hunkKind(cur.lines, cur.context);
+        out[cls] ??= {};
+        out[cls][kind] = (out[cls][kind] || 0) + 1;
+        cur = null;
+    };
+    for (const line of text.split('\n')) {
+        if (line.startsWith('@C\t') || line.startsWith('diff --git')) { flush(); if (line.startsWith('@C')) file = null; }
+        else if (line.startsWith('+++ b/')) { flush(); file = line.slice(6); }
+        else if (line.startsWith('@@') && file) { flush(); cur = { lines: [], context: /^@@[^@]*@@ ?\S/.test(line) }; }
+        else if (cur && (line.startsWith('+') || line.startsWith('-')) && !line.startsWith('+++') && !line.startsWith('---')) cur.lines.push(line);
+    }
+    flush();
+    return out;
+}
+
+/** A time-bounded sample: every n-th file of the set, one git walk, stopped at `seconds` (the partial stream is still classified). */
+export async function sample(repo, dir, { files = 60, commits = 400, seconds = 240 }) {
+    const all = fs.readFileSync(path.join(dir, 'set.tsv'), 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0]);
+    const stride = Math.max(1, Math.floor(all.length / files));
+    const picked = chunkPaths(all.filter((_, i) => i % stride === 0).slice(0, files))[0] ?? [];
+    const f = path.join(dir, 'sample-hunks.txt');
+    let stopped = false;
+    await new Promise((resolve, reject) => {
+        const out = fs.createWriteStream(f);
+        const p = spawn('git', ['-C', repo, ...GIT_SETTINGS, 'log', `-n${commits}`, '--no-merges', '-M', '-p', '-U0', '--no-color', '--format=@C%x09%H', '--', ...picked], { stdio: ['ignore', 'pipe', 'inherit'], windowsHide: true });
+        const timer = setTimeout(() => { stopped = true; p.kill(); }, seconds * 1000);
+        p.stdout.pipe(out);
+        p.on('error', reject);
+        p.on('close', () => { clearTimeout(timer); out.end(resolve); });
+    });
+    const byClass = classifyHunks(fs.readFileSync(f, 'utf8'));
+    const total = Object.values(byClass).flatMap((c) => Object.values(c)).reduce((a, b) => a + b, 0);
+    const result = { files: picked.length, commitsAsked: commits, secondsBudget: seconds, stoppedByBudget: stopped, hunks: total, byFileKind: byClass };
+    fs.writeFileSync(path.join(dir, 'sample-metrics.json'), JSON.stringify(result, null, 2) + '\n');
+    fs.rmSync(f);
+    manifest(dir, 'sample', { metrics: 'sample-metrics.json' });
+    return result;
+}
+
+/** The snapshot executable: SUB0CANVAS_EXE, then the default build directory. */
+function snapshotExe() {
+    const found = [process.env.SUB0CANVAS_EXE, path.join(root, 'build', 'default', 'sub0canvas.exe'), path.join(root, 'build', 'default', 'sub0canvas')]
+        .find((p) => p && fs.existsSync(p));
+    if (!found) throw new Error('sub0canvas is not built (set SUB0CANVAS_EXE)');
+    return found;
+}
+
+/** Folds one snapshot bundle into per-block counts: commits per block, partial edits, and hunks the library could not place in a block. */
+export function blockMetrics(entries, M) {
+    const { docs } = M.loadEntries(entries);
+    const perBlock = new Map();
+    let edits = 0, partial = 0, outside = 0, hunkTotal = 0;
+    for (const d of docs) {
+        const spans = new Map(d.turns.map((t) => [t.turn ?? d.turns.indexOf(t), new Map(t.blocks.map((b) => [b.id, b.last - b.first + 1]))]));
+        for (const t of d.turns) {
+            if (t.diffHunks) { hunkTotal += t.diffHunks.total; outside += t.diffHunks.outside; }
+        }
+        for (const e of d.events) {
+            if (e.detail !== 'edited' || !e.hunks) continue;
+            const key = `${e.path}|${e.id}`;
+            const len = spans.get(e.turn)?.get(e.id);
+            const changed = e.hunks.reduce((n, h) => n + Math.max(h[1], h[3]), 0);
+            const rec = perBlock.get(key) ?? perBlock.set(key, { turns: new Set(), hunks: 0 }).get(key);
+            rec.turns.add(e.turn);
+            rec.hunks += e.hunks.length;
+            edits++;
+            if (len && changed < len) partial++;
+        }
+    }
+    return { perBlock, edits, partial, outside, hunkTotal };
+}
+
+/** G2: snapshots each command-line-sized slice of the set (`history` first-parent turns) and joins hunks to the library's blocks. */
+export async function blocks(repo, dir, { history = 150, maxFiles = 1500 }) {
+    const M = createRequire(import.meta.url)('../../src/model.js');
+    const paths = fs.readFileSync(path.join(dir, 'set.tsv'), 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0]);
+    const exe = snapshotExe();
+    const parts = chunkPaths(paths, 6000);   // popen-style commands are limited to about 8k on Windows
+    const all = new Map();
+    let edits = 0, partial = 0, outside = 0, hunkTotal = 0;
+    for (const [i, part] of parts.entries()) {
+        const f = path.join(dir, `blocks-${i}.json`);
+        await new Promise((resolve, reject) => {
+            const out = fs.createWriteStream(f);
+            const p = spawn(exe, ['snapshot', '--repo', repo, '--history', String(history), '--max-files', String(maxFiles), '--', ...part], { stdio: ['ignore', 'pipe', 'inherit'], windowsHide: true });
+            p.stdout.pipe(out);
+            p.on('error', reject);
+            p.on('close', (c) => out.end(() => (c === 0 ? resolve() : reject(new Error(`snapshot exited ${c}`)))));
+        });
+        const m = blockMetrics(JSON.parse(fs.readFileSync(f, 'utf8')), M);
+        for (const [k, v] of m.perBlock) all.set(k, v);
+        edits += m.edits; partial += m.partial; outside += m.outside; hunkTotal += m.hunkTotal;
+        fs.rmSync(f);   // bundles are large; only the counts are kept
+    }
+    const per = [...all.values()].map((r) => r.turns.size);
+    const metrics = {
+        history, slices: parts.length, files: paths.length, blocksEdited: all.size, commitsPerBlock: hist(per, [2, 3, 4, 6, 11, 21]),
+        blocksEditedTwiceOrMore: per.filter((x) => x >= 2).length, blocksEditedThreeOrMore: per.filter((x) => x >= 3).length,
+        maxCommitsPerBlock: per.length ? Math.max(...per) : 0, editEvents: edits, partialEdits: partial,
+        partialFraction: edits ? Number((partial / edits).toFixed(3)) : 0, hunksInDiffs: hunkTotal, hunksOutsideBlocks: outside,
+    };
+    fs.writeFileSync(path.join(dir, 'block-metrics.json'), JSON.stringify(metrics, null, 2) + '\n');
+    manifest(dir, 'blocks', { metrics: 'block-metrics.json', gitCalls: 'one diff per turn per slice, inside the library' });
+    return metrics;
+}
+
 /** The only place a run directory is made: under out/gold/ of this checkout, whatever the alias or run id says. */
 export function runDir(run, base = path.join(root, 'out', 'gold')) {
     const dir = path.resolve(base, run);
@@ -166,6 +295,10 @@ async function main() {
     if (want('census')) console.log(finished(dir, 'census', force) ? 'census: finished earlier (--force repeats it)' : `census ${JSON.stringify(await census(repo, dir, { since, minTouches }))}`);
     if (want('hunks')) console.log(finished(dir, 'hunks', force) ? 'hunks: finished earlier (--force repeats it)' : `hunks ${JSON.stringify(await hunks(repo, dir, { since }))}`);
     if (want('join')) console.log(`join ${JSON.stringify(join(dir))}`);
+    if (stage === 'sample') console.log(`sample ${JSON.stringify(await sample(repo, dir, { files: Number(get('files', 60)), commits: Number(get('commits', 400)), seconds: Number(get('seconds', 240)) }))}`);
+    if (stage === 'blocks' ||a.includes('--blocks')) {
+        console.log(finished(dir, 'blocks', force) ? 'blocks: finished earlier (--force repeats it)' : `blocks ${JSON.stringify(await blocks(repo, dir, { history: Number(get('history', 150)) }))}`);
+    }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch((e) => { console.error(e.message); process.exit(1); });

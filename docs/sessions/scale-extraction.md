@@ -28,3 +28,6 @@ Second product, same session: a codified anonymiser. It reads an extraction and 
 * Build with GCC 14 or later (the code uses `<print>`); the Strawberry GCC 13 cannot. Use short build paths on Windows.
 * Click timing is only valid in a foreground window; a throttled pane steps in whole seconds.
 * `gh` is logged in to the owner's forge host with repository scope; use read-only calls, and keep the responses in `out/`.
+
+## First numbers and follow-ups
+A first library-block measurement of the 30-day hot set, and the follow-ups it raised (why a third of hunks sit outside every block; the design options), are in [scale-dataset-plan.md](scale-dataset-plan.md) section 14. Left from this brief: the cause table for outside hunks, compact turns, the adapters.

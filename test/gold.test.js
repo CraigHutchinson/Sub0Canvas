@@ -19,6 +19,18 @@ test('chunkPaths keeps every path, in order, and each batch within the budget', 
     assert.deepEqual(chunkPaths([], 100), []);
 });
 
+test('hunkKind names the shapes that sit outside a function', async () => {
+    const { hunkKind, classifyHunks } = await import('../tools/gold/run.mjs');
+    assert.equal(hunkKind(['+#include <a>', '-#include <b>'], false), 'include or using');
+    assert.equal(hunkKind(['+// note', '+/* x */'], false), 'comment');
+    assert.equal(hunkKind(['+#if X', '+#endif'], false), 'preprocessor');
+    assert.equal(hunkKind(['+static int g = 0;'], false), 'global or member declaration');
+    assert.equal(hunkKind(['+  total += 1;'], true), 'statement or member');
+    assert.equal(hunkKind(['+', '-'], false), 'blank lines');
+    const patch = '@C\tx\ndiff --git a/a.h b/a.h\n+++ b/a.h\n@@ -1,0 +2 @@\n+#include <a>\n@@ -9 +9 @@ void f()\n+  y += 1;\n';
+    assert.deepEqual(classifyHunks(patch), { header: { 'include or using': 1, 'statement or member': 1 } });
+});
+
 test('a run directory cannot leave out/gold', async () => {
     const { runDir } = await import('../tools/gold/run.mjs');
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'gold-'));
@@ -46,5 +58,16 @@ test('census, hunks and join over the fixture: batched git calls, manifests, and
     const direct = execFileSync('git', ['-C', repo, 'log', '--no-merges', '-M', '-p', '-U0', '--format=', '--', ...set], { encoding: 'utf8', maxBuffer: 1 << 28 })
         .split('\n').filter((l) => l.startsWith('@@')).length;
     assert.equal(m.hunks, direct, 'the join sees every hunk git reports');
+    const exe = [process.env.SUB0CANVAS_EXE, path.join(__dirname, '..', 'build', 'default', 'sub0canvas.exe'), path.join(__dirname, '..', 'build', 'default', 'sub0canvas')]
+        .find((p) => p && fs.existsSync(p));
+    if (exe) {
+        process.env.SUB0CANVAS_EXE = exe;
+        const { blocks } = await import('../tools/gold/run.mjs');
+        const b = await blocks(repo, dir, { history: 40 });
+        assert.ok(b.blocksEdited > 0 && b.editEvents > 0, 'the library placed hunks in blocks');
+        assert.ok(b.blocksEditedTwiceOrMore > 0, 'some block was edited by several commits');
+        assert.ok(b.hunksOutsideBlocks <= b.hunksInDiffs);
+        assert.ok(fs.existsSync(path.join(dir, 'blocks.manifest.json')));
+    }
     for (const stage of ['census', 'hunks', 'join']) assert.ok(fs.existsSync(path.join(dir, `${stage}.manifest.json`)), stage);
 });
