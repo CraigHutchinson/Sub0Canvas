@@ -1,4 +1,0 @@
-{"schema":"canvas-events-1","document":"b14-claim-expiry"}
-{"seq":0,"kind":"block","source":"canvas/index","subject":"b837452ec0481","data":{"turn":0,"carry":"added","id":"b837452ec0481","path":"src/calc.cpp","name":"divide","detail":""}}
-{"seq":1,"kind":"block","source":"canvas/index","subject":"b8e3e5d9bd0ab","data":{"turn":0,"carry":"added","id":"b8e3e5d9bd0ab","path":"src/calc.cpp","name":"square","detail":""}}
-{"seq":2,"kind":"block","source":"canvas/index","subject":"b8e3e5d9bd0ab","data":{"turn":2,"carry":"kept","id":"b8e3e5d9bd0ab","path":"src/calc.cpp","name":"square","detail":"edited"}}

@@ -122,7 +122,7 @@ Status: living (2026-11-18). The catalogue the tests check. Use cases are in [US
 | R-FMT-1 | A snapshot is valid JSON with the schema name, the turn, each file's text and revision, the blocks, their history and every layer's items and anchors. | built | `test_doc_layers`, `test/golden.test.js` |
 | R-FMT-2 | The format grows only additively: an old reader ignores new fields; an old file means what it meant. | built (as a rule) | `test/model.test.js` (loose files, cumulative events), `test/mock.test.js` (the string-only shape) |
 | R-FMT-3 | A snapshot writes each item's `id`, each anchor's `column` and range where known, a `layerMeta` entry for the issues, each file's `revisionId` and `textId`, and the `policies` that made it. | built | `test_doc_layers`, `test/mock.test.js` |
-| R-FMT-4 | A snapshot's `events` are those since the previous one, `eventsFrom` says where they start in the log, and the cumulative log holds the same events in order. | built | `test_doc_layers`, `test/mock.test.js` |
+| R-FMT-4 | A snapshot's `events` are those since the previous one, `eventsFrom` says where they start in the log, and concatenating the turns gives the block events in order. | built | `test_doc_layers`, `test/mock.test.js` |
 | R-FMT-5 | Texts can travel by content id: a text is carried once per document, a snapshot alone carries what it needs, and the viewer reads them as inline texts; 8 turns cost a few times one. | built | `test_doc_layers`, `test/mock.test.js` (g7: 2.5x) |
 
 ### The use case end to end (R-U1)

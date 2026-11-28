@@ -181,10 +181,6 @@ public:
     [[nodiscard]] std::vector<std::set<std::string>> literals(const std::string& path) const;
     /// What happened to ids, in order.
     [[nodiscard]] EventLog events() const { return EventLog{this}; }
-    /// The whole log as the cumulative record, schema `canvas-events-1` (docs/BACKBONE.md section 7): a header line naming `document`, then one line per event,
-    /// `{"seq":n,"kind":"block","source":"canvas/index","subject":id,"data":{turn,carry,path,name,detail}}`, `seq` being the position in `events()` (the cursor
-    /// a snapshot's `eventsFrom` names). A provisional subset of the design's Event: the actor and time are not recorded here, and B1's store owns the final writer.
-    [[nodiscard]] std::string eventLogNdjson(const std::string& document) const;
     [[nodiscard]] BlockIndexStats stats() const;
 private:
     friend class EventLog;

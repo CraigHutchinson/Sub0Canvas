@@ -15,8 +15,7 @@ Phase 2 is sequential (each slice is used before the next is built). The rest of
 
 ## Ordered list
 
-1. **Cleanup to one current account (in progress).** One `layered-doc-1` shape in every writer, fixture and reader (no compatibility readers or options); one copy of each helper; dead code, stubs and unused CMake options removed; the interim event-log writer
-   (`eventLogNdjson`) retired; a quick-tier guard so none of it comes back. Every removed public symbol is listed under "v0.5.0 breaking" in [INTEGRATION.md](INTEGRATION.md). Golden fixtures stop being verbatim until the re-capture below (their README says so).
+1. **Cleanup to one current account (in progress).** One `layered-doc-1` shape in every writer, fixture and reader (no compatibility readers or options); one copy of each helper; dead code, stubs and unused CMake options removed; a quick-tier guard so none of it comes back. Every removed public symbol is listed under "v0.5.0 breaking" in [INTEGRATION.md](INTEGRATION.md). Golden fixtures stop being verbatim until the re-capture below (their README says so).
    `setAnalysisCacheLimit` (RevisionIndex): wire into RevisionIndex or delete by S2.
 2. **v0.5.0, then the Sub0Squad PR** (the tag needs the owner's go-ahead; one hosted full-tier run first, and once before a release the MSVC, macOS and sanitizer legs, which have never run). The PR: pin bump; `SnapshotSpec` (per-turn events, texts by id), `revisionFileName`
    (`%2F` names), `issuesLayerMeta`, `applyEdits` returning `std::expected`, the changed item keys; the first `layeredJson` call and the inline shape are gone. Owner-run, not for an agent: a real attempt with compiler diagnostics at several places, re-captured through the

@@ -409,6 +409,8 @@ meant. A new schema name is used only if a field changes meaning, and none does.
 Two smaller fixes the viewer asked for are adopted: turn files are written with `\n` line endings (they already are), and revision text files escape
 `/` as `%2F` instead of `_` (an old name with `_` is still read).
 
+Snapshot bundles carry block events in their turn slices. The store's event log is a separate persistence format.
+
 **The event log file**, `events.ndjson`, schema `canvas-events-1`: one `Event` per line, as section 3.3, first line
 `{"schema":"canvas-events-1","document":"..."}`. A torn final line is discarded on open.
 

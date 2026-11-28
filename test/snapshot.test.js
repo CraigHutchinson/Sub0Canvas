@@ -15,7 +15,9 @@ const exe = [process.env.SUB0CANVAS_EXE, path.join(root, 'build', 'default', 'su
 test('a snapshot of this repository loads in the viewer', { skip: !exe && 'sub0canvas is not built' }, () => {
     const r = spawnSync(exe, ['snapshot', '--repo', root, '--history', '4', '--', 'lib/src'], { encoding: 'utf8', maxBuffer: 1 << 28 });
     assert.equal(r.status, 0, r.stderr);
-    const { docs, problems } = M.loadEntries(JSON.parse(r.stdout));
+    const entries = JSON.parse(r.stdout);
+    assert.ok(entries.every(({ path }) => path === "canvas.json" || /^layers\/turn-\d+\.json$/.test(path)));
+    const { docs, problems } = M.loadEntries(entries);
     assert.deepEqual(problems, []);
     const last = docs[0].turns.at(-1);
     assert.ok(Object.keys(last.files).every((p) => p.startsWith('lib/src/')), 'only the pathspec');

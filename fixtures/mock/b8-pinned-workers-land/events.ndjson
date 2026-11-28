@@ -1,6 +1,0 @@
-{"schema":"canvas-events-1","document":"b8-pinned-workers-land"}
-{"seq":0,"kind":"block","source":"canvas/index","subject":"b837452ec0481","data":{"turn":0,"carry":"added","id":"b837452ec0481","path":"src/calc.cpp","name":"divide","detail":""}}
-{"seq":1,"kind":"block","source":"canvas/index","subject":"b8e3e5d9bd0ab","data":{"turn":0,"carry":"added","id":"b8e3e5d9bd0ab","path":"src/calc.cpp","name":"square","detail":""}}
-{"seq":2,"kind":"block","source":"canvas/index","subject":"b837452ec0481","data":{"turn":1,"carry":"kept","id":"b837452ec0481","path":"src/calc.cpp","name":"divide","detail":"edited"}}
-{"seq":3,"kind":"block","source":"canvas/index","subject":"b8e3e5d9bd0ab","data":{"turn":2,"carry":"kept","id":"b8e3e5d9bd0ab","path":"src/calc.cpp","name":"square","detail":"edited"}}
-{"seq":4,"kind":"block","source":"canvas/index","subject":"b837452ec0481","data":{"turn":4,"carry":"kept","id":"b837452ec0481","path":"src/calc.cpp","name":"divide","detail":"edited"}}

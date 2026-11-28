@@ -171,8 +171,6 @@ public:
     }
     /// How many events the identity history holds now: what the next snapshot's `eventsFrom` is once this one is written.
     [[nodiscard]] std::size_t eventCount() const { return index_.events().size(); }
-    /// The whole history as the cumulative log (`canvas-events-1`).
-    [[nodiscard]] std::string eventLog(const std::string& document) const { return index_.eventLogNdjson(document); }
 
     [[nodiscard]] const std::map<std::string, std::string>& files() const { return files_; }
 

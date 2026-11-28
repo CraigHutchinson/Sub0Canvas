@@ -1,5 +1,0 @@
-{"schema":"canvas-events-1","document":"g5-fix-away-from-diagnostic"}
-{"seq":0,"kind":"block","source":"canvas/index","subject":"b837452ec0481","data":{"turn":0,"carry":"added","id":"b837452ec0481","path":"src/calc.cpp","name":"divide","detail":""}}
-{"seq":1,"kind":"block","source":"canvas/index","subject":"b8e3e5d9bd0ab","data":{"turn":0,"carry":"added","id":"b8e3e5d9bd0ab","path":"src/calc.cpp","name":"square","detail":""}}
-{"seq":2,"kind":"block","source":"canvas/index","subject":"bee3f701e1ed8","data":{"turn":0,"carry":"added","id":"bee3f701e1ed8","path":"src/calc.cpp","name":"area","detail":""}}
-{"seq":3,"kind":"block","source":"canvas/index","subject":"b79836a75c91b","data":{"turn":1,"carry":"added","id":"b79836a75c91b","path":"src/calc.cpp","name":"legacy","detail":""}}

@@ -71,6 +71,7 @@ The next tag is a breaking one for Sub0Squad. Every removed or changed public sy
   * `LineRange` and `ReadResult::marks` (`ReadResult::overlaid` and `labelled` say the same; the line numbers are in `labelled`).
   * `outlinersOf(paths)` (blocks.hpp).
   * `BlockIndex::textSource()` and `BlockIndex::indexedTextId(path)` (`setTextSource` stays).
+  * `BlockIndex::eventLogNdjson(document)` and the snapshot bundle’s root `events.ndjson` sidecar. Read block events from the turn files in `eventsFrom` order, or from `BlockIndex::events()` in process.
   * `BlockIndex::json()`, `BlockIndex::json(eventsFrom)` and `BlockIndex::jsonFrom`: write a snapshot with `layeredJson(SnapshotSpec, index)`, which always carries `eventsFrom`.
   * `BlockIndex::writeJsonMembers`, `jsonSizeHint` and `writeEventJson` are private (`layeredJson` and the query's projection are the only callers).
   * `layeredJson(int turn, files, revisions, index, layers)` (the first-version overload: cumulative events, inline texts): write a `SnapshotSpec` (`turn`, `files`, `revisions`, `layers`) and call `layeredJson(spec, index)`; the spec writes per-turn events from `eventsFrom` and the texts once by content id.

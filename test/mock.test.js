@@ -99,38 +99,19 @@ test('mock g5: the fix lands away from the diagnostic; the block it named keeps 
     assert.notEqual(t1.layers.issues[0].id, t0.layers.issues[0].id, 'the compile error is gone and a failing test is a different item');
 });
 
-test('mock: per-turn events and the cumulative log read the same', () => {
+test('mock: per-turn events are contiguous and read in order', () => {
     let attemptsWithEvents = 0;
     for (const name of names) {
-        const log = path.join(root, name, 'events.ndjson');
-        if (!fs.existsSync(log)) continue;
-        ++attemptsWithEvents;
-        const lines = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
-        assert.deepEqual(lines[0], { schema: 'canvas-events-1', document: name });
-        const cumulative = lines.slice(1);
-        cumulative.forEach((e, i) => assert.equal(e.seq, i, `${name}: dense positions`));
-        const flat = cumulative.map((e) => e.data);
-        const { doc } = load(name);
-        // Each turn file's slice starts where the one before ended, and together they are the log (up to the events of replies that wrote no turn file).
-        let at = 0;
-        for (const { text } of rawTurns(name)) {
-            const t = JSON.parse(text);
-            assert.equal(t.eventsFrom, at, `${name} turn ${t.turn}: eventsFrom is where the last one ended`);
-            assert.deepEqual(t.events, flat.slice(at, at + t.events.length), `${name} turn ${t.turn}: its events are that slice of the log`);
-            at += t.events.length;
+        assert.ok(!fs.existsSync(path.join(root, name, 'events.ndjson')), `${name}: block events belong in turns`);
+        const turns = rawTurns(name).map(({ text }) => JSON.parse(text));
+        if (!turns.length) continue;
+        const flat = [];
+        for (const t of turns) {
+            assert.equal(t.eventsFrom, flat.length, `${name} turn ${t.turn}: eventsFrom follows the previous turn`);
+            for (const event of t.events) flat.push(event);
         }
-        assert.ok(at <= flat.length);
-        // The viewer's own per-turn reading gives the same events as the log, in order.
-        assert.deepEqual(doc.events, flat.slice(0, at), `${name}: the viewer's per-turn events concatenate to the log`);
-
-        // The old shape: every turn carrying the log so far, with no eventsFrom, and the same with eventsFrom 0: both read as per-turn.
-        const turns = rawTurns(name).map((x) => JSON.parse(x.text));
-        let upto = 0;
-        const cumulativeTurns = turns.map((t) => { upto += t.events.length; return { ...t, events: flat.slice(0, upto), eventsFrom: undefined }; });
-        const asEntries = (list) => list.map((t) => ({ path: `${name}/layers/turn-${t.turn}.json`, text: JSON.stringify(t) }));
-        assert.deepEqual(M.loadEntries(asEntries(cumulativeTurns)).docs[0].events, doc.events, `${name}: cumulative without eventsFrom`);
-        assert.deepEqual(M.loadEntries(asEntries(cumulativeTurns.map((t) => ({ ...t, eventsFrom: 0 })))).docs[0].events, doc.events, `${name}: cumulative with eventsFrom 0`);
-        assert.deepEqual(M.loadEntries(asEntries(cumulativeTurns)).docs[0].turns.map((t) => t.events.length), doc.turns.map((t) => t.events.length));
+        if (flat.length) ++attemptsWithEvents;
+        assert.deepEqual(load(name).doc.events, flat, `${name}: the viewer preserves event order`);
     }
     assert.ok(attemptsWithEvents >= 15);
 });

@@ -5,8 +5,7 @@
 // Writes a viewer bundle to stdout: a JSON array of {path, text} holding layers/turn-N.json (layered-doc-1) and canvas.json. One turn per commit
 // that touched the pathspec, oldest first: the last N on REV's first-parent line. Block identities are the library's (BlockIndex), carried across
 // the commits, and a `commits` layer anchors each commit to the blocks it changed. Each turn carries only the events since the one before (`eventsFrom`) and each
-// text once under its content id (`texts`); the whole event log
-// is the bundle's `events.ndjson`. Nothing is written to disk and nothing is copied out of the
+// text once under its content id (`texts`). Nothing is written to disk or copied out of the
 // repository beyond the bundle on stdout, whose size the limits bound (docs/AUTHORING.md section 2: a view is bounded by attention, not data).
 #include <print>
 #include <sub0canvas/content_id.hpp>
@@ -256,8 +255,7 @@ int snapshot(const Options& o)
     canvas.beginObject().key("files").beginObject();
     for (const auto& [p, r] : revisions) canvas.kv(p, r);
     canvas.endObject().kvRaw("log", log.view()).endObject();
-    bundle.beginObject().kv("path", "canvas.json").kv("text", canvas.take()).endObject();
-    bundle.beginObject().kv("path", "events.ndjson").kv("text", index.eventLogNdjson("snapshot")).endObject().endArray();
+    bundle.beginObject().kv("path", "canvas.json").kv("text", canvas.take()).endObject().endArray();
 
     const std::string out = bundle.take();
     std::fwrite(out.data(), 1, out.size(), stdout);

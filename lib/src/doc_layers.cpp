@@ -1009,24 +1009,6 @@ std::size_t BlockIndex::jsonSizeHint(std::size_t eventsFrom) const
     return bytes;
 }
 
-std::string BlockIndex::eventLogNdjson(const std::string& document) const
-{
-    std::string out;
-    {
-        json::Writer w;
-        w.beginObject().kv("schema", "canvas-events-1").kv("document", document).endObject();
-        out += std::string{w.view()} + '\n';
-    }
-    for (std::size_t i = 0; i < s_->events.size(); ++i) {
-        json::Writer w;
-        w.beginObject().kv("seq", static_cast<std::int64_t>(i)).kv("kind", "block").kv("source", "canvas/index").kv("subject", idText(s_->events[i].id)).key("data");
-        writeEv(w, s_->events[i], *s_->pool);
-        w.endObject();
-        out += std::string{w.view()} + '\n';
-    }
-    return out;
-}
-
 std::vector<BlockEvent> blockHistory(const BlockIndex& index, const std::string& id)
 {
     std::set<std::string> ids{id};

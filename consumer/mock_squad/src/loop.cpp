@@ -119,10 +119,6 @@ public:
         if (p_.useStore) persistStore();
         if (claimsEnabled()) persistClaims();
         if (viewsEnabled()) persistSessions();
-        if (p_.issueMode != 0) {
-            lib("BlockIndex::eventLogNdjson");
-            out_.record["events.ndjson"] = index_.eventLogNdjson(s_.name);   // the cumulative log: every snapshot's events are a slice of it (`eventsFrom` is a position in it)
-        }
         if (!lastGate_.text.empty()) {
             out_.record["gate.txt"] = lastGate_.text;
             if (!lastGate_.failures.empty()) out_.record["failures.txt"] = lastGate_.failures;

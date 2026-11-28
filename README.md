@@ -79,7 +79,7 @@ The library's producer (`layeredJson`, `sub0canvas snapshot`) writes the rows ma
 | `endLine`, `endColumn` | anchor | *Written* when the diagnostic gives a range (`col-endcol`, or a `^~~~` underline): the end, the column just past the last character. |
 | `revisionId` | file | *Written.* The revision as an opaque string (`r<n>` unless the producer names another; `sub0canvas snapshot` writes the commit). `revision` (the number) is still written; a file with only the id is numbered by the order its ids first appear. |
 | `textId`, `texts` | file, turn | *Written.* `textId` is the text's git blob id. Texts are never inline: the turn's `texts` table holds each text the earlier turns did not carry. |
-| `eventsFrom` | turn | *Written.* The position in the whole log where this turn's `events` start: `events` are per turn. A cumulative list (no `eventsFrom`, or `eventsFrom` 0 in every turn) is read as per turn too. The whole log is `events.ndjson` (`canvas-events-1`). |
+| `eventsFrom` | turn | *Written.* The position in the whole log where this turn's `events` start: `events` are per turn. A cumulative list (no `eventsFrom`, or `eventsFrom` 0 in every turn) is read as per turn too. Read the block event history by concatenating the turn slices in order. |
 | `policies` | turn | *Written* when the producer names them: `{role: name@version}` of what made the turn. |
 | `layerMeta` | turn | *Written.* `{layer: {label, description, producer}}`; the library describes `issues`, the caller any other. |
 | `fix` | item, or an anchor to override the item's | `{"kind":"regex","pattern","replacement","flags","summary"}`: a proposed fix to apply at every anchor. |

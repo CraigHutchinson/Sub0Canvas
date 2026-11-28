@@ -387,12 +387,6 @@ int main()
         CHECK(!parser.parse(d.snapshot(second)).get(doc));
         CHECK(int64_t{doc["eventsFrom"]} == static_cast<int64_t>(afterFirst) && doc["events"].get_array().size() == d.eventCount() - afterFirst && d.eventCount() > afterFirst);
         for (auto e : doc["events"].get_array()) CHECK(int64_t{e["turn"]} == 1);   // only what happened since the previous snapshot
-        // The cumulative log: a header, then one line per event with its position; the snapshot's events are a slice of it.
-        const std::string log = d.eventLog("calc");
-        std::size_t lines = 0;
-        for (const char c : log) lines += c == '\n';
-        CHECK(lines == d.eventCount() + 1 && log.starts_with("{\"schema\":\"canvas-events-1\",\"document\":\"calc\"}\n"));
-        CHECK(log.contains("{\"seq\":" + std::to_string(afterFirst) + ",\"kind\":\"block\""));
     }
     {   // R-AUTH-14, R-FMT-5: by id, a text is carried once: a later snapshot lists the texts that are new and refers to the others; alone, a snapshot carries all it needs.
         Doc d;

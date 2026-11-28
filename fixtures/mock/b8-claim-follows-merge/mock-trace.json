@@ -5,4 +5,4 @@
 {"call":0,"actor":"a","kind":"released","text":"mock/a:1","verdict":"Claim mock/a:1 on src/calc.cpp:twice released.","focus":""},
 {"call":0,"actor":"b","kind":"claimed","text":"mock/b:4 on src/calc.cpp:twice until 1560","verdict":"Claim mock/b:4 taken on src/calc.cpp:twice until 1560.","focus":""},
 {"call":1,"actor":"a","kind":"passed","text":"","verdict":"The item's tests pass.","focus":""}
-],"libraryCalls":["BlockIndex::eventLogNdjson","BlockIndex::update","Canvas::logJson","Store::merge","applyReply","checkClaim","claimsJson","cutOffInsideEdit","detectEditOverrun","detectRunaway","diffLines","emitBlockCarries","eventJson","findClaim","layerFocus","layerInline","layerSummary","layeredJson","parseCanvasReply","parseEvent","parseIssueReads","parseIssues","releaseClaim","takeClaim"]}
+],"libraryCalls":["BlockIndex::update","Canvas::logJson","Store::merge","applyReply","checkClaim","claimsJson","cutOffInsideEdit","detectEditOverrun","detectRunaway","diffLines","emitBlockCarries","eventJson","findClaim","layerFocus","layerInline","layerSummary","layeredJson","parseCanvasReply","parseEvent","parseIssueReads","parseIssues","releaseClaim","takeClaim"]}
