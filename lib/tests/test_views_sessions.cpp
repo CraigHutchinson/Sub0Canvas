@@ -253,7 +253,11 @@ int main()
         CHECK_EQ(adv->anchors[0].status, std::string{"moved"});
         CHECK_EQ(adv->delta.form, DeltaForm::compacted);                   // the view's own form
         CHECK_EQ((**A->view(va)).held[1].status, std::string{"editable"});   // gamma shifted down one line and kept its authority
-        CHECK_EQ(A->resolve(va, *gamma)->key, *gamma);
+        const auto shifted = A->resolve(va, *gamma);
+        CHECK(shifted && shifted->key == *gamma);
+        CHECK(shifted->anchor.line == 11 && shifted->anchor.endLine == 11);
+        CHECK(shifted->anchor.revision == anchorRevision(**A->view(va)));
+        CHECK(shifted->anchor.quote == "return 3;");
         CHECK_EQ(A->resolve(va, *beta).error().code, std::string{"not-editable"});   // no edit until re-read
         const auto again = A->reread(va, *beta);
         CHECK(again.has_value());

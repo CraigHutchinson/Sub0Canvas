@@ -499,8 +499,14 @@ std::vector<AnchorChange> Session::reanchor(ViewRecord& rec, const std::set<std:
     AnchorResolver resolver(doc);
     for (HeldAnchor& h : rec.held) {
         const Resolution res = resolver.resolve(h.anchor);
-        h.status = res.outcome == Outcome::orphaned ? "orphaned" : (res.outcome == Outcome::resolved && res.editable ? "editable" : "moved");
-        if (h.status != "editable") out.push_back({h.key, h.status, std::string{toString(res.outcome)}, std::string{toString(res.reason)}, res.path, res.line, res.confidence});
+        const auto text = files.find(res.path);
+        if (res.editable && text != files.end() && inScope(rec.scope.paths, res.path)) {
+            h.anchor = makeSourceAnchor(res.path, anchorRevision(rec), text->second, res.line, res.column, res.endLine, res.endColumn, ws_.index_);
+            h.status = "editable";
+        } else {
+            h.status = res.outcome == Outcome::orphaned ? "orphaned" : "moved";
+            out.push_back({h.key, h.status, std::string{toString(res.outcome)}, std::string{toString(res.reason)}, res.path, res.line, res.confidence});
+        }
     }
     return out;
 }
