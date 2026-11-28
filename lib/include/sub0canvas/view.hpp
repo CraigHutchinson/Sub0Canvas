@@ -144,7 +144,7 @@ struct SessionRecord
 [[nodiscard]] std::string sessionJson(const SessionRecord& s);
 [[nodiscard]] std::expected<SessionRecord, std::string> parseSessionRecord(std::string_view json);
 
-/// Where views and sessions persist (decision 5). Reads return what the last `put` of that id held.
+/// Where views and sessions persist (decision 5). Reads return what the last `put` of that id held. Borrowed records may be invalidated by a write.
 class ViewStore
 {
 public:

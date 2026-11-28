@@ -110,7 +110,7 @@ struct ResolvePolicy
     std::size_t fuzzyMinChars = 8;           ///< quotes with fewer non-blank characters are never matched fuzzily (too little evidence)
     std::size_t fuzzyWindowBudget = 4000;    ///< the most windows scored per resolution
     double blockOnlyConfidence = 0.3;        ///< the block lives but its text no longer holds the quote
-    std::size_t maxOccurrences = 64;         ///< occurrences kept when a quote repeats (the count past it is not needed)
+    std::size_t maxOccurrences = 64;         ///< occurrences kept when a quote repeats (at least two to detect ambiguity)
 };
 
 /// The target side of a resolution: a document at one revision. Contract: pure reads, deterministic, safe to call repeatedly; every returned pointer stays valid
@@ -166,7 +166,7 @@ private:
 class HistoryDocument final : public AnchorDocument
 {
 public:
-    /// `index` and `source` must outlive the document.
+    /// `index` and `source` must outlive the document. Resolves the revision once to pin both index and texts.
     HistoryDocument(RevisionIndex& index, const DocumentSource& source, Scope scope, std::string revision);
     [[nodiscard]] const std::string& revision() const override { return revision_; }
     [[nodiscard]] TextRef text(const std::string& path) const override;

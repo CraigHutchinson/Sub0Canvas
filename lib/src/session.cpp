@@ -679,10 +679,14 @@ Result<HeldAnchor> Session::reread(const std::string& view, const std::string& a
     const CanvasDocument doc(index, files, anchorRevision(r));
     const Resolution res = AnchorResolver(doc).resolve(it->anchor);
     if (res.outcome == Outcome::orphaned) return fail("orphaned", std::format("address '{}' resolves to nothing: {}", address, res.detail));
-    const std::string& text = files[res.path.empty() ? it->anchor.path : res.path];
+    if (res.outcome != Outcome::resolved && (res.truncated || res.alternatives > 0))
+        return fail("ambiguous-address", std::format("address '{}' needs an explicit selection: {}", address, res.detail));
+    const auto found = files.find(res.path);
+    if (found == files.end()) return fail("orphaned", std::format("address '{}' has no text in the pin", address));
+    const std::string& text = found->second;
     const int endLine = res.endLine != 0 ? res.endLine : res.line;
     const int endColumn = res.endLine != 0 ? res.endColumn : res.column + static_cast<int>(it->anchor.quote.size());
-    it->anchor = makeSourceAnchor(it->anchor.path, anchorRevision(r), text, res.line, res.column, endLine, endColumn, ws_.index_);
+    it->anchor = makeSourceAnchor(res.path, anchorRevision(r), text, res.line, res.column, endLine, endColumn, ws_.index_);
     it->status = "editable";
     const HeldAnchor out = *it;
     save(r);
@@ -747,9 +751,9 @@ Result<std::string> Workspace::open(const Identity& who, Instant now)
 
 void Workspace::finish(const std::string& id, Instant now, const std::string& reason)
 {
-    for (const ViewRecord* v : views_.viewsOf(id)) {
-        if (v->closed) continue;
-        ViewRecord r = *v;
+    std::vector<ViewRecord> open;
+    for (const ViewRecord* v : views_.viewsOf(id)) if (!v->closed) open.push_back(*v);
+    for (ViewRecord& r : open) {
         r.closed = true;
         (void)unsubscribe(store_, "view:" + r.id);
         views_.putView(r);
@@ -775,9 +779,11 @@ Result<Session*> Workspace::attach(std::string_view id, const Identity& who, Ins
     if (rec->closed) return fail(rec->closeReason == "expired" ? "expired" : "closed", std::format("session '{}' is {}", id, rec->closeReason));
     const auto live = sessions_.find(id);
     const Instant last = live != sessions_.end() ? std::max(rec->lastSeen, live->second->lastSeenLive_) : rec->lastSeen;
-    if (now - last > rec->limits.idleTtl) {
-        finish(std::string{id}, now, "expired");
-        return fail("expired", std::format("session '{}' was idle past its limit of {} s", id, rec->limits.idleTtl));
+    const auto idleTtl = rec->limits.idleTtl;
+    if (now - last > idleTtl) {
+        const std::string expiredId{id};
+        finish(expiredId, now, "expired");
+        return fail("expired", std::format("session '{}' was idle past its limit of {} s", expiredId, idleTtl));
     }
     Session* session = nullptr;
     if (live == sessions_.end()) {   // known to the log only (a restarted process): same views and positions, no pending edits

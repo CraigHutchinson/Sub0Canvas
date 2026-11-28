@@ -194,6 +194,21 @@ int main()
         CHECK_STR(B->read(vb, "a.cpp")->text, kT1);                           // bob's pin still holds
     }
 
+    {   // Rereading a probable location does not choose among duplicate quotes.
+        Rig r;
+        Session* session = r.open(who("alice"));
+        const std::string view = *session->openView({});
+        auto anchor = makeSourceAnchor("a.cpp", anchorRevision(**session->view(view)), kT1, 6, 5, 6, 14, &r.index);
+        const auto address = session->hold(view, anchor);
+        CHECK(address.has_value());
+        CHECK_EQ(r.edit("t/bob", 6, 6, "    return 2; // one\n    return 2; // two\n"), 2);
+        CHECK(session->advance(view).has_value());
+        const auto reread = session->reread(view, *address);
+        CHECK(!reread);
+        if (!reread) CHECK_EQ(reread.error().code, std::string{"ambiguous-address"});
+        CHECK(!session->resolve(view, *address));
+    }
+
     {   // R-PIN-4 and decision 6: advance lands what it can and reports the rest; held anchors are re-anchored, authority following the resolution.
         Rig r;
         Session* A = r.open(who("alice"));
@@ -475,6 +490,49 @@ int main()
         const std::string second = *r.ws->open(alice, 200);
         CHECK_EQ(second, std::string{"s2"});
         CHECK_EQ(r.ws->attach(second, alice, 301).error().code, std::string{"expired"});   // attach itself notices
+    }
+
+    {   // A persistent view store may invalidate all borrowed records on each write.
+        struct ReplaceOnWrite final : ViewStore
+        {
+            LogViewStore backing;
+            mutable std::unique_ptr<SessionRecord> cachedSession;
+            mutable std::vector<ViewRecord> cachedViews;
+            explicit ReplaceOnWrite(Store& store) : backing(store) {}
+            void reset() { cachedSession.reset(); std::vector<ViewRecord>().swap(cachedViews); }
+            void putSession(const SessionRecord& r) override { reset(); backing.putSession(r); }
+            void putView(const ViewRecord& r) override { reset(); backing.putView(r); }
+            const SessionRecord* session(std::string_view id) const override
+            {
+                const auto* r = backing.session(id);
+                cachedSession = r ? std::make_unique<SessionRecord>(*r) : nullptr;
+                return cachedSession.get();
+            }
+            const ViewRecord* view(std::string_view id) const override { return backing.view(id); }
+            std::vector<const ViewRecord*> viewsOf(std::string_view id) const override
+            {
+                cachedViews.clear();
+                for (const auto* v : backing.viewsOf(id)) cachedViews.push_back(*v);
+                std::vector<const ViewRecord*> out;
+                for (const auto& v : cachedViews) out.push_back(&v);
+                return out;
+            }
+            std::vector<const SessionRecord*> sessions() const override { return backing.sessions(); }
+        };
+        Rig r;
+        r.policy.defaults.idleTtl = 9;
+        ReplaceOnWrite views(*r.store);
+        Workspace ws(r.canvas, *r.store, views, r.policy, r.compactor, &r.index);
+        const auto alice = who("alice");
+        const auto sid = ws.open(alice, 0);
+        Session* s = *ws.attach(*sid, alice, 0);
+        const auto first = s->openView({});
+        const auto second = s->openView({});
+        CHECK(first && second);
+        const auto expired = ws.attach(*sid, alice, 10);
+        CHECK(!expired && expired.error().code == "expired");
+        CHECK(expired.error().message.find("9 s") != std::string::npos);
+        CHECK(views.view(*first)->closed && views.view(*second)->closed);
     }
 
     {   // R-PIN-9 and "resume equals live": views and positions replay from the log to the same records; a resumed session has the same views and positions.

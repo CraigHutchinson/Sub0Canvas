@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <set>
@@ -494,6 +495,11 @@ int main(int argc, char** argv)
         const Scope scope{"notes.section"};
         const auto head = index.at(scope, "HEAD");
         const auto base = index.at(scope, "r0");
+        options.checkpointEvery = std::numeric_limits<std::size_t>::max();
+        RevisionIndex sparse(source, options);
+        const auto sparseHead = sparse.at(scope, "HEAD");
+        CHECK(sparseHead && (*sparseHead)->ordinal == 2 && sparse.stats().checkpoints == 1);
+        CHECK((*sparseHead)->index.liveCount() == 2);
         CHECK(head && base && (*head)->index.liveCount() == 2 && (*base)->index.liveCount() == 2);
         const Block* child = (*head)->index.at("notes.section", 3);
         CHECK(child && child->name == "outer::inner" && child->first == 2 && child->last == 3);

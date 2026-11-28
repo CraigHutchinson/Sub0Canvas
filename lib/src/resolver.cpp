@@ -184,7 +184,7 @@ AnchorDocument::Identity CanvasDocument::identity(const SourceAnchor& anchor) co
 }
 
 HistoryDocument::HistoryDocument(RevisionIndex& index, const DocumentSource& source, Scope scope, std::string revision)
-    : index_(index), source_(source), scope_(std::move(scope)), revision_(std::move(revision))
+    : index_(index), source_(source), scope_(std::move(scope)), revision_(source.resolve(revision).value_or(""))
 {
 }
 
@@ -192,13 +192,15 @@ const Replayed* HistoryDocument::target() const
 {
     if (!targetTried_) {
         targetTried_ = true;
-        if (auto at = index_.at(scope_, revision_)) target_ = *at;
+        if (!revision_.empty())
+            if (auto at = index_.at(scope_, revision_)) target_ = *at;
     }
     return target_.get();
 }
 
 AnchorDocument::TextRef HistoryDocument::text(const std::string& path) const
 {
+    if (revision_.empty()) return {Presence::unknown, nullptr};
     auto it = texts_.find(path);
     if (it == texts_.end()) {
         auto answers = source_.read({FileRef{revision_, path}});
@@ -254,6 +256,7 @@ namespace {
 std::vector<Span> findAll(std::string_view hay, std::size_t lo, std::size_t hi, std::string_view needle, std::size_t cap)
 {
     std::vector<Span> out;
+    cap = std::max<std::size_t>(cap, 2);   // edit authority requires distinguishing one occurrence from several
     if (needle.empty() || hi > hay.size() || lo >= hi) return out;
     const std::string_view region = hay.substr(lo, hi - lo);
     for (std::size_t at = region.find(needle); at != std::string_view::npos && out.size() < cap; at = region.find(needle, at + 1))

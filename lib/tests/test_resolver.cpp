@@ -314,6 +314,14 @@ void testDuplicates()
         CHECK_EQ(r.line, 5);
         CHECK_EQ(r.alternatives, std::size_t{1});
     }
+    {   // A small sample budget must never turn duplicate text into edit authority.
+        Doc e = d;
+        e.put("src/f.cpp", "int f(int x)\n{\n    x = x + 1;\n    x = x - 3;\n    x = x + 1;\n    return x;\n}\n");
+        ResolvePolicy policy;
+        policy.maxOccurrences = 1;
+        const Resolution r = resolveIn(e, "r2", a, policy);
+        CHECK(!r.editable && r.outcome == Outcome::moved && r.alternatives == 1);
+    }
     // An equal content id proves nothing changed: the original position, though the quote repeats.
     {
         SourceAnchor same = a;

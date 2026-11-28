@@ -44,7 +44,7 @@ private:
     std::string repo_;
     mutable std::vector<std::string> commands_;
     mutable std::optional<bool> shallow_;
-    mutable std::map<std::string, std::optional<std::string>> resolved_;
+    mutable std::set<std::string, std::less<>> verifiedCommits_;
     mutable std::set<std::string> boundary_;   ///< the commits a shallow clone cut off (its `shallow` file)
 };
 

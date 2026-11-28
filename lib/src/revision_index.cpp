@@ -210,10 +210,11 @@ void applyCommit(BlockIndex& index, std::map<std::string, std::size_t>& sizes, s
 
 void RevisionIndex::advance(Line& line, std::shared_ptr<State>& holder, int to, bool retain)
 {
-    const int every = static_cast<int>(options_.checkpointEvery);
+    const std::size_t every = options_.checkpointEvery;
     int from = holder->view.ordinal;
     while (from < to) {
-        const int chunkEnd = std::min(to, (from / every + 1) * every);
+        const auto step = std::min(static_cast<std::size_t>(to - from), every - static_cast<std::size_t>(from) % every);
+        const int chunkEnd = from + static_cast<int>(step);
         std::vector<FileRef> refs;
         for (int ord = from + 1; ord <= chunkEnd; ++ord) {
             const Commit& c = line.commits[static_cast<std::size_t>(ord) - 1];
@@ -234,7 +235,7 @@ void RevisionIndex::advance(Line& line, std::shared_ptr<State>& holder, int to, 
             s.view.revision = line.commits[static_cast<std::size_t>(ord) - 1].info.id;
             s.view.ordinal = ord;
             ++stats_.commitsReplayed;
-            if (retain && ord % every == 0) {
+            if (retain && static_cast<std::size_t>(ord) % every == 0) {
                 line.checkpoints[ord] = holder;
                 ++stats_.checkpoints;
             }

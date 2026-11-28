@@ -184,14 +184,14 @@ std::optional<std::string> GitSource::subject(const std::string& revision) const
 std::optional<std::string> GitSource::resolve(const std::string& name) const
 {
     if (!safe(name)) return std::nullopt;
-    if (const auto known = resolved_.find(name); known != resolved_.end()) return known->second;   // for the life of the source: a revision named once is not asked again
-    auto raw = run(std::format("rev-parse --verify --quiet \"{}^{{commit}}\"", name));   // quoted: ^ is cmd.exe's escape character
+    if (verifiedCommits_.contains(name)) return name;
+    auto raw = run(std::format("rev-parse --verify --quiet --end-of-options \"{}^{{commit}}\"", name));   // quoted: ^ is cmd.exe's escape character
     std::optional<std::string> id;
     if (raw) {
         while (!raw->empty() && (raw->back() == '\n' || raw->back() == '\r')) raw->pop_back();
         if (!raw->empty()) id = std::move(*raw);
     }
-    resolved_.emplace(name, id);
+    if (id) verifiedCommits_.insert(*id);   // refs, abbreviations and misses can change between calls
     return id;
 }
 
