@@ -21,7 +21,7 @@ namespace sub0canvas::app {
 class GitSource final : public DocumentSource
 {
 public:
-    /// A local repository (a working tree or a bare one). Sets the environment that keeps git off the network.
+    /// A local repository (a working tree or a bare one). Git child processes are configured to avoid lazy fetches and prompts.
     explicit GitSource(std::string repo);
 
     [[nodiscard]] History history(const std::string& to, const Scope& scope, std::size_t limit) const override;
@@ -54,8 +54,5 @@ private:
 
 /// The pathspec arguments of a scope: ` -- "a" "b"`; empty for the whole tree. nullopt when an entry holds a character the shell cannot be trusted with.
 [[nodiscard]] std::optional<std::string> pathspecArgs(const Scope& scope);
-
-/// `sub0canvas history`: the identity history of the blocks named in a scope (argv[1] is "history"). Returns the process exit code.
-int historyCommand(int argc, char** argv);
 
 }  // namespace sub0canvas::app

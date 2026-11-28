@@ -386,6 +386,25 @@ public:
   root (`index.root`), and ids are only compared within one root. A durable id across roots would need a content hash (Unison's approach); not proposed
   now, because a body edit would then change identity.
 
+### Git replay and frontends
+
+The shipped frontend is the static Web viewer. It loads `layered-doc-1` JSON bundles from disk or the local server. Keep JSON as an interchange
+format for the viewer, tools and external clients. A native OS frontend can link the C++ backend and query a scoped, immutable `Replayed` state
+through `RevisionIndex`. Build with `SUB0CANVAS_BUILD_IO=ON` and link `sub0canvas::io` for the native `GitSource`. The host can use the typed
+blocks and load the text on demand through `DocumentSource`. Its toolkit and UI thread stay outside
+the backend. It can own the index on one worker and pass pinned read results to the UI.
+
+The binary proof uses the same Git source, replay and block identities as `history --blocks`. Run the two commands against this repository's
+`app` directory at the same revision. `history --blocks-binary` bypasses JSON serialization and returns one live block table. The C++ reader allocates
+row arrays and borrows their strings from the input buffer. Treat the table as a read projection. It carries no source text, event history or state
+for resuming a replay. A persisted replay checkpoint remains separate work under G1/S2.
+
+The `S0BLOCK1` layout starts with its eight ASCII magic bytes. Each integer is an unsigned 32-bit little-endian value. Each string is its byte length
+followed by the bytes. The header fields are requested revision, indexed revision, replay ordinal, flags (0 or 1 for a history cut) and the count
+of unknown objects. Each unknown entry is a revision and a path. The block count follows. Each row contains ID, path, name, signature, first and
+last line (inclusive and 1-based). An empty path repeats the preceding row's path. Keep the requested scope with the table if saving it for later.
+The receiving test compares every row with the JSON view on Sub0Canvas itself and checks that repeated projections give identical bytes.
+
 ## 7. The format
 
 `layered-doc-1` stays, extended **additively**: an old reader ignores what it does not know; an old file has none of the new fields and means what it

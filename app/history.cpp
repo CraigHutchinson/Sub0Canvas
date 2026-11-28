@@ -1,7 +1,7 @@
 // `sub0canvas history`: the identity history of blocks across a repository's commits (docs/BACKBONE.md section 6, "As built (G1)"), through the git DocumentSource and the
 // library's RevisionIndex. Read-only and local.
 //
-//   sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks] [--] SCOPE...
+//   sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks | --blocks-binary] [--] SCOPE...
 //
 // SCOPE is one or more files or directories (a view is scoped, never the whole repository). Writes one JSON object to stdout: the revision, whether the history is
 // cut (a shallow clone), every (revision, path) git could not supply, the replay's counters, the git commands run, and for each --name the ids of the blocks of
@@ -9,7 +9,7 @@
 #include "git_source.hpp"
 
 #include <print>
-#include <sub0canvas/revision_index.hpp>
+#include <sub0canvas/block_table.hpp>
 
 #include "json_util.hpp"
 
@@ -53,7 +53,7 @@ struct Options
 {
     std::string repo, rev = "HEAD";
     std::size_t max = 0, checkpoint = 50;
-    bool follow = true, blocks = false;
+    bool follow = true, blocks = false, binary = false;
     std::vector<std::string> names;
     Scope scope;
 };
@@ -74,8 +74,10 @@ Options parse(int argc, char** argv)
         else if (a == "--no-follow") o.follow = false;
         else if (a == "--name") o.names.push_back(next());
         else if (a == "--blocks") o.blocks = true;
+        else if (a == "--blocks-binary") o.binary = true;
         else fail("unknown option " + a);
     }
+    if (o.binary && (o.blocks || !o.names.empty())) fail("--blocks-binary cannot be combined with --blocks or --name");
     if (o.repo.empty()) fail("history needs --repo DIR");
     if (o.scope.empty()) fail("history needs at least one path: an identity history is scoped, never the whole repository");
     // Arguments reach a shell (popen): refuse every character that could leave its quotes or chain a command, rather than escape for two shells.
@@ -104,6 +106,13 @@ int historyCommand(int argc, char** argv)
     if (!revision) fail("no commit named " + o.rev);
     const auto state = index.at(o.scope, *revision);
     if (!state) fail(state.error());
+    if (o.binary) {
+        const auto bytes = writeBlockTable(*revision, **state);
+        if (!bytes) fail(bytes.error());
+        if (std::fwrite(bytes->data(), 1, bytes->size(), stdout) != bytes->size() || std::fflush(stdout) != 0)
+            fail("could not write the block table");
+        return 0;
+    }
 
     std::map<std::string, std::string> subjects;   // by revision: its subject, asked once
     const auto subjectOf = [&](const std::string& id) -> const std::string& {

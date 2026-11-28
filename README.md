@@ -162,3 +162,8 @@ The library came from Sub0Squad (imported from its commit d54758f on 2026-11-17)
 Start with [AGENTS.md](AGENTS.md) (working here: layout, style, rules) and [docs/RESUME.md](docs/RESUME.md) (where it stands).
 
 Every document, with what it holds, is listed once: in [AGENTS.md](AGENTS.md), "What this is".
+
+### Native block table from Git
+
+`sub0canvas history --repo . --max 10 --blocks-binary -- app` writes a versioned binary table of live blocks to standard output.
+The same command with `--blocks` writes the JSON history view. See [Git replay and frontends](docs/BACKBONE.md#git-replay-and-frontends).

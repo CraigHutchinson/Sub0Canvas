@@ -7,6 +7,7 @@ set(SUB0CANVAS_TOP_LEVEL OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(SUB0CANVAS_TOP_LEVEL ON)
 endif()
+option(SUB0CANVAS_BUILD_IO "Build the native Git source and file log" ${SUB0CANVAS_TOP_LEVEL})
 option(SUB0CANVAS_BUILD_TESTING "Build Sub0Canvas's tests" ${SUB0CANVAS_TOP_LEVEL})
 option(SUB0CANVAS_BUILD_BENCHMARKS "Build the scale harness (bench/): the synthetic corpus generator and the benchmarks (Sub0Canvas_Bench)" ${SUB0CANVAS_TOP_LEVEL})
 
@@ -36,7 +37,7 @@ endif()
 # The library: folded views and READ requests (outline), search/replace and line edits (edits), the revisioned canvas and its transactions (canvas),
 # stable block ids and layers (doc_layers), the event envelope and log seam (event) and the store core folded from events (store).
 add_library(sub0canvas STATIC lib/src/outline.cpp lib/src/blocks.cpp lib/src/edits.cpp lib/src/canvas.cpp lib/src/doc_layers.cpp lib/src/content_id.cpp lib/src/turn_control.cpp
-            lib/src/git_plumbing.cpp lib/src/revision_index.cpp lib/src/event.cpp lib/src/store.cpp lib/src/claims.cpp lib/src/inbox.cpp lib/src/anchor.cpp lib/src/resolver.cpp lib/src/query.cpp lib/src/view.cpp lib/src/session.cpp lib/src/hunks.cpp)
+            lib/src/git_plumbing.cpp lib/src/revision_index.cpp lib/src/block_table.cpp lib/src/event.cpp lib/src/store.cpp lib/src/claims.cpp lib/src/inbox.cpp lib/src/anchor.cpp lib/src/resolver.cpp lib/src/query.cpp lib/src/view.cpp lib/src/session.cpp lib/src/hunks.cpp)
 add_library(sub0canvas::sub0canvas ALIAS sub0canvas)
 target_compile_features(sub0canvas PUBLIC cxx_std_23)
 target_include_directories(sub0canvas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/src)
@@ -44,16 +45,17 @@ target_compile_options(sub0canvas PRIVATE ${SUB0CANVAS_STRICT})
 target_link_libraries(sub0canvas PRIVATE simdjson::simdjson)
 
 # The command line (app/): the I/O the pure library may not do, such as reading a git repository for `sub0canvas snapshot`.
-# The file log (app/file_log.*, B1b): the I/O half of the log seam, a library of its own so the tests can drive it without the command line.
-if(SUB0CANVAS_TOP_LEVEL OR SUB0CANVAS_BUILD_TESTING)
-  add_library(sub0canvas_io STATIC app/file_log.cpp)
+# The Git source and the file log (app/) are also available to a native host embedding the backend.
+if(SUB0CANVAS_TOP_LEVEL OR SUB0CANVAS_BUILD_TESTING OR SUB0CANVAS_BUILD_IO)
+  add_library(sub0canvas_io STATIC app/file_log.cpp app/git_source.cpp)
+  add_library(sub0canvas::io ALIAS sub0canvas_io)
   target_compile_features(sub0canvas_io PUBLIC cxx_std_23)
   target_include_directories(sub0canvas_io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app PRIVATE lib/src)   # lib/src: json_util.hpp
   target_compile_options(sub0canvas_io PRIVATE ${SUB0CANVAS_STRICT})
   target_link_libraries(sub0canvas_io PUBLIC sub0canvas PRIVATE simdjson::simdjson)
 endif()
 if(SUB0CANVAS_TOP_LEVEL)
-  add_executable(sub0canvas_app app/sub0canvas.cpp app/git_source.cpp app/history.cpp)
+  add_executable(sub0canvas_app app/sub0canvas.cpp app/history.cpp)
   set_target_properties(sub0canvas_app PROPERTIES OUTPUT_NAME sub0canvas)
   target_compile_options(sub0canvas_app PRIVATE ${SUB0CANVAS_STRICT})
   target_include_directories(sub0canvas_app PRIVATE lib/src)     # json_util.hpp: one JSON writer for the library and its tools
@@ -121,7 +123,7 @@ if(SUB0CANVAS_BUILD_TESTING)
       SOURCE_SUBDIR cpp)
   endif()
   # Requirement tests (docs/REQUIREMENTS.md): each names the requirements it checks; doc_driver.hpp keeps them independent of the library's internals.
-  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control test_revision_index test_store test_claims test_inbox test_file_log test_query test_views_sessions test_hunks)
+  foreach(name test_edits test_doc_layers test_views test_outline test_canvas_model test_golden_replay test_replies test_turn_control test_revision_index test_store test_claims test_inbox test_file_log test_query test_views_sessions test_hunks test_block_table)
     add_executable(${name} lib/tests/${name}.cpp)
     target_compile_options(${name} PRIVATE ${SUB0CANVAS_STRICT} -g)
     target_include_directories(${name} PRIVATE lib/tests)

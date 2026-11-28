@@ -111,3 +111,36 @@ test('git history refuses what it must not pass to git, and an unscoped request'
         assert.notEqual(res.status, 0, args.join(' '));
     }
 });
+
+test('native binary blocks agree with Git history on Sub0Canvas itself', { skip }, () => {
+    const run = (format) => spawnSync(exe, ['history', '--repo', root, '--max', '10', format, '--', 'app'], { maxBuffer: 1 << 24 });
+    const json = run('--blocks');
+    const binary = run('--blocks-binary');
+    assert.equal(json.status, 0, json.stderr.toString());
+    assert.equal(binary.status, 0, binary.stderr.toString());
+    const expected = JSON.parse(json.stdout);
+    const bytes = binary.stdout;
+    assert.equal(bytes.toString('ascii', 0, 8), 'S0BLOCK1');
+    let at = 8;
+    const number = () => { const value = bytes.readUInt32LE(at); at += 4; return value; };
+    const text = () => { const size = number(); const value = bytes.toString('utf8', at, at + size); at += size; return value; };
+    assert.equal(text(), expected.revision);
+    assert.match(text(), /^[a-f0-9]{40,64}$/);
+    const ordinal = number();
+    assert.ok(ordinal > 0 && ordinal <= 10);
+    assert.equal(number(), Number(expected.historyCut));
+    const unknown = Array.from({ length: number() }, () => ({ revision: text(), path: text() }));
+    assert.deepEqual(unknown, expected.unknown);
+    let lastPath = '';
+    const blocks = Array.from({ length: number() }, () => {
+        const id = text();
+        lastPath = text() || lastPath;
+        const name = text();
+        assert.ok(text(), 'block signature');
+        return { id, path: lastPath, name, first: number(), last: number() };
+    });
+    assert.equal(at, bytes.length);
+    assert.deepEqual(blocks, expected.blocks);
+    assert.ok(blocks.some((row) => row.path === 'app/history.cpp' && row.name.endsWith('historyCommand')));
+    assert.deepEqual(run('--blocks-binary').stdout, bytes, 'same pinned state produces the same bytes');
+});

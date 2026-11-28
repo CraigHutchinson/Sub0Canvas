@@ -200,6 +200,12 @@ processes, of which 40 were whole-diff queries asked because a file was added in
 (about 0.1 s per git process), and the next gain is fewer processes (a long-lived `cat-file --batch`, a stopping revision, batching the added-file diffs), not a faster index. Not measured: memory (the index holds every
 text and a copy per checkpoint until S1), a partial clone's cost, a repository of 10^5 commits (S3).
 
+On Sub0Canvas commit `1cd2be4` (Linux, GCC 15, Release), the `history` command with `--max 20 -- lib/src app` returned 616 live blocks.
+After one warm-up, ten interleaved invocations per mode measured a 54.0 ms end-to-end median for both `--blocks` (52.8–54.6 ms) and
+`--blocks-binary` (53.0–54.3 ms). JSON wrote 60,236 bytes and the binary table wrote 77,232 bytes. The binary includes signatures that
+the JSON view omits. The timings include process launch, Git reads, replay and output. This experiment establishes no speedup and does
+not isolate projection cost. The format is described in [BACKBONE.md](BACKBONE.md#git-replay-and-frontends).
+
 ### 6.3 Built and measured: the compact, lazy block index (S1, 2026-11-24)
 
 What `BlockIndex` is now (`lib/src/doc_layers.cpp`, `doc_layers.hpp`), against the numbers of section 6.0 (same corpus, same machine and baseline `croglegion`, mains power; A/B against the pre-change build, two to three interleaved runs each, so read to a few percent):

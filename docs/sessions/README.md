@@ -33,6 +33,7 @@ Backlog: <item>. Design: <BACKBONE.md section and slice>.
 
 | Brief | Task |
 |---|---|
+| [review-correctness.md](review-correctness.md) | Preserve disjoint rebases and keep bounded snapshot membership current |
 | [s0-scale-harness.md](s0-scale-harness.md) | S0: the sizes beyond 10^5 lines, profile B, change sets, the index against the truth |
 | [b0-format-catch-up.md](b0-format-catch-up.md) | B0: the release, the Sub0Squad PR and the real-attempt re-capture (deleted by the cleanup) |
 | [v0-worktree-snapshot.md](v0-worktree-snapshot.md) | V0: Markdown blocks, Markdown rendered in the viewer, the worktree's uncommitted state, merge titles |

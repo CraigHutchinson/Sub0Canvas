@@ -26,15 +26,6 @@ bool safe(const std::string& s) { return !s.empty() && s.find_first_of("\"'`$;&|
 
 std::string quote(const std::string& s) { return "\"" + s + "\""; }
 
-void setEnv(const char* name, const char* value)
-{
-#ifdef _WIN32
-    _putenv_s(name, value);
-#else
-    setenv(name, value, 1);
-#endif
-}
-
 constexpr std::size_t kBatch = 2000;   ///< objects per `cat-file --batch` process
 
 }  // namespace
@@ -54,7 +45,14 @@ std::optional<std::string> runGit(const std::string& repo, const std::string& ar
 {
     // The rename limit is git's maximum: above git's default of 1000 files a large commit silently skips rename detection and every moved file looks
     // like a delete plus an add, which breaks block identity across the move.
-    std::string cmd = "git -C " + quote(repo) + " -c diff.renameLimit=32767 " + args;
+    if (!safe(repo) || (!stdinFile.empty() && !safe(stdinFile))) return std::nullopt;
+    // Constrain the child only. A native host may have its own Git subprocesses.
+#ifdef _WIN32
+    std::string cmd = R"(set "GIT_NO_LAZY_FETCH=1" && set "GIT_TERMINAL_PROMPT=0" && set "GIT_OPTIONAL_LOCKS=0" && )";
+#else
+    std::string cmd = "GIT_NO_LAZY_FETCH=1 GIT_TERMINAL_PROMPT=0 GIT_OPTIONAL_LOCKS=0 ";
+#endif
+    cmd += "git -C " + quote(repo) + " -c diff.renameLimit=32767 " + args;
     if (!stdinFile.empty()) cmd += " < " + quote(stdinFile);
 #ifdef _WIN32
     FILE* p = popen(cmd.c_str(), "rb");   // binary: no CRLF translation of blob bytes
@@ -69,12 +67,7 @@ std::optional<std::string> runGit(const std::string& repo, const std::string& ar
     return out;
 }
 
-GitSource::GitSource(std::string repo) : repo_(std::move(repo))
-{
-    setEnv("GIT_NO_LAZY_FETCH", "1");        // a partial clone's missing object stays missing: unknown, never a download (A20)
-    setEnv("GIT_TERMINAL_PROMPT", "0");
-    setEnv("GIT_OPTIONAL_LOCKS", "0");       // read-only
-}
+GitSource::GitSource(std::string repo) : repo_(std::move(repo)) {}
 
 std::optional<std::string> GitSource::run(const std::string& args, const std::string& stdinFile) const
 {

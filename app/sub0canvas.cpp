@@ -291,12 +291,14 @@ Options parse(int argc, char** argv)
 
 }  // namespace
 
+namespace sub0canvas::app { int historyCommand(int argc, char** argv); }
+
 int main(int argc, char** argv)
 {
     const std::string command = argc < 2 ? std::string{} : argv[1];
     if (command != "snapshot" && command != "history") {
         eprintln("usage: sub0canvas snapshot --repo DIR [--rev REV] [--history N] [--max-files N] [--max-file-bytes N] [--] PATHSPEC...");
-        eprintln("       sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks] [--] PATH...");
+        eprintln("       sub0canvas history --repo DIR [--rev REV] [--max N] [--checkpoint N] [--no-follow] [--name NAME]... [--blocks | --blocks-binary] [--] PATH...");
         return 2;
     }
 #ifdef _WIN32

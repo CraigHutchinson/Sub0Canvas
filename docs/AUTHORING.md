@@ -168,6 +168,10 @@ A scenario is a file of steps, each an actor and a command, with assertions on v
 Scenarios are the L2 rung of TESTING.md for this track: deterministic (a passed clock, seeded ids), byte-compared views, hand-checked truth. A scenario
 with two people and an agent is how C1 (multi-user review) is tested long before two real people use it.
 
+The current frontend is the Web viewer. It exchanges JSON bundles and can use the live query protocol as it lands. A native OS frontend may
+link the C++ backend and use typed views directly. The binary block table is available when exchanging a scoped result across a process or file
+boundary. See [Git replay and frontends](BACKBONE.md#git-replay-and-frontends).
+
 ## 7. Slices
 
 Each slice is used (by the owner, on this repository) before the next is built.
