@@ -316,6 +316,84 @@ public:
     }
 };
 
+class MarkdownProvider final : public OutlineProvider
+{
+public:
+    std::string name() const override { return "markdown@1"; }
+
+    Outline outline(std::string_view text) const override
+    {
+        Outline out;
+        out.provider = name();
+        char fence = 0;
+        std::size_t fenceWidth = 0;
+        const auto lines = splitViews(text);
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            View line = trimEnd(lines[i]);
+            const auto at = line.find_first_not_of(' ');
+            if (at == View::npos || at > 3) continue;
+            line.remove_prefix(at);
+            if (line.front() == '~' || line.front() == '`') {
+                const auto end = line.find_first_not_of(line.front());
+                const auto width = end == View::npos ? line.size() : end;
+                if (fence == 0 && width >= 3 && (line.front() != '`' || !line.substr(width).contains('`'))) {
+                    fence = line.front();
+                    fenceWidth = width;
+                    continue;
+                }
+                if (fence == line.front() && width >= fenceWidth && trimEnd(line.substr(width)).empty()) {
+                    fence = 0;
+                    continue;
+                }
+            }
+            if (fence != 0 || !line.starts_with('#')) continue;
+            const auto marker = line.find_first_not_of('#');
+            if (marker == View::npos || marker > 6 || (line[marker] != ' ' && line[marker] != '\t')) continue;
+            line.remove_prefix(marker);
+            const auto start = line.find_first_not_of(" \t");
+            if (start == View::npos) continue;
+            View title = line.substr(start);
+            const auto tail = title.find_last_not_of('#');
+            if (tail != View::npos && tail + 1 < title.size() && (title[tail] == ' ' || title[tail] == '\t'))
+                title = trimEnd(title.substr(0, tail + 1));
+            const int number = static_cast<int>(i + 1);
+            if (!out.nodes.empty()) {
+                out.nodes.back().last = number - 1;
+                out.nodes.back().bodyTo = number - 1;
+            }
+            out.nodes.push_back({"heading", std::string(title), std::string(title), number, number, number, number, number, collapse(line), {}});
+        }
+        if (!out.nodes.empty()) out.nodes.back().last = out.nodes.back().bodyTo = static_cast<int>(lines.size());
+        out.partial = fence != 0;
+        return out;
+    }
+
+private:
+    static View trimEnd(View line)
+    {
+        const auto end = line.find_last_not_of(" \t\r");
+        return line.substr(0, end == View::npos ? 0 : end + 1);
+    }
+};
+
+struct BuiltinExtension { View extension, language; };
+
+constexpr BuiltinExtension kBuiltinExtensions[] = {
+    {".py", "python"}, {".md", "markdown"}, {".markdown", "markdown"},
+    {".c", "c"}, {".h", "c"}, {".cc", "cpp"}, {".cpp", "cpp"}, {".cxx", "cpp"}, {".hh", "cpp"}, {".hpp", "cpp"},
+    {".hxx", "cpp"}, {".inl", "cpp"}, {".cs", "csharp"}, {".java", "java"}, {".js", "javascript"}, {".mjs", "javascript"},
+    {".ts", "typescript"}, {".go", "go"}, {".rs", "rust"}, {".m", "objective-c"}, {".mm", "objective-c"}, {".swift", "swift"}, {".kt", "kotlin"},
+};
+
+const OutlineProvider* builtinProvider(View language)
+{
+    static const MarkdownProvider markdown;
+    if (language == "python") return &indentProvider();
+    if (language == "markdown") return &markdown;
+    for (const auto& ext : kBuiltinExtensions) if (ext.language == language) return &bracesProvider();
+    return nullptr;
+}
+
 bool endsWith(std::string_view s, std::string_view suffix) { return s.size() > suffix.size() && s.substr(s.size() - suffix.size()) == suffix; }
 
 std::string lastComponent(const std::string& s) { return s.substr(s.find_last_of('/') == std::string::npos ? 0 : s.find_last_of('/') + 1); }
@@ -360,9 +438,17 @@ std::string Languages::detect(std::string_view path, std::string_view firstLine)
     for (const auto& d : detects_)
         if (std::ranges::find(d.filenames, file) != d.filenames.end()) return d.language;
     for (const auto& d : detects_)
-        for (const auto& e : d.extensions) if (endsWith(path, e)) return d.language;
+        for (const auto& e : d.extensions) if (endsWith(file, e)) return d.language;
+    if (builtins_) {
+        const auto dot = file.rfind('.');
+        if (dot != View::npos && dot > 0) {
+            const auto extension = file.substr(dot);
+            for (const auto& ext : kBuiltinExtensions) if (ext.extension == extension) return std::string(ext.language);
+        }
+    }
     if (firstLine.starts_with("#!")) {
         const std::string word = interpreterOf(firstLine);
+        if (builtins_ && word == "python") return word;
         for (const auto& d : detects_)
             if (std::ranges::find(d.interpreters, word) != d.interpreters.end()) return d.language;
     }
@@ -374,6 +460,8 @@ const OutlineProvider* Languages::provider(std::string_view language) const
     const Entry* best = nullptr;
     for (const auto& e : entries_)
         if (e.language == language && (!best || e.priority > best->priority)) best = &e;
+    if (builtins_ && (!best || best->priority <= 0))
+        if (const auto* builtin = builtinProvider(language)) return builtin;
     return best ? best->provider.get() : fallback_.get();
 }
 
@@ -394,10 +482,8 @@ const Languages& defaultLanguages()
 {
     static const Languages languages = [] {
         Languages l;
-        const auto borrowed = [](const OutlineProvider& p) { return std::shared_ptr<const OutlineProvider>(std::shared_ptr<void>{}, &p); };   // the providers are static
-        l.detects("python", {".py"}, {}, {"python"});
-        l.add("python", borrowed(indentProvider()), 0);
-        l.setFallback(borrowed(bracesProvider()));
+        l.builtins_ = true;
+        l.setFallback(std::shared_ptr<const OutlineProvider>(std::shared_ptr<void>{}, &bracesProvider()));
         return l;
     }();
     return languages;

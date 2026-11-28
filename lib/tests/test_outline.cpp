@@ -75,8 +75,16 @@ int main()
         CHECK_EQ(l.detect("tools/run", "#!/usr/bin/env python3"), std::string("python"));
         CHECK_EQ(l.detect("tools/run", "#!/usr/bin/python3.12"), std::string("python"));
         CHECK_EQ(l.detect("tools/run", "#!/bin/sh"), std::string(""));
-        CHECK_EQ(l.detect("src/a.cpp"), std::string(""));      // no provider of its own yet: the fallback serves it
+        CHECK_EQ(l.detect("src/a.cpp"), std::string("cpp"));
         CHECK_EQ(l.detect(".py"), std::string(""));
+        CHECK_EQ(l.detect("tools/.py"), std::string(""));
+        CHECK_EQ(l.detect("lib/example.rs"), std::string("rust"));
+        CHECK_EQ(l.detect("ui/example.ts"), std::string("typescript"));
+        CHECK_EQ(l.detect("cmd/example.go"), std::string("go"));
+        const auto prose = l.outline("guide.md", "# Start ###\nbody\n~~~markdown\n# Example\n~~~\n## Next\nbody\n");
+        CHECK(prose.language == "markdown" && prose.provider == "markdown@1" && prose.nodes.size() == 2);
+        CHECK(prose.nodes[0].name == "Start" && prose.nodes[0].first == 1 && prose.nodes[0].last == 5);
+        CHECK(prose.nodes[1].name == "Next" && prose.nodes[1].first == 6 && prose.nodes[1].last == 7);
         CHECK(l.provider("python") != nullptr && l.provider("python")->name() == "indent@2");
         CHECK(l.provider("")->name() == "braces@3");
         // the registry is data: a language added by a client wins by priority, and a filename beats an extension

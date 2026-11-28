@@ -7,6 +7,7 @@
 #include "sub0platform/testing/check.hpp"
 
 #include "fixture_source.hpp"
+#include "sub0canvas/block_table.hpp"
 #include "sub0canvas/git_plumbing.hpp"
 #include "sub0canvas/revision_index.hpp"
 
@@ -465,6 +466,42 @@ int main(int argc, char** argv)
             CHECK(!(*at3)->unknown.empty() && (*at3)->unknown[0].path.empty() && (*at3)->unknown[0].revision == manifest.windows[0].first);
             CHECK(!(*at3)->index.all().empty());
         }
+    }
+
+    {   // A client-defined provider survives checkpoint copies and reaches the same native / binary block backend.
+        struct Provider final : OutlineProvider
+        {
+            std::string name() const override { return "sections@1"; }
+            Outline outline(std::string_view text) const override
+            {
+                if (!text.starts_with("group outer\nsection inner\n")) return {};
+                OutlineNode child{"section", "inner", "outer::inner", 2, 3, 2, 2, 3, "section inner", {}};
+                OutlineNode parent{"group", "outer", "outer", 1, 4, 1, 1, 4, "group outer", {child}};
+                return {"", name(), {parent}, false};
+            }
+        };
+        Canvas canvas;
+        canvas.addFile("notes.section", "group outer\nsection inner\noriginal\nend\n");
+        CHECK(canvas.replaceText("notes.section", "group outer\nsection inner\nupdated\nend\n", "test").ok);
+        fixture::CanvasSource source(canvas, {{{"notes.section", 1}}, {{"notes.section", 2}}});
+        auto registry = std::make_shared<Languages>(defaultLanguages());
+        registry->detects("sections", {".section"});
+        registry->add("sections", std::make_shared<Provider>(), 0);
+        RevisionIndex::Options options;
+        options.checkpointEvery = 1;
+        options.languages = registry;
+        RevisionIndex index(source, options);
+        const Scope scope{"notes.section"};
+        const auto head = index.at(scope, "HEAD");
+        const auto base = index.at(scope, "r0");
+        CHECK(head && base && (*head)->index.liveCount() == 2 && (*base)->index.liveCount() == 2);
+        const Block* child = (*head)->index.at("notes.section", 3);
+        CHECK(child && child->name == "outer::inner" && child->first == 2 && child->last == 3);
+        CHECK((*base)->index.at("notes.section", 3)->id == child->id);
+        const auto bytes = writeBlockTable((*head)->revision, **head);
+        CHECK(bytes);
+        const auto table = readBlockTable(*bytes);
+        CHECK(table && table->blocks.size() == 2 && table->blocks[1].id == child->id);
     }
 
     // ---- R-SRC-5: revision ids are opaque strings; a canvas's revisions are one kind among others (the second DocumentSource) -----------------------------

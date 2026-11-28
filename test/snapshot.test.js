@@ -97,3 +97,15 @@ test('edited events carry block-relative hunk ranges and the turn reconciles wit
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('the snapshot discovers Markdown through the same registry as Git history', { skip: !exe && 'sub0canvas is not built' }, () => {
+    const snapshot = spawnSync(exe, ['snapshot', '--repo', root, '--history', '1', '--', 'docs/BACKBONE.md'], { encoding: 'utf8' });
+    const history = spawnSync(exe, ['history', '--repo', root, '--max', '1', '--blocks', '--', 'docs/BACKBONE.md'], { encoding: 'utf8' });
+    assert.equal(snapshot.status, 0, snapshot.stderr);
+    assert.equal(history.status, 0, history.stderr);
+    const { docs, problems } = M.loadEntries(JSON.parse(snapshot.stdout));
+    assert.deepEqual(problems, []);
+    const names = docs[0].turns[0].blocks.map((block) => block.name);
+    assert.ok(names.length > 10);
+    assert.deepEqual(names, JSON.parse(history.stdout).blocks.map((block) => block.name));
+});

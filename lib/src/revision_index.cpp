@@ -132,6 +132,7 @@ RevisionIndex::Line& RevisionIndex::buildLine(const Scope& scope, const std::str
     for (std::size_t i = 0; i < line.commits.size(); ++i) line.ordinalOf.emplace(line.commits[i].info.id, static_cast<int>(i) + 1);
 
     line.frontier = std::make_shared<State>();
+    if (options_.languages) line.frontier->view.index = BlockIndex(options_.languages);
     line.frontier->view.historyCut = line.cut;
     line.frontier->view.revision = line.baseRevision;
     applyBaseline(line, *line.frontier);

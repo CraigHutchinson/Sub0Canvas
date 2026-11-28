@@ -87,14 +87,8 @@ std::vector<std::string> lines(const std::string& text)
     return out;
 }
 
-/// The languages the block heuristic serves today (BLOCK_DISCOVERY.md section 2); everything else is not shown, so a view is code, not data.
-bool isCode(const std::string& path)
-{
-    static const std::set<std::string> exts = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".inl", ".cs", ".java", ".js", ".mjs", ".ts",
-                                               ".py", ".go", ".rs", ".mm", ".m", ".swift", ".kt"};
-    const auto dot = path.rfind('.');
-    return dot != std::string::npos && exts.count(path.substr(dot));
-}
+/// Snapshot candidates use path detection before fetching blobs.
+bool isSupportedPath(std::string_view path) { return !defaultLanguages().detect(path).empty(); }
 
 /// Blob texts for `rev:path` names, read through one `git cat-file --batch` (its input from a temporary file: popen is one-directional).
 std::map<std::string, std::string> readBlobs(const Options& o, const std::string& rev, const std::vector<std::string>& paths)
@@ -166,13 +160,13 @@ int snapshot(const Options& o)
         if (t == 0) {
             // The first turn: the pathspec's code files at that commit, in path order, up to the limit (the rest are counted, never silently dropped).
             for (const auto& p : lines(git(o, "ls-tree -r --name-only " + revs[0] + pathspecArgs(o))))
-                if (isCode(p)) (fetch.size() < o.maxFiles ? fetch.push_back(p) : void(++skipped));
+                if (isSupportedPath(p)) (fetch.size() < o.maxFiles ? fetch.push_back(p) : void(++skipped));
         } else {
             for (const auto& l : lines(git(o, std::format("diff --name-status --no-renames {} {}{}", revs[t - 1], revs[t], pathspecArgs(o))))) {
                 const auto tab = l.find('\t');
                 if (tab == std::string::npos) continue;
                 const std::string path = l.substr(tab + 1);
-                if (!isCode(path)) continue;
+                if (!isSupportedPath(path)) continue;
                 if (l[0] == 'D') { if (files.count(path)) removed.push_back(path); }
                 else if (files.count(path) || files.size() + fetch.size() < o.maxFiles) fetch.push_back(path);
                 else ++skipped;
@@ -228,7 +222,7 @@ int snapshot(const Options& o)
         if (t > 0) {
             std::size_t total = 0, outside = 0;
             for (const auto& [p, list] : hunks) {
-                if (!isCode(p) || !(files.contains(p) || std::ranges::contains(removed, p))) continue;
+                if (!isSupportedPath(p) || !(files.contains(p) || std::ranges::contains(removed, p))) continue;
                 const auto before = spansBefore.find(p);
                 const HunkMapping m = mapHunks(list, before == spansBefore.end() ? std::vector<BlockSpan>{} : before->second, spansOf(p));
                 total += m.total;
@@ -259,7 +253,7 @@ int snapshot(const Options& o)
 
     const std::string out = bundle.take();
     std::fwrite(out.data(), 1, out.size(), stdout);
-    eprintln("sub0canvas snapshot: {} turns, {} files, {} code files over the limit not shown, {} bytes", revs.size(), files.size(), skipped,
+    eprintln("sub0canvas snapshot: {} turns, {} files, {} supported files over the limit not shown, {} bytes", revs.size(), files.size(), skipped,
                  out.size());
     return 0;
 }

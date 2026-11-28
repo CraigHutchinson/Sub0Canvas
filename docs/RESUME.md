@@ -31,7 +31,7 @@ The cleanup to one current account is in progress (backlog item 1); then v0.5.0 
 
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4); the owner-run re-capture replaces the golden fixtures.
 * Heap per block is 319 B against the 200 B target (an expected failure in `perf/metrics.json`); `BlockIndex` has no reader, so checkpoints are not persisted.
-* Block discovery: the open faults are listed in [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 2.1; YAML, JSON, XML and Markdown have no blocks.
+* Block discovery: the open faults are listed in [BLOCK_DISCOVERY.md](BLOCK_DISCOVERY.md) 2.1; Markdown ATX headings have blocks. YAML, JSON and XML providers remain planned.
 * The gate cannot judge the rows added since the last re-record, and a confirmed regression makes a push slow ([TESTING.md](TESTING.md), "What a push waits for").
 * The hosted full tier has not run on MSVC, macOS or the sanitizers.
 

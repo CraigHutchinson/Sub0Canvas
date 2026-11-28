@@ -66,6 +66,8 @@ public:
     [[nodiscard]] Outline outline(std::string_view path, std::string_view text) const;
 
 private:
+    friend const Languages& defaultLanguages();
+    bool builtins_ = false;
     struct Entry { std::string language; std::shared_ptr<const OutlineProvider> provider; int priority; };
     struct Detect { std::string language; std::vector<std::string> extensions, filenames, interpreters; };
     std::vector<Entry> entries_;
@@ -77,7 +79,7 @@ private:
 [[nodiscard]] const OutlineProvider& bracesProvider();
 /// `indent@2`: the `def` and indentation heuristic for Python.
 [[nodiscard]] const OutlineProvider& indentProvider();
-/// The library's own registry: python on `indent@2`, everything else on `braces@3`. Built once; immutable.
+/// Default providers: brace languages, Python and Markdown, with braces as the fallback. Built once and immutable.
 [[nodiscard]] const Languages& defaultLanguages();
 
 }  // namespace sub0canvas

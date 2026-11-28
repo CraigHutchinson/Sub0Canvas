@@ -76,6 +76,7 @@ public:
         std::size_t checkpointEvery = 50;   ///< a state is retained every this many revisions of a line (at least 1)
         std::size_t maxRevisions = 0;       ///< replay at most this many revisions back from the head (0: all); older ones form the baseline
         bool followRenames = true;          ///< chase a file added by a rename back to its old name (asks the source for the revision's whole diff)
+        std::shared_ptr<const Languages> languages;  ///< a fixed registry for each replay and checkpoint (null uses the defaults)
     };
 
     template <class T> using Result = std::expected<T, std::string>;   ///< an error is a caller's mistake (an unresolvable revision), never a missing object

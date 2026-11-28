@@ -61,6 +61,19 @@ R-BLK-4 is asserted for the probe cases, not for arbitrary text; `index.outliner
 A block with no name breaks two rules at once: identity's second rule (same name, new signature) and `SYMBOL name` editing. A file whose blocks
 vanish orphans every item anchored to it. These are the failure modes the design below must make impossible to ship unnoticed (section 6).
 
+### 2.2 Language registration in Git replay
+
+The default registry names the existing brace languages and selects the indentation provider for Python, including recognised shebangs. Markdown
+files use `markdown@1` for ATX headings. Sections run up to the next heading and fenced examples do not introduce headings. Setext headings
+and nested Markdown sections are follow-up work. Snapshots use the registry's path detection before fetching candidates. A scoped history
+read can also recognise a shebang after fetching the text.
+
+A native client can copy `defaultLanguages()`, register an `OutlineProvider` and its detection rules, then pass the registry to `BlockIndex` or
+`RevisionIndex::Options::languages`. Finish registration before replay and keep the registry fixed while any index uses it. A new provider
+version can change spans and identities, so replay from source when switching versions. The block index takes spans from the outline and
+indexes each child as a separate block. A line lookup prefers the smallest containing span. The native, JSON and binary projections all read
+the resulting index and need no language-specific decoding.
+
 ## 3. Prior art
 
 Listed from knowledge, not from a fresh search; versions and licences are to be confirmed before anything is adopted (the owner approves every

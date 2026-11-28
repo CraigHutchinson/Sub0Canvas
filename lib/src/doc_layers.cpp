@@ -494,6 +494,7 @@ struct Retired
 struct BlockIndex::State
 {
     std::shared_ptr<Pool> pool = std::make_shared<Pool>();
+    std::shared_ptr<const Languages> languages;
     const TextSource* source = nullptr;
     std::string birthRevision;
     std::vector<FileState> files;
@@ -604,7 +605,11 @@ struct FileLines
 
 }  // namespace
 
-BlockIndex::BlockIndex() : s_(std::make_unique<State>()) {}
+BlockIndex::BlockIndex() : BlockIndex(nullptr) {}
+BlockIndex::BlockIndex(std::shared_ptr<const Languages> languages) : s_(std::make_unique<State>())
+{
+    s_->languages = std::move(languages);
+}
 BlockIndex::BlockIndex(const BlockIndex& other) : turn_(other.turn_), s_(std::make_unique<State>(*other.s_)) {}
 BlockIndex::BlockIndex(BlockIndex&& other) noexcept = default;
 BlockIndex& BlockIndex::operator=(const BlockIndex& other)
@@ -667,23 +672,33 @@ void BlockIndex::update(const std::string& path, const std::string& text)
     } else {
         ++S.stats.parses;
         std::string scratch;
-        const auto regions = foldRegionsFor(path, text, true);
-        fresh.reserve(regions.size());   // exact: a block vector is never over-allocated
-        for (const auto& r : regions) {
+        const auto& languages = S.languages ? *S.languages : defaultLanguages();
+        const auto outline = languages.outline(path, text);
+        const auto count = [](auto&& self, const std::vector<OutlineNode>& nodes) -> std::size_t {
+            std::size_t size = nodes.size();
+            for (const auto& node : nodes) if (!node.children.empty()) size += self(self, node.children);
+            return size;
+        };
+        fresh.reserve(count(count, outline.nodes));
+        const auto add = [&](auto&& self, const OutlineNode& node) -> void {
+            if (node.first < 1 || node.nameLine < node.first || node.last < node.nameLine ||
+                static_cast<std::size_t>(node.last) > lines.size()) return;
             LiveBlock b;
             b.path = pathView;
-            b.name = pool.internView(r.name);
-            b.first = r.spanFirst > 0 ? r.spanFirst : r.first;   // decorators are inside the block (R-BLK-6)
-            b.last = std::max(r.first, r.bodyTo);
-            b.sigLine = r.first;
-            collapseLines(lines, r.first, r.first, scratch);
+            b.name = pool.internView(node.qualifiedName);
+            b.first = node.first;
+            b.last = node.last;
+            b.sigLine = node.nameLine;
+            collapseLines(lines, b.sigLine, b.sigLine, scratch);
             b.signature = pool.internView(scratch);
             for (int k = b.first; k <= b.last; ++k)
-                if (k > r.first || b.first == b.last) scanTokens(lines[static_cast<std::size_t>(k) - 1], [&](std::string_view t) { b.bloom.add(hashView(t, kTokenSeed)); });
+                if (k > b.sigLine || b.first == b.last) scanTokens(lines[static_cast<std::size_t>(k) - 1], [&](std::string_view t) { b.bloom.add(hashView(t, kTokenSeed)); });
             collapseLines(lines, b.first, b.last, scratch);
             b.bodyHash = hashView(scratch);
             fresh.push_back(std::move(b));
-        }
+            for (const auto& child : node.children) self(self, child);
+        };
+        for (const auto& node : outline.nodes) add(add, node);
         if (S.cacheLimit > 0) {
             auto entry = std::make_shared<Analysis>();
             entry->pathId = pathId;
@@ -881,8 +896,12 @@ const Block* BlockIndex::at(const std::string& path, int line) const
 {
     const auto it = s_->byPath.find(std::string_view{path});
     if (it == s_->byPath.end()) return nullptr;
-    for (const auto& b : s_->files[it->second].blocks) if (line >= b.first && line <= b.last) return &b;
-    return nullptr;
+    const Block* closest = nullptr;
+    for (const auto& b : s_->files[it->second].blocks) {
+        if (b.first > line) break;
+        if (line <= b.last && (!closest || b.last - b.first < closest->last - closest->first)) closest = &b;
+    }
+    return closest;
 }
 
 std::vector<const Block*> BlockIndex::blocks(const std::string& path) const

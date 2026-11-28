@@ -10,6 +10,8 @@
 /// inline (`layerInline`). The layer item, its summary and
 /// its detail are layer-neutral, so the review and prose layers reuse them. Pure data, no I/O.
 
+#include "sub0canvas/blocks.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -133,6 +135,8 @@ class BlockIndex
 {
 public:
     BlockIndex();
+    /// Use a fixed language registry for this index and its copies. Null selects defaultLanguages().
+    explicit BlockIndex(std::shared_ptr<const Languages> languages);
     BlockIndex(const BlockIndex& other);
     BlockIndex(BlockIndex&& other) noexcept;
     BlockIndex& operator=(const BlockIndex& other);
