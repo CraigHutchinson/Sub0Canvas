@@ -97,24 +97,42 @@ std::map<std::string, std::string> readBlobs(const Options& o, const std::string
     if (paths.empty()) return out;
     std::random_device rd;
     const auto list = std::filesystem::temp_directory_path() / std::format("sub0canvas-{:08x}.txt", rd());
+    std::vector<std::string> queried;
     {
         std::ofstream f(list, std::ios::binary);
-        for (const auto& p : paths) f << rev << ':' << p << '\n';
+        if (!f) fail("cannot write snapshot blob requests");
+        for (const auto& path : paths) {
+            if (path.find_first_of("\r\n") != std::string::npos) continue;
+            queried.push_back(path);
+            f << rev << ':' << path << '\n';
+        }
     }
-    const std::string raw = git(o, "cat-file --batch", list.string());
+    // Check sizes before requesting bodies so large blobs never enter the snapshot buffer.
+    const auto info = lines(git(o, "cat-file --batch-check", list.string()));
+    std::vector<std::string> selected;
+    {
+        std::ofstream f(list, std::ios::binary | std::ios::trunc);
+        if (!f) fail("cannot write snapshot blob requests");
+        for (std::size_t i = 0; i < std::min(info.size(), queried.size()); ++i) {
+            if (info[i].ends_with(" missing")) continue;
+            std::istringstream row(info[i]);
+            std::string id, type;
+            std::size_t size = 0;
+            if (!(row >> id >> type >> size) || type != "blob" || size > o.maxFileBytes) continue;
+            selected.push_back(queried[i]);
+            f << id << '\n';
+        }
+    }
+    if (!selected.empty()) {
+        const std::string raw = git(o, "cat-file --batch", list.string());
+        if (auto texts = gitplumbing::parseCatFileBatch(raw, selected.size())) {
+            for (std::size_t i = 0; i < selected.size(); ++i) {
+                auto& text = (*texts)[i];
+                if (text.presence == Presence::present && !text.text.contains('\0')) out.emplace(selected[i], std::move(text.text));
+            }
+        }
+    }
     std::filesystem::remove(list);
-    std::size_t at = 0;
-    for (const auto& p : paths) {
-        const auto eol = raw.find('\n', at);
-        if (eol == std::string::npos) break;
-        const std::string header = raw.substr(at, eol - at);
-        at = eol + 1;
-        if (header.ends_with(" missing")) continue;
-        const auto size = std::stoull(header.substr(header.rfind(' ') + 1));
-        std::string text = raw.substr(at, size);
-        at += size + 1;
-        if (size <= o.maxFileBytes && !text.contains('\0')) out[p] = std::move(text);
-    }
     return out;
 }
 
@@ -152,24 +170,28 @@ int snapshot(const Options& o)
     json::Writer bundle, log;
     bundle.beginArray();
     log.beginArray();
-    std::size_t skipped = 0;
+    std::size_t skipped = 0, unavailable = 0;
+    std::set<std::string> pending;
+    const app::GitSource source(o.repo);
 
     for (std::size_t t = 0; t < revs.size(); ++t) {
         index.setTurn(static_cast<int>(t));
         std::vector<std::string> fetch, removed;
         if (t == 0) {
-            // The first turn: the pathspec's code files at that commit, in path order, up to the limit (the rest are counted, never silently dropped).
-            for (const auto& p : lines(git(o, "ls-tree -r --name-only " + revs[0] + pathspecArgs(o))))
-                if (isSupportedPath(p)) (fetch.size() < o.maxFiles ? fetch.push_back(p) : void(++skipped));
+            const auto listing = source.list(revs[0], o.pathspecs);
+            if (!listing.known) fail("could not list the snapshot scope");
+            for (const auto& path : listing.paths) if (isSupportedPath(path)) pending.insert(path);
         } else {
-            for (const auto& l : lines(git(o, std::format("diff --name-status --no-renames {} {}{}", revs[t - 1], revs[t], pathspecArgs(o))))) {
-                const auto tab = l.find('\t');
-                if (tab == std::string::npos) continue;
-                const std::string path = l.substr(tab + 1);
-                if (!isSupportedPath(path)) continue;
-                if (l[0] == 'D') { if (files.count(path)) removed.push_back(path); }
-                else if (files.count(path) || files.size() + fetch.size() < o.maxFiles) fetch.push_back(path);
-                else ++skipped;
+            const auto changes = gitplumbing::parseNameStatus(git(o, std::format("diff --name-status -z --no-renames {} {}{}",
+                                                                               revs[t - 1], revs[t], pathspecArgs(o))));
+            if (!changes) fail(changes.error());
+            for (const auto& change : *changes) {
+                const auto& path = change.path;
+                if (change.kind == ChangeKind::deleted) {
+                    pending.erase(path);
+                    if (files.contains(path)) removed.push_back(path);
+                } else if (files.contains(path)) fetch.push_back(path);
+                else if (isSupportedPath(path)) pending.insert(path);
             }
         }
         // The hunks of this turn: ONE `git diff -U0` between the two commits for the whole pathspec, mapped per file from the spans the blocks had before
@@ -183,8 +205,13 @@ int snapshot(const Options& o)
             return spans;
         };
         if (t > 0) for (const auto& p : fetch) if (hunks.contains(p)) spansBefore[p] = spansOf(p);
-        for (const auto& p : removed) { index.update(p, ""); files.erase(p); textIds.erase(p); revisionIds.erase(p); }
-        for (auto& [p, text] : readBlobs(o, revs[t], fetch)) {
+        const auto remove = [&](const std::string& path) {
+            index.update(path, "");
+            files.erase(path);
+            textIds.erase(path);
+            revisionIds.erase(path);
+        };
+        const auto publish = [&](const std::string& p, std::string text) {
             index.update(p, text);
             ++revisions[p];
             revisionIds[p] = commits[t].sha;
@@ -192,7 +219,29 @@ int snapshot(const Options& o)
             log.beginObject().kv("path", p).kv("by", commits[t].sha.substr(0, 10) + " " + commits[t].subject).kv("revision", revisions[p])
                 .kv("base", revisions[p] - 1).kv("from", 1).kv("to", static_cast<int>(std::ranges::count(text, '\n'))).kv("delta", 0).endObject();
             files[p] = std::move(text);
+        };
+        for (const auto& path : removed) remove(path);
+        auto changed = readBlobs(o, revs[t], fetch);
+        for (const auto& path : fetch) {
+            const auto found = changed.find(path);
+            if (found == changed.end()) {
+                remove(path);
+                removed.push_back(path);
+                ++unavailable;
+            } else publish(path, std::move(found->second));
         }
+        while (!pending.empty() && files.size() < o.maxFiles) {
+            std::vector<std::string> candidates;
+            const std::size_t free = o.maxFiles - files.size();
+            while (!pending.empty() && candidates.size() < free) {
+                candidates.push_back(*pending.begin());
+                pending.erase(pending.begin());
+            }
+            auto admitted = readBlobs(o, revs[t], candidates);
+            unavailable += candidates.size() - admitted.size();
+            for (auto& [path, text] : admitted) publish(path, std::move(text));
+        }
+        skipped += pending.size();
 
         // This commit as an item, anchored to every block it added or changed (the turn's events), so history is a layer like any other.
         LayerItem item;
@@ -253,8 +302,8 @@ int snapshot(const Options& o)
 
     const std::string out = bundle.take();
     std::fwrite(out.data(), 1, out.size(), stdout);
-    eprintln("sub0canvas snapshot: {} turns, {} files, {} supported files over the limit not shown, {} bytes", revs.size(), files.size(), skipped,
-                 out.size());
+    eprintln("sub0canvas snapshot: {} turns, {} files, {} file-turns omitted at capacity, {} unavailable, binary or oversized blob revisions, {} bytes",
+             revs.size(), files.size(), skipped, unavailable, out.size());
     return 0;
 }
 

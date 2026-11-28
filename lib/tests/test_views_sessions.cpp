@@ -194,6 +194,27 @@ int main()
         CHECK_STR(B->read(vb, "a.cpp")->text, kT1);                           // bob's pin still holds
     }
 
+    {   // Caller-supplied write permissions cannot widen a pinned view.
+        Rig r;
+        Session* session = r.open(who("alice"));
+        OpenSpec spec;
+        spec.scope.paths.insert("a.cpp");
+        const auto view = session->openView(spec);
+        CHECK(view.has_value());
+        const auto outside = session->stage(*view, "=== FILE: outside.cpp ===\nint added;\n=== END FILE ===\n",
+                                            {{"outside.cpp"}, false});
+        CHECK(!outside && outside.error().code == "out-of-scope");
+        CHECK(session->pending(*view)->files == 0 && !r.canvas.has("outside.cpp"));
+        auto anchor = makeSourceAnchor("a.cpp", anchorRevision(**session->view(*view)), kT1, 2, 5, 2, 14, &r.index);
+        anchor.quote = "different text";
+        const auto unverified = session->hold(*view, anchor);
+        CHECK(unverified && !session->resolve(*view, *unverified));
+        CHECK(!session->reread(*view, *unverified));
+        anchor.path = "outside.cpp";
+        const auto outOfScope = session->hold(*view, anchor);
+        CHECK(!outOfScope && outOfScope.error().code == "out-of-scope");
+    }
+
     {   // Rereading a probable location does not choose among duplicate quotes.
         Rig r;
         Session* session = r.open(who("alice"));

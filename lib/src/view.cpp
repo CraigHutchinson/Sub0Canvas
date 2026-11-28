@@ -517,13 +517,9 @@ void FileScratch::set(const std::string& path, std::optional<std::string> text)
 
 std::optional<Conflict> conflictSince(const Canvas& canvas, const std::string& path, int baseRevision, int from, int to)
 {
-    int shift = 0;
     for (const CanvasLogEntry& e : canvas.log()) {
         if (e.path != path || e.revision <= baseRevision) continue;
-        const int lo = from + shift, hi = to + shift;
-        if (e.to < lo) shift += e.delta;
-        else if (e.from > hi) continue;
-        else return Conflict{e.by, e.revision, e.from, e.to};
+        if (const auto hit = e.rebase(from, to)) return Conflict{e.by, e.revision, hit->from, hit->to};
     }
     return std::nullopt;
 }

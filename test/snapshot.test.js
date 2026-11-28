@@ -109,3 +109,42 @@ test('the snapshot discovers Markdown through the same registry as Git history',
     assert.ok(names.length > 10);
     assert.deepEqual(names, JSON.parse(history.stdout).blocks.map((block) => block.name));
 });
+
+test('bounded snapshots evict unavailable revisions and admit replacements', { skip: !exe && 'sub0canvas is not built' }, () => {
+    const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'sub0canvas-bounded-'));
+    const git = (...args) => {
+        const result = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+        assert.equal(result.status, 0, result.stderr);
+    };
+    const commit = (message) => {
+        git('add', '-A');
+        git('-c', 'user.name=Snapshot test', '-c', 'user.email=test@example.test', '-c', 'commit.gpgsign=false', 'commit', '-qm', message);
+    };
+    const write = (name, text) => fs.writeFileSync(path.join(dir, name), text);
+    try {
+        git('init', '-q');
+        write('a.cpp', 'int first() { return 1; }\n');
+        commit('starts visible');
+        write('a.cpp', 'int big() { return 2; }\n'.repeat(20));
+        commit('oversized');
+        write('a.cpp', 'int recovered() { return 3; }\n');
+        commit('back in range');
+        write('a.cpp', Buffer.from([0, 1, 2]));
+        commit('binary');
+        write('a.cpp', 'int again() { return 4; }\n');
+        commit('text again');
+        fs.unlinkSync(path.join(dir, 'a.cpp'));
+        write('b.cpp', 'int replacement() { return 5; }\n');
+        commit('replace at capacity');
+        const result = spawnSync(exe, ['snapshot', '--repo', dir, '--history', '6', '--max-files', '1', '--max-file-bytes', '80', '--', '.'], { encoding: 'utf8' });
+        assert.equal(result.status, 0, result.stderr);
+        assert.match(result.stderr, /2 unavailable, binary or oversized/);
+        const { docs, problems } = M.loadEntries(JSON.parse(result.stdout));
+        assert.deepEqual(problems, []);
+        const turns = docs[0].turns;
+        assert.deepEqual(turns.map((turn) => Object.keys(turn.files)), [['a.cpp'], [], ['a.cpp'], [], ['a.cpp'], ['b.cpp']]);
+        assert.deepEqual(turns.map((turn) => turn.blocks.map((block) => block.name)), [['first'], [], ['recovered'], [], ['again'], ['replacement']]);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

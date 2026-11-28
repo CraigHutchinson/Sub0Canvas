@@ -283,7 +283,8 @@ Result<StageResult> Session::stage(const std::string& view, const std::string& r
     Runtime& rt = runtime(view);
     auto trial = rt.scratch->clone();
     ApplyOptions ao;
-    ao.allowed.insert(options.allowed.begin(), options.allowed.end());
+    for (const auto& path : options.allowed) if (inScope(r.scope.paths, path)) ao.allowed.insert(path);
+    if (ao.allowed.empty()) return fail("out-of-scope", "none of the writable files is inside the view's scope");
     ao.by = actorName(who_.actor);
     ao.partial = options.partial;
     auto applied = trial->stage(parsed, ao, [&](const std::string& path) { return textAtPin(ws_.canvas_, r.pin, path); });
@@ -641,7 +642,16 @@ Result<std::string> Session::hold(const std::string& view, const SourceAnchor& a
     ViewRecord r = **rec;
     HeldAnchor h;
     h.key = std::format("{}#{}", view, r.held.size() + 1);
+    if (!inScope(r.scope.paths, anchor.path)) return fail("out-of-scope", std::format("'{}' is outside the scope of view '{}'", anchor.path, view));
     h.anchor = anchor;
+    const auto pinnedText = textAtPin(ws_.canvas_, r.pin, anchor.path);
+    if (!pinnedText) h.status = "orphaned";
+    else if (anchor.revision != anchorRevision(r) || anchor.quote.empty()) h.status = "moved";
+    else {
+        const auto site = makeSourceAnchor(anchor.path, anchor.revision, *pinnedText, anchor.line, anchor.column, anchor.endLine, anchor.endColumn);
+        if (site.quote != anchor.quote || site.line != anchor.line || site.column != anchor.column ||
+            site.endLine != anchor.endLine || site.endColumn != anchor.endColumn) h.status = "moved";
+    }
     r.held.push_back(h);
     save(r);
     return h.key;
@@ -660,6 +670,7 @@ Result<HeldAnchor> Session::resolve(const std::string& view, const std::string& 
     }
     for (const HeldAnchor& h : (*rec)->held) {
         if (h.key != address) continue;
+        if (!inScope((*rec)->scope.paths, h.anchor.path)) return fail("out-of-scope", std::format("address '{}' is outside the view's scope", address));
         if (h.status != "editable") return fail("not-editable", std::format("address '{}' is {}: re-read it before editing", address, h.status));
         return h;
     }
@@ -681,6 +692,8 @@ Result<HeldAnchor> Session::reread(const std::string& view, const std::string& a
     if (res.outcome == Outcome::orphaned) return fail("orphaned", std::format("address '{}' resolves to nothing: {}", address, res.detail));
     if (res.outcome != Outcome::resolved && (res.truncated || res.alternatives > 0))
         return fail("ambiguous-address", std::format("address '{}' needs an explicit selection: {}", address, res.detail));
+    if (res.method == Method::block) return fail("not-editable", std::format("address '{}' needs a fresh quoted range", address));
+    if (!inScope(r.scope.paths, res.path)) return fail("out-of-scope", std::format("'{}' is outside the scope of view '{}'", res.path, view));
     const auto found = files.find(res.path);
     if (found == files.end()) return fail("orphaned", std::format("address '{}' has no text in the pin", address));
     const std::string& text = found->second;

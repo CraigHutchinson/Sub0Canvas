@@ -27,6 +27,9 @@ Designed, not built: the authoring tool beyond the snapshot ([AUTHORING.md](AUTH
 
 The cleanup to one current account is in progress (backlog item 1); then v0.5.0 and the Sub0Squad PR (item 2). Start the next session at [BACKLOG.md](BACKLOG.md).
 
+Disjoint stale edits now rebase through the exact spans in a transaction. Bounded snapshots evict unavailable blobs and refill freed slots.
+The regression cases run in `test_edits` and the snapshot tests.
+
 ## Known gaps
 
 * No golden attempt has compiler diagnostics at several places, so the golden replay checks test failures only (R-U1-4); the owner-run re-capture replaces the golden fixtures.

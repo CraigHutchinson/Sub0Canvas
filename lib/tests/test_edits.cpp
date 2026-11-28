@@ -77,6 +77,15 @@ int main()
             auto rv = cv.revertTo("a.cpp", 1, "owner");
             CHECK(rv.ok && rv.revision == 5 && cv.text("a.cpp") == cv.textAt("a.cpp", 1));
             CHECK(!cv.apply({"a.cpp", 4, "w4", {{CanvasOp::Kind::replaceLines, 1, 1, "", "q"}}}).ok);   // a revert touched everything: older edits conflict
+            // A stale edit in an untouched gap sees only the preceding operation's shift.
+            cv.addFile("gap.cpp", "a\nb\nc\nd\ne\nf\n");
+            CHECK(cv.apply({"gap.cpp", 1, "batch", {{CanvasOp::Kind::replaceLines, 2, 2, "", "B1\nB2"},
+                                                    {CanvasOp::Kind::replaceLines, 5, 5, "", ""}}}).ok);
+            CHECK(cv.apply({"gap.cpp", 2, "prefix", {{CanvasOp::Kind::insertAfter, 0, 0, "", "top"}}}).ok);
+            CHECK(cv.apply({"gap.cpp", 1, "stale", {{CanvasOp::Kind::replaceLines, 4, 4, "", "D"}}}).ok);
+            CHECK(cv.text("gap.cpp") == "top\na\nB1\nB2\nc\nD\nf\n");
+            const auto overwritten = cv.apply({"gap.cpp", 1, "stale", {{CanvasOp::Kind::replaceLines, 5, 5, "", "E"}}});
+            CHECK(!overwritten.ok && overwritten.error.contains("batch") && overwritten.error.contains("lines 5-5"));
             // Replace a function by name: no line arithmetic.
             cv.addFile("f.cpp", "int a() { return 1; }\ndouble f(double x)\n{\n  x += 1;\n  x += 2;\n  return x;\n}\nint z;\n");
             auto sym = cv.apply({"f.cpp", 1, "w5", {{CanvasOp::Kind::replaceSymbol, 0, 0, "f", "double f(double x) { return x; }"}}});

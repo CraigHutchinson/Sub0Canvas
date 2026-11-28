@@ -8,6 +8,7 @@
 
 #include <expected>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -39,14 +40,24 @@ struct TxResult
     std::string error;         ///< why it was rejected, naming the line, symbol or conflicting edit
 };
 
+/// An operation's interval in the pre-transaction revision. Insertions use to == from - 1.
+struct CanvasChangeSpan
+{
+    int from, to, delta;
+};
+
 /// One accepted transaction.
 struct CanvasLogEntry
 {
     std::string path, by;
     int revision = 0;          ///< the revision this transaction produced
     int baseRevision = 0;
-    int from = 0, to = 0;      ///< the span it changed, in the numbering of the revision before it (an insertion has to == from - 1)
+    int from = 0, to = 0;      ///< the envelope of its changes, in the numbering of the revision before it (an insertion has to == from - 1)
     int delta = 0;             ///< lines added (negative: removed)
+    std::vector<CanvasChangeSpan> spans = {};   ///< exact changes for a multi-operation transaction; otherwise use the envelope
+
+    /// Rebase a span through this entry, updating its coordinates on success. Returns the conflicting operation if it intersects.
+    [[nodiscard]] std::optional<CanvasChangeSpan> rebase(int& first, int& last) const;
 };
 
 class Canvas

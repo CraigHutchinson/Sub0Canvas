@@ -6,6 +6,7 @@
 #include "sub0canvas/outline.hpp"
 
 #include <algorithm>
+#include <span>
 #include <cctype>
 #include <cstdlib>
 #include <sstream>
@@ -25,6 +26,21 @@ struct Span { int from = 0, to = 0; std::vector<std::string> repl; bool insert =
 bool trimmedEmpty(const std::string& l) { return l.find_first_not_of(" \t\r") == std::string::npos; }
 
 }  // namespace
+
+std::optional<CanvasChangeSpan> CanvasLogEntry::rebase(int& first, int& last) const
+{
+    const CanvasChangeSpan envelope{from, to, delta};
+    const std::span<const CanvasChangeSpan> changes = spans.empty()
+        ? std::span{&envelope, std::size_t{1}} : std::span<const CanvasChangeSpan>{spans};
+    int shift = 0;
+    for (const auto& change : changes) {
+        if (change.to < first) shift += change.delta;
+        else if (change.from <= last) return change;
+    }
+    first += shift;
+    last += shift;
+    return std::nullopt;
+}
 
 void Canvas::addFile(const std::string& path, std::string text)
 {
@@ -118,15 +134,16 @@ TxResult Canvas::apply(const Transaction& tx)
     // 2. Rebase through the edits made since the base revision. Each logged edit is in the numbering of the revision before it, which is where our span is
     // by then: an edit wholly before the span shifts it, one wholly after leaves it, anything else touched our lines and is a conflict.
     for (auto& s : spans) {
-        int shift = 0;
+        const int from = s.from, to = s.to;
         for (const auto& e : log_) {
             if (e.path != tx.path || e.revision <= tx.baseRevision) continue;
-            const int lo = s.from + shift, hi = s.to + shift;
-            if (e.to < lo) shift += e.delta;
-            else if (e.from > hi) continue;
-            else { r.error = "lines " + std::to_string(s.from) + "-" + std::to_string(s.to) + " were changed by " + (e.by.empty() ? std::string{"another edit"} : e.by) + " in revision " + std::to_string(e.revision) + " (lines " + std::to_string(e.from) + "-" + std::to_string(e.to) + "): read the current text and redo this edit"; return r; }
+            if (const auto conflict = e.rebase(s.from, s.to)) {
+                r.error = "lines " + std::to_string(from) + "-" + std::to_string(to) + " were changed by " +
+                          (e.by.empty() ? std::string{"another edit"} : e.by) + " in revision " + std::to_string(e.revision) +
+                          " (lines " + std::to_string(conflict->from) + "-" + std::to_string(conflict->to) + "): read the current text and redo this edit";
+                return r;
+            }
         }
-        s.from += shift; s.to += shift;
     }
 
     // 3. Apply from the bottom up to the current text; all or nothing.
@@ -141,8 +158,14 @@ TxResult Canvas::apply(const Transaction& tx)
         lastLine = std::max(lastLine, it->to);
         delta += static_cast<int>(it->repl.size()) - (it->to - it->from + 1);
     }
+    CanvasLogEntry entry{tx.path, tx.by, current + 1, tx.baseRevision, firstLine, lastLine, delta};
+    if (spans.size() > 1) {
+        entry.spans.reserve(spans.size());
+        for (const auto& span : spans)
+            entry.spans.push_back({span.from, span.to, static_cast<int>(span.repl.size()) - (span.to - span.from + 1)});
+    }
     file.revisions.push_back(joinLines(lines));
-    log_.push_back({tx.path, tx.by, current + 1, tx.baseRevision, firstLine, lastLine, delta});
+    log_.push_back(std::move(entry));
     r.ok = true;
     r.revision = current + 1;
     return r;

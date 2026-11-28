@@ -34,7 +34,7 @@ struct Identity
 
 /// A structured refusal. `code`: `unknown-session`, `not-your-session`, `closed`, `expired`, `unknown-view`, `unknown-subscription`, `quota`, `capability`,
 /// `pinned`, `unpinned`, `pending-work`, `not-allowed`, `stage-refused`, `not-found`, `out-of-scope`, `unknown-address`, `foreign-address`, `not-editable`,
-/// `orphaned`, `notify-off`, `not-supported`, `bad-request`. A quota refusal names the limit (`views`, `pendingBytes`, `subscriptions`) with its value.
+/// `ambiguous-address`, `orphaned`, `notify-off`, `not-supported`, `bad-request`. A quota refusal names the limit (`views`, `pendingBytes`, `subscriptions`) with its value.
 struct SessionError
 {
     std::string code, limit, message;
